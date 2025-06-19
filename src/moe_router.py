@@ -32,3 +32,31 @@ class HashRouter(nn.Module):
     def expert_utilization(self, assignments: torch.Tensor) -> torch.Tensor:
         """Return number of tokens routed to each expert."""
         return torch.bincount(assignments.view(-1), minlength=self.num_experts)
+
+
+class SwitchRouter(nn.Module):
+    """Top-k gating network for S-1 sparse Mixture-of-Experts."""
+
+    def __init__(self, dim: int, num_experts: int, k: int = 2) -> None:
+        super().__init__()
+        self.num_experts = num_experts
+        self.k = k
+        self.gate = nn.Linear(dim, num_experts)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Select top-k experts via learned gating.
+
+        Args:
+            x: Tensor of shape (batch, seq, dim).
+        Returns:
+            Tensor of shape (batch, seq, k) with expert indices.
+        """
+        logits = self.gate(x)
+        return torch.topk(logits, self.k, dim=-1).indices
+
+    def load_balance_std(self, assignments: torch.Tensor) -> float:
+        counts = torch.bincount(assignments.view(-1), minlength=self.num_experts).float()
+        return (counts.std() / counts.mean()).item()
+
+    def expert_utilization(self, assignments: torch.Tensor) -> torch.Tensor:
+        return torch.bincount(assignments.view(-1), minlength=self.num_experts)
