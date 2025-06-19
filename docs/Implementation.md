@@ -37,10 +37,10 @@ print('counts:', router.expert_utilization(assign))
 `scripts/benchmark_moe.py` offers a minimal example comparing parameter counts and approximate
 training FLOPs with and without the MOE router.
 
-Run it from the project root:
+Run it from the project root. By default it uses `HashRouter`; pass `--router switch` to benchmark the learned router:
 
 ```bash
-python scripts/benchmark_moe.py
+python scripts/benchmark_moe.py --router switch
 ```
 
 Expected output shows the dense and MOE parameter counts along with their ratio and a rough FLOP
@@ -54,12 +54,12 @@ FLOP ratio: 8.5
 ```
 
 `scripts/moe_vs_dense.py` provides a similar toy benchmark implemented as a standalone module. It
-contrasts a dense feed-forward model with the MOE version built around `HashRouter`.
+contrasts a dense feed-forward model with the MOE version. Pass `--router switch` to use the learned router.
 
 Run it as:
 
 ```bash
-python scripts/moe_vs_dense.py
+python scripts/moe_vs_dense.py --router switch
 ```
 
 The script prints the same parameter counts and a comparable FLOP ratio, labelled `Param ratio`. Both
