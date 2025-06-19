@@ -2302,3 +2302,152 @@ Mildenhall et al. (ECCV 2020)**
     different styles: Monet painting ↔ photo, etc., which CycleGAN also did in an extended work)
     can show versatility. Overall, visuals should cement how **two GANs + cycle consistency**
     yields meaningful, invertible mappings between domains.
+21. **"EfficientNet: Rethinking Model Scaling for Conv. Neural Networks" – Mingxing Tan, Quoc V. Le (ICML 2019)**
+
+    * *Key Ideas & Contributions:* Introduced compound scaling
+       to balance network depth, width and resolution for better accuracy with fewer parameters.
+
+22. **"Diffusion Models Beat GANs on Image Synthesis" – Prafulla Dhariwal, Alexander Nichol (NeurIPS 2021)**
+
+    * *Key Ideas & Contributions:* Showed improved noise schedules
+       and classifier-free guidance push diffusion models past GANs in sample quality.
+
+23. **"Imagen: Photorealistic Text-to-Image Diffusion Models" – Chitwan Saharia et al. (ICML 2022)**
+
+    * *Key Ideas & Contributions:* Demonstrated that large frozen language models
+       paired with diffusion decoders yield highly detailed text-to-image generation.
+
+24. **"Hierarchical Text-Conditional Image Generation with CLIP Latents (DALL·E 2)" – Ramesh et al. (2022)**
+
+    * *Key Ideas & Contributions:* Combined CLIP-based priors with diffusion decoders
+       to generate high fidelity images from text prompts.
+
+25. **"PaLM: Scaling Language Modeling with Pathways" – Aakanksha Chowdhery et al. (arXiv 2022)**
+
+    * *Key Ideas & Contributions:* Presented a 540B parameter transformer
+       trained with the Pathways system, showing strong few-shot and reasoning abilities.
+
+26. **"GPT-4 Technical Report" – OpenAI (2023)**
+
+    * *Key Ideas & Contributions:* Described the capabilities
+       and safety measures of GPT-4, a large multimodal language model with improved reliability.
+
+27. **"LLaMA: Open and Efficient Foundation Language Models" – Hugo Touvron et al. (arXiv 2023)**
+
+    * *Key Ideas & Contributions:* Released a suite of smaller transformer models
+       trained on trillions of tokens, enabling broad research access.
+
+28. **"Segment Anything" – Kirillov et al. (arXiv 2023)**
+
+    * *Key Ideas & Contributions:* Introduced a promptable segmentation model
+       trained on 11M masks that generalizes to a wide range of visual tasks.
+
+29. **"Whisper: Robust Speech Recognition via Large-Scale Weak Supervision" – Radford et al. (2022)**
+
+    * *Key Ideas & Contributions:* Trained a large encoder-decoder transformer
+       on 680k hours of audio to achieve strong multilingual ASR performance.
+
+30. **"InstructGPT: Aligning Language Models with Human Feedback" – Long Ouyang et al. (NeurIPS 2022)**
+
+    * *Key Ideas & Contributions:* Demonstrated reinforcement learning
+       from human feedback to make GPT-3 follow instructions more helpfully and safely.
+
+31. **"LoRA: Low-Rank Adaptation of Large Language Models" – Edward Hu et al. (ICLR 2022)**
+
+    * *Key Ideas & Contributions:* Proposed a parameter-efficient fine-tuning method
+       that inserts trainable rank-decomposition matrices into transformer weights.
+
+32. **"Retrieval-Augmented Generation for Knowledge-Intensive NLP" – Patrick Lewis et al. (NeurIPS 2020)**
+
+    * *Key Ideas & Contributions:* Combined neural retrieval with generation
+       to answer open-domain questions using up-to-date documents at inference time.
+
+33. **"Learning to Act by Watching Unlabeled Videos (VPT)" – Baker et al. (arXiv 2022)**
+
+    * *Key Ideas & Contributions:* Showed how pretraining on large video datasets
+       enables RL agents to acquire Minecraft skills from human gameplay.
+
+34. **"A Generalist Agent" – Scott Reed et al. (Gato, DeepMind 2022)**
+
+    * *Key Ideas & Contributions:* Trained a single transformer policy
+       on diverse multimodal tasks, from playing games to controlling robots.
+
+35. **"Flamingo: Visual Language Models for Few-Shot Learning" – Alayrac et al. (NeurIPS 2022)**
+
+    * *Key Ideas & Contributions:* Introduced a multimodal model
+       that can perform vision-language tasks with minimal examples using frozen language models.
+
+36. **"Bootstrapping Language-Image Pre-training (BLIP-2)" – Li et al. (ICLR 2023)**
+
+    * *Key Ideas & Contributions:* Used a query transformer
+       and frozen LLM to achieve strong image-text understanding with less compute.
+
+37. **"DreamFusion: Text-to-3D Using 2D Diffusion" – Ben Poole et al. (arXiv 2022)**
+
+    * *Key Ideas & Contributions:* Optimized neural radiance fields
+       guided by pre-trained diffusion models to create 3D assets from text prompts.
+
+38. **"DreamerV3: Scaling World Models for Reinforcement Learning" – Hafner et al. (2023)**
+
+    * *Key Ideas & Contributions:* Improved world model RL with efficiency and scalability, achieving strong performance
+       on many control benchmarks.
+
+39. **"MuZero: Mastering Games Without Rules" – Julian Schrittwieser et al. (Nature 2020)**
+
+    * *Key Ideas & Contributions:* Learned a model of environment dynamics
+       purely from reward to master Go, chess and Atari without knowing the rules.
+
+40. **"Decision Transformer: Reinforcement Learning via Sequence Modeling" – Chen et al. (NeurIPS 2021)**
+
+    * *Key Ideas & Contributions:* Framed RL as conditional sequence modeling with transformers,
+       enabling offline RL using supervised learning techniques.
+
+41. **"No Language Left Behind" – Costa-jussà et al. (ACL 2022)**
+
+    * *Key Ideas & Contributions:* Released a multilingual translation model
+       covering 200+ languages with high accuracy, enabling translation for low-resource tongues.
+
+42. **"RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robots" – Brohan et al. (2023)**
+
+    * *Key Ideas & Contributions:* Unified language, vision and action models
+      so robots can perform open-ended tasks specified with natural language.
+
+43. **"BigGAN: Large Scale GAN Training for High Fidelity Natural Image Synthesis" – Andrew Brock et al. (ICLR 2019)**
+
+    * *Key Ideas & Contributions:* Showed that scaling up GANs with large batch
+       sizes and carefully tuned training leads to unprecedented image quality.
+
+44. **"SimCLR: Simple Framework for Contrastive Learning of Visual Representations" – Chen et al. (ICML 2020)**
+
+    * *Key Ideas & Contributions:* Demonstrated that contrastive pretraining on
+       augmented views yields powerful image representations without labels.
+
+45. **"Bootstrap Your Own Latent (BYOL)" – Grill et al. (NeurIPS 2020)**
+
+    * *Key Ideas & Contributions:* Proposed a self-supervised method
+       that learns representations by predicting target network outputs without negative pairs.
+
+46. **"Masked Autoencoders Are Scalable Vision Learners" – Kaiming He et al. (CVPR 2022)**
+
+    * *Key Ideas & Contributions:* Showed that masking large portions of input images
+       and reconstructing them trains effective vision transformers.
+
+47. **"wav2vec 2.0: Self-Supervised Learning for Speech Recognition" – Baevski et al. (NeurIPS 2020)**
+
+    * *Key Ideas & Contributions:* Learned speech representations from raw audio
+       using contrastive objectives, enabling strong ASR with minimal labeled data.
+
+48. **"Switch Transformers: Scaling to Trillion Parameter Models with Efficient Sparsity" – Fedus et al. (JMLR 2022)**
+
+    * *Key Ideas & Contributions:* Introduced a sparse mixture-of-experts architecture
+       that dramatically reduces compute for very large language models.
+
+49. **"GLaM: Efficient Scaling of Language Models with Mixture-of-Experts" – Du et al. (ICML 2022)**
+
+    * *Key Ideas & Contributions:* Presented a 1.2T parameter MoE model
+       that achieves strong results while activating only part of the network per token.
+
+50. **"AlphaDev: Discovering Faster Sorting Algorithms with Reinforcement Learning" – Fawzi et al. (Nature 2023)**
+
+    * *Key Ideas & Contributions:* Used deep reinforcement learning
+       to invent new sorting routines that outperform human-designed algorithms.
