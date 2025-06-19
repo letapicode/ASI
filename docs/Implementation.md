@@ -6,6 +6,7 @@ This repository includes starter modules for the first two algorithms listed in 
 
 - `src/moe_router.py` provides a hash-based router that activates at most two experts per token.
 - The `load_balance_std` method reports the relative standard deviation across experts.
+- The `expert_utilization` method returns token counts per expert so you can inspect distribution.
 
 ## S-2 FlashAttention-3 Kernel
 
@@ -16,13 +17,26 @@ These modules are prototypes to facilitate experimentation and benchmarking.
 
 ## Load-Balancing Measurement
 
-See `docs/load_balance.md` for a walkthrough on how expert utilization is computed and how to replicate the measurement.
+See `docs/load_balance.md` for a walkthrough on how expert utilization is computed and how to replicate
+the measurement. A quick example:
+
+```python
+from src.moe_router import HashRouter
+import torch
+
+x = torch.randn(4, 512, 256)
+router = HashRouter(num_experts=16)
+assign = router(x)
+print('std:', router.load_balance_std(assign))
+print('counts:', router.expert_utilization(assign))
+```
 
 ## Benchmark Script
 
-`scripts/benchmark_moe.py` offers a minimal example comparing parameter counts and
-approximate training FLOPs with and without the MOE router. It is a starting point
-for more detailed experiments.
+`scripts/benchmark_moe.py` offers a minimal example comparing parameter counts and approximate training
+FLOPs with and without the MOE router. Run it directly with `python scripts/benchmark_moe.py`. The
+output shows the parameter growth and rough FLOP ratio when routing is enabled. Use this as a starting
+point for more detailed experiments.
 
 ## FlashAttention-3 Integration
 
