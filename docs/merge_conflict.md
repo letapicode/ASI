@@ -58,13 +58,20 @@ locally, run `git merge-base` or `git status` to detect conflicts.
 
 ## Handling Giant PR and Individual Task PRs
 
-The repository occasionally receives a giant PR that contains all tasks at once, along with individual PRs for each task. The giant PR usually merges first because it covers everything at once. However, the smaller PRs are still useful to check for missed functionality.
+The repository occasionally receives a giant PR containing all tasks at once.
+Individual PRs exist for each task as well.
+The giant PR usually merges first because it covers everything at once.
+
+However, the smaller PRs are still useful to check for missed functionality.
+See [`pullrequest_merge_conflict.md`](pullrequest_merge_conflict.md) for a step‑by‑step workflow.
 
 ### `pullrequest_merge_conflict.md`
 
 #### \ud83d\udccc Purpose
 
-This guide outlines the standard process to handle pull request (PR) conflicts when both a giant PR and individual task PRs are generated for the same set of tasks. It helps the AI identify and resolve merge conflicts while ensuring no functionality is lost.
+This guide outlines the standard process to handle pull request (PR) conflicts.
+It applies when both a giant PR and individual task PRs are generated for the same set of tasks.
+It helps the AI identify and resolve merge conflicts while ensuring no functionality is lost.
 
 #### \u2705 Assumptions
 
@@ -85,7 +92,8 @@ This guide outlines the standard process to handle pull request (PR) conflicts w
 5. **Output a single unified task description** with the following:
    * All missing or extra functionality found in individual PRs.
    * Any improved code or logic that should be preserved.
-6. This unified task will then be handed to Codex to **regenerate one final PR** that safely integrates everything without merge conflicts.
+6. This unified task will then be handed to Codex to **regenerate one final PR**.
+   That final PR safely integrates everything without merge conflicts.
 
 #### \ud83d\udee0\ufe0f Example Workflow
 
