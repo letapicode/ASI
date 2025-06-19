@@ -85,7 +85,7 @@ Prototype modules for **S-1** and **S-2** have been added in `src/`.
 - `src/flash_attention3.py` wraps the FlashAttention‑3 kernel and exposes `_HAS_FLASH3`.
 - `scripts/benchmark_moe.py` and `scripts/moe_vs_dense.py` estimate FLOPs with and without routing.
 - `src/scaling_breakpoint.py` provides an early model for the **S-3** scaling-law breakpoint task.
-- Next: implement a RetNet retention kernel for **C-1** ([arxiv.org][5]).
+- `src/retnet_retention.py` implements a RetNet-style retention kernel for **C-1**.
 - Next: integrate a Mamba state-space block for **C-2** ([arxiv.org][6]).
 See `docs/Implementation.md` and `docs/load_balance.md` for details.
 
