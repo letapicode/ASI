@@ -20,11 +20,15 @@ See `docs/load_balance.md` for a walkthrough on how expert utilization is comput
 
 ## Benchmark Script
 
-`scripts/benchmark_moe.py` offers a minimal example comparing parameter counts and approximate training FLOPs with and without the MOE router. It serves as a starting point for more detailed experiments.
+`scripts/benchmark_moe.py` offers a minimal example
+ comparing parameter counts and approximate training FLOPs with and without the MOE router.
+It serves as a starting point for more detailed experiments.
 
 ## FlashAttention-3 Integration
 
-`src/flash_attention3.py` attempts to import the FlashAttention-3 CUDA/ROCm kernel. If it is not available, the function falls back to PyTorch's built-in attention. To build the kernel yourself:
+`src/flash_attention3.py` attempts to import the FlashAttention-3 CUDA/ROCm kernel.
+If it is not available, the function falls back to PyTorch's built-in attention.
+To build the kernel yourself:
 
 1. Install the `flash-attn` package with CUDA visible: `pip install flash-attn --no-binary flash-attn`.
 2. Ensure `TORCH_CUDA_ARCH_LIST` matches your GPU architecture.
