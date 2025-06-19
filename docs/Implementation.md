@@ -96,3 +96,10 @@ print('predictions:', model.predict(params))
 The helper searches over candidate breakpoints and performs linear regression in
 log space on either side. The resulting model can forecast loss beyond the
 training range.
+
+## C-1 RetNet Retention Kernel
+
+- `src/retnet_retention.py` implements a minimal retention module.
+- It sequentially accumulates `k * v` products with a decay factor and multiplies by the query at each step.
+- The design follows the linear-time, constant-memory retention described in the
+  RetNet paper and serves as a placeholder for more optimised kernels.
