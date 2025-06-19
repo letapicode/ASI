@@ -10,8 +10,8 @@ This repository includes starter modules for the first two algorithms listed in 
 
 ## S-2 FlashAttention-3 Kernel
 
-- `src/flash_attention3.py` contains a placeholder for the FlashAttention-3 kernel.
-- For now it falls back to PyTorch's `scaled_dot_product_attention` until the fused kernel is linked.
+- `src/flash_attention3.py` wraps the FlashAttention-3 kernel and exposes `_HAS_FLASH3` to
+signal availability. If the import fails, the wrapper calls PyTorch's `scaled_dot_product_attention` instead.
 
 These modules are prototypes to facilitate experimentation and benchmarking.
 
@@ -41,7 +41,8 @@ point for more detailed experiments.
 ## FlashAttention-3 Integration
 
 `src/flash_attention3.py` attempts to import the FlashAttention-3 CUDA/ROCm kernel.
-If it is not available, the function falls back to PyTorch's built-in attention.
+The module exposes `_HAS_FLASH3` to indicate whether the kernel was imported.
+If not, the wrapper falls back to `torch.nn.functional.scaled_dot_product_attention`.
 To build the kernel yourself:
 
 1. Install the `flash-attn` package with CUDA visible: `pip install flash-attn --no-binary flash-attn`.
