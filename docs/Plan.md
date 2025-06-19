@@ -87,6 +87,15 @@ Prototype modules for **S-1** and **S-2** have been added in `src/`.
 - `src/scaling_breakpoint.py` provides an early model for the **S-3** scaling-law breakpoint task.
 See `docs/Implementation.md` and `docs/load_balance.md` for details.
 
+### Upcoming milestones
+
+1. **Refine S-1 router** – explore improved hashing and dynamic gating to reduce imbalance.
+2. **Compile FlashAttention-3** – benchmark end-to-end speed-ups once the kernel is available.
+3. **Validate S-3 model** – fit the breakpoint on new data from trillion-parameter runs.
+4. **Implement C-1 → C-6** – prototype long-context modules (RetNet, Mamba, Hyena, etc.).
+5. **Build self-improvement tools (A-1 → A-4)** – code transpiler, autobench harness, meta-RL agent, and quantum HPO.
+6. **Develop alignment stack (L-1 → L-4)** – constitutional AI, deliberative checks, iterative self-alignment, and Critic-in-the-loop RLHF.
+
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
 [3]: https://www.businessinsider.com/openai-orion-model-scaling-law-silicon-valley-chatgpt-2024-11?utm_source=chatgpt.com "OpenAI is reportedly struggling to improve its next big AI model. It's a warning for the entire AI industry."

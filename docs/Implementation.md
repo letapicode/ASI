@@ -72,3 +72,12 @@ print('predictions:', model.predict(params))
 The helper searches over candidate breakpoints and performs linear regression in
 log space on either side. The resulting model can forecast loss beyond the
 training range.
+
+## Running tests
+
+Unit tests for the router, FlashAttention wrapper and scaling breakpoint model
+are located in the `tests/` directory. Execute them with:
+
+```bash
+pytest
+```

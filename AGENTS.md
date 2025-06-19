@@ -1,6 +1,6 @@
 # AGENTS Instructions
 
-This repository contains documentation on algorithms towards self-improving AI. The main content lives in `docs/Plan.md`.
+This repository hosts prototypes and docs for self-improving AI. The main plan lives in `docs/Plan.md`.
 
 ## Editing guidelines
 
@@ -12,5 +12,6 @@ This repository contains documentation on algorithms towards self-improving AI. 
 
 ## Testing
 
-There is no automated test suite for this repository. Changes to documentation do not require running tests.
+A minimal test suite lives in `tests/`. Run `pytest` when modifying code.
+Documentation-only changes do not require running tests.
 
