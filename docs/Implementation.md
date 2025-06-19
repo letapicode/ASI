@@ -34,9 +34,11 @@ print('counts:', router.expert_utilization(assign))
 ## Benchmark Script
 
 `scripts/benchmark_moe.py` offers a minimal example comparing parameter counts and approximate training
-FLOPs with and without the MOE router. Run it directly with `python scripts/benchmark_moe.py`. The
-output shows the parameter growth and rough FLOP ratio when routing is enabled. Use this as a starting
-point for more detailed experiments.
+FLOPs with and without the MOE router. Run it directly with `python scripts/benchmark_moe.py`.
+`scripts/moe_vs_dense.py` provides a similar toy benchmark implemented as a standalone module. It
+contrasts a dense feed-forward model with the MOE version built around `HashRouter`.
+Both scripts show the parameter growth and rough FLOP ratio when routing is enabled. Use them as a
+starting point for more detailed experiments.
 
 ## FlashAttention-3 Integration
 
@@ -53,21 +55,20 @@ After installation, the wrapper will automatically call the optimized kernel.
 
 ## S-3 Scaling-law Breakpoint Model
 
-The module `src/scaling_law.py` fits a two-regime power law to empirical compute
-vs. loss measurements. The `BreakpointScalingLaw` class estimates one slope
-before a specified compute threshold and another after it.
+`src/scaling_breakpoint.py` fits a piecewise log--log relation to compute versus
+loss. Call `fit_breakpoint()` with arrays of parameter sizes and observed losses
+to obtain a `BreakpointModel` instance.
 
 ```python
-from src.scaling_law import BreakpointScalingLaw
+from src.scaling_breakpoint import fit_breakpoint
 
-compute = [1e15, 3e15, 1e16, 3e16]
-loss = [2.0, 1.5, 1.2, 1.1]
-model = BreakpointScalingLaw(break_compute=3e15)
-model.fit(compute, loss)
-pred = model.predict([5e15])
-print('predicted loss:', pred[0])
+params = [1e7, 5e7, 1e8, 5e8]
+loss = [2.0, 1.8, 1.6, 1.3]
+model = fit_breakpoint(params, loss)
+print('breakpoint:', model.breakpoint)
+print('predictions:', model.predict(params))
 ```
 
-Adjust `break_compute` to the knee of your dataset or leave it `None` to split
-the data in half. The model performs simple log-log linear regression on each
-segment and returns predictions in the original scale.
+The helper searches over candidate breakpoints and performs linear regression in
+log space on either side. The resulting model can forecast loss beyond the
+training range.
