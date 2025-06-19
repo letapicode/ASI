@@ -28,3 +28,7 @@ class HashRouter(nn.Module):
         """Compute relative standard deviation of expert loads."""
         counts = torch.bincount(assignments.view(-1), minlength=self.num_experts).float()
         return (counts.std() / counts.mean()).item()
+
+    def expert_utilization(self, assignments: torch.Tensor) -> torch.Tensor:
+        """Return number of tokens routed to each expert."""
+        return torch.bincount(assignments.view(-1), minlength=self.num_experts)
