@@ -16,22 +16,25 @@ These modules are prototypes to facilitate experimentation and benchmarking.
 
 ## Load-Balancing Measurement
 
-See `docs/load_balance.md` for a walkthrough on how expert utilization is computed and how to replicate the measurement.
+Call `HashRouter.load_balance_std(assignments)` to compute the relative standard deviation across experts.
+This value measures how evenly tokens are distributed and matches the `≤0.03` target in `docs/Plan.md`.
+See `docs/load_balance.md` for a step-by-step walkthrough.
 
 ## Benchmark Script
 
-`scripts/benchmark_moe.py` offers a minimal example comparing parameter counts and
-approximate training FLOPs with and without the MOE router. It is a starting point
-for more detailed experiments.
+`scripts/benchmark_moe.py` compares a dense baseline against a MOE variant using `HashRouter`.
+Run `python scripts/benchmark_moe.py` to print parameter counts for both models and
+the ratio of approximate training FLOPs. Use this as a quick check that parameter
+growth aligns with the `docs/Plan.md` goal of ≤10 × parameters with ≤ 1.3 × FLOPs.
 
 ## FlashAttention-3 Integration
 
-`src/flash_attention3.py` attempts to import the FlashAttention-3 CUDA/ROCm kernel.
-If it is not available, the function falls back to PyTorch's built-in attention.
-To build the kernel yourself:
+`src/flash_attention3.py` tries to import the FlashAttention‑3 CUDA/ROCm kernel.
+When the build is missing, it falls back to `torch.nn.functional.scaled_dot_product_attention`.
+To compile the kernel yourself:
 
-1. Install the `flash-attn` package with CUDA visible: `pip install flash-attn --no-binary flash-attn`.
-2. Ensure `TORCH_CUDA_ARCH_LIST` matches your GPU architecture.
-3. Set the environment variable `FLASH_ATTENTION_FORCE_BUILD=1` to trigger compilation from source if needed.
+1. Install `flash-attn` with CUDA visible: `pip install flash-attn --no-binary flash-attn`.
+2. Set `TORCH_CUDA_ARCH_LIST` to match your GPU architecture.
+3. Optionally export `FLASH_ATTENTION_FORCE_BUILD=1` to trigger a source build.
 
-After installation, the wrapper will automatically call the optimized kernel.
+Once installed, rerun your script and the wrapper will automatically use the optimized kernel.

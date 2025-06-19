@@ -10,6 +10,10 @@ Mixture-of-Experts router implemented in `src/moe_router.py`.
    counts and divide by the mean to obtain the relative load imbalance.
 4. **Target threshold** – the Plan specifies that the relative standard deviation should remain below `0.03` (3 %).
 
+The helper method `HashRouter.load_balance_std(assignments)` performs these calculations
+and returns the relative standard deviation across experts. Values near zero indicate
+uniform routing, as required by `docs/Plan.md`.
+
 To reproduce the measurement:
 
 ```python
