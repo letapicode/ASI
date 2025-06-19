@@ -50,3 +50,24 @@ To build the kernel yourself:
 3. Set the environment variable `FLASH_ATTENTION_FORCE_BUILD=1` to trigger compilation from source if needed.
 
 After installation, the wrapper will automatically call the optimized kernel.
+
+## S-3 Scaling-law Breakpoint Model
+
+The module `src/scaling_law.py` fits a two-regime power law to empirical compute
+vs. loss measurements. The `BreakpointScalingLaw` class estimates one slope
+before a specified compute threshold and another after it.
+
+```python
+from src.scaling_law import BreakpointScalingLaw
+
+compute = [1e15, 3e15, 1e16, 3e16]
+loss = [2.0, 1.5, 1.2, 1.1]
+model = BreakpointScalingLaw(break_compute=3e15)
+model.fit(compute, loss)
+pred = model.predict([5e15])
+print('predicted loss:', pred[0])
+```
+
+Adjust `break_compute` to the knee of your dataset or leave it `None` to split
+the data in half. The model performs simple log-log linear regression on each
+segment and returns predictions in the original scale.
