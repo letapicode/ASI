@@ -20,6 +20,7 @@ x = torch.randn(4, 512, 256)
 router = HashRouter(num_experts=16)
 assign = router(x)
 print('load balance std:', router.load_balance_std(assign))
+print('token counts:', router.token_counts(assign))
 ```
 
 Run this code on representative batches and average the reported standard

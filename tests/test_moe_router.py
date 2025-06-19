@@ -9,7 +9,8 @@ class TestHashRouter(unittest.TestCase):
         assignments = router(x)
         std = router.load_balance_std(assignments)
         self.assertLess(std, 0.03)
-        util = router.expert_utilization(assignments)
+        util = router.token_counts(assignments)
+        self.assertTrue(torch.equal(util, router.expert_utilization(assignments)))
         self.assertEqual(util.sum().item(), x.numel() // x.shape[-1] * router.k)
 
 if __name__ == '__main__':

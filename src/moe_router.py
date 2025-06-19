@@ -2,7 +2,12 @@ import torch
 from torch import nn
 
 class HashRouter(nn.Module):
-    """O(1) router for Sparse Mixture-of-Experts (Plan.md S-1)."""
+    """O(1) router for Sparse Mixture-of-Experts (Plan.md S-1).
+
+    The `load_balance_std` method computes the relative standard deviation
+    across experts, while `token_counts` returns how many tokens are routed
+    to each expert.
+    """
 
     def __init__(self, num_experts: int, k: int = 2, seed: int = 42) -> None:
         super().__init__()
@@ -29,6 +34,10 @@ class HashRouter(nn.Module):
         counts = torch.bincount(assignments.view(-1), minlength=self.num_experts).float()
         return (counts.std() / counts.mean()).item()
 
-    def expert_utilization(self, assignments: torch.Tensor) -> torch.Tensor:
-        """Return number of tokens routed to each expert."""
+    def token_counts(self, assignments: torch.Tensor) -> torch.Tensor:
+        """Return how many tokens route to each expert."""
         return torch.bincount(assignments.view(-1), minlength=self.num_experts)
+
+    def expert_utilization(self, assignments: torch.Tensor) -> torch.Tensor:
+        """Alias for :meth:`token_counts` (for backward compatibility)."""
+        return self.token_counts(assignments)

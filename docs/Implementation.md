@@ -5,7 +5,8 @@ This repository includes starter modules for the first two algorithms listed in 
 ## S-1 Sparse Mixture-of-Experts Routing
 
 - `src/moe_router.py` provides a hash-based router that activates at most two experts per token.
-- The `load_balance_std` method reports the relative standard deviation across experts.
+- The `load_balance_std` helper reports the relative standard deviation across experts.
+- The `token_counts` helper returns how many tokens route to each expert.
 
 ## S-2 FlashAttention-3 Kernel
 

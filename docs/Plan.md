@@ -78,7 +78,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 ### Current progress
 
 Prototype modules for **S-1** and **S-2** have been added in `src/`.
-- `src/moe_router.py` implements a hash-based router with load-balance reporting.
+- `src/moe_router.py` implements a hash-based router with helper methods for load
+  balance and token counts per expert.
 - `src/flash_attention3.py` wraps the FlashAttention‑3 kernel placeholder.
 - `scripts/benchmark_moe.py` estimates FLOPs with and without routing.
 See `docs/Implementation.md` and `docs/load_balance.md` for details.
