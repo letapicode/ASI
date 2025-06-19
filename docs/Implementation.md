@@ -6,6 +6,8 @@ This repository includes starter modules for the first two algorithms listed in 
 
 - `src/moe_router.py` provides a hash-based router that activates at most two experts per token.
 - The `load_balance_std` method reports the relative standard deviation across experts.
+- `scripts/benchmark_moe.py` compares training FLOPs with and without routing.
+- `docs/load_balance.md` demonstrates how to measure expert utilization.
 
 ## S-2 FlashAttention-3 Kernel
 
