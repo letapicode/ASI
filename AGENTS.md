@@ -12,5 +12,7 @@ This repository contains documentation on algorithms towards self-improving AI. 
 
 ## Testing
 
-There is no automated test suite for this repository. Changes to documentation do not require running tests.
+Minimal unit tests live under `tests/`.
+Run them with `pytest` or `python -m unittest` whenever you change code in `src/`.
+Pure documentation edits can skip them.
 
