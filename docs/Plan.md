@@ -75,6 +75,13 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 * **Quantum speed-ups (A-4)** slash search times yet do **not** remove the need for the safety stack (*L-1 → L-4*).
 * When these algorithmic boxes are all ticked—and only then—scaling the system as a whole (not just the parameters) gives you a credible trajectory toward ASI.
 
+### Current progress
+
+Prototype modules for **S-1** and **S-2** have been added in `src/`.
+- `src/moe_router.py` implements a hash-based router with load-balance reporting.
+- `src/flash_attention3.py` wraps the FlashAttention‑3 kernel placeholder.
+See `docs/Implementation.md` for details.
+
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
 [3]: https://www.businessinsider.com/openai-orion-model-scaling-law-silicon-valley-chatgpt-2024-11?utm_source=chatgpt.com "OpenAI is reportedly struggling to improve its next big AI model. It's a warning for the entire AI industry."
