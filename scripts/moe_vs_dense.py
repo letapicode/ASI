@@ -1,0 +1,55 @@
+import torch
+from torch import nn
+from src.moe_router import HashRouter
+
+class ToyModel(nn.Module):
+    """Minimal feed-forward model with optional MOE."""
+    def __init__(self, dim: int, hidden: int, num_experts: int = 0) -> None:
+        super().__init__()
+        self.dim = dim
+        self.hidden = hidden
+        self.moe = num_experts > 0
+        if self.moe:
+            self.router = HashRouter(num_experts)
+            self.experts = nn.ModuleList([
+                nn.Linear(dim, hidden) for _ in range(num_experts)
+            ])
+        else:
+            self.fc = nn.Linear(dim, hidden)
+        self.out = nn.Linear(hidden, dim)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.moe:
+            assign = self.router(x)
+            batch, seq, _ = x.shape
+            hidden = torch.zeros(batch, seq, self.hidden, device=x.device)
+            for i, layer in enumerate(self.experts):
+                mask = (assign == i).any(-1)
+                if mask.any():
+                    hidden[mask] = layer(x[mask])
+        else:
+            hidden = self.fc(x)
+        return self.out(torch.relu(hidden))
+
+def param_count(model: nn.Module) -> int:
+    return sum(p.numel() for p in model.parameters())
+
+def approx_flops(model: nn.Module, tokens: int) -> int:
+    # Rough estimate: 2 * params * tokens
+    return 2 * param_count(model) * tokens
+
+def build_and_profile(dim: int, hidden: int, tokens: int, num_experts: int = 0):
+    x = torch.randn(1, tokens, dim)
+    model = ToyModel(dim, hidden, num_experts)
+    flops = approx_flops(model, tokens)
+    out = model(x)
+    out.sum().backward()
+    return param_count(model), flops
+
+if __name__ == "__main__":
+    dense_params, dense_flops = build_and_profile(256, 512, 1024, 0)
+    moe_params, moe_flops = build_and_profile(256, 512, 1024, 16)
+    print("Dense params:", dense_params)
+    print("MOE params:", moe_params)
+    print("Param ratio:", moe_params / dense_params)
+    print("FLOP ratio:", moe_flops / dense_flops)
