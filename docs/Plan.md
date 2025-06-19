@@ -83,7 +83,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - Prototype modules for **S-1** and **S-2** have been added in `src/`.
 - `src/moe_router.py` offers `HashRouter` and a new `SwitchRouter` with learned gating and load-balance reporting.
 - `src/flash_attention3.py` wraps the FlashAttention‑3 kernel and exposes `_HAS_FLASH3`.
-- `scripts/benchmark_moe.py` and `scripts/moe_vs_dense.py` estimate FLOPs with and without routing.
+- `scripts/benchmark_moe.py` and `scripts/moe_vs_dense.py` estimate FLOPs with and without routing; both now accept `--router switch`.
 - `src/scaling_breakpoint.py` provides an early model for the **S-3** scaling-law breakpoint task.
 - `src/retnet_retention.py` implements a RetNet-style retention kernel for **C-1**.
 - `src/mamba_block.py` provides a simplified Mamba state-space block for **C-2**.
