@@ -37,6 +37,15 @@ print('counts:', router.expert_utilization(assign))
 FLOPs with and without the MOE router. Run it directly with `python scripts/benchmark_moe.py`. The
 output shows the parameter growth and rough FLOP ratio when routing is enabled. Use this as a starting
 point for more detailed experiments.
+`scripts/moe_vs_dense.py` provides a similar toy benchmark implemented as a standalone module. It
+contrasts a dense feed-forward model with the MOE version built around `HashRouter`.
+
+## Scaling-Law Breakpoint Example
+
+`src/scaling_breakpoint.py` implements a simple piecewise log--log model that fits a "knee"
+in the loss curve versus parameter count.  Call `fit_breakpoint()` with arrays of parameter sizes
+and losses to obtain a `BreakpointModel` that predicts future losses.  This is a prototype for
+algorithm **S-3** in `docs/Plan.md`.
 
 ## FlashAttention-3 Integration
 
