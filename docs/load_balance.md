@@ -13,11 +13,11 @@ Mixture-of-Experts router implemented in `src/moe_router.py`.
 To reproduce the measurement:
 
 ```python
-from src.moe_router import HashRouter
+from src.moe_router import HashRouter, SwitchRouter
 import torch
 
 x = torch.randn(4, 512, 256)
-router = HashRouter(num_experts=16)
+router = SwitchRouter(dim=256, num_experts=16)
 assign = router(x)
 print('load balance std:', router.load_balance_std(assign))
 print('expert counts:', router.expert_utilization(assign))
