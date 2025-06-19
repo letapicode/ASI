@@ -103,3 +103,9 @@ training range.
 - It sequentially accumulates `k * v` products with a decay factor and multiplies by the query at each step.
 - The design follows the linear-time, constant-memory retention described in the
   RetNet paper and serves as a placeholder for more optimised kernels.
+
+## C-2 Mamba State-Space Block
+
+- `src/mamba_block.py` implements a simplified state-space module with a gated recurrent update.
+- The block runs in linear time over the sequence and maintains a per-batch hidden state.
+- It serves as a minimal reference for experiments targeting the Mamba architecture described in the paper.

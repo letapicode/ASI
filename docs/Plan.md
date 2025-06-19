@@ -86,7 +86,7 @@ Prototype modules for **S-1** and **S-2** have been added in `src/`.
 - `scripts/benchmark_moe.py` and `scripts/moe_vs_dense.py` estimate FLOPs with and without routing.
 - `src/scaling_breakpoint.py` provides an early model for the **S-3** scaling-law breakpoint task.
 - `src/retnet_retention.py` implements a RetNet-style retention kernel for **C-1**.
-- Next: integrate a Mamba state-space block for **C-2** ([arxiv.org][6]).
+- `src/mamba_block.py` provides a simplified Mamba state-space block for **C-2**.
 See `docs/Implementation.md` and `docs/load_balance.md` for details.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
