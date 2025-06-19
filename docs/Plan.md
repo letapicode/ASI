@@ -1,4 +1,7 @@
-Below is a **shopping list of concrete algorithmic gaps** that must be closed on the road from today’s LLMs to a self-improving Artificial Super-Intelligence (ASI).  Each entry names the *exact algorithm (or family)*, why it matters, and what new result would count as “solved”.  Citations point to the most recent public work so you can drill straight into the details.
+Below is a **shopping list of concrete algorithmic gaps** that must be closed on the road from
+today’s LLMs to a self-improving Artificial Super-Intelligence (ASI).  Each entry names the *exact
+algorithm (or family)*, why it matters, and what new result would count as “solved”.  Citations
+point to the most recent public work so you can drill straight into the details.
 
 ---
 
@@ -10,7 +13,9 @@ Below is a **shopping list of concrete algorithmic gaps** that must be closed on
 | **S-2** | **FlashAttention-3 kernel**                         | Exact soft-max attention in fused CUDA/ROCm kernel with block-wise recomputation               | ≥90 % GPU util. for 8 k→1 M tokens, Wall-time speed-up ≥2 × over FA-2 ([tridao.me][2])                   |
 | **S-3** | **Scaling-law breakpoint model**                    | Predict test-loss vs (model, data, compute) past the current “diminishing-returns knee”        | Empirically fit to ≥3 new models above 3 T params; error <10 % ([businessinsider.com][3], [time.com][4]) |
 
-**Take-away:**  Parameter-scaling alone still improves raw capability, but returns are now *sub-linear*; the industry is already in the knee of the curve.  Architectural and data-efficiency gains (S-1, S-2) therefore matter more than brute size.
+**Take-away:**  Parameter-scaling alone still improves raw capability, but returns are now
+*sub-linear*; the industry is already in the knee of the curve.  Architectural and data-efficiency
+gains (S-1, S-2) therefore matter more than brute size.
 
 ---
 
@@ -25,7 +30,10 @@ Below is a **shopping list of concrete algorithmic gaps** that must be closed on
 | **C-5** | **Top-k Sparse Attention for inference**        | Select k≈64 most-relevant keys each step                           | 20 %b/word latency cut at 1 M tokens; accuracy drop <0.5 pp ([arxiv.org][11])                                                |
 | **C-6** | **RWKV infinite-context training loop**         | Constant-memory recurrence with token-shift trick                  | Train 7 B RWKV on 4 M-token samples, VRAM ≤80 GB; effective context ≥2 M at inference ([wiki.rwkv.com][12], [arxiv.org][13]) |
 
-**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.
+**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add
+**hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).
+Recurrence handles the whole stream; retrieval gives random access—context length becomes limited
+only by storage, not RAM.
 
 ---
 
@@ -53,27 +61,36 @@ Below is a **shopping list of concrete algorithmic gaps** that must be closed on
 
 ## 5  Will “just scaling Transformers” reach ASI?
 
-* Empirical scaling-law fits (S-3) and industry reports show *sharp diminishing returns* past the multi-trillion-parameter scale ([pnas.org][22], [time.com][4]).
-* **Therefore:** Raw scaling is **necessary but not sufficient**.  Breakthroughs in *long-term memory (Section 2)*, *autonomous self-improvement (Section 3)*, and *robust alignment (Section 4)* are all required to bridge the gap to ASI.
+* Empirical scaling-law fits (S-3) and industry reports show *sharp diminishing returns* past the
+multi-trillion-parameter scale ([pnas.org][22], [time.com][4]).
+* **Therefore:** Raw scaling is **necessary but not sufficient**.  Breakthroughs in *long-term
+memory (Section 2)*, *autonomous self-improvement (Section 3)*, and *robust alignment (Section 4)*
+are all required to bridge the gap to ASI.
 
 ---
 
 ### Practical roadmap to “infinite” context
 
 1. **Linear-time backbone** (Mamba / RetNet).
-2. **Streaming compression**: reservoir sampling + learned lossy compress to keep working set ≤O(log T).
+2. **Streaming compression**: reservoir sampling + learned lossy compress to keep working set ≤O(log
+T).
 3. **Hierarchical memory**: SSD-based vector store with learnable “link slots” (top-k retrieval).
-4. **Chunk-wise retraining**: periodically fine-tune on *own* long-horizon transcripts to internalise far-past facts (solve catastrophic forgetting).
+4. **Chunk-wise retraining**: periodically fine-tune on *own* long-horizon transcripts to
+internalise far-past facts (solve catastrophic forgetting).
 
-Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not model design—conceptually “infinite”.
+Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not model
+design—conceptually “infinite”.
 
 ---
 
 ### Bottom line
 
-* **Transformers will stay in the loop**, but solving *S-1 → S-3* + *C-1 → C-6* is what lifts the ceiling.
-* **Quantum speed-ups (A-4)** slash search times yet do **not** remove the need for the safety stack (*L-1 → L-4*).
-* When these algorithmic boxes are all ticked—and only then—scaling the system as a whole (not just the parameters) gives you a credible trajectory toward ASI.
+* **Transformers will stay in the loop**, but solving *S-1 → S-3* + *C-1 → C-6* is what lifts the
+ceiling.
+* **Quantum speed-ups (A-4)** slash search times yet do **not** remove the need for the safety stack
+(*L-1 → L-4*).
+* When these algorithmic boxes are all ticked—and only then—scaling the system as a whole (not just
+the parameters) gives you a credible trajectory toward ASI.
 
 ### Current progress
 
