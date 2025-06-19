@@ -20,8 +20,10 @@ x = torch.randn(4, 512, 256)
 router = HashRouter(num_experts=16)
 assign = router(x)
 print('load balance std:', router.load_balance_std(assign))
+print('expert counts:', router.expert_utilization(assign))
 ```
 
 Run this code on representative batches and average the reported standard
 deviation. If the value exceeds `0.03`, adjust the routing strategy or increase
-the number of experts.
+the number of experts. The `expert_utilization` call returns the token counts per
+expert so you can inspect how evenly tokens are distributed.

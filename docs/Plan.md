@@ -1,4 +1,7 @@
-Below is a **shopping list of concrete algorithmic gaps** that must be closed on the road from today’s LLMs to a self-improving Artificial Super-Intelligence (ASI).  Each entry names the *exact algorithm (or family)*, why it matters, and what new result would count as “solved”.  Citations point to the most recent public work so you can drill straight into the details.
+Below is a **shopping list of concrete algorithmic gaps** that must be closed on the road from
+today’s LLMs to a self-improving Artificial Super-Intelligence (ASI).  Each entry names the
+*exact algorithm (or family)*, why it matters, and what new result would count as “solved”.
+Citations point to the most recent public work so you can drill straight into the details.
 
 ---
 
