@@ -82,9 +82,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 Prototype modules for **S-1** and **S-2** have been added in `src/`.
 - `src/moe_router.py` implements a hash-based router with load-balance reporting.
-- `src/flash_attention3.py` wraps the FlashAttention‑3 kernel placeholder.
-- `scripts/benchmark_moe.py` estimates FLOPs with and without routing.
-- `src/scaling_law.py` introduces a simple breakpoint model for **S-3**.
+- `src/flash_attention3.py` wraps the FlashAttention‑3 kernel and exposes `_HAS_FLASH3`.
+- `scripts/benchmark_moe.py` and `scripts/moe_vs_dense.py` estimate FLOPs with and without routing.
+- `src/scaling_breakpoint.py` provides an early model for the **S-3** scaling-law breakpoint task.
 See `docs/Implementation.md` and `docs/load_balance.md` for details.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
