@@ -166,3 +166,11 @@ training range.
   evaluation function that returns `True` on success. The helper repeatedly
   estimates the success probability via `amplitude_estimate()` and returns the
   best performing setting.
+
+## L-1 Collective Constitutional AI
+
+- `src/collective_constitution.py` aggregates crowd-sourced principles into
+  actionable rules.
+- `derive_rules()` keeps principles supported by at least `min_agreement` users.
+- `label_responses()` tags unlabeled text as safe or unsafe depending on rule
+  matches.
