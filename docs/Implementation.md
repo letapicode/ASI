@@ -174,3 +174,9 @@ training range.
 - `derive_rules()` keeps principles supported by at least `min_agreement` users.
 - `label_responses()` tags unlabeled text as safe or unsafe depending on rule
   matches.
+
+## L-2 Deliberative Alignment
+
+- `src/deliberative_alignment.py` implements a simple chain-of-thought checker.
+- `DeliberativeAligner.check()` validates each reasoning step against a policy
+  text and returns `True` only if no rule is violated.

@@ -97,6 +97,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/quantum_hpo.py` provides a quantum amplitude-estimation search for **A-4**.
 - `src/rwkv_loop.py` demonstrates the infinite-context loop for **C-6**.
 - `src/collective_constitution.py` aggregates crowd-sourced rules for **L-1**.
+- `src/deliberative_alignment.py` checks chain-of-thought steps for **L-2**.
 See `docs/Implementation.md` and `docs/load_balance.md` for details.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
