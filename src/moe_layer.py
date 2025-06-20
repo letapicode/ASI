@@ -24,9 +24,12 @@ class MoELayer(nn.Module):
         assign = self.router(x)
         batch, seq, _ = x.shape
         out = torch.zeros(batch, seq, self.dim, device=x.device, dtype=x.dtype)
+        flat_x = x.reshape(batch * seq, self.dim)
+        flat_out = out.reshape(batch * seq, self.dim)
         for idx, expert in enumerate(self.experts):
-            mask = (assign == idx).any(-1)
+            mask = (assign == idx).any(-1).view(-1)
             if mask.any():
-                out_tokens = expert(x[mask])
-                out[mask] += out_tokens
+                out_tokens = expert(flat_x[mask])
+                flat_out[mask] += out_tokens
+        out = flat_out.view(batch, seq, self.dim)
         return out / self.k
