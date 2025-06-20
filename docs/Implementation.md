@@ -132,3 +132,8 @@ training range.
 
 - `src/topk_sparse_attention.py` defines a `topk_sparse_attention` function that selects the highest-scoring keys per query.
 - This provides a lightweight inference-time approximation to full attention for the **C-5** task.
+
+## C-6 RWKV Infinite-Context Loop
+
+- `src/rwkv_loop.py` provides a simplified recurrent block employing the token-shift trick.
+- It keeps only a single hidden state per batch, enabling constant-memory training on very long sequences.
