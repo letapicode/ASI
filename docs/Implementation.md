@@ -157,3 +157,12 @@ training range.
   *replace*, *refactor*, or *rollback* modules based on benchmark feedback.
 - The agent exposes `select_action()` for epsilon-greedy exploration and `update()` to adjust
   its Q-table from observed rewards.
+
+## A-4 Quantum Amplitude-Estimation HPO
+
+- `src/quantum_hpo.py` provides a toy hyper-parameter search using a simulated
+  quantum amplitude estimation routine.
+- Call `QAEHyperparamSearch.search()` with a candidate parameter set and an
+  evaluation function that returns `True` on success. The helper repeatedly
+  estimates the success probability via `amplitude_estimate()` and returns the
+  best performing setting.
