@@ -188,3 +188,10 @@ training range.
 - `src/deliberative_alignment.py` implements a simple chain-of-thought checker.
 - `DeliberativeAligner.check()` validates each reasoning step against a policy
   text and returns `True` only if no rule is violated.
+
+## L-3 Iterative Constitutional Self-Alignment
+
+- `src/iter_align.py` implements a lightweight iterative alignment loop.
+- `IterativeAligner.iterate()` repeatedly critiques transcripts against current rules and
+  extends the rule set with any flagged lines.
+- This demonstrates a toy version of the "IterAlign" process described in the Plan.

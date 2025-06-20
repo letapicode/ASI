@@ -6,3 +6,5 @@ from .quantum_hpo import QAEHyperparamSearch, amplitude_estimate
 from .collective_constitution import CollectiveConstitution
 from .deliberative_alignment import DeliberativeAligner
 from .streaming_compression import ReservoirBuffer, StreamingCompressor
+from .iter_align import IterativeAligner
+
