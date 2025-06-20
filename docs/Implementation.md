@@ -137,3 +137,11 @@ training range.
 
 - `src/rwkv_loop.py` provides a simplified recurrent block employing the token-shift trick.
 - It keeps only a single hidden state per batch, enabling constant-memory training on very long sequences.
+
+## A-1 Paper-to-Code Transpiler
+
+- `src/paper_to_code.py` offers a minimal transpiler from LaTeX pseudo-code to
+  Python. The function `transpile()` maps common `\For`, `\If`, and `\State`
+  commands to Python syntax and manages indentation.
+- A small command line interface is provided via `python -m src.paper_to_code`
+  to convert a LaTeX file into a Python script.
