@@ -89,6 +89,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/retnet_retention.py` implements a RetNet-style retention kernel for **C-1**.
 - `src/mamba_block.py` provides a simplified Mamba state-space block for **C-2**.
 - `src/hyena_filter.py` implements the implicit-FFT filter for **C-3**.
+- `src/streaming_compression.py` maintains a reservoir buffer with a small
+  autoencoder for **streaming compression**.
 - `src/megabyte_patching.py` adds a hierarchical byte patcher for **C-4**.
 - `src/topk_sparse_attention.py` implements a top-k inference kernel for **C-5**.
 - `src/paper_to_code.py` transpiles LaTeX pseudo-code to Python for **A-1**.

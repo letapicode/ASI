@@ -121,6 +121,14 @@ training range.
 - This provides a prototype for the long-range implicit-FFT filtering described
   in the Plan under **C-3**.
 
+## Streaming Compression
+
+- `src/streaming_compression.py` implements a `StreamingCompressor` that keeps a
+  reservoir sample of token embeddings and compresses them with a small
+  autoencoder.
+- This demonstrates the *streaming compression* step toward infinite context,
+  keeping the working set roughly logarithmic in sequence length.
+
 ## C-4 MegaByte Patching
 
 - `src/megabyte_patching.py` contains a `MegaBytePatching` module that groups
