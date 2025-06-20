@@ -127,3 +127,8 @@ training range.
   byte sequences into fixed-size patches.
 - Each patch is embedded with a learnable byte table and projected to a single
   vector, forming the hierarchical representation used in MegaByte models.
+
+## C-5 Top-k Sparse Attention
+
+- `src/topk_sparse_attention.py` defines a `topk_sparse_attention` function that selects the highest-scoring keys per query.
+- This provides a lightweight inference-time approximation to full attention for the **C-5** task.
