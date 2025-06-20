@@ -145,3 +145,8 @@ training range.
   commands to Python syntax and manages indentation.
 - A small command line interface is provided via `python -m src.paper_to_code`
   to convert a LaTeX file into a Python script.
+
+## A-2 AutoBench Harness
+
+- `src/autobench.py` runs each test module in its own subprocess to sandbox imports.
+- The command line interface `python -m src.autobench` prints pass/fail status per file and a summary.
