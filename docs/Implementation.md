@@ -150,3 +150,12 @@ training range.
 
 - `src/autobench.py` runs each test module in its own subprocess to sandbox imports.
 - The command line interface `python -m src.autobench` prints pass/fail status per file and a summary.
+
+## A-3 Meta-RL Refactor Agent
+
+- `src/meta_rl_refactor.py` contains a toy Q-learning agent that decides whether
+  to *replace*, *refactor*, or *rollback* modules.
+- `RefactorEnv` simulates performance changes per action, and `MetaRLRefactorAgent`
+  stores per-module Q-values and updates them from observed rewards.
+- The implementation is minimal but demonstrates how the refactor agent might
+  explore choices and learn from benchmark feedback.

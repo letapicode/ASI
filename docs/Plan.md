@@ -93,6 +93,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/topk_sparse_attention.py` implements a top-k inference kernel for **C-5**.
 - `src/paper_to_code.py` transpiles LaTeX pseudo-code to Python for **A-1**.
 - `src/autobench.py` runs isolated test modules for **A-2**.
+- `src/meta_rl_refactor.py` provides a toy Q-learning agent for **A-3**.
 See `docs/Implementation.md` and `docs/load_balance.md` for details.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
