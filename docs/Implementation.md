@@ -120,3 +120,10 @@ training range.
   with the same shape as the input.
 - This provides a prototype for the long-range implicit-FFT filtering described
   in the Plan under **C-3**.
+
+## C-4 MegaByte Patching
+
+- `src/megabyte_patching.py` contains a `MegaBytePatching` module that groups
+  byte sequences into fixed-size patches.
+- Each patch is embedded with a learnable byte table and projected to a single
+  vector, forming the hierarchical representation used in MegaByte models.
