@@ -111,3 +111,12 @@ training range.
 - `src/mamba_block.py` implements a simplified state-space module with a gated recurrent update.
 - The block runs in linear time over the sequence and maintains a per-batch hidden state.
 - It serves as a minimal reference for experiments targeting the Mamba architecture described in the paper.
+
+## C-3 Hyena Filter
+
+- `src/hyena_filter.py` adds an FFT-based 1D convolution used in Hyena and H\u00b3 models.
+- The module exposes a `HyenaFilter` class with a learnable filter.
+- Forward pass performs convolution in the frequency domain and returns a tensor
+  with the same shape as the input.
+- This provides a prototype for the long-range implicit-FFT filtering described
+  in the Plan under **C-3**.
