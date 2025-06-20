@@ -94,6 +94,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/paper_to_code.py` transpiles LaTeX pseudo-code to Python for **A-1**.
 - `src/autobench.py` runs isolated test modules for **A-2**.
 - `src/meta_rl_refactor.py` implements a small Q-learning agent for **A-3**.
+- `src/quantum_hpo.py` provides a quantum amplitude-estimation search for **A-4**.
+- `src/rwkv_loop.py` demonstrates the infinite-context loop for **C-6**.
+- `src/collective_constitution.py` aggregates crowd-sourced rules for **L-1**.
 See `docs/Implementation.md` and `docs/load_balance.md` for details.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
