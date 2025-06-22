@@ -195,3 +195,12 @@ training range.
 - `IterativeAligner.iterate()` repeatedly critiques transcripts against current rules and
   extends the rule set with any flagged lines.
 - This demonstrates a toy version of the "IterAlign" process described in the Plan.
+
+## L-4 Critic-in-the-Loop RLHF
+
+- `src/critic_rlhf.py` implements a lightweight trainer that blends human rewards
+  with scores from a critic model.
+- `CriticRLHF.update()` mixes the two feedback signals using a weighting factor
+  and updates action values.
+- `select_action()` returns the highest-valued action with optional
+  epsilon-greedy exploration.
