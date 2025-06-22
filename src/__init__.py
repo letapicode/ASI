@@ -7,5 +7,5 @@ from .collective_constitution import CollectiveConstitution
 from .deliberative_alignment import DeliberativeAligner
 from .streaming_compression import ReservoirBuffer, StreamingCompressor
 from .iter_align import IterativeAligner
-from .critic_rlhf import CriticRLHF
+from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 
