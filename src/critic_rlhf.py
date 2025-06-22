@@ -1,37 +1,57 @@
-import random
-from typing import Iterable, Tuple
+import torch
+from typing import Iterable, Sequence
 
 
-class CriticRLHF:
-    """Simplified RLHF trainer using a critic model (Plan.md L-4)."""
+class CriticScorer:
+    """Heuristic critic that assigns rewards based on banned phrases."""
+
+    def __init__(self, banned_phrases: Iterable[str] | None = None) -> None:
+        self.banned = [p.lower() for p in banned_phrases or ()]
+
+    def score(self, text: str) -> float:
+        """Return +1 unless ``text`` contains a banned phrase, else -1."""
+        clean = text.lower()
+        for phrase in self.banned:
+            if phrase and phrase in clean:
+                return -1.0
+        return 1.0
+
+
+class CriticRLHFTrainer:
+    """Minimal critic-driven RLHF loop using REINFORCE.
+
+    The trainer samples an action from ``model`` given an input tensor, evaluates
+    it with ``CriticScorer``, and updates the model so that high-scoring outputs
+    become more likely.
+    """
 
     def __init__(
         self,
-        actions: Iterable[str],
-        critic_weight: float = 0.5,
-        lr: float = 0.1,
-        epsilon: float = 0.1,
+        model: torch.nn.Module,
+        actions: Sequence[str],
+        scorer: CriticScorer,
+        lr: float = 1e-2,
     ) -> None:
-        self.actions = tuple(actions)
-        if not self.actions:
+        if not actions:
             raise ValueError("actions must not be empty")
-        self.critic_weight = critic_weight
-        self.lr = lr
-        self.epsilon = epsilon
-        self.values: dict[str, float] = {a: 0.0 for a in self.actions}
+        self.model = model
+        self.actions = list(actions)
+        self.scorer = scorer
+        self.opt = torch.optim.SGD(model.parameters(), lr=lr)
 
-    def select_action(self) -> str:
-        """Choose an action using an epsilon-greedy policy."""
-        if random.random() < self.epsilon:
-            return random.choice(self.actions)
-        return max(self.actions, key=lambda a: self.values.get(a, 0.0))
+    def sample(self, x: torch.Tensor) -> tuple[int, torch.Tensor]:
+        """Return (index, prob) for a sampled action from ``model(x)``."""
+        logits = self.model(x)
+        probs = torch.softmax(logits, dim=-1).squeeze(0)
+        idx = torch.multinomial(probs, 1).item()
+        return idx, probs[idx]
 
-    def update(self, action: str, human_score: float, critic_score: float) -> float:
-        """Update value estimates from human and critic feedback."""
-        if action not in self.actions:
-            raise ValueError(f"Invalid action: {action}")
-        reward = (1 - self.critic_weight) * human_score + self.critic_weight * critic_score
-        value = self.values.get(action, 0.0)
-        value += self.lr * (reward - value)
-        self.values[action] = value
-        return value
+    def train_step(self, x: torch.Tensor) -> float:
+        """Sample an action, score it, and update the model."""
+        idx, prob = self.sample(x)
+        reward = self.scorer.score(self.actions[idx])
+        loss = -reward * torch.log(prob + 1e-8)
+        self.opt.zero_grad()
+        loss.backward()
+        self.opt.step()
+        return reward
