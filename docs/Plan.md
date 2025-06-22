@@ -101,6 +101,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/collective_constitution.py` aggregates crowd-sourced rules for **L-1**.
 - `src/deliberative_alignment.py` checks chain-of-thought steps for **L-2**.
 - `src/iter_align.py` runs a simple iterative alignment loop for **L-3**.
+- `src/critic_rlhf.py` mixes human and critic scores for **L-4**.
   See `docs/Implementation.md` and `docs/load_balance.md` for details.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
