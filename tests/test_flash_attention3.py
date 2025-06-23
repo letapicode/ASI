@@ -1,6 +1,5 @@
 import unittest
 import torch
-import importlib
 
 import src.flash_attention3 as fa3
 
