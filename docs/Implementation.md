@@ -129,6 +129,15 @@ training range.
 - This demonstrates the *streaming compression* step toward infinite context,
   keeping the working set roughly logarithmic in sequence length.
 
+## Hierarchical Vector Store
+
+- `src/vector_store.py` provides an in-memory `VectorStore` with dot-product
+  similarity search.
+- `VectorStore.add()` stores embeddings with optional metadata and
+  `search()` returns the top-k nearest vectors.
+- This serves as a minimal prototype for the *hierarchical retrieval* memory
+  described in the Plan.
+
 ## C-4 MegaByte Patching
 
 - `src/megabyte_patching.py` contains a `MegaBytePatching` module that groups
