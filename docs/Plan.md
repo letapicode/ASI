@@ -98,6 +98,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/meta_rl_refactor.py` implements a small Q-learning agent for **A-3**.
 - `src/quantum_hpo.py` provides a quantum amplitude-estimation search for **A-4**.
 - `src/rwkv_loop.py` demonstrates the infinite-context loop for **C-6**.
+- `src/chunkwise_retrainer.py` implements chunk-wise retraining on long transcripts.
 - `src/collective_constitution.py` aggregates crowd-sourced rules for **L-1**.
 - `src/deliberative_alignment.py` checks chain-of-thought steps for **L-2**.
 - `src/iter_align.py` runs a simple iterative alignment loop for **L-3**.
