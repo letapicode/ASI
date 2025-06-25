@@ -21,7 +21,7 @@ class ChunkWiseRetrainer:
         total_loss = 0.0
         count = 0
         for seq in sequences:
-            for start in range(0, seq.size(0) - 1, self.chunk_size):
+            for start in range(0, seq.size(0) - self.chunk_size, self.chunk_size):
                 inp = seq[start : start + self.chunk_size]
                 tgt = seq[start + 1 : start + 1 + self.chunk_size]
                 for _ in range(epochs):

@@ -1,5 +1,6 @@
 import os
 import sys
+import tempfile
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import unittest
 import numpy as np
@@ -24,6 +25,17 @@ class TestVectorStore(unittest.TestCase):
         store = VectorStore(dim=3)
         with self.assertRaises(ValueError):
             store.add(np.array([1.0, 2.0]))
+
+    def test_save_and_load(self):
+        store = VectorStore(dim=2)
+        store.add(np.array([[1.0, 0.0], [0.0, 1.0]]), metadata=["a", "b"])
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "store.npz")
+            store.save(path)
+            loaded = VectorStore.load(path)
+            vecs, meta = loaded.search(np.array([0.0, 1.0]), k=1)
+            np.testing.assert_allclose(vecs, np.array([[0.0, 1.0]], dtype=np.float32))
+            self.assertEqual(meta, ["b"])
 
 if __name__ == "__main__":
     unittest.main()
