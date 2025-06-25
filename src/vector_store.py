@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Iterable, List, Tuple, Any
+from pathlib import Path
 
 class VectorStore:
     """In-memory vector store with simple top-k retrieval."""
@@ -37,3 +38,24 @@ class VectorStore:
         scores = mat @ q.T  # (n,1)
         idx = np.argsort(scores.ravel())[::-1][:k]
         return mat[idx], [self._meta[i] for i in idx]
+
+    def save(self, path: str | Path) -> None:
+        """Persist vectors and metadata to a compressed ``.npz`` file."""
+        vecs = (
+            np.concatenate(self._vectors, axis=0)
+            if self._vectors
+            else np.empty((0, self.dim), dtype=np.float32)
+        )
+        meta = np.array(self._meta, dtype=object)
+        np.savez_compressed(path, dim=self.dim, vectors=vecs, meta=meta)
+
+    @classmethod
+    def load(cls, path: str | Path) -> "VectorStore":
+        """Load vectors and metadata from ``save()`` output."""
+        data = np.load(path, allow_pickle=True)
+        store = cls(int(data["dim"]))
+        vectors = data["vectors"]
+        meta = data["meta"].tolist()
+        if vectors.size:
+            store.add(vectors, metadata=meta)
+        return store

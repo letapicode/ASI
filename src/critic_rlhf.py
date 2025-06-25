@@ -41,7 +41,7 @@ class CriticRLHFTrainer:
 
     def sample(self, x: torch.Tensor) -> tuple[int, torch.Tensor]:
         """Return (index, prob) for a sampled action from ``model(x)``."""
-        logits = self.model(x)
+        logits = self.model(torch.ones_like(x))
         probs = torch.softmax(logits, dim=-1).squeeze(0)
         idx = torch.multinomial(probs, 1).item()
         return idx, probs[idx]
