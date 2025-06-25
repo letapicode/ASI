@@ -135,6 +135,8 @@ training range.
   similarity search.
 - `VectorStore.add()` stores embeddings with optional metadata and
   `search()` returns the top-k nearest vectors.
+- `save()` and `load()` persist the store to disk via `numpy.savez`, allowing
+  the memory to be maintained across runs.
 - This serves as a minimal prototype for the *hierarchical retrieval* memory
   described in the Plan.
 - `src/hierarchical_memory.py` combines `StreamingCompressor` and

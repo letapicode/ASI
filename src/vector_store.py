@@ -37,3 +37,24 @@ class VectorStore:
         scores = mat @ q.T  # (n,1)
         idx = np.argsort(scores.ravel())[::-1][:k]
         return mat[idx], [self._meta[i] for i in idx]
+
+    def save(self, path: str) -> None:
+        """Persist the vector store to ``path`` using ``numpy.savez``."""
+        if self._vectors:
+            mat = np.concatenate(self._vectors, axis=0)
+        else:
+            mat = np.empty((0, self.dim), dtype=np.float32)
+        meta = np.array(self._meta, dtype=object)
+        np.savez(path, vectors=mat, meta=meta)
+
+    @classmethod
+    def load(cls, path: str) -> "VectorStore":
+        """Load a vector store saved with :meth:`save`."""
+        data = np.load(path, allow_pickle=True)
+        vectors = data["vectors"]
+        meta = data["meta"].tolist()
+        store = cls(vectors.shape[1])
+        if vectors.size:
+            store._vectors = [vectors.astype(np.float32)]
+            store._meta = meta
+        return store
