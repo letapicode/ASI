@@ -139,11 +139,12 @@ training range.
   to a compressed `.npz` file.
 - This serves as a minimal prototype for the *hierarchical retrieval* memory
   described in the Plan.
-- `src/hierarchical_memory.py` combines `StreamingCompressor` and
-  `VectorStore` into a single `HierarchicalMemory` utility. It compresses
-  incoming embeddings, stores them in the vector store and returns decoded
-  vectors on search. This wires together steps two and three of the
-  infinite-context roadmap.
+ - `src/hierarchical_memory.py` combines `StreamingCompressor` and
+   `VectorStore` into a single `HierarchicalMemory` utility. It compresses
+   incoming embeddings, stores them in the vector store and returns decoded
+   vectors on search. The module now also supports `save()` and `load()`
+   so compressor state and vectors can be persisted. This wires together
+   steps two and three of the infinite-context roadmap.
 
 ## C-4 MegaByte Patching
 
