@@ -13,6 +13,7 @@ class TestHierarchicalMemory(unittest.TestCase):
         mem.add(data, metadata=["a", "b", "c"])
         out, meta = mem.search(data[0], k=1)
         self.assertEqual(out.shape, (1, 4))
+        self.assertEqual(out.device, data[0].device)
         self.assertEqual(len(meta), 1)
         self.assertIn(meta[0], ["a", "b", "c"])
 
