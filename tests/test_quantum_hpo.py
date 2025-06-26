@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from src.quantum_hpo import QAEHyperparamSearch
+from asi.quantum_hpo import QAEHyperparamSearch
 
 
 class TestQuantumHPO(unittest.TestCase):

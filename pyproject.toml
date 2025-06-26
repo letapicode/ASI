@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asi"
+version = "0.1.0"
+authors = [{name = "ASI Team"}]
+description = "Prototype modules for self-improving AI"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+package-dir = {"asi" = "src"}
+packages = ["asi"]
+

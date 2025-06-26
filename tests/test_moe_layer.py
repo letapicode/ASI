@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from src.moe_layer import MoELayer
+from asi.moe_layer import MoELayer
 
 
 class TestMoELayer(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from src.rwkv_loop import RWKVLoop
+from asi.rwkv_loop import RWKVLoop
 
 
 class TestRWKVLoop(unittest.TestCase):

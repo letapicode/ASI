@@ -10,4 +10,5 @@ from .hierarchical_memory import HierarchicalMemory
 from .iter_align import IterativeAligner
 from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 from .chunkwise_retrainer import ChunkWiseRetrainer
+from .scaling_law import BreakpointScalingLaw
 

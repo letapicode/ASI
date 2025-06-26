@@ -1,6 +1,6 @@
 import unittest
 
-from src.paper_to_code import transpile
+from asi.paper_to_code import transpile
 
 
 class TestPaperToCode(unittest.TestCase):
