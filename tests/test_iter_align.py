@@ -1,6 +1,6 @@
 import unittest
 
-from src.iter_align import IterativeAligner
+from asi.iter_align import IterativeAligner
 
 class TestIterativeAligner(unittest.TestCase):
     def test_iterate_refines_rules(self):

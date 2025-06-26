@@ -1,13 +1,18 @@
 """Utility package for ASI prototype modules."""
 
-from .autobench import run_autobench, BenchResult
-from .meta_rl_refactor import MetaRLRefactorAgent
-from .quantum_hpo import QAEHyperparamSearch, amplitude_estimate
-from .collective_constitution import CollectiveConstitution
-from .deliberative_alignment import DeliberativeAligner
-from .streaming_compression import ReservoirBuffer, StreamingCompressor
-from .hierarchical_memory import HierarchicalMemory
-from .iter_align import IterativeAligner
-from .critic_rlhf import CriticScorer, CriticRLHFTrainer
-from .chunkwise_retrainer import ChunkWiseRetrainer
+# Modules are exposed under the :mod:`asi` namespace. Imports are kept lazy to
+# avoid optional heavy dependencies at package import time.
+
+__all__ = [
+    "autobench",
+    "meta_rl_refactor",
+    "quantum_hpo",
+    "collective_constitution",
+    "deliberative_alignment",
+    "streaming_compression",
+    "hierarchical_memory",
+    "iter_align",
+    "critic_rlhf",
+    "chunkwise_retrainer",
+]
 

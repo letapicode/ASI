@@ -2,7 +2,7 @@ import unittest
 import torch
 from torch import nn
 
-from src.chunkwise_retrainer import ChunkWiseRetrainer
+from asi.chunkwise_retrainer import ChunkWiseRetrainer
 
 class TestChunkWiseRetrainer(unittest.TestCase):
     def test_training_reduces_loss(self):

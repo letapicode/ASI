@@ -1,6 +1,6 @@
 import unittest
 
-from src.meta_rl_refactor import MetaRLRefactorAgent
+from asi.meta_rl_refactor import MetaRLRefactorAgent
 
 
 class TestMetaRLRefactorAgent(unittest.TestCase):

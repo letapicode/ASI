@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from src.megabyte_patching import MegaBytePatching
+from asi.megabyte_patching import MegaBytePatching
 
 class TestMegaBytePatching(unittest.TestCase):
     def test_patch_shape(self):

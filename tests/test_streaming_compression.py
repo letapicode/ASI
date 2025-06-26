@@ -1,10 +1,7 @@
-import os
-import sys
 import unittest
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import torch
 
-from src.streaming_compression import ReservoirBuffer, StreamingCompressor
+from asi.streaming_compression import ReservoirBuffer, StreamingCompressor
 
 
 class TestReservoirBuffer(unittest.TestCase):
