@@ -35,6 +35,10 @@ class CriticRLHFTrainer:
         if not actions:
             raise ValueError("actions must not be empty")
         self.model = model
+        if getattr(self.model, "bias", None) is None:
+            self.model.register_parameter(
+                "bias", torch.nn.Parameter(torch.zeros(len(actions)))
+            )
         self.actions = list(actions)
         self.scorer = scorer
         self.opt = torch.optim.SGD(model.parameters(), lr=lr)
