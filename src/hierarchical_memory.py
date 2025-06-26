@@ -27,10 +27,11 @@ class HierarchicalMemory:
             q = q[0]
         comp_vecs, meta = self.store.search(q, k)
         if comp_vecs.shape[0] == 0:
-            return torch.empty(0, query.size(-1)), meta
+            empty = torch.empty(0, query.size(-1), device=query.device)
+            return empty, meta
         comp_t = torch.from_numpy(comp_vecs)
         decoded = self.compressor.decoder(comp_t)
-        return decoded, meta
+        return decoded.to(query.device), meta
 
     def save(self, path: str | Path) -> None:
         """Persist compressor state and vector store to ``path``."""
