@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from pathlib import Path
 from typing import Iterable, Any, Tuple, List
 
 from .streaming_compression import StreamingCompressor
@@ -30,3 +31,36 @@ class HierarchicalMemory:
         comp_t = torch.from_numpy(comp_vecs)
         decoded = self.compressor.decoder(comp_t)
         return decoded, meta
+
+    def save(self, path: str | Path) -> None:
+        """Persist compressor state and vector store to ``path``."""
+        path = Path(path)
+        path.mkdir(parents=True, exist_ok=True)
+        comp_state = {
+            "dim": self.compressor.encoder.in_features,
+            "compressed_dim": self.compressor.encoder.out_features,
+            "capacity": self.compressor.buffer.capacity,
+            "buffer": [t.cpu() for t in self.compressor.buffer.data],
+            "count": self.compressor.buffer.count,
+            "encoder": self.compressor.encoder.state_dict(),
+            "decoder": self.compressor.decoder.state_dict(),
+        }
+        torch.save(comp_state, path / "compressor.pt")
+        self.store.save(path / "store.npz")
+
+    @classmethod
+    def load(cls, path: str | Path) -> "HierarchicalMemory":
+        """Load memory from ``save()`` output."""
+        path = Path(path)
+        state = torch.load(path / "compressor.pt", map_location="cpu")
+        mem = cls(
+            dim=int(state["dim"]),
+            compressed_dim=int(state["compressed_dim"]),
+            capacity=int(state["capacity"]),
+        )
+        mem.compressor.encoder.load_state_dict(state["encoder"])
+        mem.compressor.decoder.load_state_dict(state["decoder"])
+        mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
+        mem.compressor.buffer.count = int(state["count"])
+        mem.store = VectorStore.load(path / "store.npz")
+        return mem
