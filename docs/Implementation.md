@@ -81,18 +81,19 @@ After installation, the wrapper will automatically call the optimized kernel.
 
 ## S-3 Scaling-law Breakpoint Model
 
-`src/scaling_breakpoint.py` fits a piecewise log--log relation to compute versus
-loss. Call `fit_breakpoint()` with arrays of parameter sizes and observed losses
-to obtain a `BreakpointModel` instance. This is the canonical implementation;
-the older `BreakpointScalingLaw` module has been removed to avoid confusion.
+`src/scaling_law.py` defines ``BreakpointScalingLaw`` which fits a piecewise
+log--log relation to compute versus loss. Initialize the model with an optional
+breakpoint guess and call ``fit()`` with arrays of compute values and observed
+losses.
 
 ```python
-from src.scaling_breakpoint import fit_breakpoint
+from src.scaling_law import BreakpointScalingLaw
 
 params = [1e7, 5e7, 1e8, 5e8]
 loss = [2.0, 1.8, 1.6, 1.3]
-model = fit_breakpoint(params, loss)
-print('breakpoint:', model.breakpoint)
+model = BreakpointScalingLaw()
+model.fit(params, loss)
+print('breakpoint:', model.break_compute)
 print('predictions:', model.predict(params))
 ```
 

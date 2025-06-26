@@ -1,6 +1,6 @@
 import unittest
 import torch
-from src.moe_router import HashRouter, SwitchRouter
+from asi.moe_router import HashRouter, SwitchRouter
 
 class TestHashRouter(unittest.TestCase):
     def test_load_balance(self):

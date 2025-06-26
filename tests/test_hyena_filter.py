@@ -2,7 +2,7 @@ import unittest
 import torch
 import torch.nn.functional as F
 
-from src.hyena_filter import HyenaFilter
+from asi.hyena_filter import HyenaFilter
 
 
 class TestHyenaFilter(unittest.TestCase):

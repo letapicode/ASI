@@ -2,7 +2,7 @@ import unittest
 import tempfile
 from pathlib import Path
 
-from src.autobench import run_autobench
+from asi.autobench import run_autobench
 
 
 class TestAutoBench(unittest.TestCase):

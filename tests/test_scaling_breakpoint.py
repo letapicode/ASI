@@ -1,14 +1,7 @@
-import os
-import importlib.util
-import unittest
 import numpy as np
+import unittest
 
-MODULE_PATH = os.path.join(os.path.dirname(__file__), "..", "src", "scaling_breakpoint.py")
-spec = importlib.util.spec_from_file_location("scaling_breakpoint", MODULE_PATH)
-sb = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(sb)
-BreakpointModel = sb.BreakpointModel
-fit_breakpoint = sb.fit_breakpoint
+from asi.scaling_breakpoint import BreakpointModel, fit_breakpoint
 
 class TestScalingBreakpoint(unittest.TestCase):
     def test_fit_breakpoint_basic(self):

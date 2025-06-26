@@ -1,6 +1,6 @@
 import unittest
 import torch
-from src.topk_sparse_attention import topk_sparse_attention
+from asi.topk_sparse_attention import topk_sparse_attention
 
 class TestTopkSparseAttention(unittest.TestCase):
     def test_shape_and_equivalence(self):
