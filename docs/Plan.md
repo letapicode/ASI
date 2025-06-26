@@ -85,7 +85,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/moe_layer.py` defines a simple MoE feed-forward layer using those routers.
 - `src/flash_attention3.py` wraps the FlashAttention‑3 kernel and exposes `_HAS_FLASH3`.
 - `scripts/benchmark_moe.py` and `scripts/moe_vs_dense.py` estimate FLOPs with and without routing; both now accept `--router switch`.
-- `src/scaling_breakpoint.py` provides an early model for the **S-3** scaling-law breakpoint task.
+- `src/scaling_law.py` implements a `BreakpointScalingLaw` model for the **S-3**
+  scaling-law breakpoint task.
 - `src/retnet_retention.py` implements a RetNet-style retention kernel for **C-1**.
 - `src/mamba_block.py` provides a simplified Mamba state-space block for **C-2**.
 - `src/hyena_filter.py` implements the implicit-FFT filter for **C-3**.
@@ -95,11 +96,14 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   `save()`/`load()` for SSD-backed persistence.
 - `src/hierarchical_memory.py` ties compression and retrieval together for
   hierarchical context. `save()`/`load()` persist the compressor and vector
-  store so memory can be restored from disk.
+  store so memory can be restored from disk. Search results remain on the
+  same device as the query.
 - `src/megabyte_patching.py` adds a hierarchical byte patcher for **C-4**.
 - `src/topk_sparse_attention.py` implements a top-k inference kernel for **C-5**.
 - `src/paper_to_code.py` transpiles LaTeX pseudo-code to Python for **A-1**.
-- `src/autobench.py` runs isolated test modules for **A-2**.
+- `src/autobench.py` runs isolated test modules for **A-2** and
+  `summarize_results()` prints a concise scoreboard with snippets from failing
+  outputs.
 - `src/meta_rl_refactor.py` implements a small Q-learning agent for **A-3**.
 - `src/quantum_hpo.py` provides a quantum amplitude-estimation search for **A-4**.
 - `src/rwkv_loop.py` demonstrates the infinite-context loop for **C-6**.
