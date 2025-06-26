@@ -5,8 +5,8 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 
 ## Prototype Scripts
 
-- `scripts/benchmark_moe.py` measures parameter counts and rough FLOPs with and without the sparse Mixture-of-Experts router.
-- `scripts/moe_vs_dense.py` offers a similar benchmark for quick comparisons between dense and MOE feed-forward layers.
+- `scripts/benchmark_moe.py` measures parameter counts and FLOPs. It can use a Mixture-of-Experts router.
+- `scripts/moe_vs_dense.py` benchmarks dense versus Mixture-of-Experts feed-forward layers.
 - `python -m src.paper_to_code` transpiles LaTeX pseudo-code to Python.
 - `python -m src.autobench` runs each test file in isolation and reports a summary.
 
@@ -17,3 +17,9 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 3. Run `pip install -e .` to enable imports from the `asi` package.
 
 Run the scripts directly with `python` to see parameter and FLOP estimates.
+
+## Testing
+
+1. Install requirements: `pip install -r requirements.txt`.
+2. Install the package in editable mode: `pip install -e .`.
+3. Run tests with `pytest`.
