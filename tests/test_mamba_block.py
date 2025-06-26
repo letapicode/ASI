@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from src.mamba_block import MambaBlock
+from asi.mamba_block import MambaBlock
 
 
 class TestMambaBlock(unittest.TestCase):

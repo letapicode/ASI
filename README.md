@@ -14,5 +14,6 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 
 1. Use Python 3.10 or newer with PyTorch installed.
 2. Optional: `pip install flash-attn` to enable the FlashAttention-3 wrapper in `src/flash_attention3.py`.
+3. Run `pip install -e .` to enable imports from the `asi` package.
 
 Run the scripts directly with `python` to see parameter and FLOP estimates.

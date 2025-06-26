@@ -1,13 +1,7 @@
-import os
-import importlib.util
 import unittest
 import numpy as np
 
-MODULE_PATH = os.path.join(os.path.dirname(__file__), "..", "src", "scaling_law.py")
-spec = importlib.util.spec_from_file_location("scaling_law", MODULE_PATH)
-sl = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(sl)
-BreakpointScalingLaw = sl.BreakpointScalingLaw
+from asi.scaling_law import BreakpointScalingLaw
 
 
 class TestBreakpointScalingLaw(unittest.TestCase):

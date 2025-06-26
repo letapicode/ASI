@@ -1,10 +1,7 @@
-import os
-import sys
 import unittest
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import torch
 
-from src.hierarchical_memory import HierarchicalMemory
+from asi.hierarchical_memory import HierarchicalMemory
 
 
 class TestHierarchicalMemory(unittest.TestCase):

@@ -1,6 +1,6 @@
 import unittest
 
-from src.deliberative_alignment import DeliberativeAligner
+from asi.deliberative_alignment import DeliberativeAligner
 
 
 class TestDeliberativeAligner(unittest.TestCase):
