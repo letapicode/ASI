@@ -1,4 +1,4 @@
-from src.collective_constitution import CollectiveConstitution
+from asi.collective_constitution import CollectiveConstitution
 
 
 def test_derive_rules():

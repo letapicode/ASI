@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-import src.flash_attention3 as fa3
+import asi.flash_attention3 as fa3
 
 class TestFlashAttention3(unittest.TestCase):
     def test_fallback(self):

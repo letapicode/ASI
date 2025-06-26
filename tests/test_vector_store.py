@@ -1,11 +1,10 @@
 import os
 import sys
 import tempfile
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import unittest
 import numpy as np
 
-from src.vector_store import VectorStore
+from asi.vector_store import VectorStore
 
 class TestVectorStore(unittest.TestCase):
     def test_add_and_search(self):

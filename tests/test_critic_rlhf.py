@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from src.critic_rlhf import CriticScorer, CriticRLHFTrainer
+from asi.critic_rlhf import CriticScorer, CriticRLHFTrainer
 
 
 class TestCriticRLHFTrainer(unittest.TestCase):
