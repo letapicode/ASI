@@ -33,12 +33,15 @@ class TestAutoBench(unittest.TestCase):
     def test_summarize_results(self):
         results = {
             "a.py": BenchResult(True, ""),
-            "b.py": BenchResult(False, ""),
+            "b.py": BenchResult(False, "Line1\nLine2\nLine3\nLine4"),
         }
         summary = summarize_results(results)
         self.assertIn("Passed 1/2 modules", summary)
         self.assertIn("a.py: PASS", summary)
         self.assertIn("b.py: FAIL", summary)
+        self.assertIn("Line1", summary)
+        self.assertIn("Line3", summary)
+        self.assertNotIn("Line4", summary)
 
 
 if __name__ == "__main__":

@@ -39,6 +39,10 @@ def summarize_results(results: Dict[str, BenchResult]) -> str:
     for name, res in sorted(results.items()):
         status = "PASS" if res.passed else "FAIL"
         lines.append(f"{name}: {status}")
+        if not res.passed and res.output:
+            snippet = "\n".join(res.output.strip().splitlines()[:3])
+            if snippet:
+                lines.append(snippet)
     return "\n".join(lines)
 
 
