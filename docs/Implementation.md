@@ -83,7 +83,8 @@ After installation, the wrapper will automatically call the optimized kernel.
 
 `src/scaling_breakpoint.py` fits a piecewise log--log relation to compute versus
 loss. Call `fit_breakpoint()` with arrays of parameter sizes and observed losses
-to obtain a `BreakpointModel` instance.
+to obtain a `BreakpointModel` instance. This is the canonical implementation;
+the older `BreakpointScalingLaw` module has been removed to avoid confusion.
 
 ```python
 from src.scaling_breakpoint import fit_breakpoint
