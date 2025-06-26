@@ -31,6 +31,17 @@ def run_autobench(test_dir: str = "tests") -> Dict[str, BenchResult]:
     return results
 
 
+def summarize_results(results: Dict[str, BenchResult]) -> str:
+    """Return a formatted summary scoreboard."""
+    total = len(results)
+    passed = sum(1 for r in results.values() if r.passed)
+    lines = [f"Passed {passed}/{total} modules"]
+    for name, res in sorted(results.items()):
+        status = "PASS" if res.passed else "FAIL"
+        lines.append(f"{name}: {status}")
+    return "\n".join(lines)
+
+
 def main() -> None:
     import argparse
 
@@ -41,12 +52,7 @@ def main() -> None:
     args = parser.parse_args()
 
     results = run_autobench(args.test_dir)
-    total = len(results)
-    passed = sum(1 for r in results.values() if r.passed)
-    for name, res in results.items():
-        status = "PASS" if res.passed else "FAIL"
-        print(f"{name}: {status}")
-    print(f"Passed {passed}/{total} modules")
+    print(summarize_results(results))
 
 
 if __name__ == "__main__":
