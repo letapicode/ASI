@@ -1,0 +1,3 @@
+numpy
+torch
+# optional: flash-attn for FlashAttention-3 support
