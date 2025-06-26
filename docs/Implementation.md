@@ -144,10 +144,10 @@ training range.
 - `src/hierarchical_memory.py` combines `StreamingCompressor` and
   `VectorStore` into a single `HierarchicalMemory` utility. It compresses
   incoming embeddings, stores them in the vector store and returns decoded
-  vectors on search. This wires together steps two and three of the
-  infinite-context roadmap. `HierarchicalMemory.save()` and `.load()` persist
-  both the compressor state and vector store so memory can be restored from
-  disk.
+  vectors on search. Search results stay on the same device as the query. This
+  wires together steps two and three of the infinite-context roadmap.
+  `HierarchicalMemory.save()` and `.load()` persist both the compressor state
+  and vector store so memory can be restored from disk.
 
 ## C-4 MegaByte Patching
 
@@ -177,7 +177,8 @@ training range.
 ## A-2 AutoBench Harness
 
 - `src/autobench.py` runs each test module in its own subprocess to sandbox imports.
-- The command line interface `python -m src.autobench` prints pass/fail status per file and a summary.
+- `summarize_results()` returns a concise scoreboard and shows the first few lines of failing output.
+- The command line interface `python -m src.autobench` prints this summary for the specified directory.
 
 ## A-3 Meta-RL Refactor Agent
 
