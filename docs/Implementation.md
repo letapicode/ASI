@@ -145,7 +145,9 @@ training range.
   `VectorStore` into a single `HierarchicalMemory` utility. It compresses
   incoming embeddings, stores them in the vector store and returns decoded
   vectors on search. This wires together steps two and three of the
-  infinite-context roadmap.
+  infinite-context roadmap. `HierarchicalMemory.save()` and `.load()` persist
+  both the compressor state and vector store so memory can be restored from
+  disk.
 
 ## C-4 MegaByte Patching
 
