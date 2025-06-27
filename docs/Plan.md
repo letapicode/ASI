@@ -92,11 +92,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/hyena_filter.py` implements the implicit-FFT filter for **C-3**.
 - `src/streaming_compression.py` maintains a reservoir buffer with a small
   autoencoder for **streaming compression**.
-- `src/vector_store.py` stores embeddings in memory and now supports
-  `save()`/`load()` for SSD-backed persistence.
+- `src/vector_store.py` stores embeddings in memory and now supports a
+  disk-backed `FaissVectorStore`.
 - `src/hierarchical_memory.py` ties compression and retrieval together for
-  hierarchical context. `save()`/`load()` persist the compressor and vector
-  store so memory can be restored from disk. Search results remain on the
+  hierarchical context. With a database path it hooks into FAISS so far-past
+  tokens reload from disk automatically. Search results remain on the
   same device as the query.
 - `src/megabyte_patching.py` adds a hierarchical byte patcher for **C-4**.
 - `src/topk_sparse_attention.py` implements a top-k inference kernel for **C-5**.

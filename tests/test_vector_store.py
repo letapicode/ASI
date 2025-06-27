@@ -3,7 +3,7 @@ import tempfile
 import unittest
 import numpy as np
 
-from asi.vector_store import VectorStore
+from asi.vector_store import VectorStore, FaissVectorStore
 
 class TestVectorStore(unittest.TestCase):
     def test_add_and_search(self):
@@ -31,6 +31,16 @@ class TestVectorStore(unittest.TestCase):
             path = os.path.join(tmpdir, "store.npz")
             store.save(path)
             loaded = VectorStore.load(path)
+            vecs, meta = loaded.search(np.array([0.0, 1.0]), k=1)
+            np.testing.assert_allclose(vecs, np.array([[0.0, 1.0]], dtype=np.float32))
+            self.assertEqual(meta, ["b"])
+
+    def test_faiss_persistence(self):
+        store = FaissVectorStore(dim=2)
+        store.add(np.array([[1.0, 0.0], [0.0, 1.0]]), metadata=["a", "b"])
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store.save(tmpdir)
+            loaded = FaissVectorStore.load(tmpdir)
             vecs, meta = loaded.search(np.array([0.0, 1.0]), k=1)
             np.testing.assert_allclose(vecs, np.array([[0.0, 1.0]], dtype=np.float32))
             self.assertEqual(meta, ["b"])

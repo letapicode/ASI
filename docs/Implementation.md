@@ -141,13 +141,12 @@ training range.
   to a compressed `.npz` file.
 - This serves as a minimal prototype for the *hierarchical retrieval* memory
   described in the Plan.
-- `src/hierarchical_memory.py` combines `StreamingCompressor` and
-  `VectorStore` into a single `HierarchicalMemory` utility. It compresses
-  incoming embeddings, stores them in the vector store and returns decoded
-  vectors on search. Search results stay on the same device as the query. This
-  wires together steps two and three of the infinite-context roadmap.
-  `HierarchicalMemory.save()` and `.load()` persist both the compressor state
-  and vector store so memory can be restored from disk.
+- `src/hierarchical_memory.py` combines `StreamingCompressor` with either the
+  in-memory `VectorStore` or a new `FaissVectorStore`. Passing a path hooks the
+  memory to a persistent FAISS index so distant tokens are written to disk
+  automatically. Retrieved vectors stay on the query device. The `save()` and
+  `load()` helpers now handle both store types, letting large histories rebuild
+  from disk with a single call.
 
 ## C-4 MegaByte Patching
 

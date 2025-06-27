@@ -4,15 +4,20 @@ from pathlib import Path
 from typing import Iterable, Any, Tuple, List
 
 from .streaming_compression import StreamingCompressor
-from .vector_store import VectorStore
+from .vector_store import VectorStore, FaissVectorStore
 
 
 class HierarchicalMemory:
     """Combine streaming compression with a vector store."""
 
-    def __init__(self, dim: int, compressed_dim: int, capacity: int) -> None:
+    def __init__(
+        self, dim: int, compressed_dim: int, capacity: int, db_path: str | Path | None = None
+    ) -> None:
         self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
-        self.store = VectorStore(dim=compressed_dim)
+        if db_path is None:
+            self.store = VectorStore(dim=compressed_dim)
+        else:
+            self.store = FaissVectorStore(dim=compressed_dim, path=db_path)
 
     def add(self, x: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:
         """Compress and store embeddings with optional metadata."""
@@ -47,7 +52,10 @@ class HierarchicalMemory:
             "decoder": self.compressor.decoder.state_dict(),
         }
         torch.save(comp_state, path / "compressor.pt")
-        self.store.save(path / "store.npz")
+        if isinstance(self.store, FaissVectorStore):
+            self.store.save(path / "store")
+        else:
+            self.store.save(path / "store.npz")
 
     @classmethod
     def load(cls, path: str | Path) -> "HierarchicalMemory":
@@ -63,5 +71,9 @@ class HierarchicalMemory:
         mem.compressor.decoder.load_state_dict(state["decoder"])
         mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
         mem.compressor.buffer.count = int(state["count"])
-        mem.store = VectorStore.load(path / "store.npz")
+        store_dir = path / "store"
+        if store_dir.exists():
+            mem.store = FaissVectorStore.load(store_dir)
+        else:
+            mem.store = VectorStore.load(path / "store.npz")
         return mem
