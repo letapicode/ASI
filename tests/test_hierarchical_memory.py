@@ -30,6 +30,17 @@ class TestHierarchicalMemory(unittest.TestCase):
         torch.testing.assert_close(out_after, out_before)
         self.assertEqual(meta_after, meta_before)
 
+    def test_faiss_backend(self):
+        torch.manual_seed(0)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
+            data = torch.randn(3, 4)
+            mem.add(data, metadata=["x", "y", "z"])
+            # ensure vectors are saved by adding and reloading
+            mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
+            out, meta = mem2.search(data[0], k=1)
+            self.assertEqual(len(meta), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
