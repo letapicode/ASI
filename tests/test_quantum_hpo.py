@@ -1,7 +1,10 @@
+import os
 import random
+import sys
 import unittest
 
-from asi.quantum_hpo import QAEHyperparamSearch
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+from quantum_hpo import QAEHyperparamSearch
 
 
 class TestQuantumHPO(unittest.TestCase):

@@ -8,7 +8,12 @@ def amplitude_estimate(oracle: Callable[[], bool], shots: int = 32) -> float:
     This function simulates quantum amplitude estimation by
     measuring the oracle ``shots`` times and returning the
     observed frequency of ``True`` outcomes.
+
+    Raises:
+        ValueError: If ``shots`` is not a positive integer.
     """
+    if shots <= 0:
+        raise ValueError("shots must be positive")
     successes = sum(1 for _ in range(shots) if oracle())
     return successes / shots
 
