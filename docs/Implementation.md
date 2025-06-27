@@ -194,8 +194,9 @@ training range.
   quantum amplitude estimation routine.
 - Call `QAEHyperparamSearch.search()` with a candidate parameter set and an
   evaluation function that returns `True` on success. The helper repeatedly
-  estimates the success probability via `amplitude_estimate()` and returns the
-  best performing setting.
+  estimates the success probability via either `amplitude_estimate()` or the
+  Bayesian variant `amplitude_estimate_bayesian()` and returns the best
+  performing setting.
 - See `docs/Plan.md` task **A-4** for context and goals.
 
 ## L-1 Collective Constitutional AI
