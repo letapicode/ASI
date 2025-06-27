@@ -87,6 +87,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `scripts/benchmark_moe.py` and `scripts/moe_vs_dense.py` estimate FLOPs with and without routing; both now accept `--router switch`.
 - `src/scaling_law.py` implements a `BreakpointScalingLaw` model for the **S-3**
   scaling-law breakpoint task.
+- `src/scaling_breakpoint.py` provides a light-weight `fit_breakpoint()` helper
+  that returns a dataclass `BreakpointModel` with piecewise slopes.
 - `src/retnet_retention.py` implements a RetNet-style retention kernel for **C-1**.
 - `src/mamba_block.py` provides a simplified Mamba state-space block for **C-2**.
 - `src/hyena_filter.py` implements the implicit-FFT filter for **C-3**.

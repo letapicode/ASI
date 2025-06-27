@@ -101,6 +101,18 @@ The helper searches over candidate breakpoints and performs linear regression in
 log space on either side. The resulting model can forecast loss beyond the
 training range.
 
+`src/scaling_breakpoint.py` offers a compact variant `fit_breakpoint()` which
+returns a dataclass `BreakpointModel` with slopes and intercepts on either side
+of the break. Use it when you just need predictions without storing the full
+fitting helper:
+
+```python
+from src.scaling_breakpoint import fit_breakpoint
+
+model = fit_breakpoint(params, loss)
+print(model.breakpoint, model.predict(params))
+```
+
 ## C-1 RetNet Retention Kernel
 
 - `src/retnet_retention.py` implements a minimal retention module.
