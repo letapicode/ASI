@@ -160,6 +160,7 @@ training range.
 
 - `src/topk_sparse_attention.py` defines a `topk_sparse_attention` function that selects the highest-scoring keys per query.
 - This provides a lightweight inference-time approximation to full attention for the **C-5** task.
+- `k_top` must not exceed `seq_k`; a `ValueError` is raised otherwise.
 
 ## C-6 RWKV Infinite-Context Loop
 

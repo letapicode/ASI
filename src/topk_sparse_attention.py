@@ -15,6 +15,10 @@ def topk_sparse_attention(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, k_t
         Tensor of shape ``(batch, seq_q, dim)`` with attended outputs.
     """
     dim = q.size(-1)
+    if k_top > k.size(1):
+        raise ValueError(
+            f"k_top {k_top} exceeds sequence length {k.size(1)}"
+        )
     scores = torch.matmul(q, k.transpose(-1, -2)) / dim ** 0.5
     topk_scores, indices = torch.topk(scores, k_top, dim=-1)
 
