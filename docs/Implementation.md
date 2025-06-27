@@ -157,8 +157,9 @@ training range.
 
 ## C-5 Top-k Sparse Attention
 
-- `src/topk_sparse_attention.py` defines a `topk_sparse_attention` function that selects the highest-scoring keys per query.
+- `src/topk_sparse_attention.py` defines `topk_sparse_attention` to select the highest-scoring keys per query.
 - This provides a lightweight inference-time approximation to full attention for the **C-5** task.
+- See `docs/Plan.md` under **C-5** for the full task context.
 
 ## C-6 RWKV Infinite-Context Loop
 
@@ -194,6 +195,7 @@ training range.
   evaluation function that returns `True` on success. The helper repeatedly
   estimates the success probability via `amplitude_estimate()` and returns the
   best performing setting.
+- See `docs/Plan.md` task **A-4** for context and goals.
 
 ## L-1 Collective Constitutional AI
 
