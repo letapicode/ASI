@@ -32,6 +32,21 @@ class TestQuantumHPO(unittest.TestCase):
         self.assertEqual(best_param, 2)
         self.assertGreater(est, 0.6)
 
+    def test_search_early_stop(self):
+        probs = {0: False, 1: True, 2: False}
+        calls = {"n": 0}
+
+        def eval_func(p):
+            calls["n"] += 1
+            return probs[p]
+
+        random.seed(0)
+        search = QAEHyperparamSearch(eval_func, probs.keys())
+        best_param, est = search.search(num_samples=3, shots=1, early_stop=0.8)
+        self.assertEqual(best_param, 1)
+        self.assertEqual(calls["n"], 1)
+        self.assertGreaterEqual(est, 0.8)
+
 
 if __name__ == "__main__":
     unittest.main()

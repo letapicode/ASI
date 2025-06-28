@@ -212,7 +212,13 @@ print(model.breakpoint, model.predict(params))
   evaluation function that returns `True` on success. The helper repeatedly
   estimates the success probability via either `amplitude_estimate()` or the
   Bayesian variant `amplitude_estimate_bayesian()` and returns the best
-  performing setting.
+  performing setting. Passing `early_stop` halts the search once an estimate
+  meets the given probability threshold:
+
+  ```python
+  search = QAEHyperparamSearch(eval_func, params)
+  best, prob = search.search(num_samples=5, early_stop=0.8)
+  ```
 - See `docs/Plan.md` task **A-4** for context and goals.
 
 ## L-1 Collective Constitutional AI
