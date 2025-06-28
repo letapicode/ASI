@@ -29,6 +29,30 @@ class VectorStore:
         self._vectors.append(arr)
         self._meta.extend(metas)
 
+    def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
+        """Delete vectors by absolute index or metadata tag."""
+        if index is None and tag is None:
+            raise ValueError("index or tag must be specified")
+        if isinstance(index, Iterable) and not isinstance(index, (bytes, str, bytearray)):
+            indices = sorted(int(i) for i in index)
+        elif index is not None:
+            indices = [int(index)]
+        else:
+            indices = [i for i, m in enumerate(self._meta) if m == tag]
+        if not indices:
+            return
+        vecs = (
+            np.concatenate(self._vectors, axis=0)
+            if self._vectors
+            else np.empty((0, self.dim), dtype=np.float32)
+        )
+        mask = np.ones(len(self._meta), dtype=bool)
+        for i in indices:
+            if 0 <= i < len(mask):
+                mask[i] = False
+        self._vectors = [vecs[mask]] if mask.any() else []
+        self._meta = [m for j, m in enumerate(self._meta) if mask[j]]
+
     def search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, List[Any]]:
         """Return top-k vectors and metadata by dot-product similarity."""
         if not self._vectors:
@@ -104,6 +128,34 @@ class FaissVectorStore:
         self.index.add(arr)
         self._vectors = np.concatenate([self._vectors, arr], axis=0)
         self._meta.extend(metas)
+        if self.path:
+            faiss.write_index(self.index, str(self.path / "index.faiss"))
+            np.save(self.path / "vectors.npy", self._vectors)
+            np.save(self.path / "meta.npy", np.array(self._meta, dtype=object))
+
+    def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
+        """Delete vectors by absolute index or metadata tag."""
+        import faiss
+
+        if index is None and tag is None:
+            raise ValueError("index or tag must be specified")
+        if isinstance(index, Iterable) and not isinstance(index, (bytes, str, bytearray)):
+            indices = sorted(int(i) for i in index)
+        elif index is not None:
+            indices = [int(index)]
+        else:
+            indices = [i for i, m in enumerate(self._meta) if m == tag]
+        if not indices:
+            return
+        mask = np.ones(self._vectors.shape[0], dtype=bool)
+        for i in indices:
+            if 0 <= i < len(mask):
+                mask[i] = False
+        self._vectors = self._vectors[mask]
+        self._meta = [m for j, m in enumerate(self._meta) if mask[j]]
+        self.index = faiss.IndexFlatIP(self.dim)
+        if self._vectors.size:
+            self.index.add(self._vectors)
         if self.path:
             faiss.write_index(self.index, str(self.path / "index.faiss"))
             np.save(self.path / "vectors.npy", self._vectors)
