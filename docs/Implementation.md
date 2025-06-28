@@ -189,6 +189,19 @@ print(model.breakpoint, model.predict(params))
 - `src/rwkv_loop.py` provides a simplified recurrent block employing the token-shift trick.
 - It keeps only a single hidden state per batch, enabling constant-memory training on very long sequences.
 
+### Example Infinite Context Training
+
+`scripts/train_infinite_context.py` wires together `RWKVLoop`, `StreamingCompressor`,
+`HierarchicalMemory`, and `LinkSlotAttention`. It trains a tiny language model with
+`ChunkWiseRetrainer` on a dummy token stream:
+
+```bash
+python scripts/train_infinite_context.py --epochs 2
+```
+
+The script prints the average loss per chunk and demonstrates how retrieval memory can
+extend the context window indefinitely while still training in constant memory.
+
 ## A-1 Paper-to-Code Transpiler
 
 - `src/paper_to_code.py` offers a minimal transpiler from LaTeX pseudo-code to
