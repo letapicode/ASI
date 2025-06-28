@@ -103,6 +103,16 @@ The helper searches over candidate breakpoints and performs linear regression in
 log space on either side. The resulting model can forecast loss beyond the
 training range.
 
+Pass a list to ``break_compute`` to fit multiple breakpoints. Each segment's
+``(slope, intercept)`` pair is stored in ``model.params``:
+
+```python
+model = BreakpointScalingLaw([5e7, 5e8])
+model.fit(params, loss)
+print('breaks:', model.break_compute)
+print('segments:', model.params)
+```
+
 `src/scaling_breakpoint.py` offers a compact variant `fit_breakpoint()` which
 returns a dataclass `BreakpointModel` with slopes and intercepts on either side
 of the break. Use it when you just need predictions without storing the full
