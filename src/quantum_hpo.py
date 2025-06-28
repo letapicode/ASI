@@ -54,18 +54,36 @@ class QAEHyperparamSearch:
         self.param_space = list(param_space)
 
     def search(
-        self, num_samples: int = 10, shots: int = 32, method: str = "standard"
+        self,
+        num_samples: int = 10,
+        shots: int = 32,
+        method: str = "standard",
+        early_stop: float | None = None,
     ) -> Tuple[Any, float]:
-        """Evaluate a subset of parameters and return the best one.
+        """Evaluate parameters and return the best one.
 
         Args:
             num_samples: Number of parameter settings to evaluate.
             shots: Number of oracle calls per setting.
             method: ``"standard"`` uses ``amplitude_estimate`` while
                 ``"bayesian"`` applies ``amplitude_estimate_bayesian``.
+            early_stop: Optional probability threshold for early stopping.
+                Evaluation halts when an estimate meets or exceeds this value.
+
         Returns:
-            Tuple of (best_param, estimated_probability).
+            Tuple of ``(best_param, estimated_probability)``.
+
+        Raises:
+            ValueError: If ``num_samples`` or ``shots`` are non-positive, or
+                ``early_stop`` is not between 0 and 1.
         """
+        if num_samples <= 0:
+            raise ValueError("num_samples must be positive")
+        if shots <= 0:
+            raise ValueError("shots must be positive")
+        if early_stop is not None and not (0.0 <= early_stop <= 1.0):
+            raise ValueError("early_stop must be between 0 and 1")
+
         candidates = random.sample(self.param_space, min(num_samples, len(self.param_space)))
         best_param = None
         best_prob = -1.0
@@ -81,4 +99,6 @@ class QAEHyperparamSearch:
             if prob > best_prob:
                 best_prob = prob
                 best_param = param
+            if early_stop is not None and prob >= early_stop:
+                break
         return best_param, best_prob
