@@ -2,26 +2,41 @@ import torch
 from torch import nn
 
 class RetNetRetention(nn.Module):
-    """Simplified retention module for C-1 experiments."""
+    """Simplified retention module supporting multiple heads."""
 
-    def __init__(self, decay: float = 0.9) -> None:
+    def __init__(self, num_heads: int = 1, decay: float | list[float] = 0.9) -> None:
         super().__init__()
-        self.decay = decay
+        self.num_heads = num_heads
+        if isinstance(decay, float):
+            decay = [decay] * num_heads
+        if len(decay) != num_heads:
+            raise ValueError("decay must have length equal to num_heads")
+        # Register as buffer so it moves with the module but is not trainable
+        self.register_buffer("decay", torch.tensor(decay).view(1, num_heads, 1))
 
     def forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
-        """Compute RetNet-style retention.
+        """Compute RetNet-style retention for multiple heads.
 
         Args:
-            q: Query tensor of shape (batch, seq, dim).
-            k: Key tensor of shape (batch, seq, dim).
-            v: Value tensor of shape (batch, seq, dim).
+            q: Query tensor of shape ``(batch, seq, dim)``.
+            k: Key tensor with the same shape as ``q``.
+            v: Value tensor with the same shape as ``q``.
         Returns:
-            Tensor of shape (batch, seq, dim).
+            Tensor of shape ``(batch, seq, dim)``.
         """
         batch, seq, dim = q.shape
-        r = torch.zeros(batch, dim, device=q.device, dtype=q.dtype)
+        if dim % self.num_heads != 0:
+            raise ValueError("dim must be divisible by num_heads")
+        head_dim = dim // self.num_heads
+
+        q = q.view(batch, seq, self.num_heads, head_dim)
+        k = k.view(batch, seq, self.num_heads, head_dim)
+        v = v.view(batch, seq, self.num_heads, head_dim)
+
+        r = torch.zeros(batch, self.num_heads, head_dim, device=q.device, dtype=q.dtype)
         outputs = []
         for t in range(seq):
             r = self.decay * r + k[:, t] * v[:, t]
             outputs.append(q[:, t] * r)
-        return torch.stack(outputs, dim=1)
+        out = torch.stack(outputs, dim=1)
+        return out.view(batch, seq, dim)
