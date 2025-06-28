@@ -153,6 +153,10 @@ print(model.breakpoint, model.predict(params))
   to a compressed `.npz` file.
 - This serves as a minimal prototype for the *hierarchical retrieval* memory
   described in the Plan.
+- `src/async_vector_store.py` adds `AsyncFaissVectorStore` which wraps the
+  disk-backed FAISS index with a thread pool. `add_async()` and `search_async()`
+  submit operations to background workers, while `aadd()` and `asearch()`
+  provide `asyncio` interfaces.
 - `src/hierarchical_memory.py` combines `StreamingCompressor` with either the
   in-memory `VectorStore` or a new `FaissVectorStore`. Passing a path hooks the
   memory to a persistent FAISS index so distant tokens are written to disk
