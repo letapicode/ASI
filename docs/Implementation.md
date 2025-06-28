@@ -8,7 +8,9 @@ This repository includes starter modules for the first two algorithms listed in 
   - `HashRouter` uses hash-based gating to activate at most two experts per token.
   - `SwitchRouter` employs a learned linear gate and selects the top-k experts.
   Both expose `load_balance_std` and `expert_utilization` to inspect token distribution.
-- `src/moe_layer.py` implements a small MoE feed-forward block using these routers.
+- `src/moe_layer.py` implements a small MoE feed-forward block using these routers. It accepts an optional
+  `balance_weight` which multiplies the `balance_loss()` penalty derived from the router's assignments and
+  returns it alongside the layer output.
 
 ## S-2 FlashAttention-3 Kernel
 

@@ -15,8 +15,9 @@ class TestHashRouter(unittest.TestCase):
     def test_switch_router(self):
         router = SwitchRouter(dim=64, num_experts=8, k=2)
         x = torch.randn(2, 512, 64)
-        assignments = router(x)
+        assignments, weights = router(x)
         self.assertEqual(assignments.shape, (2, 512, 2))
+        self.assertEqual(weights.shape, (2, 512, 2))
         std = router.load_balance_std(assignments)
         self.assertLess(std, 0.5)  # gating may be imbalanced but should compute
 
