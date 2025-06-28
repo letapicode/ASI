@@ -165,6 +165,10 @@ print(model.breakpoint, model.predict(params))
   automatically. Retrieved vectors stay on the query device. The `save()` and
   `load()` helpers now handle both store types, letting large histories rebuild
   from disk with a single call.
+- `HierarchicalMemory` now accepts `use_async=True` to employ
+  `AsyncFaissVectorStore`. Call `await aadd()` and `await asearch()` for
+  asynchronous writes and queries while the regular `add()`/`search()` methods
+  still block on these operations.
 
 ## C-4 MegaByte Patching
 

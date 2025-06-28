@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import asyncio
 import torch
 
 from asi.hierarchical_memory import HierarchicalMemory
@@ -40,6 +41,18 @@ class TestHierarchicalMemory(unittest.TestCase):
             mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
             out, meta = mem2.search(data[0], k=1)
             self.assertEqual(len(meta), 1)
+
+    def test_async_add_search(self):
+        torch.manual_seed(0)
+        async def run():
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, use_async=True)
+            data = torch.randn(2, 4)
+            await mem.aadd(data, metadata=["a", "b"])
+            out, meta = await mem.asearch(data[0], k=1)
+            self.assertEqual(out.shape, (1, 4))
+            self.assertEqual(len(meta), 1)
+            self.assertIn(meta[0], ["a", "b"])
+        asyncio.run(run())
 
 
 if __name__ == "__main__":
