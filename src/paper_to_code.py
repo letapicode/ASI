@@ -6,7 +6,10 @@ def _strip_latex(line: str) -> str:
     """Remove basic LaTeX commands and math wrappers."""
     line = re.sub(r"\\(?:begin|end)\{[^}]*\}", "", line)
     line = re.sub(r"\\(?:caption|label)\{[^}]*\}", "", line)
+    line = line.replace("$$", "")
     line = line.replace("$", "")
+    for wrapper in ["\\(", "\\)", "\\[", "\\]"]:
+        line = line.replace(wrapper, "")
     return line.strip()
 
 
@@ -21,7 +24,7 @@ def transpile(latex_code: str) -> str:
         if line.strip() == "}":
             indent = max(indent - 1, 0)
             continue
-        if re.match(r"\\End(For|If|While)", line):
+        if re.match(r"\\End(For|If|While|Function|Procedure)", line):
             indent = max(indent - 1, 0)
             continue
         elif line.startswith("\\ElseIf"):
@@ -33,6 +36,20 @@ def transpile(latex_code: str) -> str:
         elif line.startswith("\\Else"):
             indent = max(indent - 1, 0)
             py_lines.append("    " * indent + "else:")
+            indent += 1
+            continue
+        m = re.search(r"\\(Function|Procedure)\{([^}]*)\}(?:\{([^}]*)\})?", line)
+        if m:
+            name = m.group(2)
+            args = m.group(3) or ""
+            if args:
+                py_lines.append("    " * indent + f"def {name}({args}):")
+            else:
+                py_lines.append("    " * indent + f"def {name}:")
+            indent += 1
+            continue
+        if line.startswith("\\Repeat"):
+            py_lines.append("    " * indent + "while True:")
             indent += 1
             continue
         m = re.search(r"\\For\{([^}]*)\}", line)
@@ -49,6 +66,12 @@ def transpile(latex_code: str) -> str:
         if m:
             py_lines.append("    " * indent + f"while {m.group(1)}:")
             indent += 1
+            continue
+        m = re.search(r"\\Until\{([^}]*)\}", line)
+        if m:
+            py_lines.append("    " * indent + f"if {m.group(1)}:")
+            py_lines.append("    " * (indent + 1) + "break")
+            indent = max(indent - 1, 0)
             continue
         m = re.search(r"\\Return\{?([^}]*)\}?", line)
         if m:
