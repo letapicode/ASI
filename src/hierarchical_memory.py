@@ -103,6 +103,11 @@ class HierarchicalMemory:
 
     def save(self, path: str | Path) -> None:
         """Persist compressor state and vector store to ``path``."""
+        if isinstance(self.store, AsyncFaissVectorStore):
+            import asyncio
+
+            asyncio.run(self.save_async(path))
+            return
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)
         comp_state = {
@@ -120,9 +125,56 @@ class HierarchicalMemory:
         else:
             self.store.save(path / "store.npz")
 
+    async def save_async(self, path: str | Path) -> None:
+        """Asynchronously persist compressor state and vector store."""
+        path = Path(path)
+        path.mkdir(parents=True, exist_ok=True)
+        comp_state = {
+            "dim": self.compressor.encoder.in_features,
+            "compressed_dim": self.compressor.encoder.out_features,
+            "capacity": self.compressor.buffer.capacity,
+            "buffer": [t.cpu() for t in self.compressor.buffer.data],
+            "count": self.compressor.buffer.count,
+            "encoder": self.compressor.encoder.state_dict(),
+            "decoder": self.compressor.decoder.state_dict(),
+        }
+        torch.save(comp_state, path / "compressor.pt")
+        if isinstance(self.store, AsyncFaissVectorStore):
+            await self.store.save_async(path / "store")
+        elif isinstance(self.store, FaissVectorStore):
+            self.store.save(path / "store")
+        else:
+            self.store.save(path / "store.npz")
+
     @classmethod
     def load(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
         """Load memory from ``save()`` output."""
+        if use_async:
+            import asyncio
+
+            return asyncio.run(cls.load_async(path, use_async=True))
+        path = Path(path)
+        state = torch.load(path / "compressor.pt", map_location="cpu")
+        mem = cls(
+            dim=int(state["dim"]),
+            compressed_dim=int(state["compressed_dim"]),
+            capacity=int(state["capacity"]),
+            use_async=use_async,
+        )
+        mem.compressor.encoder.load_state_dict(state["encoder"])
+        mem.compressor.decoder.load_state_dict(state["decoder"])
+        mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
+        mem.compressor.buffer.count = int(state["count"])
+        store_dir = path / "store"
+        if store_dir.exists():
+            mem.store = FaissVectorStore.load(store_dir)
+        else:
+            mem.store = VectorStore.load(path / "store.npz")
+        return mem
+
+    @classmethod
+    async def load_async(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
+        """Asynchronously load memory from ``save_async()`` output."""
         path = Path(path)
         state = torch.load(path / "compressor.pt", map_location="cpu")
         mem = cls(
@@ -138,7 +190,7 @@ class HierarchicalMemory:
         store_dir = path / "store"
         if store_dir.exists():
             if use_async:
-                mem.store = AsyncFaissVectorStore(dim=int(state["compressed_dim"]), path=store_dir)
+                mem.store = await AsyncFaissVectorStore.load_async(store_dir)
             else:
                 mem.store = FaissVectorStore.load(store_dir)
         else:
