@@ -1,4 +1,7 @@
 import argparse
+import urllib.request
+from pathlib import Path
+
 import torch
 from torch import nn
 
@@ -6,6 +9,69 @@ from asi.rwkv_loop import RWKVLoop
 from asi.hierarchical_memory import HierarchicalMemory
 from asi.link_slot_attention import LinkSlotAttention
 from asi.chunkwise_retrainer import ChunkWiseRetrainer
+
+
+def load_dataset(path: str = "data/tinyshakespeare.txt") -> tuple[torch.Tensor, int]:
+    """Download and tokenize TinyShakespeare if ``path`` is missing."""
+    url = (
+        "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/"
+        "tinyshakespeare/input.txt"
+    )
+    p = Path(path)
+    if not p.exists():
+        p.parent.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(url, p)
+    text = p.read_text(encoding="utf-8")
+    vocab = sorted(set(text))
+    stoi = {ch: i for i, ch in enumerate(vocab)}
+    tokens = torch.tensor([stoi[c] for c in text], dtype=torch.long)
+    return tokens, len(vocab)
+
+
+def evaluate(model: nn.Module, seq: torch.Tensor, chunk: int = 64) -> tuple[float, float, float, int]:
+    """Return loss, perplexity, hit rate and memory size."""
+    criterion = nn.CrossEntropyLoss()
+    hits = 0
+    attempts = 0
+    total = 0.0
+    count = 0
+
+    orig = model.memory.search
+
+    def search(query: torch.Tensor, k: int = 5):
+        nonlocal hits, attempts
+        out, meta = orig(query, k)
+        n = query.size(0) if query.ndim == 2 else 1
+        attempts += n
+        if out.numel() > 0:
+            hits += n
+        return out, meta
+
+    model.memory.search = search  # type: ignore
+
+    with torch.no_grad():
+        for i in range(0, seq.size(0) - chunk, chunk):
+            inp = seq[i : i + chunk].unsqueeze(0)
+            tgt = seq[i + 1 : i + 1 + chunk].unsqueeze(0)
+            logits = model(inp)
+            loss = criterion(logits.view(-1, logits.size(-1)), tgt.view(-1))
+            total += loss.item()
+            count += 1
+
+    model.memory.search = orig  # type: ignore
+    avg_loss = total / max(count, 1)
+    ppl = torch.exp(torch.tensor(avg_loss)).item()
+    hit_rate = hits / max(attempts, 1)
+    mem_size = len(model.memory.store)
+    return avg_loss, ppl, hit_rate, mem_size
+
+
+def save_checkpoint(model: nn.Module, optim: torch.optim.Optimizer, path: str, step: int) -> None:
+    """Persist model parameters and hierarchical memory."""
+    ckpt = Path(path) / f"step{step}"
+    ckpt.mkdir(parents=True, exist_ok=True)
+    torch.save({"model": model.state_dict(), "optim": optim.state_dict()}, ckpt / "model.pt")
+    model.memory.save(ckpt / "memory")
 
 
 class InfiniteContextModel(nn.Module):
@@ -28,19 +94,30 @@ class InfiniteContextModel(nn.Module):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train toy infinite-context model")
-    parser.add_argument("--epochs", type=int, default=1, help="Epochs per chunk")
+    parser.add_argument("--epochs", type=int, default=1, help="Number of epochs")
+    parser.add_argument(
+        "--checkpoint-dir",
+        type=str,
+        default="checkpoints",
+        help="Directory to store checkpoints",
+    )
     args = parser.parse_args()
 
+    seq, vocab = load_dataset()
+
     torch.manual_seed(0)
-    model = InfiniteContextModel()
+    model = InfiniteContextModel(vocab_size=vocab, dim=32)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    trainer = ChunkWiseRetrainer(model, optimizer, chunk_size=8)
+    trainer = ChunkWiseRetrainer(model, optimizer, chunk_size=64)
 
-    # Dummy token stream
-    seq = torch.randint(0, 100, (64,), dtype=torch.long)
-
-    loss = trainer.train([seq], epochs=args.epochs)
-    print(f"avg loss: {loss:.4f}")
+    for epoch in range(1, args.epochs + 1):
+        loss = trainer.train([seq], epochs=1)
+        print(f"epoch {epoch} loss {loss:.4f}")
+        e_loss, ppl, hit, mem = evaluate(model, seq)
+        print(
+            f"eval ppl {ppl:.2f} | memory {mem} | hit rate {hit:.2f}"
+        )
+        save_checkpoint(model, optimizer, args.checkpoint_dir, epoch)
 
 
 if __name__ == "__main__":

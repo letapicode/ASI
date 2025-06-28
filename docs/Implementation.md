@@ -192,14 +192,17 @@ print(model.breakpoint, model.predict(params))
 ### Example Infinite Context Training
 
 `scripts/train_infinite_context.py` wires together `RWKVLoop`, `StreamingCompressor`,
-`HierarchicalMemory`, and `LinkSlotAttention`. It trains a tiny language model with
-`ChunkWiseRetrainer` on a dummy token stream:
+`HierarchicalMemory`, and `LinkSlotAttention`. The script now downloads the
+TinyShakespeare corpus and feeds it through `ChunkWiseRetrainer`. After each
+epoch the model is evaluated to report perplexity, retrieval hit rate, and
+current memory size:
 
 ```bash
 python scripts/train_infinite_context.py --epochs 2
 ```
 
-The script prints the average loss per chunk and demonstrates how retrieval memory can
+Checkpoints under `checkpoints/` persist both the model weights and the
+hierarchical memory state. This workflow demonstrates how retrieval memory can
 extend the context window indefinitely while still training in constant memory.
 
 ## A-1 Paper-to-Code Transpiler
