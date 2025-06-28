@@ -20,6 +20,18 @@ class TestQuantumHPO(unittest.TestCase):
         self.assertEqual(best_param, 2)
         self.assertGreater(est, 0.7)
 
+    def test_search_parallel_execution(self):
+        probs = {0: 0.3, 1: 0.6, 2: 0.9}
+
+        def eval_func(p):
+            return random.random() < probs[p]
+
+        random.seed(1)
+        search = QAEHyperparamSearch(eval_func, probs.keys())
+        best_param, est = search.search(num_samples=3, shots=30, max_workers=2)
+        self.assertEqual(best_param, 2)
+        self.assertGreaterEqual(est, 0.7)
+
     def test_search_bayesian_method(self):
         probs = {0: 0.2, 1: 0.4, 2: 0.8}
 
