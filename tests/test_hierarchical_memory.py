@@ -54,6 +54,25 @@ class TestHierarchicalMemory(unittest.TestCase):
             self.assertIn(meta[0], ["a", "b"])
         asyncio.run(run())
 
+    def test_delete(self):
+        torch.manual_seed(0)
+        mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+        data = torch.randn(3, 4)
+        mem.add(data, metadata=["a", "b", "c"])
+        mem.delete(tag="b")
+        self.assertEqual(len(mem.store), 2)
+
+    def test_delete_persist_faiss(self):
+        torch.manual_seed(0)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
+            data = torch.randn(3, 4)
+            mem.add(data, metadata=["x", "y", "z"])
+            mem.delete(index=1)
+            self.assertEqual(len(mem.store), 2)
+            mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
+            self.assertEqual(len(mem2.store), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

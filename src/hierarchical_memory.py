@@ -40,6 +40,15 @@ class HierarchicalMemory:
             comp = self.compressor.encoder(x).detach().cpu().numpy()
             self.store.add(comp, metadata)
 
+    def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
+        """Remove vectors from the store by index or metadata tag."""
+        if isinstance(self.store, AsyncFaissVectorStore):
+            import asyncio
+
+            asyncio.run(self.adelete(index, tag))
+        else:
+            self.store.delete(index=index, tag=tag)
+
     async def aadd(self, x: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:
         """Asynchronously compress and store embeddings."""
         self.compressor.add(x)
@@ -48,6 +57,16 @@ class HierarchicalMemory:
             await self.store.aadd(comp, metadata)
         else:
             self.store.add(comp, metadata)
+
+    async def adelete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
+        """Asynchronously delete vectors from the store."""
+        import asyncio
+
+        if isinstance(self.store, AsyncFaissVectorStore):
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, self.store.delete, index, tag)
+        else:
+            self.store.delete(index=index, tag=tag)
 
     def search(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
         """Retrieve top-k decoded vectors and their metadata."""
