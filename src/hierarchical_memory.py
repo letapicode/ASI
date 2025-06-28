@@ -5,32 +5,76 @@ from typing import Iterable, Any, Tuple, List
 
 from .streaming_compression import StreamingCompressor
 from .vector_store import VectorStore, FaissVectorStore
+from .async_vector_store import AsyncFaissVectorStore
 
 
 class HierarchicalMemory:
     """Combine streaming compression with a vector store."""
 
     def __init__(
-        self, dim: int, compressed_dim: int, capacity: int, db_path: str | Path | None = None
+        self,
+        dim: int,
+        compressed_dim: int,
+        capacity: int,
+        db_path: str | Path | None = None,
+        use_async: bool = False,
     ) -> None:
         self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
-        if db_path is None:
-            self.store = VectorStore(dim=compressed_dim)
+        self.use_async = use_async
+        if use_async:
+            self.store = AsyncFaissVectorStore(dim=compressed_dim, path=db_path)
         else:
-            self.store = FaissVectorStore(dim=compressed_dim, path=db_path)
+            if db_path is None:
+                self.store = VectorStore(dim=compressed_dim)
+            else:
+                self.store = FaissVectorStore(dim=compressed_dim, path=db_path)
 
     def add(self, x: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:
         """Compress and store embeddings with optional metadata."""
+        if isinstance(self.store, AsyncFaissVectorStore):
+            import asyncio
+
+            asyncio.run(self.aadd(x, metadata))
+        else:
+            self.compressor.add(x)
+            comp = self.compressor.encoder(x).detach().cpu().numpy()
+            self.store.add(comp, metadata)
+
+    async def aadd(self, x: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:
+        """Asynchronously compress and store embeddings."""
         self.compressor.add(x)
         comp = self.compressor.encoder(x).detach().cpu().numpy()
-        self.store.add(comp, metadata)
+        if isinstance(self.store, AsyncFaissVectorStore):
+            await self.store.aadd(comp, metadata)
+        else:
+            self.store.add(comp, metadata)
 
     def search(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
         """Retrieve top-k decoded vectors and their metadata."""
+        if isinstance(self.store, AsyncFaissVectorStore):
+            import asyncio
+
+            return asyncio.run(self.asearch(query, k))
         q = self.compressor.encoder(query).detach().cpu().numpy()
         if q.ndim == 2:
             q = q[0]
         comp_vecs, meta = self.store.search(q, k)
+        if comp_vecs.shape[0] == 0:
+            empty = torch.empty(0, query.size(-1), device=query.device)
+            return empty, meta
+        comp_t = torch.from_numpy(comp_vecs)
+        decoded = self.compressor.decoder(comp_t)
+        return decoded.to(query.device), meta
+
+    async def asearch(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
+        """Asynchronously retrieve vectors and metadata."""
+        q = self.compressor.encoder(query).detach().cpu().numpy()
+        if q.ndim == 2:
+            q = q[0]
+        if isinstance(self.store, AsyncFaissVectorStore):
+            comp_vecs, meta = await self.store.asearch(q, k)
+        else:
+            comp_vecs, meta = self.store.search(q, k)
         if comp_vecs.shape[0] == 0:
             empty = torch.empty(0, query.size(-1), device=query.device)
             return empty, meta
@@ -58,7 +102,7 @@ class HierarchicalMemory:
             self.store.save(path / "store.npz")
 
     @classmethod
-    def load(cls, path: str | Path) -> "HierarchicalMemory":
+    def load(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
         """Load memory from ``save()`` output."""
         path = Path(path)
         state = torch.load(path / "compressor.pt", map_location="cpu")
@@ -66,6 +110,7 @@ class HierarchicalMemory:
             dim=int(state["dim"]),
             compressed_dim=int(state["compressed_dim"]),
             capacity=int(state["capacity"]),
+            use_async=use_async,
         )
         mem.compressor.encoder.load_state_dict(state["encoder"])
         mem.compressor.decoder.load_state_dict(state["decoder"])
@@ -73,7 +118,10 @@ class HierarchicalMemory:
         mem.compressor.buffer.count = int(state["count"])
         store_dir = path / "store"
         if store_dir.exists():
-            mem.store = FaissVectorStore.load(store_dir)
+            if use_async:
+                mem.store = AsyncFaissVectorStore(dim=int(state["compressed_dim"]), path=store_dir)
+            else:
+                mem.store = FaissVectorStore.load(store_dir)
         else:
             mem.store = VectorStore.load(path / "store.npz")
         return mem
