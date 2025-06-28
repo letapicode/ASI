@@ -19,4 +19,9 @@ from .chunkwise_retrainer import ChunkWiseRetrainer
 from .scaling_law import BreakpointScalingLaw
 from .link_slot_attention import LinkSlotAttention
 
-from .pull_request_monitor import list_open_prs, check_mergeable
+from .pull_request_monitor import (
+    list_open_prs,
+    check_mergeable,
+    list_open_prs_async,
+    check_mergeable_async,
+)

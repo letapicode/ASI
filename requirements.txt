@@ -3,3 +3,4 @@ torch
 # disk-backed vector DB
 faiss-cpu
 # optional: flash-attn for FlashAttention-3 support
+aiohttp
