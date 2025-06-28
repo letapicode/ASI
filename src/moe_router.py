@@ -43,16 +43,20 @@ class SwitchRouter(nn.Module):
         self.k = k
         self.gate = nn.Linear(dim, num_experts)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor):
         """Select top-k experts via learned gating.
 
         Args:
             x: Tensor of shape (batch, seq, dim).
         Returns:
-            Tensor of shape (batch, seq, k) with expert indices.
+            Tuple of tensors ``(assignments, weights)`` each with shape
+            ``(batch, seq, k)`` where ``assignments`` holds the expert indices
+            and ``weights`` the corresponding normalized gate values.
         """
         logits = self.gate(x)
-        return torch.topk(logits, self.k, dim=-1).indices
+        probs = torch.softmax(logits, dim=-1)
+        topk = torch.topk(probs, self.k, dim=-1)
+        return topk.indices, topk.values
 
     def load_balance_std(self, assignments: torch.Tensor) -> float:
         counts = torch.bincount(assignments.view(-1), minlength=self.num_experts).float()
@@ -60,3 +64,12 @@ class SwitchRouter(nn.Module):
 
     def expert_utilization(self, assignments: torch.Tensor) -> torch.Tensor:
         return torch.bincount(assignments.view(-1), minlength=self.num_experts)
+
+
+def balance_loss(assignments: torch.Tensor, num_experts: int) -> torch.Tensor:
+    """Return relative std of expert usage as a loss term."""
+    counts = torch.bincount(assignments.view(-1), minlength=num_experts).float()
+    mean = counts.mean()
+    if mean == 0:
+        return torch.tensor(0.0, device=assignments.device)
+    return counts.std() / mean
