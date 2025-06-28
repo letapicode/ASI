@@ -194,7 +194,7 @@ print(model.breakpoint, model.predict(params))
 ## A-2 AutoBench Harness
 
 - `src/autobench.py` runs each test module in its own subprocess to sandbox imports.
-- `summarize_results()` returns a concise scoreboard and shows the first few lines of failing output.
+- `summarize_results()` returns a concise scoreboard and shows the full output from failing modules.
 - The command line interface `python -m src.autobench` prints this summary for the specified directory.
 
 ## A-3 Meta-RL Refactor Agent

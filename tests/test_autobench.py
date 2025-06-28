@@ -39,9 +39,8 @@ class TestAutoBench(unittest.TestCase):
         self.assertIn("Passed 1/2 modules", summary)
         self.assertIn("a.py: PASS", summary)
         self.assertIn("b.py: FAIL", summary)
-        self.assertIn("Line1", summary)
-        self.assertIn("Line3", summary)
-        self.assertNotIn("Line4", summary)
+        for line in ["Line1", "Line2", "Line3", "Line4"]:
+            self.assertIn(line, summary)
 
 
 if __name__ == "__main__":
