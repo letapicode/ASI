@@ -219,11 +219,12 @@ print(model.breakpoint, model.predict(params))
   estimates the success probability via either `amplitude_estimate()` or the
   Bayesian variant `amplitude_estimate_bayesian()` and returns the best
   performing setting. Passing `early_stop` halts the search once an estimate
-  meets the given probability threshold:
+  meets the given probability threshold. Set `max_workers` to evaluate
+  candidates concurrently:
 
   ```python
   search = QAEHyperparamSearch(eval_func, params)
-  best, prob = search.search(num_samples=5, early_stop=0.8)
+  best, prob = search.search(num_samples=5, early_stop=0.8, max_workers=4)
   ```
 - See `docs/Plan.md` task **A-4** for context and goals.
 
