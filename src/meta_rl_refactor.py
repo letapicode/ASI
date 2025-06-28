@@ -1,5 +1,5 @@
 import random
-from typing import Any, Iterable, Tuple
+from typing import Any, Iterable, Tuple, List
 
 
 class MetaRLRefactorAgent:
@@ -37,3 +37,49 @@ class MetaRLRefactorAgent:
         next_q = max(self.q.get((next_state, a), 0.0) for a in self.actions)
         target = reward + self.gamma * next_q
         self.q[(state, action)] = current + self.alpha * (target - current)
+
+
+def _load_log(path: str) -> List[tuple[str, float]]:
+    """Return list of (action, reward) pairs from ``path``."""
+    entries: List[tuple[str, float]] = []
+    with open(path, "r", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) < 2:
+                continue
+            action = parts[0]
+            try:
+                reward = float(parts[1])
+            except ValueError:
+                continue
+            entries.append((action, reward))
+    return entries
+
+
+def main(argv: List[str] | None = None) -> None:
+    """Train the agent from an action/reward CSV and print the best action."""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Train Meta-RL agent from an action,reward log"
+    )
+    parser.add_argument("log", help="Path to CSV file with 'action,reward' lines")
+    args = parser.parse_args(argv)
+
+    entries = _load_log(args.log)
+    agent = MetaRLRefactorAgent()
+    state = 0
+    for action, reward in entries:
+        next_state = state + 1
+        agent.update(state, action, reward, next_state)
+        state = next_state
+
+    best = agent.select_action(state)
+    print(f"Best action after {len(entries)} steps: {best}")
+
+
+if __name__ == "__main__":
+    main()

@@ -14,3 +14,6 @@ requires-python = ">=3.10"
 package-dir = {"asi" = "src"}
 packages = ["asi"]
 
+[project.scripts]
+meta-rl-refactor = "asi.meta_rl_refactor:main"
+
