@@ -12,6 +12,7 @@ from .deliberative_alignment import DeliberativeAligner
 from .streaming_compression import ReservoirBuffer, StreamingCompressor
 from .hierarchical_memory import HierarchicalMemory
 from .vector_store import VectorStore, FaissVectorStore
+from .async_vector_store import AsyncFaissVectorStore
 from .iter_align import IterativeAligner
 from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 from .chunkwise_retrainer import ChunkWiseRetrainer
