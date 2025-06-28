@@ -23,6 +23,17 @@ class AsyncFaissVectorStore(FaissVectorStore):
         """Schedule ``search`` on a background thread."""
         return self._executor.submit(super().search, query, k)
 
+    async def save_async(self, path: str | Path) -> None:
+        """Awaitable ``save`` wrapper using ``asyncio``."""
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(self._executor, super().save, path)
+
+    @classmethod
+    async def load_async(cls, path: str | Path) -> "AsyncFaissVectorStore":
+        """Awaitable ``load`` wrapper using ``asyncio``."""
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, cls.load, path)
+
     async def aadd(self, vectors: np.ndarray, metadata: Iterable[Any] | None = None) -> None:
         """Awaitable ``add`` wrapper using ``asyncio``."""
         loop = asyncio.get_running_loop()

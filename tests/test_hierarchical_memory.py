@@ -54,6 +54,21 @@ class TestHierarchicalMemory(unittest.TestCase):
             self.assertIn(meta[0], ["a", "b"])
         asyncio.run(run())
 
+    def test_async_save_load(self):
+        torch.manual_seed(0)
+        async def run():
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, use_async=True)
+            data = torch.randn(3, 4)
+            await mem.aadd(data, metadata=["x", "y", "z"])
+            out_before, meta_before = await mem.asearch(data[0], k=1)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                await mem.save_async(tmpdir)
+                loaded = await HierarchicalMemory.load_async(tmpdir, use_async=True)
+                out_after, meta_after = await loaded.asearch(data[0], k=1)
+            torch.testing.assert_close(out_after, out_before)
+            self.assertEqual(meta_after, meta_before)
+        asyncio.run(run())
+
     def test_delete(self):
         torch.manual_seed(0)
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
