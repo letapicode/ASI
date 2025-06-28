@@ -179,6 +179,8 @@ print(model.breakpoint, model.predict(params))
   `AsyncFaissVectorStore`. Call `await aadd()` and `await asearch()` for
   asynchronous writes and queries while the regular `add()`/`search()` methods
   still block on these operations.
+  New `save_async()` and `load_async()` helpers persist and restore the
+  hierarchical memory without blocking the event loop.
 
 ## C-4 MegaByte Patching
 
