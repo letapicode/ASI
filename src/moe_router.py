@@ -37,10 +37,12 @@ class HashRouter(nn.Module):
 class SwitchRouter(nn.Module):
     """Top-k gating network for S-1 sparse Mixture-of-Experts."""
 
-    def __init__(self, dim: int, num_experts: int, k: int = 2) -> None:
+    def __init__(self, dim: int, num_experts: int, k: int = 2,
+                 temperature: float = 1.0) -> None:
         super().__init__()
         self.num_experts = num_experts
         self.k = k
+        self.temperature = temperature
         self.gate = nn.Linear(dim, num_experts)
 
     def forward(self, x: torch.Tensor):
@@ -53,7 +55,7 @@ class SwitchRouter(nn.Module):
             ``(batch, seq, k)`` where ``assignments`` holds the expert indices
             and ``weights`` the corresponding normalized gate values.
         """
-        logits = self.gate(x)
+        logits = self.gate(x) / self.temperature
         probs = torch.softmax(logits, dim=-1)
         topk = torch.topk(probs, self.k, dim=-1)
         return topk.indices, topk.values
@@ -73,3 +75,19 @@ def balance_loss(assignments: torch.Tensor, num_experts: int) -> torch.Tensor:
     if mean == 0:
         return torch.tensor(0.0, device=assignments.device)
     return counts.std() / mean
+
+
+def balance_loss_probs(probs: torch.Tensor) -> torch.Tensor:
+    """Differentiable load-balance penalty from routing probabilities."""
+    counts = probs.sum(dim=(-3, -2))
+    mean = counts.mean()
+    if mean == 0:
+        return torch.tensor(0.0, device=probs.device)
+    return counts.std() / mean
+
+
+def token_drop_rate(assignments: torch.Tensor, num_experts: int, capacity: int) -> float:
+    """Return fraction of tokens exceeding per-expert ``capacity``."""
+    counts = torch.bincount(assignments.view(-1), minlength=num_experts).float()
+    dropped = torch.clamp(counts - capacity, min=0).sum()
+    return (dropped / assignments.numel()).item()
