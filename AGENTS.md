@@ -5,8 +5,8 @@ This repository contains documentation on algorithms towards self-improving AI. 
 ## Editing guidelines
 
 - Use Markdown formatting.
-- No line length limit, but keep code modular to minimize context.
 - Avoid trailing whitespace.
+- No line length limit, but keep code modular
 - Reference or update `docs/Plan.md` where relevant.
 - Commit messages should start with a short summary in the imperative mood, e.g. `Add section on scalability`.
 
