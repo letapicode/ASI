@@ -31,3 +31,8 @@ Run the scripts directly with `python` to see parameter and FLOP estimates.
 1. Install requirements: `pip install -r requirements.txt`.
 2. Install the package in editable mode: `pip install -e .`.
 3. Run tests with `pytest`.
+
+## CI
+
+Automated tests run on GitHub Actions. The workflow installs the project in editable mode and executes `pytest`.
+See [.github/workflows/test.yml](.github/workflows/test.yml) for details.
