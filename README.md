@@ -36,3 +36,8 @@ Run the scripts directly with `python` to see parameter and FLOP estimates.
 
 This project imposes no strict lines-of-code limit. The only style rule comes from the AGENTS guidelines:
 keep lines under 120 characters whenever practical.
+
+## CI
+
+Automated tests run on GitHub Actions. The workflow installs the project in editable mode and executes `pytest`.
+See [.github/workflows/test.yml](.github/workflows/test.yml) for details.
