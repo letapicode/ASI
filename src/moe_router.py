@@ -1,7 +1,20 @@
 import torch
 from torch import nn
+from abc import ABC, abstractmethod
 
-class HashRouter(nn.Module):
+
+class BaseRouter(nn.Module, ABC):
+    """Abstract base router specifying the routing interface."""
+
+    @abstractmethod
+    def forward(self, x: torch.Tensor):
+        """Return expert assignments or (assignments, weights) for ``x``."""
+
+    @abstractmethod
+    def load_balance_std(self, assignments: torch.Tensor) -> float:
+        """Compute relative standard deviation of expert loads."""
+
+class HashRouter(BaseRouter):
     """O(1) router for Sparse Mixture-of-Experts (Plan.md S-1)."""
 
     def __init__(self, num_experts: int, k: int = 2, seed: int = 42) -> None:
@@ -34,7 +47,7 @@ class HashRouter(nn.Module):
         return torch.bincount(assignments.view(-1), minlength=self.num_experts)
 
 
-class SwitchRouter(nn.Module):
+class SwitchRouter(BaseRouter):
     """Top-k gating network for S-1 sparse Mixture-of-Experts."""
 
     def __init__(self, dim: int, num_experts: int, k: int = 2,
