@@ -217,6 +217,23 @@ Checkpoints under `checkpoints/` persist both the model weights and the
 hierarchical memory state. This workflow demonstrates how retrieval memory can
 extend the context window indefinitely while still training in constant memory.
 
+To reproduce the toy run step by step:
+
+1. Execute `train_infinite_context.py` with the desired number of epochs. The
+   helper `load_dataset()` downloads and tokenizes TinyShakespeare on the first
+   run.
+2. An `InfiniteContextModel` is instantiated combining `RWKVLoop` with a
+   `HierarchicalMemory` store. Training occurs through
+   `ChunkWiseRetrainer.train()` which feeds the tokens in 64-token chunks.
+3. After each epoch `evaluate()` calculates the loss, perplexity and retrieval
+   hit rate using the growing memory.
+4. `save_checkpoint()` writes the model weights and the memory state to
+   `checkpoints/stepN`. The memory is stored via `HierarchicalMemory.save()`.
+5. When restarting from a checkpoint, load `model.pt` with `torch.load` and
+   call `HierarchicalMemory.load()` on the saved memory directory. Assign the
+   result to `model.memory` before resuming training. Reloading ensures previous
+   retrievals remain available so the context effectively persists across runs.
+
 ## A-1 Paper-to-Code Transpiler
 
 - `src/paper_to_code.py` offers a minimal transpiler from LaTeX pseudo-code to
