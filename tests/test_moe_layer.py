@@ -2,6 +2,7 @@ import unittest
 import torch
 
 from asi.moe_layer import MoELayer
+from asi.moe_router import HashRouter
 
 
 class TestMoELayer(unittest.TestCase):
@@ -17,6 +18,13 @@ class TestMoELayer(unittest.TestCase):
         out, penalty = layer(x)
         self.assertEqual(out.shape, x.shape)
         self.assertGreaterEqual(penalty.item(), 0.0)
+
+    def test_custom_router_instance(self):
+        router = HashRouter(num_experts=4)
+        layer = MoELayer(dim=8, hidden=16, num_experts=4, router=router)
+        x = torch.randn(1, 3, 8)
+        out = layer(x)
+        self.assertEqual(out.shape, x.shape)
 
 
 if __name__ == '__main__':

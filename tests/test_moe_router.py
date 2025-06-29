@@ -1,11 +1,18 @@
 import unittest
 import torch
 from asi.moe_router import (
+    BaseRouter,
     HashRouter,
     SwitchRouter,
     balance_loss_probs,
     token_drop_rate,
 )
+
+
+class TestBaseRouter(unittest.TestCase):
+    def test_subclasses(self):
+        self.assertTrue(issubclass(HashRouter, BaseRouter))
+        self.assertTrue(issubclass(SwitchRouter, BaseRouter))
 
 class TestHashRouter(unittest.TestCase):
     def test_load_balance(self):

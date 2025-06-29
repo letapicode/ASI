@@ -1,12 +1,13 @@
 import torch
 from torch import nn
-from .moe_router import HashRouter, SwitchRouter, balance_loss
+from .moe_router import BaseRouter, HashRouter, SwitchRouter, balance_loss
 
 
 class MoELayer(nn.Module):
     """Minimal Mixture-of-Experts feed-forward block implementing S-1 routing."""
 
-    def __init__(self, dim: int, hidden: int, num_experts: int, router: str = "hash", k: int = 2,
+    def __init__(self, dim: int, hidden: int, num_experts: int,
+                 router: str | BaseRouter = "hash", k: int = 2,
                  balance_weight: float | None = None) -> None:
         super().__init__()
         self.dim = dim
@@ -14,7 +15,9 @@ class MoELayer(nn.Module):
         self.num_experts = num_experts
         self.k = k
         self.balance_weight = balance_weight
-        if router == "switch":
+        if isinstance(router, BaseRouter):
+            self.router = router
+        elif router == "switch":
             self.router = SwitchRouter(dim=dim, num_experts=num_experts, k=k)
         else:
             self.router = HashRouter(num_experts=num_experts, k=k)
