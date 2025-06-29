@@ -31,3 +31,8 @@ Run the scripts directly with `python` to see parameter and FLOP estimates.
 1. Install requirements: `pip install -r requirements.txt`.
 2. Install the package in editable mode: `pip install -e .`.
 3. Run tests with `pytest`.
+
+## Style
+
+This project imposes no strict lines-of-code limit. The only style rule comes from the AGENTS guidelines:
+keep lines under 120 characters whenever practical.
