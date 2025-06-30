@@ -426,3 +426,16 @@ txt = generate_transcript(pairs[0][2])
    or your own short experiments.
 6. **Document results** in both `docs/Plan.md` and this file. Describe what
    worked, what failed, and any insights gained.
+
+### Upcoming Implementation Tasks
+
+- Create a `HybridRetention` module that combines the linear update from
+  `MambaBlock` with the decay kernel in `RetNetRetention`.
+- Extend `HierarchicalMemory` so `cross_modal_fusion.encode_all()` can store and
+  retrieve multimodal embeddings.
+- Add a `log_memory_usage()` helper to `eval_harness.py` and print GPU memory
+  usage alongside accuracy metrics.
+- Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the
+  exploration rate during refactoring.
+- Rewrite `download_triples()` with asyncio to fetch dataset files
+  concurrently.
