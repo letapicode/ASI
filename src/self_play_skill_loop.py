@@ -112,6 +112,3 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 
 __all__ = ["run_loop", "SelfPlaySkillLoopConfig", "self_play_skill_loop"]
-
-
-__all__ = ["self_play_skill_loop"]
