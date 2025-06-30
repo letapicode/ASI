@@ -17,7 +17,11 @@ def _github_api(path: str, token: str | None = None) -> Any:
         return json.loads(resp.read().decode())
 
 
-async def _github_api_async(path: str, token: str | None = None, session: aiohttp.ClientSession | None = None) -> Any:
+async def _github_api_async(
+    path: str,
+    token: str | None = None,
+    session: aiohttp.ClientSession | None = None,
+) -> Any:
     """Asynchronously call the GitHub API and return parsed JSON."""
     url = f"https://api.github.com/{path}"
     headers = {"Accept": "application/vnd.github+json"}
@@ -39,9 +43,15 @@ def list_open_prs(repo: str, token: str | None = None) -> List[Dict[str, Any]]:
     return [{"number": pr["number"], "title": pr["title"]} for pr in data]
 
 
-async def list_open_prs_async(repo: str, token: str | None = None) -> List[Dict[str, Any]]:
+async def list_open_prs_async(
+    repo: str,
+    token: str | None = None,
+    session: aiohttp.ClientSession | None = None,
+) -> List[Dict[str, Any]]:
     """Asynchronously return a list of open pull requests for ``repo``."""
-    data = await _github_api_async(f"repos/{repo}/pulls?state=open", token)
+    data = await _github_api_async(
+        f"repos/{repo}/pulls?state=open", token, session=session
+    )
     return [{"number": pr["number"], "title": pr["title"]} for pr in data]
 
 
@@ -51,9 +61,16 @@ def check_mergeable(repo: str, pr_number: int, token: str | None = None) -> Opti
     return pr.get("mergeable")
 
 
-async def check_mergeable_async(repo: str, pr_number: int, token: str | None = None) -> Optional[bool]:
+async def check_mergeable_async(
+    repo: str,
+    pr_number: int,
+    token: str | None = None,
+    session: aiohttp.ClientSession | None = None,
+) -> Optional[bool]:
     """Asynchronously return whether the pull request can be merged cleanly."""
-    pr = await _github_api_async(f"repos/{repo}/pulls/{pr_number}", token)
+    pr = await _github_api_async(
+        f"repos/{repo}/pulls/{pr_number}", token, session=session
+    )
     return pr.get("mergeable")
 
 
@@ -68,10 +85,25 @@ def main() -> None:
 
     if args.use_asyncio:
         async def run() -> None:
-            prs = await list_open_prs_async(args.repo, args.token)
-            results = await asyncio.gather(*(check_mergeable_async(args.repo, pr["number"], args.token) for pr in prs))
-            for pr, mergeable in zip(prs, results):
-                print(f"#{pr['number']} {pr['title']} - mergeable: {mergeable}")
+            async with aiohttp.ClientSession() as session:
+                prs = await list_open_prs_async(
+                    args.repo, args.token, session=session
+                )
+                results = await asyncio.gather(
+                    *(
+                        check_mergeable_async(
+                            args.repo,
+                            pr["number"],
+                            args.token,
+                            session=session,
+                        )
+                        for pr in prs
+                    )
+                )
+                for pr, mergeable in zip(prs, results):
+                    print(
+                        f"#{pr['number']} {pr['title']} - mergeable: {mergeable}"
+                    )
         asyncio.run(run())
     else:
         prs = list_open_prs(args.repo, args.token)

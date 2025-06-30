@@ -35,8 +35,10 @@ def fake_urlopen_factory(responses):
     return fake_urlopen
 
 
-def fake_async_api_factory(responses):
-    async def fake_api(path, token=None):
+def fake_async_api_factory(responses, calls=None):
+    async def fake_api(path, token=None, session=None):
+        if calls is not None:
+            calls.append(session)
         return responses.pop(0)
     return fake_api
 
@@ -57,16 +59,22 @@ class TestPullRequestMonitor(unittest.TestCase):
 
     def test_list_open_prs_async(self):
         responses = [[{"number": 1, "title": "Bug"}, {"number": 2, "title": "Feature"}]]
-        with patch.object(prmon, '_github_api_async', fake_async_api_factory(responses)):
-            prs = asyncio.run(list_open_prs_async('owner/repo'))
+        calls = []
+        session = object()
+        with patch.object(prmon, '_github_api_async', fake_async_api_factory(responses, calls)):
+            prs = asyncio.run(list_open_prs_async('owner/repo', session=session))
         self.assertEqual(len(prs), 2)
         self.assertEqual(prs[1]['title'], 'Feature')
+        self.assertIs(calls[0], session)
 
     def test_check_mergeable_async(self):
         responses = [{"mergeable": False}]
-        with patch.object(prmon, '_github_api_async', fake_async_api_factory(responses)):
-            result = asyncio.run(check_mergeable_async('owner/repo', 1))
+        calls = []
+        session = object()
+        with patch.object(prmon, '_github_api_async', fake_async_api_factory(responses, calls)):
+            result = asyncio.run(check_mergeable_async('owner/repo', 1, session=session))
         self.assertFalse(result)
+        self.assertIs(calls[0], session)
 
 
 if __name__ == '__main__':
