@@ -87,13 +87,18 @@ def apply_quant_lora(model: nn.Module, target_modules: Sequence[str], r: int = 4
     dropout:
         Optional dropout probability for the injected adapters.
     """
-    for name, module in model.named_modules():
-        for tgt in target_modules:
-            if name.endswith(tgt) and isinstance(module, nn.Linear):
-                parent_name = name.rsplit(".", 1)[0]
-                parent = model
-                if parent_name:
-                    for attr in parent_name.split("."):
-                        parent = getattr(parent, attr)
-                setattr(parent, tgt, LoRAQuantLinear(module, r=r, alpha=alpha, dropout=dropout))
+    for tgt in target_modules:
+        parts = tgt.split(".")
+        parent = model
+        for attr in parts[:-1]:
+            if not hasattr(parent, attr):
+                parent = None
+                break
+            parent = getattr(parent, attr)
+        if parent is None:
+            continue
+        name = parts[-1]
+        module = getattr(parent, name, None)
+        if isinstance(module, nn.Linear):
+            setattr(parent, name, LoRAQuantLinear(module, r=r, alpha=alpha, dropout=dropout))
     return model
