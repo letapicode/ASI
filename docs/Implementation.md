@@ -382,8 +382,10 @@ To reproduce the toy run step by step:
 
 ## M-4 Cross-Modal Data Ingestion Pipeline
 
-- `src/data_ingest.py` will align text, image and audio pairs from open datasets.
-- Augmentation helpers generate crops and transcripts for training the multi-modal world model.
+- `src/data_ingest.py` downloads open datasets and aligns text, image and audio files.
+- `load_pairs()` returns matching triples and `ingest_samples()` applies random
+  crops and optional audio transcription so the samples can feed
+  `cross_modal_fusion.py` and `multimodal_world_model.py`.
 
 ## Research workflow
 

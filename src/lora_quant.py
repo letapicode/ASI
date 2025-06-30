@@ -90,10 +90,9 @@ def apply_quant_lora(model: nn.Module, target_modules: Sequence[str], r: int = 4
     for name, module in model.named_modules():
         for tgt in target_modules:
             if name.endswith(tgt) and isinstance(module, nn.Linear):
-                parent_name = name.rsplit(".", 1)[0]
+                parts = name.split(".")
                 parent = model
-                if parent_name:
-                    for attr in parent_name.split("."):
-                        parent = getattr(parent, attr)
-                setattr(parent, tgt, LoRAQuantLinear(module, r=r, alpha=alpha, dropout=dropout))
+                for attr in parts[:-1]:
+                    parent = getattr(parent, attr)
+                setattr(parent, parts[-1], LoRAQuantLinear(module, r=r, alpha=alpha, dropout=dropout))
     return model
