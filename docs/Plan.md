@@ -61,6 +61,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **L-3** | **Iterative Constitutional Self-Alignment (IterAlign)** | Auto-draft rules, critique, self-refine                       | 3-round loop closes ≥70 % harmful loopholes each cycle ([ui.adsabs.harvard.edu][20])         |
 | **L-4** | **Critic-in-the-Loop RLHF**                             | Use a stronger “CriticGPT” to grade outputs                   | Bug-catch rate +60 % vs human-only RLHF ([wired.com][21])                                    |
 | **L-5** | **Formal Verification Harness** | Prove critical safety invariants over model updates | 95 % of release candidates pass property checks |
+| **L-6** | **Mechanistic Interpretability Tools** | Instrument and ablate transformer circuits for transparent debugging | Replicable head-importance traces on a 10 B+ parameter model |
 
 ---
 
@@ -199,6 +200,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    to test world-model learning from mixed-modality self-play data.
 10. **Attention trace analysis**: Use the upcoming `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
+11. **Graph-of-thought planning**: Prototype `GraphOfThoughtPlanner` and measure
+    refactor quality gains over the baseline meta-RL agent.
+12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with
+    `world_model_rl.rollout_policy()` and log constraint violations.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
