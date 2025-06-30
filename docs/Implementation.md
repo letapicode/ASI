@@ -453,5 +453,7 @@ txt = generate_transcript(pairs[0][2])
   saves interactive attention heatmaps for interpretability experiments.
 - Prototype a `GraphOfThoughtPlanner` that composes reasoning steps into a
   searchable graph for code refactoring decisions.
-- Add a `NeuroSymbolicExecutor` module that runs logical constraints alongside
-  neural world-model rollouts.
+- Add a `NeuroSymbolicExecutor` module that runs logical constraints alongside neural world-model rollouts.
+- Implement a `GenerativeDataAugmentor` that rolls out the world model to synthesize training triples and feeds them through `data_ingest`.
+- Add `continuous_eval.py` to schedule `eval_harness` and `autobench` after each pull request using GitHub Actions or a local cron job.
+- Combine `GraphOfThoughtPlanner` with `MetaRLRefactorAgent` in an `AdaptivePlanner` module that ranks and applies refactor suggestions automatically.

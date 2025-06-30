@@ -204,6 +204,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     refactor quality gains over the baseline meta-RL agent.
 12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with
     `world_model_rl.rollout_policy()` and log constraint violations.
+13. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize new training triples from world-model rollouts and expand the dataset.
+14. **Continuous evaluation**: Run `continuous_eval.py` after each pull request to track benchmark progress automatically.
+15. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with `MetaRLRefactorAgent` to auto-rank refactor strategies.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
