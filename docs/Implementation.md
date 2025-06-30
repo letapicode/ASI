@@ -327,8 +327,12 @@ To reproduce the toy run step by step:
 
 ## A-5 Multi-Modal World Model
 
-- `src/multimodal_world_model.py` is planned to hold a unified transformer that ingests text, images and low-level actions.
-- The module will expose `train_world_model()` and `rollout()` helpers so RL agents can simulate diverse environments.
+`src/multimodal_world_model.py` now implements a unified transformer that ingests
+text tokens, image observations and low-level actions. The helper
+`train_world_model()` performs a simple MSE optimisation loop over a dataloader
+while `rollout()` generates predicted state vectors for a sequence of inputs.
+These utilities provide a lightweight environment model so RL agents can
+simulate diverse settings directly in Python.
 
 ## A-6 Embodied Skill Transfer
 

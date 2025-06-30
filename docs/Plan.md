@@ -138,6 +138,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   See `docs/Implementation.md` and `docs/load_balance.md` for details.
 - `src/pull_request_monitor.py` now supports asynchronous GitHub queries using
   `aiohttp` for faster monitoring of open pull requests.
+- `src/multimodal_world_model.py` implements a simple cross-modal transformer
+  with training and rollout helpers for **A-5**.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."

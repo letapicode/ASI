@@ -25,3 +25,4 @@ from .pull_request_monitor import (
     list_open_prs_async,
     check_mergeable_async,
 )
+from .multimodal_world_model import MultiModalWorldModel, train_world_model, rollout
