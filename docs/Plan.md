@@ -12,6 +12,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **S-1** | **Sparse Mixture-of-Experts Routing (Switch-type)** | Activate ≤2 experts/token with *O*(1) router cost; keep cross-expert load-balance ≤3 % std-dev | 10 × parameter-count growth *without* >1.3 × training FLOPs ([medium.com][1])                            |
 | **S-2** | **FlashAttention-3 kernel**                         | Exact soft-max attention in fused CUDA/ROCm kernel with block-wise recomputation               | ≥90 % GPU util. for 8 k→1 M tokens, Wall-time speed-up ≥2 × over FA-2 ([tridao.me][2])                   |
 | **S-3** | **Scaling-law breakpoint model**                    | Predict test-loss vs (model, data, compute) past the current “diminishing-returns knee”        | Empirically fit to ≥3 new models above 3 T params; error <10 % ([businessinsider.com][3], [time.com][4]) |
+| **S-4** | **Weight-Averaged Distillation**                    | Merge checkpoints via stochastic weight averaging and distillation | Match baseline perplexity with ≤50 % gradient updates ([arxiv.org][23]) |
 
 **Take-away:**  Parameter-scaling alone still improves raw capability, but returns are now *sub-linear*; the industry is already in the knee of the curve.  Architectural and data-efficiency gains (S-1, S-2) therefore matter more than brute size.
 
@@ -27,6 +28,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-4** | **MegaByte hierarchical patching**              | Two-level decoder that chunks bytes then words                     | Predict 1 M-byte sequence with perplexity ≤1.05× GPT-J but 3× fewer FLOPs ([arxiv.org][9], [huggingface.co][10])             |
 | **C-5** | **Top-k Sparse Attention for inference**        | Select k≈64 most-relevant keys each step                           | 20 %b/word latency cut at 1 M tokens; accuracy drop <0.5 pp ([arxiv.org][11])                                                |
 | **C-6** | **RWKV infinite-context training loop**         | Constant-memory recurrence with token-shift trick                  | Train 7 B RWKV on 4 M-token samples, VRAM ≤80 GB; effective context ≥2 M at inference ([wiki.rwkv.com][12], [arxiv.org][13]) |
+| **C-7** | **Self-Summarising Memory**              | Periodically compress far context into <1 kB summaries and store in the vector DB | Recall >90 % of facts after 10 M tokens with ≤1/4 storage vs raw history ([arxiv.org][24]) |
 
 **Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.
 
@@ -40,6 +42,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **A-2** | **AutoBench Harness**                    | Sandbox every imported module, tag wins/losses    | Coverage ≥95 % pass; dashboard latency <2 min                                                                      |
 | **A-3** | **Meta-RL Refactor Agent**               | Decide “replace / refactor / rollback” on modules | ≥15 % average benchmark uplift in 30 days                                                                          |
 | **A-4** | **Quantum Amplitude-Estimation HPO**     | Use QAE to sample hyper-params with √N speed-up   | Same accuracy with ≤30 % wall-clock time vs classical Bayesian search ([arxiv.org][16])                            |
+| **A-5** | **Automated Data Ingestion Pipeline** | Crawl new ML repositories; convert code via A‑1 and benchmark via A‑2 | Add ≥500 modules/month with ≥80 % test coverage ([github.com][25]) |
 
 ---
 
@@ -51,6 +54,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **L-2** | **Deliberative Alignment**                              | Chain-of-thought check against explicit policy text           | Red-team jailbreak rate <2 % on AdvBench ([openai.com][19])                                  |
 | **L-3** | **Iterative Constitutional Self-Alignment (IterAlign)** | Auto-draft rules, critique, self-refine                       | 3-round loop closes ≥70 % harmful loopholes each cycle ([ui.adsabs.harvard.edu][20])         |
 | **L-4** | **Critic-in-the-Loop RLHF**                             | Use a stronger “CriticGPT” to grade outputs                   | Bug-catch rate +60 % vs human-only RLHF ([wired.com][21])                                    |
+| **L-5** | **Mechanistic Interpretability Filter** | Inspect activations for anomalous patterns before output | Reduce triggered failures by ≥50 % on policy evals ([arxiv.org][26]) |
 
 ---
 
@@ -145,3 +149,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 [20]: https://ui.adsabs.harvard.edu/abs/2024arXiv240318341C/abstract?utm_source=chatgpt.com "IterAlign: Iterative Constitutional Alignment of Large Language Models"
 [21]: https://www.wired.com/story/openai-rlhf-ai-training?utm_source=chatgpt.com "OpenAI Wants AI to Help Humans Train AI"
 [22]: https://www.pnas.org/doi/10.1073/pnas.2413443122?utm_source=chatgpt.com "Scaling language model size yields diminishing returns for ... - PNAS"
+[23]: https://arxiv.org/abs/2010.02704?utm_source=chatgpt.com "Stochastic Weight Averaging for Language Models"
+[24]: https://arxiv.org/abs/2305.15101?utm_source=chatgpt.com "Self-Summarising Memory for Long Documents"
+[25]: https://github.com/features/actions?utm_source=chatgpt.com "GitHub Actions for automated repository processing"
+[26]: https://arxiv.org/abs/2211.00564?utm_source=chatgpt.com "Transformer Circuits: Mechanistic Interpretability"
