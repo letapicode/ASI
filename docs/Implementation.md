@@ -275,6 +275,13 @@ To reproduce the toy run step by step:
   ```
 - See `docs/Plan.md` task **A-4** for context and goals.
 
+## Pull Request Monitoring
+
+- `src/pull_request_monitor.py` lists open pull requests and checks mergeability.
+- The asynchronous helpers now accept an optional `aiohttp.ClientSession` so
+  multiple API calls can share a single session. The `main()` helper creates
+  one session when invoked with `--use-asyncio` and reuses it across requests.
+
 ## L-1 Collective Constitutional AI
 
 - `src/collective_constitution.py` aggregates crowd-sourced principles into
