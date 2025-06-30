@@ -439,10 +439,15 @@ txt = generate_transcript(pairs[0][2])
   exploration rate during refactoring.
 - Rewrite `download_triples()` with asyncio to fetch dataset files
   concurrently.
-- Implement a `MemoryReplicator` in `distributed_memory.py` that streams vector
-  updates between nodes for near-real-time consistency.
-- Extend `self_play_skill_loop.run_loop()` so each cycle logs embeddings to
-  `HierarchicalMemory` and retrains the world model via
-  `multimodal_world_model.train_world_model()`.
-- Create `viz_dashboard.py` to plot `head_importance()` metrics and retrieval
-  weights from `link_slot_attention.py`.
+- Add streaming RPCs to `MemoryServer` so batches of vectors can be pushed and
+  queried in one call. Update `memory.proto` and the `RemoteMemory` client.
+- Implement optional gradient checkpointing in `multimodal_world_model.py` via a
+  `checkpoint_blocks` flag to cut training memory.
+- Create `scripts/distributed_memory_benchmark.py` that measures throughput of
+  `DistributedMemory` across multiple nodes.
+- Implement a `PrioritizedReplayBuffer` in `self_play_env.py` and adapt
+  `self_play_skill_loop.run_loop()` to sample transitions by reward.
+- Create `scripts/distributed_eval.py` to run `eval_harness` across multiple
+  processes or hosts and aggregate the results.
+- Extend `transformer_circuits.py` with an `AttentionVisualizer` class that
+  saves interactive attention heatmaps for interpretability experiments.
