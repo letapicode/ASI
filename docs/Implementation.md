@@ -178,12 +178,14 @@ print(model.breakpoint, model.predict(params))
   `load()` helpers now handle both store types, letting large histories rebuild
   from disk with a single call.
 - `HierarchicalMemory` now accepts `use_async=True` to employ
-  `AsyncFaissVectorStore`. `add()`, `delete()`, `search()`, `save()` and
-  `load()` check if an event loop is running. When called from synchronous code
-  they block with ``asyncio.run``. Inside a running loop they return an
-  ``asyncio.Task`` so callers can ``await`` the scheduled operation. The
-  explicit async variants (`aadd`, `adelete`, `asearch`, `save_async`,
-  `load_async`) remain available for direct use.
+ `AsyncFaissVectorStore`. `add()`, `delete()`, `search()`, `save()` and
+ `load()` check if an event loop is running. When called from synchronous code
+ they block with ``asyncio.run``. Inside a running loop they return an
+ ``asyncio.Task`` so callers can ``await`` the scheduled operation. The
+ explicit async variants (`aadd`, `adelete`, `asearch`, `save_async`,
+ `load_async`) remain available for direct use.
+ `HierarchicalMemory` defines `__len__` so `len(mem)` reports the number of
+ stored vectors.
 
 ## C-4 MegaByte Patching
 
