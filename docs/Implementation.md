@@ -314,3 +314,28 @@ To reproduce the toy run step by step:
   and updates action values.
 - `select_action()` returns the highest-valued action with optional
   epsilon-greedy exploration.
+
+## S-4 Weight-Averaged Distillation
+
+A future `swa_distill.py` module will combine multiple training checkpoints using
+stochastic weight averaging followed by knowledge distillation. The goal is to
+reduce the number of gradient steps while matching baseline perplexity.
+
+## C-7 Self-Summarising Memory
+
+The planned `self_summarising_memory.py` will summarise far-past tokens with a
+lightweight language model and store the summaries via `HierarchicalMemory`.
+This should retain factual recall with far less storage.
+
+## A-5 Automated Data Ingestion Pipeline
+
+An upcoming script `ingest_repos.py` will crawl trending ML repositories,
+convert any embedded pseudo-code through `paper_to_code.transpile()` and run the
+resulting modules with `autobench`. Statistics will merge into the existing
+scoreboard.
+
+## L-5 Mechanistic Interpretability Filter
+
+A proposed `interpretability_filter.py` will analyse token-level activations
+using attribution scores. It will block or flag outputs whenever anomaly scores
+exceed a learned threshold.
