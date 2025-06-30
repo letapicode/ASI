@@ -408,6 +408,13 @@ img = random_crop(Image.open(pairs[0][1]), (32, 32))
 txt = generate_transcript(pairs[0][2])
 ```
 
+## L-6 Mechanistic Interpretability Tools
+
+- `src/transformer_circuits.py` provides utilities to record attention weights
+  and ablate individual heads. `ActivationRecorder` registers hooks on named
+  modules, while `head_importance()` measures output differences when heads are
+  zeroed.
+
 ## Research workflow
 
 1. **Select an algorithm** from `docs/Plan.md` that remains unsolved.
