@@ -95,6 +95,7 @@ class CrossModalFusion(nn.Module):
 
     def __init__(self, cfg: CrossModalFusionConfig) -> None:
         super().__init__()
+        self.cfg = cfg
         self.text_enc = TextEncoder(cfg.vocab_size, cfg.text_dim)
         self.img_enc = ImageEncoder(cfg.img_channels, cfg.text_dim)
         self.audio_enc = AudioEncoder(cfg.audio_channels, cfg.text_dim)
@@ -139,7 +140,7 @@ def train_fusion_model(
 ) -> None:
     """Train model using CLIP-style contrastive loss."""
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    opt = torch.optim.Adam(model.parameters(), lr=model.temperature)
+    opt = torch.optim.Adam(model.parameters(), lr=model.cfg.lr)
     device = next(model.parameters()).device
     model.train()
     for _ in range(epochs):

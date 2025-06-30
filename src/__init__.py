@@ -72,4 +72,16 @@ from .data_ingest import (
     align_triples,
     random_crop,
     generate_transcript,
+    download_dataset,
+    load_pairs,
+    ingest_samples,
+    transcribe_audio,
+    ModalSample,
+    pair_modalities,
+    random_crop_image,
+    add_gaussian_noise,
+    text_dropout,
 )
+from .remote_memory import RemoteMemory
+from .distributed_memory import DistributedMemory
+from .memory_service import MemoryService, serve
