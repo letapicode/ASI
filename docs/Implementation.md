@@ -360,6 +360,28 @@ To reproduce the toy run step by step:
 - `src/eval_harness.py` gathers benchmark metrics from each module and compares them with the targets in `docs/Plan.md`.
 - Running `python -m src.eval_harness` prints a pass/fail table for the whole project.
 
+Expected metrics currently tracked:
+
+- **S‑1 MoE routing:** verifies that the `HashRouter` keeps the load‑balance
+  standard deviation below `0.03`.
+- **S‑2 FlashAttention‑3:** checks whether the optimised kernel is available via
+  the `_HAS_FLASH3` flag.
+- **S‑3 Breakpoint model:** fits a toy dataset and reports the mean relative
+  error which must be under `10%`.
+- **C‑3 Hyena filter:** back-propagates through a short sequence and asserts the
+  filter gradient norm stays below `2`.
+- **C‑5 Top‑k sparse attention:** confirms that using `k_top = seq_len` matches
+  full attention within `1e-5` absolute error.
+
+These checks are lightweight proxies for the success criteria listed in
+`docs/Plan.md`. Run:
+
+```bash
+python -m src.eval_harness
+```
+
+to print the Markdown table summarising all metrics.
+
 ## L-5 Formal Verification Harness
 
 - `src/formal_verifier.py` provides a small property checker that loads model snapshots and symbolically executes critical routines.
