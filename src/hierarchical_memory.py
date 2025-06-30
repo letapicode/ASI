@@ -3,13 +3,10 @@ import torch
 from pathlib import Path
 from typing import Iterable, Any, Tuple, List
 
-try:
-    import grpc  # type: ignore
-    from concurrent import futures
-    from . import memory_pb2, memory_pb2_grpc
-    _HAS_GRPC = True
-except Exception:  # pragma: no cover - optional dependency
-    _HAS_GRPC = False
+from concurrent import futures
+import grpc
+
+from . import memory_pb2, memory_pb2_grpc
 
 from .streaming_compression import StreamingCompressor
 from .vector_store import VectorStore, FaissVectorStore
@@ -40,6 +37,46 @@ class HierarchicalMemory:
     def __len__(self) -> int:
         """Return the number of stored vectors."""
         return len(self.store)
+
+    # gRPC server helpers -------------------------------------------------
+    def start_server(self, host: str = "0.0.0.0", port: int = 50051) -> grpc.Server:
+        """Expose this memory instance over gRPC."""
+
+        class Servicer(memory_pb2_grpc.MemoryServiceServicer):
+            def __init__(self, mem: "HierarchicalMemory") -> None:
+                self.mem = mem
+
+            def Push(self, request, context):  # noqa: N802
+                vec = np.array(request.vectors, dtype=np.float32)
+                if vec.size:
+                    vec = vec.reshape(-1, request.dim)
+                    metas = list(request.metadata) if request.metadata else None
+                    self.mem.store.add(vec, metas)
+                return memory_pb2.PushReply(ok=True)
+
+            def Query(self, request, context):  # noqa: N802
+                q = np.array(request.query, dtype=np.float32)
+                if q.size:
+                    q = q.reshape(request.dim)
+                comps, meta = self.mem.store.search(q, request.k)
+                return memory_pb2.QueryReply(
+                    vectors=comps.ravel().tolist(),
+                    metadata=[str(m) for m in meta],
+                    dim=comps.shape[1],
+                )
+
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
+        memory_pb2_grpc.add_MemoryServiceServicer_to_server(Servicer(self), server)
+        server.add_insecure_port(f"{host}:{port}")
+        server.start()
+        self._grpc_server = server
+        return server
+
+    def stop_server(self) -> None:
+        """Stop the gRPC server if running."""
+        srv = getattr(self, "_grpc_server", None)
+        if srv:
+            srv.stop(0)
 
     def add(self, x: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:
         """Compress and store embeddings with optional metadata."""
@@ -128,6 +165,44 @@ class HierarchicalMemory:
         decoded = self.compressor.decoder(comp_t)
         return decoded.to(query.device), meta
 
+    # Remote helpers -------------------------------------------------------
+    def push_remote(
+        self,
+        x: torch.Tensor,
+        metadata: Iterable[Any] | None = None,
+        address: str = "localhost:50051",
+    ) -> None:
+        """Send compressed vectors to a remote memory service."""
+        self.compressor.add(x)
+        comp = self.compressor.encoder(x).detach().cpu().numpy()
+        stub = memory_pb2_grpc.MemoryServiceStub(grpc.insecure_channel(address))
+        req = memory_pb2.PushRequest(
+            vectors=comp.ravel().tolist(),
+            metadata=[str(m) for m in metadata] if metadata else [],
+            dim=comp.shape[1],
+        )
+        stub.Push(req)
+
+    def query_remote(
+        self,
+        query: torch.Tensor,
+        k: int = 5,
+        address: str = "localhost:50051",
+    ) -> Tuple[torch.Tensor, List[str]]:
+        """Retrieve vectors from a remote memory service."""
+        q = self.compressor.encoder(query).detach().cpu().numpy()
+        if q.ndim == 2:
+            q = q[0]
+        stub = memory_pb2_grpc.MemoryServiceStub(grpc.insecure_channel(address))
+        resp = stub.Query(memory_pb2.QueryRequest(query=q.tolist(), k=k, dim=q.shape[0]))
+        vecs = np.array(resp.vectors, dtype=np.float32)
+        if vecs.size == 0:
+            return torch.empty(0, query.size(-1), device=query.device), list(resp.metadata)
+        vecs = vecs.reshape(-1, resp.dim)
+        comp_t = torch.from_numpy(vecs)
+        decoded = self.compressor.decoder(comp_t)
+        return decoded.to(query.device), list(resp.metadata)
+
     def save(self, path: str | Path) -> None:
         """Persist compressor state and vector store to ``path``."""
         if isinstance(self.store, AsyncFaissVectorStore):
@@ -209,82 +284,28 @@ class HierarchicalMemory:
         return mem
 
 
-if _HAS_GRPC:
-    class MemoryServer(memory_pb2_grpc.MemoryServiceServicer):
-        """gRPC server exposing a ``HierarchicalMemory`` backend."""
 
-        def __init__(self, memory: HierarchicalMemory, address: str = "localhost:50051", max_workers: int = 4) -> None:
-            self.memory = memory
-            self.address = address
-            self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
-            memory_pb2_grpc.add_MemoryServiceServicer_to_server(self, self.server)
-            self.server.add_insecure_port(address)
-
-        def Push(self, request: memory_pb2.PushRequest, context) -> memory_pb2.PushReply:  # noqa: N802
-            vec = torch.tensor(request.vector).reshape(1, -1)
-            meta = request.metadata if request.metadata else None
-            self.memory.add(vec, metadata=[meta])
-            return memory_pb2.PushReply(ok=True)
-
-        def Query(self, request: memory_pb2.QueryRequest, context) -> memory_pb2.QueryReply:  # noqa: N802
-            q = torch.tensor(request.vector).reshape(1, -1)
-            out, meta = self.memory.search(q, k=int(request.k))
-            flat = out.detach().cpu().view(-1).tolist()
-            meta = [str(m) for m in meta]
-            return memory_pb2.QueryReply(vectors=flat, metadata=meta)
-
-        def start(self) -> None:
-            """Start serving requests."""
-            self.server.start()
-
-        def stop(self, grace: float = 0) -> None:
-            """Stop the server."""
-            self.server.stop(grace)
-
-
-def push_remote(address: str, vector: torch.Tensor, metadata: Any | None = None, timeout: float = 5.0) -> bool:
-    """Send ``vector`` to a remote :class:`MemoryServer`."""
-    if not _HAS_GRPC:
-        raise ImportError("grpcio is required for remote memory")
-    with grpc.insecure_channel(address) as channel:
-        stub = memory_pb2_grpc.MemoryServiceStub(channel)
-        req = memory_pb2.PushRequest(vector=vector.detach().cpu().view(-1).tolist(), metadata="" if metadata is None else str(metadata))
-        reply = stub.Push(req, timeout=timeout)
-        return reply.ok
-
-
-def query_remote(address: str, vector: torch.Tensor, k: int = 5, timeout: float = 5.0) -> Tuple[torch.Tensor, List[str]]:
-    """Query vectors from a remote :class:`MemoryServer`."""
-    if not _HAS_GRPC:
-        raise ImportError("grpcio is required for remote memory")
-    with grpc.insecure_channel(address) as channel:
-        stub = memory_pb2_grpc.MemoryServiceStub(channel)
-        req = memory_pb2.QueryRequest(vector=vector.detach().cpu().view(-1).tolist(), k=k)
-        reply = stub.Query(req, timeout=timeout)
-        vec = torch.tensor(reply.vectors).reshape(-1, vector.size(-1))
-        return vec, list(reply.metadata)
-
-@classmethod
-async def load_async(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
-    """Asynchronously load memory from ``save_async()`` output."""
-    path = Path(path)
-    state = torch.load(path / "compressor.pt", map_location="cpu")
-    mem = cls(
-        dim=int(state["dim"]),
-        compressed_dim=int(state["compressed_dim"]),
-        capacity=int(state["capacity"]),
-        use_async=use_async,
-    )
-    mem.compressor.encoder.load_state_dict(state["encoder"])
-    mem.compressor.decoder.load_state_dict(state["decoder"])
-    mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
-    mem.compressor.buffer.count = int(state["count"])
-    store_dir = path / "store"
-    if store_dir.exists():
-        if use_async:
-            mem.store = await AsyncFaissVectorStore.load_async(store_dir)
+    @classmethod
+    async def load_async(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
+        """Asynchronously load memory from ``save_async()`` output."""
+        path = Path(path)
+        state = torch.load(path / "compressor.pt", map_location="cpu")
+        mem = cls(
+            dim=int(state["dim"]),
+            compressed_dim=int(state["compressed_dim"]),
+            capacity=int(state["capacity"]),
+            use_async=use_async,
+        )
+        mem.compressor.encoder.load_state_dict(state["encoder"])
+        mem.compressor.decoder.load_state_dict(state["decoder"])
+        mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
+        mem.compressor.buffer.count = int(state["count"])
+        store_dir = path / "store"
+        if store_dir.exists():
+            if use_async:
+                mem.store = await AsyncFaissVectorStore.load_async(store_dir)
+            else:
+                mem.store = FaissVectorStore.load(store_dir)
         else:
-            mem.store = FaissVectorStore.load(store_dir)
-    else:
-        mem.store = VectorStore.load(path / "store.npz")
-    return mem
+            mem.store = VectorStore.load(path / "store.npz")
+        return mem

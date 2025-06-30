@@ -1,253 +1,117 @@
-"""Goal-oriented evaluation harness for Plan.md modules."""
-
+"""Goal-oriented evaluation harness (A-10)."""
 from __future__ import annotations
 
-import argparse
-import importlib
-import re
-from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Tuple
+from dataclasses import dataclass
+from typing import Callable, Dict
 
 import numpy as np
 import torch
 
-
-# ---------------------------------------------------------------------------
-# Module discovery
-# ---------------------------------------------------------------------------
-
-def parse_modules(plan_path: str | Path = "docs/Plan.md") -> list[str]:
-    """Return unique module names mentioned in ``plan_path``."""
-    text = Path(plan_path).read_text(encoding="utf-8")
-    mods = re.findall(r"`src/([\w_]+)\.py`", text)
-    return sorted(set(mods))
+from .moe_router import HashRouter
+from .hyena_filter import HyenaFilter
+from .flash_attention3 import _HAS_FLASH3
+from .scaling_breakpoint import fit_breakpoint
+from .topk_sparse_attention import topk_sparse_attention
 
 
-# ---------------------------------------------------------------------------
-# Individual module evaluators
-# ---------------------------------------------------------------------------
-
-def _eval_import_only(module: str) -> Tuple[bool, str]:
-    importlib.import_module(f"asi.{module}")
-    return True, "imported"
+@dataclass
+class EvalResult:
+    value: float | bool
+    target: str
+    passed: bool
 
 
-def _eval_moe_router() -> Tuple[bool, str]:
-    from asi import moe_router
-
-    router = moe_router.HashRouter(num_experts=8)
-    x = torch.randn(2, 16, 4)
+def _metric_moe() -> EvalResult:
+    router = HashRouter(num_experts=16)
+    x = torch.randn(2, 64, 32)
     assign = router(x)
     std = router.load_balance_std(assign)
-    return std < 0.5, f"load_balance_std={std:.3f}"
+    passed = std <= 0.03
+    return EvalResult(float(std), "load-balance std <=0.03", passed)
 
 
-def _eval_flash_attention3() -> Tuple[bool, str]:
-    from asi import flash_attention3 as fa3
-
-    q = torch.randn(1, 4, 8)
-    k = torch.randn(1, 4, 8)
-    v = torch.randn(1, 4, 8)
-    out = fa3.flash_attention_3(q, k, v)
-    return out.shape == q.shape, f"shape={tuple(out.shape)}"
+def _metric_flash3() -> EvalResult:
+    return EvalResult(bool(_HAS_FLASH3), "FlashAttention-3 available", bool(_HAS_FLASH3))
 
 
-def _eval_scaling_law() -> Tuple[bool, str]:
-    from asi.scaling_law import BreakpointScalingLaw
-
+def _metric_scaling() -> EvalResult:
     compute = np.logspace(0, 2, 8)
-    loss = 1.0 / np.sqrt(compute)
-    model = BreakpointScalingLaw()
-    model.fit(compute, loss)
-    pred = model.predict(compute)
-    err = float(np.abs(pred - loss).mean())
-    return err < 1e-3, f"err={err:.2e}"
+    break_compute = compute[4]
+    slope1, intercept1 = -0.5, 1.0
+    slope2, intercept2 = -0.3, 0.8
+    log_c = np.log10(compute)
+    loss = np.where(
+        compute <= break_compute,
+        intercept1 + slope1 * log_c,
+        intercept2 + slope2 * log_c,
+    )
+    loss = 10 ** loss
+    model = fit_breakpoint(compute, loss)
+    preds = model.predict(compute)
+    rel_err = float(np.mean(np.abs(preds - loss) / loss))
+    passed = rel_err < 0.1
+    return EvalResult(rel_err, "fit error <10%", passed)
 
 
-def _eval_scaling_breakpoint() -> Tuple[bool, str]:
-    from asi.scaling_breakpoint import fit_breakpoint
-
-    x = np.array([1, 10, 100, 1000], dtype=float)
-    y = np.log10(x) * -0.5 + 2.0
-    model = fit_breakpoint(x, y)
-    pred = model.predict(x)
-    err = float(np.abs(pred - y).mean())
-    return err < 1e-3, f"err={err:.2e}"
-
-
-def _eval_retnet_retention() -> Tuple[bool, str]:
-    from asi.retnet_retention import RetNetRetention
-
-    q = torch.randn(1, 4, 8)
-    k = torch.randn(1, 4, 8)
-    v = torch.randn(1, 4, 8)
-    mod = RetNetRetention(num_heads=2)
-    out = mod(q, k, v)
-    return out.shape == q.shape, f"shape={tuple(out.shape)}"
+def _metric_hyena() -> EvalResult:
+    module = HyenaFilter(filter_length=4)
+    x = torch.randn(2, 32, 3, requires_grad=True)
+    out = module(x).sum()
+    out.backward()
+    norm = module.filter.grad.norm().item()
+    passed = norm < 2.0
+    return EvalResult(norm, "grad norm <2", passed)
 
 
-def _eval_mamba_block() -> Tuple[bool, str]:
-    from asi.mamba_block import MambaBlock
-
-    block = MambaBlock(dim=8)
-    x = torch.randn(1, 3, 8)
-    out = block(x)
-    return out.shape == x.shape, f"shape={tuple(out.shape)}"
-
-
-def _eval_hyena_filter() -> Tuple[bool, str]:
-    from asi.hyena_filter import HyenaFilter
-
-    filt = HyenaFilter(filter_length=4)
-    x = torch.randn(1, 6, 8)
-    out = filt(x)
-    return out.shape == x.shape, f"shape={tuple(out.shape)}"
+def _metric_topk() -> EvalResult:
+    q = torch.randn(1, 4, 4)
+    k = torch.randn(1, 6, 4)
+    v = torch.randn(1, 6, 4)
+    full_scores = torch.matmul(q, k.transpose(-1, -2)) / (4 ** 0.5)
+    full_attn = torch.softmax(full_scores, dim=-1)
+    full = torch.matmul(full_attn, v)
+    out = topk_sparse_attention(q, k, v, k_top=k.size(1))
+    diff = torch.abs(full - out).max().item()
+    passed = diff < 1e-5
+    return EvalResult(diff, "top-k matches full <1e-5", passed)
 
 
-def _eval_streaming_compression() -> Tuple[bool, str]:
-    from asi.streaming_compression import StreamingCompressor
-
-    comp = StreamingCompressor(dim=8, compressed_dim=4, capacity=10)
-    x = torch.randn(5, 8)
-    comp.add(x)
-    c = comp.compressed()
-    return c.shape[1] == 4, f"compressed_dim={c.shape[1]}"
-
-
-def _eval_vector_store() -> Tuple[bool, str]:
-    from asi.vector_store import VectorStore
-
-    store = VectorStore(dim=4)
-    vec = np.ones((2, 4), dtype=np.float32)
-    store.add(vec)
-    out, _ = store.search(vec[0])
-    return out.shape == (2, 4), f"retrieved={out.shape[0]}"
-
-
-def _eval_hierarchical_memory() -> Tuple[bool, str]:
-    from asi.hierarchical_memory import HierarchicalMemory
-
-    mem = HierarchicalMemory(dim=8, compressed_dim=4, capacity=10)
-    x = torch.randn(2, 8)
-    mem.add(x)
-    retrieved, _ = mem.search(x[0], k=1)
-    return retrieved.shape[-1] == 8, f"size={len(mem)}"
-
-
-def _eval_link_slot_attention() -> Tuple[bool, str]:
-    from asi.hierarchical_memory import HierarchicalMemory
-    from asi.link_slot_attention import LinkSlotAttention
-
-    mem = HierarchicalMemory(dim=8, compressed_dim=4, capacity=5)
-    lsa = LinkSlotAttention(mem, dim=8, k_top=1)
-    x = torch.randn(1, 3, 8)
-    out = lsa(x)
-    return out.shape == x.shape, f"shape={tuple(out.shape)}"
-
-
-def _eval_megabyte_patching() -> Tuple[bool, str]:
-    from asi.megabyte_patching import MegaBytePatching
-
-    patcher = MegaBytePatching(patch_size=4, dim=8)
-    x = torch.randint(0, 256, (1, 5))
-    out = patcher(x)
-    return out.size(-1) == 8, f"patches={out.size(1)}"
-
-
-def _eval_topk_sparse_attention() -> Tuple[bool, str]:
-    from asi.topk_sparse_attention import topk_sparse_attention
-
-    q = torch.randn(1, 2, 4)
-    k = torch.randn(1, 3, 4)
-    v = torch.randn(1, 3, 4)
-    out = topk_sparse_attention(q, k, v, k_top=2)
-    return out.shape == q.shape, f"shape={tuple(out.shape)}"
-
-
-def _eval_paper_to_code() -> Tuple[bool, str]:
-    from asi.paper_to_code import transpile
-
-    latex = "\\Function{add}{a,b}\n\\Return{a+b}"
-    py = transpile(latex)
-    return "return" in py, "transpiled"
-
-
-def _eval_autobench() -> Tuple[bool, str]:
-    from asi.autobench import run_autobench
-    import tempfile
-    from pathlib import Path
-
-    with tempfile.TemporaryDirectory() as tmp:
-        p = Path(tmp) / "test_x.py"
-        p.write_text(
-            "import unittest\n\nclass T(unittest.TestCase):\n    def test_ok(self):\n        self.assertTrue(True)\n\nif __name__=='__main__':\n    unittest.main()\n"
-        )
-        results = run_autobench(tmp)
-    ok = list(results.values())[0].passed
-    return ok, "sandboxed"
-
-
-EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
-    "moe_router": _eval_moe_router,
-    "flash_attention3": _eval_flash_attention3,
-    "scaling_law": _eval_scaling_law,
-    "scaling_breakpoint": _eval_scaling_breakpoint,
-    "retnet_retention": _eval_retnet_retention,
-    "mamba_block": _eval_mamba_block,
-    "hyena_filter": _eval_hyena_filter,
-    "streaming_compression": _eval_streaming_compression,
-    "vector_store": _eval_vector_store,
-    "hierarchical_memory": _eval_hierarchical_memory,
-    "link_slot_attention": _eval_link_slot_attention,
-    "megabyte_patching": _eval_megabyte_patching,
-    "topk_sparse_attention": _eval_topk_sparse_attention,
-    "paper_to_code": _eval_paper_to_code,
-    "autobench": _eval_autobench,
+_METRICS: Dict[str, Callable[[], EvalResult]] = {
+    "S-1": _metric_moe,
+    "S-2": _metric_flash3,
+    "S-3": _metric_scaling,
+    "C-3": _metric_hyena,
+    "C-5": _metric_topk,
 }
 
 
-# ---------------------------------------------------------------------------
-# Runner utilities
-# ---------------------------------------------------------------------------
-
-def evaluate_modules(modules: Iterable[str]) -> Dict[str, Tuple[bool, str]]:
-    """Evaluate ``modules`` and return their status."""
-    results: Dict[str, Tuple[bool, str]] = {}
-    for mod in modules:
-        fn = EVALUATORS.get(mod, lambda: _eval_import_only(mod))
+def collect_metrics() -> Dict[str, EvalResult]:
+    results: Dict[str, EvalResult] = {}
+    for key, fn in _METRICS.items():
         try:
-            passed, info = fn()
-        except Exception as exc:  # pragma: no cover - diagnostic path
-            passed, info = False, f"error: {exc}"
-        results[mod] = (passed, info)
+            results[key] = fn()
+        except Exception as exc:  # pragma: no cover
+            results[key] = EvalResult(float("nan"), f"error: {exc}", False)
     return results
 
 
-def format_results(results: Dict[str, Tuple[bool, str]]) -> str:
-    total = len(results)
-    passed = sum(1 for ok, _ in results.values() if ok)
-    lines = [f"Passed {passed}/{total} modules"]
-    for mod, (ok, info) in sorted(results.items()):
-        status = "PASS" if ok else "FAIL"
-        lines.append(f"{mod}: {status} - {info}")
+def format_table(results: Dict[str, EvalResult]) -> str:
+    lines = ["ID | Metric | Target | Status", "---|-------|--------|------"]
+    for key in sorted(results):
+        res = results[key]
+        status = "PASS" if res.passed else "FAIL"
+        if isinstance(res.value, float):
+            val_str = f"{res.value:.4f}"
+        else:
+            val_str = str(res.value)
+        lines.append(f"{key} | {val_str} | {res.target} | {status}")
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
-def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Evaluate project modules")
-    parser.add_argument(
-        "--plan", default="docs/Plan.md", help="Path to Plan.md listing modules"
-    )
-    args = parser.parse_args(argv)
-
-    mods = parse_modules(args.plan)
-    results = evaluate_modules(mods)
-    print(format_results(results))
+def main() -> None:
+    res = collect_metrics()
+    print(format_table(res))
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     main()

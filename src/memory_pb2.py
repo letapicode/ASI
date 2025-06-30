@@ -15,7 +15,7 @@ _runtime_version.ValidateProtobufRuntimeVersion(
     31,
     0,
     '',
-    'memory.proto'
+    'memory.proto',
 )
 # @@protoc_insertion_point(imports)
 
@@ -24,21 +24,21 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cmemory.proto\x12\x03\x61si\"/\n\x0bPushRequest\x12\x0e\n\x06vector\x18\x01 \x03(\x02\x12\x10\n\x08metadata\x18\x02 \x01(\t\"\x17\n\tPushReply\x12\n\n\x02ok\x18\x01 \x01(\x08\")\n\x0cQueryRequest\x12\x0e\n\x06vector\x18\x01 \x03(\x02\x12\t\n\x01k\x18\x02 \x01(\x05\"/\n\nQueryReply\x12\x0f\n\x07vectors\x18\x01 \x03(\x02\x12\x10\n\x08metadata\x18\x02 \x03(\t2f\n\rMemoryService\x12(\n\x04Push\x12\x10.asi.PushRequest\x1a\x0e.asi.PushReply\x12+\n\x05Query\x12\x11.asi.QueryRequest\x1a\x0f.asi.QueryReplyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cmemory.proto\x12\x03asi\"=\n\x0bPushRequest\x12\x0f\n\x07vectors\x18\x01 \x03(\x02\x12\x10\n\x08metadata\x18\x02 \x03(\t\x12\x0b\n\x03dim\x18\x03 \x01(\x05\"\x17\n\tPushReply\x12\n\n\x02ok\x18\x01 \x01(\x08\"5\n\x0cQueryRequest\x12\r\n\x05query\x18\x01 \x03(\x02\x12\t\n\x01k\x18\x02 \x01(\x05\x12\x0b\n\x03dim\x18\x03 \x01(\x05\"<\n\nQueryReply\x12\x0f\n\x07vectors\x18\x01 \x03(\x02\x12\x10\n\x08metadata\x18\x02 \x03(\t\x12\x0b\n\x03dim\x18\x03 \x01(\x05\x32f\n\rMemoryService\x12(\n\x04Push\x12\x10.asi.PushRequest\x1a\x0e.asi.PushReply\x12+\n\x05Query\x12\x11.asi.QueryRequest\x1a\x0f.asi.QueryReplyb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'memory_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_PUSHREQUEST']._serialized_start=21
-  _globals['_PUSHREQUEST']._serialized_end=68
-  _globals['_PUSHREPLY']._serialized_start=70
-  _globals['_PUSHREPLY']._serialized_end=93
-  _globals['_QUERYREQUEST']._serialized_start=95
-  _globals['_QUERYREQUEST']._serialized_end=136
-  _globals['_QUERYREPLY']._serialized_start=138
-  _globals['_QUERYREPLY']._serialized_end=185
-  _globals['_MEMORYSERVICE']._serialized_start=187
-  _globals['_MEMORYSERVICE']._serialized_end=289
+  _globals['_PUSHREQUEST']._serialized_start=26
+  _globals['_PUSHREQUEST']._serialized_end=87
+  _globals['_PUSHREPLY']._serialized_start=89
+  _globals['_PUSHREPLY']._serialized_end=112
+  _globals['_QUERYREQUEST']._serialized_start=114
+  _globals['_QUERYREQUEST']._serialized_end=167
+  _globals['_QUERYREPLY']._serialized_start=169
+  _globals['_QUERYREPLY']._serialized_end=229
+  _globals['_MEMORYSERVICE']._serialized_start=231
+  _globals['_MEMORYSERVICE']._serialized_end=333
 # @@protoc_insertion_point(module_scope)

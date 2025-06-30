@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+import argparse
 from typing import Callable
 
 import torch
@@ -14,28 +14,42 @@ from .robot_skill_transfer import (
 
 
 
-def self_play_skill_loop(
+def run_loop(
+    cycles: int,
     env: SimpleEnv,
     policy: Callable[[torch.Tensor], torch.Tensor],
-    skill_cfg: SkillTransferConfig,
-    real_dataset: VideoPolicyDataset,
-    cycles: int = 3,
-    steps: int = 20,
-) -> list[list[float]]:
-    """Run alternating self-play and skill transfer cycles.
-
-    Each cycle runs ``rollout_env`` to generate a reward trajectory then
-    fine-tunes the policy using ``transfer_skills`` on ``real_dataset``.
-    The reward trajectory for each cycle is logged and returned.
-    """
-
-    reward_logs: list[list[float]] = []
+    dataset: VideoPolicyDataset,
+    cfg: SkillTransferConfig,
+) -> None:
+    """Alternate self-play rollouts with skill transfer fine-tuning."""
     for i in range(cycles):
-        _, rewards = rollout_env(env, policy, steps=steps)
-        logging.info("cycle %d rewards: %s", i, rewards)
-        reward_logs.append(rewards)
-        transfer_skills(skill_cfg, real_dataset)
-    return reward_logs
+        _, rewards = rollout_env(env, policy)
+        avg_reward = sum(rewards) / len(rewards)
+        model = transfer_skills(cfg, dataset)
+        with torch.no_grad():
+            frames = torch.stack([f for f, _ in dataset])
+            actions = torch.tensor([a for _, a in dataset])
+            preds = model(frames).argmax(dim=1)
+            accuracy = (preds == actions).float().mean().item()
+        print(f"Cycle {i+1}: reward {avg_reward:.3f}, skill acc {accuracy:.3f}")
 
 
-__all__ = ["self_play_skill_loop"]
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Run self-play skill loop")
+    parser.add_argument("--cycles", type=int, default=3)
+    args = parser.parse_args(argv)
+
+    env = SimpleEnv(state_dim=4)
+
+    def policy(obs: torch.Tensor) -> torch.Tensor:
+        return torch.randn_like(obs) * 0.1
+
+    frames = torch.randn(8, 3, 32, 32)
+    actions = torch.randint(0, 5, (8,))
+    dataset = VideoPolicyDataset(frames, actions)
+    cfg = SkillTransferConfig(img_channels=3, action_dim=5, epochs=1)
+    run_loop(args.cycles, env, policy, dataset, cfg)
+
+
+if __name__ == "__main__":
+    main()

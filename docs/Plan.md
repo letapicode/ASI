@@ -123,7 +123,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/hierarchical_memory.py` ties compression and retrieval together for
   hierarchical context. With a database path it hooks into FAISS so far-past
   tokens reload from disk automatically. Search results remain on the
-  same device as the query.
+  same device as the query. The module now exposes `start_server()` so nodes can
+  share a vector store over gRPC with `push_remote()` and `query_remote()`.
 - `src/link_slot_attention.py` implements retrieval-augmented attention that
   fetches top-k vectors from the hierarchical memory for each token.
 - `src/megabyte_patching.py` adds a hierarchical byte patcher for **C-4**.

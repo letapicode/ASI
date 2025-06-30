@@ -7,8 +7,9 @@ service MemoryService {
 }
 
 message PushRequest {
-  repeated float vector = 1;
-  string metadata = 2;
+  repeated float vectors = 1;
+  repeated string metadata = 2;
+  int32 dim = 3;
 }
 
 message PushReply {
@@ -16,11 +17,13 @@ message PushReply {
 }
 
 message QueryRequest {
-  repeated float vector = 1;
+  repeated float query = 1;
   int32 k = 2;
+  int32 dim = 3;
 }
 
 message QueryReply {
   repeated float vectors = 1;
   repeated string metadata = 2;
+  int32 dim = 3;
 }
