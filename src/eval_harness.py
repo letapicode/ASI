@@ -223,6 +223,25 @@ def evaluate_modules(modules: Iterable[str]) -> Dict[str, Tuple[bool, str]]:
     return results
 
 
+async def evaluate_modules_async(modules: Iterable[str]) -> Dict[str, Tuple[bool, str]]:
+    """Asynchronously evaluate ``modules`` concurrently."""
+    loop = asyncio.get_running_loop()
+    tasks = []
+    for mod in modules:
+        fn = EVALUATORS.get(mod, lambda: _eval_import_only(mod))
+
+        async def run_fn(func: Callable[[], Tuple[bool, str]] = fn) -> Tuple[bool, str]:
+            try:
+                return await loop.run_in_executor(None, func)
+            except Exception as exc:  # pragma: no cover - diagnostic path
+                return False, f"error: {exc}"
+
+        tasks.append(run_fn())
+
+    results_list = await asyncio.gather(*tasks)
+    return {mod: res for mod, res in zip(modules, results_list)}
+
+
 def format_results(results: Dict[str, Tuple[bool, str]]) -> str:
     total = len(results)
     passed = sum(1 for ok, _ in results.values() if ok)
@@ -242,10 +261,18 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--plan", default="docs/Plan.md", help="Path to Plan.md listing modules"
     )
+    parser.add_argument(
+        "--concurrent",
+        action="store_true",
+        help="Run evaluations concurrently using asyncio",
+    )
     args = parser.parse_args(argv)
 
     mods = parse_modules(args.plan)
-    results = evaluate_modules(mods)
+    if args.concurrent:
+        results = asyncio.run(evaluate_modules_async(mods))
+    else:
+        results = evaluate_modules(mods)
     print(format_results(results))
 
 

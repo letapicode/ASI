@@ -10,7 +10,14 @@ from .quantum_hpo import (
 from .collective_constitution import CollectiveConstitution
 from .deliberative_alignment import DeliberativeAligner
 from .streaming_compression import ReservoirBuffer, StreamingCompressor
-from .hierarchical_memory import HierarchicalMemory
+from .hierarchical_memory import (
+    HierarchicalMemory,
+    MemoryServer,
+    push_remote,
+    query_remote,
+    push_remote_async,
+    query_remote_async,
+)
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .iter_align import IterativeAligner

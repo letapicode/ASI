@@ -155,7 +155,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/self_play_env.py` and `src/embodied_calibration.py` offer a sandbox for
   self-play and a sensor calibration routine.
 - `src/formal_verifier.py` checks model snapshots against custom invariants.
-- `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard.
+- `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard. The CLI now supports a `--concurrent` flag to run evaluations asynchronously via `evaluate_modules_async()`.
 
 ### Recommended next steps
 

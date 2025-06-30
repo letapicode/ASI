@@ -3,9 +3,16 @@ import unittest
 import asyncio
 import torch
 
-from asi.hierarchical_memory import HierarchicalMemory
+from asi.hierarchical_memory import (
+    HierarchicalMemory,
+    MemoryServer,
+    push_remote,
+    query_remote,
+    push_remote_async,
+    query_remote_async,
+)
 try:
-    from asi.hierarchical_memory import MemoryServer, push_remote, query_remote
+    import grpc  # noqa: F401
     _HAS_GRPC = True
 except Exception:
     _HAS_GRPC = False
@@ -143,6 +150,26 @@ class TestHierarchicalMemory(unittest.TestCase):
         self.assertEqual(vec.shape, (1, 4))
         self.assertEqual(meta[0], "r")
         server.stop(0)
+
+    def test_grpc_server_async(self):
+        if not _HAS_GRPC:
+            self.skipTest("grpcio not available")
+
+        torch.manual_seed(0)
+
+        async def run() -> None:
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+            server = MemoryServer(mem, address="localhost:50071", max_workers=1)
+            server.start()
+            data = torch.randn(1, 4)
+            ok = await push_remote_async("localhost:50071", data[0], metadata="r")
+            self.assertTrue(ok)
+            vec, meta = await query_remote_async("localhost:50071", data[0], k=1)
+            self.assertEqual(vec.shape, (1, 4))
+            self.assertEqual(meta[0], "r")
+            server.stop(0)
+
+        asyncio.run(run())
 
 
 if __name__ == "__main__":
