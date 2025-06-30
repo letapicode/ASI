@@ -18,6 +18,8 @@ from .hierarchical_memory import (
     push_remote_async,
     query_remote_async,
 )
+from .distributed_memory import DistributedMemory
+from .memory_service import serve
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .iter_align import IterativeAligner

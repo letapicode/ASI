@@ -7,6 +7,8 @@ from torch import nn
 
 from asi.rwkv_loop import RWKVLoop
 from asi.hierarchical_memory import HierarchicalMemory
+from asi.distributed_memory import DistributedMemory
+from asi.memory_service import serve
 from asi.link_slot_attention import LinkSlotAttention
 from asi.chunkwise_retrainer import ChunkWiseRetrainer
 
@@ -77,11 +79,18 @@ def save_checkpoint(model: nn.Module, optim: torch.optim.Optimizer, path: str, s
 class InfiniteContextModel(nn.Module):
     """Toy language model combining recurrence and retrieval."""
 
-    def __init__(self, vocab_size: int = 100, dim: int = 16) -> None:
+    def __init__(
+        self, vocab_size: int = 100, dim: int = 16, remotes: list[str] | None = None
+    ) -> None:
         super().__init__()
         self.embed = nn.Embedding(vocab_size, dim)
         self.loop = RWKVLoop(dim)
-        self.memory = HierarchicalMemory(dim=dim, compressed_dim=dim // 2, capacity=50)
+        if remotes:
+            self.memory = DistributedMemory(
+                dim=dim, compressed_dim=dim // 2, capacity=50, remotes=remotes
+            )
+        else:
+            self.memory = HierarchicalMemory(dim=dim, compressed_dim=dim // 2, capacity=50)
         self.link = LinkSlotAttention(self.memory, dim=dim, k_top=2)
         self.out = nn.Linear(dim, vocab_size)
 
@@ -101,14 +110,28 @@ def main() -> None:
         default="checkpoints",
         help="Directory to store checkpoints",
     )
+    parser.add_argument(
+        "--remote-memory",
+        nargs="*",
+        help="Addresses of remote memory servers",
+    )
+    parser.add_argument(
+        "--serve-memory",
+        type=str,
+        help="Expose local memory over gRPC at this address",
+    )
     args = parser.parse_args()
 
     seq, vocab = load_dataset()
 
     torch.manual_seed(0)
-    model = InfiniteContextModel(vocab_size=vocab, dim=32)
+    model = InfiniteContextModel(vocab_size=vocab, dim=32, remotes=args.remote_memory)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     trainer = ChunkWiseRetrainer(model, optimizer, chunk_size=64)
+
+    server = None
+    if args.serve_memory:
+        server = serve(model.memory, args.serve_memory)
 
     for epoch in range(1, args.epochs + 1):
         loss = trainer.train([seq], epochs=1)
@@ -118,6 +141,9 @@ def main() -> None:
             f"eval ppl {ppl:.2f} | memory {mem} | hit rate {hit:.2f}"
         )
         save_checkpoint(model, optimizer, args.checkpoint_dir, epoch)
+
+    if server is not None:
+        server.stop(0)
 
 
 if __name__ == "__main__":
