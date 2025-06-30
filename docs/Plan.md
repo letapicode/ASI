@@ -31,7 +31,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-7** | **Hierarchical Retrieval Memory**         | Cache long-tail tokens in a disk-backed vector DB                     | Retrieval hit rate ≥85 % at 1 M tokens |
 | **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service | Throughput scales to 4+ nodes with <1.2× single-node latency |
 
-**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.
+**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM. Distributed retrieval via gRPC lets multiple nodes share one vector store, pushing capacity toward cluster-scale "infinite" context.
 
 ---
 

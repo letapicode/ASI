@@ -327,8 +327,18 @@ To reproduce the toy run step by step:
 
 ## C-8 Distributed Hierarchical Memory Backend
 
-- Planned extension of `src/hierarchical_memory.py` with an optional gRPC service.
-- The store will expose `push_remote()` and `query_remote()` so multiple nodes share one vector database.
+- `src/memory_service.py` exposes the retrieval memory over gRPC.
+- `DistributedMemory` replicates additions to remote nodes and merges search results.
+- `scripts/train_infinite_context.py` accepts `--serve-memory` to host the local
+  store and `--remote-memory` to query remote addresses.
+
+Example:
+
+```bash
+python scripts/train_infinite_context.py \
+  --serve-memory 0.0.0.0:50051 \
+  --remote-memory host2:50051 host3:50051
+```
 
 ## A-5 Multi-Modal World Model
 

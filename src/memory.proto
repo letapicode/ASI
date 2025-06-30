@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+message Vector {
+  repeated float values = 1;
+}
+
+message AddRequest {
+  repeated Vector vectors = 1;
+  repeated string metadata = 2;
+}
+
+message Empty {}
+
+message QueryRequest {
+  Vector query = 1;
+  int32 k = 2;
+}
+
+message QueryResult {
+  repeated Vector vectors = 1;
+  repeated string metadata = 2;
+}
+
+service MemoryService {
+  rpc Add(AddRequest) returns (Empty);
+  rpc Query(QueryRequest) returns (QueryResult);
+}
