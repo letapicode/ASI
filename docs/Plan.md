@@ -138,6 +138,18 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   See `docs/Implementation.md` and `docs/load_balance.md` for details.
 - `src/pull_request_monitor.py` now supports asynchronous GitHub queries using
   `aiohttp` for faster monitoring of open pull requests.
+- `src/lora_quant.py` provides 4-bit LoRA adapters and `apply_quant_lora()` to
+  inject them into existing models.
+- `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
+  with a contrastive training helper.
+- `src/multimodal_world_model.py` unifies these embeddings with actions for
+  world-model rollouts.
+- `src/world_model_rl.py` contains a tiny model-based RL loop and evaluation
+  helpers.
+- `src/robot_skill_transfer.py` maps demonstration frames to control commands.
+- `src/self_play_env.py` and `src/embodied_calibration.py` offer a sandbox for
+  self-play and a sensor calibration routine.
+- `src/formal_verifier.py` checks model snapshots against custom invariants.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
