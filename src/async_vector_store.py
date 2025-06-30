@@ -53,3 +53,11 @@ class AsyncFaissVectorStore(FaissVectorStore):
 
     def __exit__(self, exc_type, exc, tb) -> None:
         self.close()
+
+    async def __aenter__(self) -> "AsyncFaissVectorStore":
+        """Enter the async context manager."""
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        """Exit the async context manager and close resources."""
+        self.close()
