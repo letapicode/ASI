@@ -20,6 +20,7 @@ from .hierarchical_memory import (
 )
 from .distributed_memory import DistributedMemory
 from .memory_service import serve
+from .remote_memory import RemoteMemory
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .iter_align import IterativeAligner

@@ -29,7 +29,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-5** | **Top-k Sparse Attention for inference**        | Select k≈64 most-relevant keys each step                           | 20 %b/word latency cut at 1 M tokens; accuracy drop <0.5 pp ([arxiv.org][11])                                                |
 | **C-6** | **RWKV infinite-context training loop**         | Constant-memory recurrence with token-shift trick                  | Train 7 B RWKV on 4 M-token samples, VRAM ≤80 GB; effective context ≥2 M at inference ([wiki.rwkv.com][12], [arxiv.org][13]) |
 | **C-7** | **Hierarchical Retrieval Memory**         | Cache long-tail tokens in a disk-backed vector DB                     | Retrieval hit rate ≥85 % at 1 M tokens |
-| **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service (see `MemoryServer`) | Throughput scales to 4+ nodes with <1.2× single-node latency |
+| **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service (see `MemoryServer`, `RemoteMemory`) | Throughput scales to 4+ nodes with <1.2× single-node latency |
 
 **Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.
 
