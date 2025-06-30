@@ -34,7 +34,12 @@ class HierarchicalMemory:
         if isinstance(self.store, AsyncFaissVectorStore):
             import asyncio
 
-            asyncio.run(self.aadd(x, metadata))
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                asyncio.run(self.aadd(x, metadata))
+            else:
+                return loop.create_task(self.aadd(x, metadata))
         else:
             self.compressor.add(x)
             comp = self.compressor.encoder(x).detach().cpu().numpy()
@@ -45,7 +50,12 @@ class HierarchicalMemory:
         if isinstance(self.store, AsyncFaissVectorStore):
             import asyncio
 
-            asyncio.run(self.adelete(index, tag))
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                asyncio.run(self.adelete(index, tag))
+            else:
+                return loop.create_task(self.adelete(index, tag))
         else:
             self.store.delete(index=index, tag=tag)
 
@@ -73,7 +83,12 @@ class HierarchicalMemory:
         if isinstance(self.store, AsyncFaissVectorStore):
             import asyncio
 
-            return asyncio.run(self.asearch(query, k))
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                return asyncio.run(self.asearch(query, k))
+            else:
+                return loop.create_task(self.asearch(query, k))
         q = self.compressor.encoder(query).detach().cpu().numpy()
         if q.ndim == 2:
             q = q[0]
@@ -106,8 +121,12 @@ class HierarchicalMemory:
         if isinstance(self.store, AsyncFaissVectorStore):
             import asyncio
 
-            asyncio.run(self.save_async(path))
-            return
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                return asyncio.run(self.save_async(path))
+            else:
+                return loop.create_task(self.save_async(path))
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)
         comp_state = {
@@ -152,7 +171,12 @@ class HierarchicalMemory:
         if use_async:
             import asyncio
 
-            return asyncio.run(cls.load_async(path, use_async=True))
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                return asyncio.run(cls.load_async(path, use_async=True))
+            else:
+                return loop.create_task(cls.load_async(path, use_async=True))
         path = Path(path)
         state = torch.load(path / "compressor.pt", map_location="cpu")
         mem = cls(

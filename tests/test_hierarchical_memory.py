@@ -88,6 +88,40 @@ class TestHierarchicalMemory(unittest.TestCase):
             mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
             self.assertEqual(len(mem2.store), 2)
 
+    def test_sync_methods_inside_event_loop(self):
+        torch.manual_seed(0)
+
+        async def run():
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, use_async=True)
+            data = torch.randn(2, 4)
+
+            t = mem.add(data, metadata=["a", "b"])
+            if isinstance(t, asyncio.Task):
+                await t
+
+            t = mem.search(data[0], k=1)
+            if isinstance(t, asyncio.Task):
+                out, meta = await t
+            else:
+                out, meta = t
+            self.assertEqual(out.shape, (1, 4))
+            self.assertEqual(len(meta), 1)
+
+            t = mem.delete(tag="a")
+            if isinstance(t, asyncio.Task):
+                await t
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                t = mem.save(tmpdir)
+                if isinstance(t, asyncio.Task):
+                    await t
+                loaded = HierarchicalMemory.load(tmpdir, use_async=True)
+                if isinstance(loaded, asyncio.Task):
+                    loaded = await loaded
+                self.assertIsInstance(loaded, HierarchicalMemory)
+
+        asyncio.run(run())
+
 
 if __name__ == "__main__":
     unittest.main()
