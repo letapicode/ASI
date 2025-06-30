@@ -66,3 +66,4 @@ from .embodied_calibration import (
     calibrate,
 )
 from .lora_quant import LoRAQuantLinear, apply_quant_lora
+from .self_play_skill_loop import SelfPlaySkillLoopConfig, run_loop as run_self_play_skill_loop

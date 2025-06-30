@@ -16,4 +16,5 @@ packages = ["asi"]
 
 [project.scripts]
 meta-rl-refactor = "asi.meta_rl_refactor:main"
+self-play-loop = "asi.self_play_skill_loop:main"
 

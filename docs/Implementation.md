@@ -349,6 +349,8 @@ To reproduce the toy run step by step:
 
 - The orchestrator in `src/self_play_skill_loop.py` will alternate `self_play_env.rollout_env()` with `robot_skill_transfer.transfer_skills()`.
 - Each cycle logs rewards and fine-tunes policies on a small batch of real examples.
+- `run_loop()` returns the mean reward from each cycle and the final trained policy.
+- `main()` exposes a `self-play-loop` CLI entry that prints these rewards.
 
 ## A-9 Automated PR Conflict Checks
 
