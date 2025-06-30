@@ -125,6 +125,11 @@ model = fit_breakpoint(params, loss)
 print(model.breakpoint, model.predict(params))
 ```
 
+## S-4 4-bit Quantized LoRA Training
+
+- `src/lora_quant.py` implements a small LoRA adapter stored in int4 precision.
+- `apply_quant_lora()` injects these adapters into an existing network so most parameters stay frozen during fine-tuning.
+
 ## C-1 RetNet Retention Kernel
 
 - `src/retnet_retention.py` implements a minimal retention module.
@@ -239,6 +244,11 @@ To reproduce the toy run step by step:
    result to `model.memory` before resuming training. Reloading ensures previous
    retrievals remain available so the context effectively persists across runs.
 
+## C-7 Hierarchical Retrieval Memory
+
+- `src/hierarchical_memory.py` and `src/link_slot_attention.py` provide a two-tier memory backed by FAISS.
+- The store compresses vectors before writing them to disk and loads the nearest neighbours on demand.
+
 ## A-1 Paper-to-Code Transpiler
 
 - `src/paper_to_code.py` offers a minimal transpiler from LaTeX pseudo-code to
@@ -278,6 +288,11 @@ To reproduce the toy run step by step:
   ```
 - See `docs/Plan.md` task **A-4** for context and goals.
 
+## A-5 Self-Play World Model
+
+- `src/self_play_env.py` defines a minimal environment and agent loop for automated skill discovery.
+- The helper `rollout_env()` runs the simulator and logs rewards so new policies can be trained from the generated traces.
+
 ## Pull Request Monitoring
 
 - `src/pull_request_monitor.py` lists open pull requests and checks mergeability.
@@ -314,3 +329,8 @@ To reproduce the toy run step by step:
   and updates action values.
 - `select_action()` returns the highest-valued action with optional
   epsilon-greedy exploration.
+
+## L-5 Formal Verification Harness
+
+- `src/formal_verifier.py` sketches a small property checker that loads model snapshots and symbolically executes critical routines.
+- `verify_model()` asserts invariants like gradient norms and output bounds before the model is released.
