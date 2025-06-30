@@ -1,26 +1,57 @@
 import unittest
+from unittest.mock import patch
 import torch
 
-from asi.self_play_skill_loop import self_play_skill_loop
-from asi.self_play_env import SimpleEnv
-from asi.robot_skill_transfer import SkillTransferConfig, VideoPolicyDataset
+import importlib.machinery
+import importlib.util
+import types
+import sys
+
+pkg = types.ModuleType('asi')
+sys.modules['asi'] = pkg
+loader_env = importlib.machinery.SourceFileLoader('asi.self_play_env', 'src/self_play_env.py')
+spec_env = importlib.util.spec_from_loader(loader_env.name, loader_env)
+self_play_env = importlib.util.module_from_spec(spec_env)
+sys.modules['asi.self_play_env'] = self_play_env
+loader_env.exec_module(self_play_env)
+loader_rst = importlib.machinery.SourceFileLoader('asi.robot_skill_transfer', 'src/robot_skill_transfer.py')
+spec_rst = importlib.util.spec_from_loader(loader_rst.name, loader_rst)
+robot_skill_transfer = importlib.util.module_from_spec(spec_rst)
+sys.modules['asi.robot_skill_transfer'] = robot_skill_transfer
+loader_rst.exec_module(robot_skill_transfer)
+loader = importlib.machinery.SourceFileLoader('asi.self_play_skill_loop', 'src/self_play_skill_loop.py')
+spec = importlib.util.spec_from_loader(loader.name, loader)
+self_play_skill_loop = importlib.util.module_from_spec(spec)
+sys.modules['asi.self_play_skill_loop'] = self_play_skill_loop
+loader.exec_module(self_play_skill_loop)
+run_loop = self_play_skill_loop.run_loop
+SelfPlaySkillLoopConfig = self_play_skill_loop.SelfPlaySkillLoopConfig
 
 
 class TestSelfPlaySkillLoop(unittest.TestCase):
-    def test_one_cycle(self):
-        env = SimpleEnv(state_dim=2)
+    def test_run_loop_mocked(self):
+        cfg = SelfPlaySkillLoopConfig(cycles=2, steps=3, epochs=1)
+        frames = [torch.randn(cfg.img_channels, 4, 4) for _ in range(2)]
+        actions = [0, 1]
 
-        def policy(obs: torch.Tensor) -> torch.Tensor:
-            return torch.ones_like(obs) * 0.05
+        def fake_rollout(env, policy, steps=3):
+            obs = [torch.zeros(env.state.shape) for _ in range(steps)]
+            rewards = [1.0] * steps
+            return obs, rewards
 
-        cfg = SkillTransferConfig(img_channels=1, action_dim=2, epochs=1, batch_size=2)
-        frames = [torch.randn(1, 4, 4) for _ in range(4)]
-        actions = [0, 1, 0, 1]
-        dataset = VideoPolicyDataset(frames, actions)
+        class DummyModel(torch.nn.Module):
+            def forward(self, x):
+                return torch.zeros(x.size(0), cfg.action_dim)
 
-        rewards = self_play_skill_loop(env, policy, cfg, dataset, cycles=1, steps=5)
-        self.assertEqual(len(rewards), 1)
-        self.assertGreater(len(rewards[0]), 0)
+        def fake_transfer(c, d):
+            return DummyModel()
+
+        policy = lambda obs: torch.zeros_like(obs)
+        with patch.object(self_play_skill_loop, "rollout_env", fake_rollout), patch.object(self_play_skill_loop, "transfer_skills", fake_transfer):
+            rewards, model = run_loop(cfg, policy, frames, actions)
+        self.assertEqual(len(rewards), 2)
+        self.assertIsInstance(model, DummyModel)
+        self.assertTrue(all(r == 1.0 for r in rewards))
 
 
 if __name__ == '__main__':

@@ -8,11 +8,13 @@ loader = importlib.machinery.SourceFileLoader('cmf', 'src/cross_modal_fusion.py'
 spec = importlib.util.spec_from_loader(loader.name, loader)
 cmf = importlib.util.module_from_spec(spec)
 sys.modules[loader.name] = cmf
+sys.modules['asi.cross_modal_fusion'] = cmf
 loader.exec_module(cmf)
 CrossModalFusionConfig = cmf.CrossModalFusionConfig
 CrossModalFusion = cmf.CrossModalFusion
 MultiModalDataset = cmf.MultiModalDataset
 encode_all = cmf.encode_all
+train_fusion_model = cmf.train_fusion_model
 
 
 def simple_tokenizer(text: str):

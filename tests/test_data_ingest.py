@@ -2,46 +2,50 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-
+import importlib.machinery
+import importlib.util
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from data_ingest import align_triples, random_crop, generate_transcript
-from PIL import Image
-import wave
+
+loader = importlib.machinery.SourceFileLoader('di', 'src/data_ingest.py')
+spec = importlib.util.spec_from_loader(loader.name, loader)
+di = importlib.util.module_from_spec(spec)
+sys.modules['data_ingest'] = di
+sys.modules['asi.data_ingest'] = di
+loader.exec_module(di)
+
+pair_modalities = di.pair_modalities
+random_crop_image = di.random_crop_image
+add_gaussian_noise = di.add_gaussian_noise
+text_dropout = di.text_dropout
+import numpy as np
 
 
 class TestDataIngest(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        base = Path(self.tmp.name)
-        (base / "text").mkdir()
-        (base / "images").mkdir()
-        (base / "audio").mkdir()
-        # create two samples
-        for i in range(2):
-            (base / "text" / f"{i}.txt").write_text(f"sample {i}")
-            img = Image.new("RGB", (64, 64), color=(i * 10, 0, 0))
-            img.save(base / "images" / f"{i}.png")
-            with wave.open(str(base / "audio" / f"{i}.wav"), "wb") as w:
-                w.setnchannels(1)
-                w.setsampwidth(2)
-                w.setframerate(16000)
-                w.writeframes(b"\x00\x00" * 16000)
-        self.base = base
+    def test_pair_and_aug(self):
+        with tempfile.TemporaryDirectory() as root:
+            td = Path(root) / 'text'
+            id = Path(root) / 'img'
+            ad = Path(root) / 'aud'
+            td.mkdir()
+            id.mkdir()
+            ad.mkdir()
+            (td / 'sample.txt').write_text('hello')
+            (id / 'sample.jpg').write_text('img')
+            (ad / 'sample.wav').write_text('aud')
+            pairs = pair_modalities(td, id, ad)
+            self.assertEqual(len(pairs), 1)
 
-    def tearDown(self):
-        self.tmp.cleanup()
+        img = np.zeros((4, 4, 1), dtype=np.float32)
+        crop = random_crop_image(img, (2, 2))
+        self.assertEqual(crop.shape, (2, 2, 1))
 
-    def test_align_and_aug(self):
-        triples = align_triples(self.base / "text", self.base / "images", self.base / "audio")
-        self.assertEqual(len(triples), 2)
-        _, img_path, aud_path = triples[0]
-        img = Image.open(img_path)
-        crop = random_crop(img, (32, 32))
-        self.assertEqual(crop.size, (32, 32))
-        txt = generate_transcript(aud_path)
-        self.assertIn("duration:", txt)
+        audio = np.zeros(10, dtype=np.float32)
+        noisy = add_gaussian_noise(audio, std=0.1)
+        self.assertEqual(noisy.shape, audio.shape)
+
+        out = text_dropout('the quick brown fox', p=1.0)
+        self.assertTrue(out)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

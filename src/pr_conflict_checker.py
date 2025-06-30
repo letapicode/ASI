@@ -1,65 +1,74 @@
+import argparse
 import subprocess
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict
 
-from pull_request_monitor import list_open_prs
-
-
-def fetch_pr(remote: str, pr_number: int) -> None:
-    """Fetch the pull request head locally."""
-    subprocess.run(
-        ["git", "fetch", remote, f"pull/{pr_number}/head:pr/{pr_number}"],
-        check=True,
-        capture_output=True,
-    )
+from .autobench import BenchResult, summarize_results
+from .pull_request_monitor import list_open_prs
 
 
-def pr_has_conflict(pr_number: int, remote: str = "origin") -> bool:
-    """Return True if merging the PR into main would conflict."""
-    fetch_pr(remote, pr_number)
-    merge_base = (
-        subprocess.check_output(["git", "merge-base", "main", f"pr/{pr_number}"])
-        .decode()
-        .strip()
-    )
+def _run_git(args: list[str], cwd: Path) -> str:
+    proc = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    proc.check_returncode()
+    return proc.stdout.strip()
+
+
+def _check_branch_conflict(base: str, branch: str, cwd: Path) -> tuple[bool, str]:
+    base_rev = _run_git(["merge-base", base, branch], cwd)
     proc = subprocess.run(
-        ["git", "merge-tree", merge_base, "main", f"pr/{pr_number}"],
+        ["git", "merge-tree", base_rev, base, branch],
+        cwd=cwd,
         capture_output=True,
         text=True,
-        check=True,
     )
-    return "<<<<<<<" in proc.stdout or ">>>>>>>" in proc.stdout
+    return ("<<<<<<<" in proc.stdout), proc.stdout
 
 
-def check_all_prs(repo: str, token: str | None = None, remote: str = "origin") -> Dict[int, bool]:
-    """Return a mapping of PR number to conflict status."""
+def check_pr_conflicts(
+    repo: str,
+    token: str | None = None,
+    base: str = "main",
+    remote: str = "origin",
+    repo_path: str | Path = ".",
+) -> Dict[str, BenchResult]:
+    cwd = Path(repo_path)
     prs = list_open_prs(repo, token)
-    return {pr["number"]: pr_has_conflict(pr["number"], remote) for pr in prs}
-
-
-def summarize_conflicts(prs: List[Dict[str, str]], conflicts: Dict[int, bool]) -> str:
-    """Return formatted scoreboard of conflict status."""
-    total = len(prs)
-    conflict_count = sum(1 for c in conflicts.values() if c)
-    lines = [f"Conflicts in {conflict_count}/{total} PRs"]
+    results: Dict[str, BenchResult] = {}
     for pr in prs:
-        status = "CONFLICT" if conflicts[pr["number"]] else "NO CONFLICT"
-        lines.append(f"#{pr['number']} {pr['title']}: {status}")
-    return "\n".join(lines)
+        branch_name = f"pr_{pr['number']}"
+        fetch = subprocess.run(
+            ["git", "fetch", remote, f"refs/pull/{pr['number']}/head:{branch_name}"],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+        )
+        key = f"PR {pr['number']}"
+        if fetch.returncode != 0:
+            results[key] = BenchResult(False, fetch.stdout + fetch.stderr)
+            continue
+        conflict, out = _check_branch_conflict(base, branch_name, cwd)
+        results[key] = BenchResult(not conflict, out)
+    return results
 
 
-def main() -> None:
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Check open PRs for merge conflicts")
-    parser.add_argument("repo", help="<owner>/<repo> to query")
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Check merge conflicts for open PRs")
+    parser.add_argument("repo", help="<owner>/<repo>")
     parser.add_argument("--token", default=None, help="GitHub token")
-    parser.add_argument("--remote", default="origin", help="Git remote to fetch PRs from")
-    args = parser.parse_args()
+    parser.add_argument("--base", default="main", help="Base branch")
+    parser.add_argument("--remote", default="origin", help="Remote name")
+    parser.add_argument("--repo-path", default=".", help="Local repository path")
+    args = parser.parse_args(argv)
 
-    prs = list_open_prs(args.repo, args.token)
-    conflicts = {pr["number"]: pr_has_conflict(pr["number"], args.remote) for pr in prs}
-    print(summarize_conflicts(prs, conflicts))
+    results = check_pr_conflicts(
+        args.repo,
+        token=args.token,
+        base=args.base,
+        remote=args.remote,
+        repo_path=args.repo_path,
+    )
+    print(summarize_results(results))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover - CLI
     main()
