@@ -455,3 +455,9 @@ txt = generate_transcript(pairs[0][2])
   searchable graph for code refactoring decisions.
 - Add a `NeuroSymbolicExecutor` module that runs logical constraints alongside
   neural world-model rollouts.
+- Develop a `NeuralArchSearch` module for distributed architecture search and
+  integrate it with `eval_harness.py` to score candidate models automatically.
+- Implement a `SelfHealingTrainer` that monitors distributed jobs and restarts
+  failed runs to maintain full compute utilization.
+- Extend `data_ingest.py` with an `offline_synthesizer` that uses the world
+  model to generate synthetic multimodal triples for training.
