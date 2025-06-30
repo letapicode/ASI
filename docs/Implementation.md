@@ -439,3 +439,10 @@ txt = generate_transcript(pairs[0][2])
   exploration rate during refactoring.
 - Rewrite `download_triples()` with asyncio to fetch dataset files
   concurrently.
+- Implement a `MemoryReplicator` in `distributed_memory.py` that streams vector
+  updates between nodes for near-real-time consistency.
+- Extend `self_play_skill_loop.run_loop()` so each cycle logs embeddings to
+  `HierarchicalMemory` and retrains the world model via
+  `multimodal_world_model.train_world_model()`.
+- Create `viz_dashboard.py` to plot `head_importance()` metrics and retrieval
+  weights from `link_slot_attention.py`.
