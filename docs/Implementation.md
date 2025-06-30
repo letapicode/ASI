@@ -455,3 +455,9 @@ txt = generate_transcript(pairs[0][2])
   searchable graph for code refactoring decisions.
 - Add a `NeuroSymbolicExecutor` module that runs logical constraints alongside
   neural world-model rollouts.
+- Implement an `ElasticMoERouter` that scales the number of active experts
+  according to real-time GPU utilization.
+- Extend `HierarchicalMemory` with an `SSDCache` that prefetches high-frequency
+  vectors for faster retrieval.
+- Build an `AutoDatasetFilter` using generative noise detection to discard
+  low-quality training samples before ingestion.
