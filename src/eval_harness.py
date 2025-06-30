@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import asyncio
 import re
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Tuple
