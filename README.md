@@ -9,12 +9,14 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 - `scripts/moe_vs_dense.py` benchmarks dense versus Mixture-of-Experts feed-forward layers.
 - `python -m src.paper_to_code` transpiles LaTeX pseudo-code to Python.
 - `python -m src.autobench` runs each test file in isolation and reports a summary.
+- `python -m src.pr_conflict_checker <owner>/<repo>` shows merge conflicts for open PRs.
 - `meta-rl-refactor` parses action/reward logs and suggests the next refactoring step.
 
 Example:
 
 ```bash
 meta-rl-refactor sample_log.csv
+python -m src.pr_conflict_checker owner/repo
 ```
 
 ## Setup
