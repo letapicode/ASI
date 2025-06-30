@@ -213,6 +213,24 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     via reinforcement learning to accelerate skill acquisition.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
     novel transformer components and report promising variants.
+17. **Elastic mixture-of-experts routing**: Implement `ElasticMoERouter` to vary
+    expert counts with GPU load and compare load balance with the static router.
+18. **Hierarchical SSD caching**: Add an `SSDCache` layer in `HierarchicalMemory`
+    that prefetches frequently accessed vectors for low-latency retrieval.
+19. **Generative noise filtering**: Use `AutoDatasetFilter` during data ingest to
+    prune low-quality samples and track the effect on training stability.
+20. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
+    new training triples from world-model rollouts and expand the dataset.
+21. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
+    to track benchmark progress automatically.
+22. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with
+    `MetaRLRefactorAgent` to auto-rank refactor strategies.
+23. **Neural architecture search**: Evaluate `NeuralArchSearch` across candidate
+    module configurations and report accuracy vs. compute costs.
+24. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
+    restart failed jobs automatically and track overall utilization.
+25. **World-model data synthesis**: Use the `offline_synthesizer` to generate
+    synthetic multimodal triples and measure retrieval improvements.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."

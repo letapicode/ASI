@@ -463,3 +463,21 @@ txt = generate_transcript(pairs[0][2])
   self-play logs using reinforcement learning.
 - Extend `QAEHyperparamSearch` to explore novel transformer components during
   architecture search.
+- Implement an `ElasticMoERouter` that scales the number of active experts
+  according to real-time GPU utilization.
+- Extend `HierarchicalMemory` with an `SSDCache` that prefetches high-frequency
+  vectors for faster retrieval.
+- Build an `AutoDatasetFilter` using generative noise detection to discard
+  low-quality training samples before ingestion.
+- Implement a `GenerativeDataAugmentor` that rolls out the world model to
+  synthesize training triples and feeds them through `data_ingest`.
+- Add `continuous_eval.py` to schedule `eval_harness` and `autobench` after each
+  pull request using GitHub Actions or a local cron job.
+- Combine `GraphOfThoughtPlanner` with `MetaRLRefactorAgent` in an `AdaptivePlanner`
+  module that ranks and applies refactor suggestions automatically.
+- Develop a `NeuralArchSearch` module for distributed architecture search and
+  integrate it with `eval_harness.py` to score candidate models automatically.
+- Implement a `SelfHealingTrainer` that monitors distributed jobs and restarts
+  failed runs to maintain full compute utilization.
+- Extend `data_ingest.py` with an `offline_synthesizer` that uses the world
+  model to generate synthetic multimodal triples for training.
