@@ -264,6 +264,36 @@ def query_remote(address: str, vector: torch.Tensor, k: int = 5, timeout: float 
         vec = torch.tensor(reply.vectors).reshape(-1, vector.size(-1))
         return vec, list(reply.metadata)
 
+
+async def push_remote_async(
+    address: str, vector: torch.Tensor, metadata: Any | None = None, timeout: float = 5.0
+) -> bool:
+    """Asynchronously send ``vector`` to a remote :class:`MemoryServer`."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    async with grpc.aio.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        req = memory_pb2.PushRequest(
+            vector=vector.detach().cpu().view(-1).tolist(),
+            metadata="" if metadata is None else str(metadata),
+        )
+        reply = await stub.Push(req, timeout=timeout)
+        return reply.ok
+
+
+async def query_remote_async(
+    address: str, vector: torch.Tensor, k: int = 5, timeout: float = 5.0
+) -> Tuple[torch.Tensor, List[str]]:
+    """Asynchronously query vectors from a remote :class:`MemoryServer`."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    async with grpc.aio.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        req = memory_pb2.QueryRequest(vector=vector.detach().cpu().view(-1).tolist(), k=k)
+        reply = await stub.Query(req, timeout=timeout)
+        vec = torch.tensor(reply.vectors).reshape(-1, vector.size(-1))
+        return vec, list(reply.metadata)
+
 @classmethod
 async def load_async(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
     """Asynchronously load memory from ``save_async()`` output."""
