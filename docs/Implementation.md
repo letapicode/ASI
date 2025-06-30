@@ -325,6 +325,11 @@ To reproduce the toy run step by step:
 - `src/hierarchical_memory.py` and `src/link_slot_attention.py` provide a two-tier memory backed by FAISS.
 - The store compresses vectors before writing them to disk and loads the nearest neighbours on demand.
 
+## C-8 Distributed Hierarchical Memory Backend
+
+- Planned extension of `src/hierarchical_memory.py` with an optional gRPC service.
+- The store will expose `push_remote()` and `query_remote()` so multiple nodes share one vector database.
+
 ## A-5 Multi-Modal World Model
 
 - `src/multimodal_world_model.py` now implements a unified transformer that ingests text, images and low-level actions.
@@ -339,6 +344,21 @@ To reproduce the toy run step by step:
 
 - `src/self_play_env.py` defines a minimal environment and agent loop for automated skill discovery.
 - `rollout_env()` runs the simulator and logs rewards so new policies can be trained from the generated traces.
+
+## A-8 Integrated Self-Play & Skill Transfer
+
+- The orchestrator in `src/self_play_skill_loop.py` will alternate `self_play_env.rollout_env()` with `robot_skill_transfer.transfer_skills()`.
+- Each cycle logs rewards and fine-tunes policies on a small batch of real examples.
+
+## A-9 Automated PR Conflict Checks
+
+- `src/pr_conflict_checker.py` reuses `pull_request_monitor.list_open_prs()` and runs `git merge-base` to detect conflicts.
+- Summaries appear in the AutoBench-style scoreboard.
+
+## A-10 Goal-Oriented Evaluation Harness
+
+- `src/eval_harness.py` gathers benchmark metrics from each module and compares them with the targets in `docs/Plan.md`.
+- Running `python -m src.eval_harness` prints a pass/fail table for the whole project.
 
 ## L-5 Formal Verification Harness
 
@@ -359,3 +379,8 @@ To reproduce the toy run step by step:
 
 - `src/embodied_calibration.py` adapts sensor and actuator parameters from a small set of real-world samples.
 - `calibrate()` aligns simulation and hardware spaces so policies trained in simulation remain effective after deployment.
+
+## M-4 Cross-Modal Data Ingestion Pipeline
+
+- `src/data_ingest.py` will align text, image and audio pairs from open datasets.
+- Augmentation helpers generate crops and transcripts for training the multi-modal world model.

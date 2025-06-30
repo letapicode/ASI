@@ -29,6 +29,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-5** | **Top-k Sparse Attention for inference**        | Select k≈64 most-relevant keys each step                           | 20 %b/word latency cut at 1 M tokens; accuracy drop <0.5 pp ([arxiv.org][11])                                                |
 | **C-6** | **RWKV infinite-context training loop**         | Constant-memory recurrence with token-shift trick                  | Train 7 B RWKV on 4 M-token samples, VRAM ≤80 GB; effective context ≥2 M at inference ([wiki.rwkv.com][12], [arxiv.org][13]) |
 | **C-7** | **Hierarchical Retrieval Memory**         | Cache long-tail tokens in a disk-backed vector DB                     | Retrieval hit rate ≥85 % at 1 M tokens |
+| **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service | Throughput scales to 4+ nodes with <1.2× single-node latency |
 
 **Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.
 
@@ -45,6 +46,9 @@ Citations point to the most recent public work so you can drill straight into th
 | **A-5** | **Multi-Modal World Model (Generalist)** | Jointly learn text, image and action dynamics     | ≥50 % success on multi-modal RL benchmarks; retrieval ≤2 × text-only baseline ([arxiv.org][23]) |
 | **A-6** | **Embodied Skill Transfer (RT-2)**        | Map web-scale demonstrations to robot policies    | 80 % task success on a 100-skill benchmark after <1 h fine-tuning ([arxiv.org][24]) |
 | **A-7** | **Self-Play World Model**                 | Train an environment simulator for iterative skill discovery | Achieve >20 % improvement on held-out tasks in 1 month |
+| **A-8** | **Integrated Self-Play & Skill Transfer** | Alternate self-play rollouts with real-world fine-tuning | >30 % improvement over running either loop alone |
+| **A-9** | **Automated PR Conflict Checks** | Summarize merge conflicts for all open pull requests | Detection completes in <2 min per repo |
+| **A-10** | **Goal-Oriented Evaluation Harness** | Benchmark each algorithm against its success criteria | Single command prints pass/fail scoreboard |
 
 ---
 
@@ -67,6 +71,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **M-1** | **Cross-Modal Fusion Architecture**     | Learn a single latent space for text, images and audio                              | ≥85 % F1 on zero-shot image↔text retrieval; audio caption BLEU within 5 % of SOTA |
 | **M-2** | **World-Model RL Bridge**               | Train a generative world model from logs and run model-based RL for fast policy updates | Real robot tasks reach 90 % of offline policy reward after <10k physical steps   |
 | **M-3** | **Self-Calibration for Embodied Agents**| Adapt sensors and actuators from small real-world samples                           | Simulation-trained policies retain ≥80 % success with <1k labelled real samples   |
+| **M-4** | **Cross-Modal Data Ingestion Pipeline** | Pair text, images and audio from open datasets with augmentations | Prepare 1 M aligned triples in under 1 h with retrieval F1 near baseline |
 
 ---
 
