@@ -183,6 +183,8 @@ print(model.breakpoint, model.predict(params))
   still block on these operations.
   New `save_async()` and `load_async()` helpers persist and restore the
   hierarchical memory without blocking the event loop.
+- `HierarchicalMemory` defines `__len__` so `len(mem)` reports the number of
+  stored vectors.
 
 ## C-4 MegaByte Patching
 

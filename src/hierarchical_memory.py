@@ -29,6 +29,10 @@ class HierarchicalMemory:
             else:
                 self.store = FaissVectorStore(dim=compressed_dim, path=db_path)
 
+    def __len__(self) -> int:
+        """Return the number of stored vectors."""
+        return len(self.store)
+
     def add(self, x: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:
         """Compress and store embeddings with optional metadata."""
         if isinstance(self.store, AsyncFaissVectorStore):

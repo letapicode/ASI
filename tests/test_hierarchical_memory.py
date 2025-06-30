@@ -75,7 +75,7 @@ class TestHierarchicalMemory(unittest.TestCase):
         data = torch.randn(3, 4)
         mem.add(data, metadata=["a", "b", "c"])
         mem.delete(tag="b")
-        self.assertEqual(len(mem.store), 2)
+        self.assertEqual(len(mem), 2)
 
     def test_delete_persist_faiss(self):
         torch.manual_seed(0)
@@ -84,9 +84,9 @@ class TestHierarchicalMemory(unittest.TestCase):
             data = torch.randn(3, 4)
             mem.add(data, metadata=["x", "y", "z"])
             mem.delete(index=1)
-            self.assertEqual(len(mem.store), 2)
+            self.assertEqual(len(mem), 2)
             mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
-            self.assertEqual(len(mem2.store), 2)
+            self.assertEqual(len(mem2), 2)
 
 
 if __name__ == "__main__":
