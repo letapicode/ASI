@@ -66,3 +66,9 @@ from .embodied_calibration import (
     calibrate,
 )
 from .lora_quant import LoRAQuantLinear, apply_quant_lora
+from .distributed_memory_backend import (
+    DistributedMemoryServer,
+    push_remote,
+    query_remote,
+)
+

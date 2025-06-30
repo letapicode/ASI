@@ -327,8 +327,27 @@ To reproduce the toy run step by step:
 
 ## C-8 Distributed Hierarchical Memory Backend
 
-- Planned extension of `src/hierarchical_memory.py` with an optional gRPC service.
-- The store will expose `push_remote()` and `query_remote()` so multiple nodes share one vector database.
+`src/distributed_memory_backend.py` implements a tiny gRPC service around
+`HierarchicalMemory`.  Launching the server allows separate workers to push
+embeddings and query nearest neighbours via two helper functions:
+
+```python
+from asi.hierarchical_memory import HierarchicalMemory
+from asi.distributed_memory_backend import DistributedMemoryServer, push_remote, query_remote
+
+memory = HierarchicalMemory(dim=4, compressed_dim=2, capacity=100)
+server = DistributedMemoryServer(memory, "localhost:50051")
+server.start()
+```
+
+Remote clients then call:
+
+```python
+push_remote("localhost:50051", vector, meta="node-id")
+results, meta = query_remote("localhost:50051", query, k=5)
+```
+
+This enables multi-node sharing of a single vector database.
 
 ## A-5 Multi-Modal World Model
 
