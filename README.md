@@ -22,7 +22,9 @@ meta-rl-refactor sample_log.csv
 1. Use Python 3.10 or newer with PyTorch installed.
 2. Install dependencies with `pip install -r requirements.txt`.
 3. Optional: `pip install flash-attn` to enable the FlashAttention-3 wrapper in `src/flash_attention3.py`.
-4. Run `pip install -e .` to enable imports from the `asi` package.
+4. Optional: `pip install faiss-cpu` to enable disk-backed vector storage in `src/vector_store.py`.
+5. Run `pip install -e .` to enable imports from the `asi` package.
+6. The project runs without these optional packages, but FlashAttention-3 and persistent storage will be disabled.
 
 Run the scripts directly with `python` to see parameter and FLOP estimates.
 
