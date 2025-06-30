@@ -54,6 +54,19 @@ git diff upstream/main..FETCH_HEAD
 
 This shows any changes not yet in `upstream/main`. After merging the branch
 locally, run `git merge-base` or `git status` to detect conflicts.
+
+## 4. Run the Automated Checker
+
+The repository provides a small helper script that summarizes conflict status
+for every open pull request. It fetches each PR branch, runs `git merge-base`
+and `git merge-tree`, then prints an AutoBench-style table.
+
+```bash
+python -m src.pr_conflict_checker letapicode/ASI
+```
+
+Set `--token` to a GitHub token for higher API limits and `--remote` if your
+PRs live on a remote other than `origin`.
 ---
 
 ## Handling Giant PR and Individual Task PRs
