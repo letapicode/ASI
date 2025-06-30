@@ -173,6 +173,21 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - **Document findings** in this file and in `docs/Implementation.md` so others
   can reproduce the experiments and build upon them.
 
+### Short-Term Research Tasks
+
+1. **Hybrid retention backbone**: Fuse `RetNetRetention` with `MambaBlock` and
+   measure throughput and memory compared with the individual kernels.
+2. **Cross-modal retrieval memory**: Store embeddings from
+   `cross_modal_fusion.encode_all()` inside `HierarchicalMemory` and evaluate
+   retrieval accuracy on 1&nbsp;M-token streams.
+3. **LoRA-quantized world model**: Apply `apply_quant_lora()` to the
+   multimodal world model and confirm the RL bridge still meets reward targets
+   with half the memory use.
+4. **QAE-guided refactoring**: Employ `QAEHyperparamSearch` to tune exploration
+   parameters in `MetaRLRefactorAgent` and track benchmark uplift.
+5. **Scalability metrics**: Update `eval_harness.py` to record GPU memory usage
+   alongside pass/fail results.
+
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
 [3]: https://www.businessinsider.com/openai-orion-model-scaling-law-silicon-valley-chatgpt-2024-11?utm_source=chatgpt.com "OpenAI is reportedly struggling to improve its next big AI model. It's a warning for the entire AI industry."
