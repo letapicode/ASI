@@ -208,6 +208,33 @@ class HierarchicalMemory:
             mem.store = VectorStore.load(path / "store.npz")
         return mem
 
+    @classmethod
+    async def load_async(
+        cls, path: str | Path, use_async: bool = False
+    ) -> "HierarchicalMemory":
+        """Asynchronously load memory from ``save_async()`` output."""
+        path = Path(path)
+        state = torch.load(path / "compressor.pt", map_location="cpu")
+        mem = cls(
+            dim=int(state["dim"]),
+            compressed_dim=int(state["compressed_dim"]),
+            capacity=int(state["capacity"]),
+            use_async=use_async,
+        )
+        mem.compressor.encoder.load_state_dict(state["encoder"])
+        mem.compressor.decoder.load_state_dict(state["decoder"])
+        mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
+        mem.compressor.buffer.count = int(state["count"])
+        store_dir = path / "store"
+        if store_dir.exists():
+            if use_async:
+                mem.store = await AsyncFaissVectorStore.load_async(store_dir)
+            else:
+                mem.store = FaissVectorStore.load(store_dir)
+        else:
+            mem.store = VectorStore.load(path / "store.npz")
+        return mem
+
 
 if _HAS_GRPC:
     class MemoryServer(memory_pb2_grpc.MemoryServiceServicer):
@@ -293,28 +320,3 @@ async def query_remote_async(
         reply = await stub.Query(req, timeout=timeout)
         vec = torch.tensor(reply.vectors).reshape(-1, vector.size(-1))
         return vec, list(reply.metadata)
-
-@classmethod
-async def load_async(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
-    """Asynchronously load memory from ``save_async()`` output."""
-    path = Path(path)
-    state = torch.load(path / "compressor.pt", map_location="cpu")
-    mem = cls(
-        dim=int(state["dim"]),
-        compressed_dim=int(state["compressed_dim"]),
-        capacity=int(state["capacity"]),
-        use_async=use_async,
-    )
-    mem.compressor.encoder.load_state_dict(state["encoder"])
-    mem.compressor.decoder.load_state_dict(state["decoder"])
-    mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
-    mem.compressor.buffer.count = int(state["count"])
-    store_dir = path / "store"
-    if store_dir.exists():
-        if use_async:
-            mem.store = await AsyncFaissVectorStore.load_async(store_dir)
-        else:
-            mem.store = FaissVectorStore.load(store_dir)
-    else:
-        mem.store = VectorStore.load(path / "store.npz")
-    return mem
