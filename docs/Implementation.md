@@ -327,35 +327,35 @@ To reproduce the toy run step by step:
 
 ## A-5 Multi-Modal World Model
 
-- `src/multimodal_world_model.py` is planned to hold a unified transformer that ingests text, images and low-level actions.
-- The module will expose `train_world_model()` and `rollout()` helpers so RL agents can simulate diverse environments.
+- `src/multimodal_world_model.py` now implements a unified transformer that ingests text, images and low-level actions.
+- `train_world_model()` fits the model on trajectory data and `rollout()` generates simulated transitions for downstream agents.
 
 ## A-6 Embodied Skill Transfer
 
-- `src/robot_skill_transfer.py` will map web-scale video demonstrations to robot control commands.
-- `transfer_skills()` will fine-tune policies on a small set of real robot examples and evaluate task success.
+- `src/robot_skill_transfer.py` maps video demonstrations to robot commands.
+- `transfer_skills()` fine-tunes policies on a small set of real robot examples and returns the trained model.
 
 ## A-7 Self-Play World Model
 
 - `src/self_play_env.py` defines a minimal environment and agent loop for automated skill discovery.
-- The helper `rollout_env()` runs the simulator and logs rewards so new policies can be trained from the generated traces.
+- `rollout_env()` runs the simulator and logs rewards so new policies can be trained from the generated traces.
 
 ## L-5 Formal Verification Harness
 
-- `src/formal_verifier.py` sketches a small property checker that loads model snapshots and symbolically executes critical routines.
+- `src/formal_verifier.py` provides a small property checker that loads model snapshots and symbolically executes critical routines.
 - `verify_model()` asserts invariants like gradient norms and output bounds before the model is released.
 
 ## M-1 Cross-Modal Fusion Architecture
 
-- Planned module `src/cross_modal_fusion.py` will embed text, images, and audio in one latent space.
-- A small training script will fine-tune a shared encoder-decoder using CLIP- and Whisper-style objectives.
+- `src/cross_modal_fusion.py` embeds text, images and audio in one latent space.
+- `train_fusion_model()` fine-tunes a shared encoder-decoder using CLIP- and Whisper-style objectives and `encode_all()` returns embeddings for retrieval.
 
 ## M-2 World-Model RL Bridge
 
-- Future `src/world_model_rl.py` will learn a generative world model from logged trajectories and run model-based RL for rapid policy updates.
-- The prototype will interface with `gym` environments and support offline rollout generation.
+- `src/world_model_rl.py` learns a generative world model from logged trajectories and runs model-based RL for rapid policy updates.
+- The prototype interfaces with ``gym``-like data and provides ``rollout_policy()`` for offline rollout generation.
 
 ## M-3 Self-Calibration for Embodied Agents
 
-- `src/embodied_calibration.py` will adapt sensor and actuator parameters from a small set of real-world samples.
-- The helper will align simulation and hardware spaces so policies trained in simulation remain effective after deployment.
+- `src/embodied_calibration.py` adapts sensor and actuator parameters from a small set of real-world samples.
+- `calibrate()` aligns simulation and hardware spaces so policies trained in simulation remain effective after deployment.

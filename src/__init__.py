@@ -25,3 +25,43 @@ from .pull_request_monitor import (
     list_open_prs_async,
     check_mergeable_async,
 )
+from .multimodal_world_model import (
+    MultiModalWorldModelConfig,
+    MultiModalWorldModel,
+    TrajectoryDataset as MMTrajectoryDataset,
+    train_world_model as train_mm_world_model,
+    rollout as rollout_world_model,
+)
+from .robot_skill_transfer import (
+    SkillTransferConfig,
+    VideoPolicyDataset,
+    SkillTransferModel,
+    transfer_skills,
+)
+from .self_play_env import EnvStep, SimpleEnv, rollout_env
+from .formal_verifier import (
+    VerificationResult,
+    check_grad_norm,
+    check_output_bounds,
+    verify_model,
+)
+from .cross_modal_fusion import (
+    CrossModalFusionConfig,
+    CrossModalFusion,
+    MultiModalDataset,
+    train_fusion_model,
+    encode_all,
+)
+from .world_model_rl import (
+    RLBridgeConfig,
+    TransitionDataset,
+    WorldModel as RLWorldModel,
+    train_world_model as train_rl_world_model,
+    rollout_policy,
+)
+from .embodied_calibration import (
+    CalibrationConfig,
+    CalibrationDataset,
+    CalibrationModel,
+    calibrate,
+)
