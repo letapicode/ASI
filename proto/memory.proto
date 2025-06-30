@@ -1,0 +1,26 @@
+syntax = "proto3";
+package asi;
+
+service MemoryService {
+  rpc Push (PushRequest) returns (PushReply);
+  rpc Query (QueryRequest) returns (QueryReply);
+}
+
+message PushRequest {
+  repeated float vector = 1;
+  string metadata = 2;
+}
+
+message PushReply {
+  bool ok = 1;
+}
+
+message QueryRequest {
+  repeated float vector = 1;
+  int32 k = 2;
+}
+
+message QueryReply {
+  repeated float vectors = 1;
+  repeated string metadata = 2;
+}

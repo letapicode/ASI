@@ -4,3 +4,5 @@ torch
 faiss-cpu
 # optional: flash-attn for FlashAttention-3 support
 aiohttp
+grpcio
+grpcio-tools

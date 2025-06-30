@@ -3,6 +3,14 @@ import torch
 from pathlib import Path
 from typing import Iterable, Any, Tuple, List
 
+try:
+    import grpc  # type: ignore
+    from concurrent import futures
+    from . import memory_pb2, memory_pb2_grpc
+    _HAS_GRPC = True
+except Exception:  # pragma: no cover - optional dependency
+    _HAS_GRPC = False
+
 from .streaming_compression import StreamingCompressor
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
@@ -200,27 +208,83 @@ class HierarchicalMemory:
             mem.store = VectorStore.load(path / "store.npz")
         return mem
 
-    @classmethod
-    async def load_async(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
-        """Asynchronously load memory from ``save_async()`` output."""
-        path = Path(path)
-        state = torch.load(path / "compressor.pt", map_location="cpu")
-        mem = cls(
-            dim=int(state["dim"]),
-            compressed_dim=int(state["compressed_dim"]),
-            capacity=int(state["capacity"]),
-            use_async=use_async,
-        )
-        mem.compressor.encoder.load_state_dict(state["encoder"])
-        mem.compressor.decoder.load_state_dict(state["decoder"])
-        mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
-        mem.compressor.buffer.count = int(state["count"])
-        store_dir = path / "store"
-        if store_dir.exists():
-            if use_async:
-                mem.store = await AsyncFaissVectorStore.load_async(store_dir)
-            else:
-                mem.store = FaissVectorStore.load(store_dir)
+
+if _HAS_GRPC:
+    class MemoryServer(memory_pb2_grpc.MemoryServiceServicer):
+        """gRPC server exposing a ``HierarchicalMemory`` backend."""
+
+        def __init__(self, memory: HierarchicalMemory, address: str = "localhost:50051", max_workers: int = 4) -> None:
+            self.memory = memory
+            self.address = address
+            self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
+            memory_pb2_grpc.add_MemoryServiceServicer_to_server(self, self.server)
+            self.server.add_insecure_port(address)
+
+        def Push(self, request: memory_pb2.PushRequest, context) -> memory_pb2.PushReply:  # noqa: N802
+            vec = torch.tensor(request.vector).reshape(1, -1)
+            meta = request.metadata if request.metadata else None
+            self.memory.add(vec, metadata=[meta])
+            return memory_pb2.PushReply(ok=True)
+
+        def Query(self, request: memory_pb2.QueryRequest, context) -> memory_pb2.QueryReply:  # noqa: N802
+            q = torch.tensor(request.vector).reshape(1, -1)
+            out, meta = self.memory.search(q, k=int(request.k))
+            flat = out.detach().cpu().view(-1).tolist()
+            meta = [str(m) for m in meta]
+            return memory_pb2.QueryReply(vectors=flat, metadata=meta)
+
+        def start(self) -> None:
+            """Start serving requests."""
+            self.server.start()
+
+        def stop(self, grace: float = 0) -> None:
+            """Stop the server."""
+            self.server.stop(grace)
+
+
+def push_remote(address: str, vector: torch.Tensor, metadata: Any | None = None, timeout: float = 5.0) -> bool:
+    """Send ``vector`` to a remote :class:`MemoryServer`."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    with grpc.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        req = memory_pb2.PushRequest(vector=vector.detach().cpu().view(-1).tolist(), metadata="" if metadata is None else str(metadata))
+        reply = stub.Push(req, timeout=timeout)
+        return reply.ok
+
+
+def query_remote(address: str, vector: torch.Tensor, k: int = 5, timeout: float = 5.0) -> Tuple[torch.Tensor, List[str]]:
+    """Query vectors from a remote :class:`MemoryServer`."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    with grpc.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        req = memory_pb2.QueryRequest(vector=vector.detach().cpu().view(-1).tolist(), k=k)
+        reply = stub.Query(req, timeout=timeout)
+        vec = torch.tensor(reply.vectors).reshape(-1, vector.size(-1))
+        return vec, list(reply.metadata)
+
+@classmethod
+async def load_async(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
+    """Asynchronously load memory from ``save_async()`` output."""
+    path = Path(path)
+    state = torch.load(path / "compressor.pt", map_location="cpu")
+    mem = cls(
+        dim=int(state["dim"]),
+        compressed_dim=int(state["compressed_dim"]),
+        capacity=int(state["capacity"]),
+        use_async=use_async,
+    )
+    mem.compressor.encoder.load_state_dict(state["encoder"])
+    mem.compressor.decoder.load_state_dict(state["decoder"])
+    mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
+    mem.compressor.buffer.count = int(state["count"])
+    store_dir = path / "store"
+    if store_dir.exists():
+        if use_async:
+            mem.store = await AsyncFaissVectorStore.load_async(store_dir)
         else:
-            mem.store = VectorStore.load(path / "store.npz")
-        return mem
+            mem.store = FaissVectorStore.load(store_dir)
+    else:
+        mem.store = VectorStore.load(path / "store.npz")
+    return mem
