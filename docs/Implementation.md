@@ -334,6 +334,7 @@ To reproduce the toy run step by step:
 
 - `src/multimodal_world_model.py` now implements a unified transformer that ingests text, images and low-level actions.
 - `train_world_model()` fits the model on trajectory data and `rollout()` generates simulated transitions for downstream agents.
+- Unit tests verify training and rollouts on small synthetic trajectories.
 
 ## A-6 Embodied Skill Transfer
 
@@ -369,11 +370,13 @@ To reproduce the toy run step by step:
 
 - `src/cross_modal_fusion.py` embeds text, images and audio in one latent space.
 - `train_fusion_model()` fine-tunes a shared encoder-decoder using CLIP- and Whisper-style objectives and `encode_all()` returns embeddings for retrieval.
+- Unit tests exercise the forward pass, training loop and encoding helper on toy data.
 
 ## M-2 World-Model RL Bridge
 
 - `src/world_model_rl.py` learns a generative world model from logged trajectories and runs model-based RL for rapid policy updates.
 - The prototype interfaces with ``gym``-like data and provides ``rollout_policy()`` for offline rollout generation.
+- Unit tests cover model training and policy rollout on synthetic transitions.
 
 ## M-3 Self-Calibration for Embodied Agents
 
