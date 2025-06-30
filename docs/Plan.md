@@ -204,6 +204,15 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     refactor quality gains over the baseline meta-RL agent.
 12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with
     `world_model_rl.rollout_policy()` and log constraint violations.
+13. **Self-healing distributed trainer**: Wrap `world_model_rl.train_world_model()`
+    in a `DistributedTrainer` that automatically resumes from failures.
+14. **Edge-memory virtualization**: Stream context from `HierarchicalMemory`
+    through `RemoteMemory` so low-memory devices can handle large-context
+    inference.
+15. **Adaptive curriculum scheduler**: Mix curated datasets with self-play logs
+    via reinforcement learning to accelerate skill acquisition.
+16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
+    novel transformer components and report promising variants.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
