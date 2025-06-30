@@ -187,6 +187,13 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    parameters in `MetaRLRefactorAgent` and track benchmark uplift.
 5. **Scalability metrics**: Update `eval_harness.py` to record GPU memory usage
    alongside pass/fail results.
+6. **Distributed memory throughput**: Use `distributed_memory_benchmark.py` to
+   verify that `DistributedMemory` scales to 4 nodes with <1.2× single-node
+   latency.
+7. **MemoryServer streaming API**: Benchmark the new batched push/query
+   endpoints and report latency savings over single-vector calls.
+8. **Checkpointed world model**: Train the multimodal world model with the
+   `checkpoint_blocks` flag and document memory reduction during training.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."

@@ -439,3 +439,9 @@ txt = generate_transcript(pairs[0][2])
   exploration rate during refactoring.
 - Rewrite `download_triples()` with asyncio to fetch dataset files
   concurrently.
+- Add streaming RPCs to `MemoryServer` so batches of vectors can be pushed and
+  queried in one call. Update `memory.proto` and the `RemoteMemory` client.
+- Implement optional gradient checkpointing in `multimodal_world_model.py` via a
+  `checkpoint_blocks` flag to cut training memory.
+- Create `scripts/distributed_memory_benchmark.py` that measures throughput of
+  `DistributedMemory` across multiple nodes.
