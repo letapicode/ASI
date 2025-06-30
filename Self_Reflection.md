@@ -11,10 +11,9 @@ Instructions for Codex come from this `AGENTS.md` file and any other documentati
 especially `docs/Plan.md`, which outlines algorithms needed for a self-improving AI.
 
 When Codex completes a task it commits its work and provides citations of logs and file lines so
-humans can verify the actions. Because this repository contains only documentation, no automated
-tests are required by default.
-
-Users should manually review Codex's pull requests before merging.
+humans can verify the actions. The repository contains code under `src/` and tests under
+`tests/`. Contributors should run the test suite with `pytest` after modifying code to ensure
+changes remain stable. Users should manually review Codex's pull requests before merging.
 
 \nThe project vision begins with the note: "Below is a shopping list of concrete algorithmic
 gaps..." as described in docs/Plan.md.
