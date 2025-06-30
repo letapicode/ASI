@@ -91,3 +91,11 @@ from .data_ingest import (
     add_gaussian_noise,
     text_dropout,
 )
+from .transformer_circuits import (
+    ActivationRecorder,
+    record_attention_weights,
+    zero_attention_head,
+    restore_attention_head,
+    patched_head,
+    head_importance,
+)

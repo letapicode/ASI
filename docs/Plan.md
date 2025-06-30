@@ -156,6 +156,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   self-play and a sensor calibration routine.
 - `src/formal_verifier.py` checks model snapshots against custom invariants.
 - `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard. The CLI now supports a `--concurrent` flag to run evaluations asynchronously via `evaluate_modules_async()`.
+- `src/transformer_circuits.py` records attention weights and lets researchers ablate individual heads for interpretability experiments.
 
 ### Recommended next steps
 
