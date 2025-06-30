@@ -358,7 +358,12 @@ To reproduce the toy run step by step:
 ## A-10 Goal-Oriented Evaluation Harness
 
 - `src/eval_harness.py` gathers benchmark metrics from each module and compares them with the targets in `docs/Plan.md`.
-- Running `python -m src.eval_harness` prints a pass/fail table for the whole project.
+- The command integrates with `autobench` so test results appear below the evaluation table.
+- Run the harness with
+
+```bash
+python -m asi.eval_harness
+```
 
 ## L-5 Formal Verification Harness
 
