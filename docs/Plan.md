@@ -187,15 +187,18 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    parameters in `MetaRLRefactorAgent` and track benchmark uplift.
 5. **Scalability metrics**: Update `eval_harness.py` to record GPU memory usage
    alongside pass/fail results.
-6. **Distributed memory replication**: Evaluate retrieval latency when
-   `DistributedMemory` replicates `HierarchicalMemory` across four nodes;
-   throughput should scale with <1.2× single-node latency.
-7. **Self-play world model synergy**: Run `self_play_skill_loop.run_loop()` with
-   `MultiModalWorldModel` updates after each cycle and measure reward
-   improvement over the baseline policy.
-8. **Attention interpretability dashboard**: Visualize attention weights using
-   `transformer_circuits.head_importance()` to verify retrieval heads align with
-   relevant tokens.
+6. **Distributed memory benchmark**: Run `DistributedMemory` with four
+   `MemoryServer` nodes using `distributed_memory_benchmark.py` and measure
+   query latency and throughput versus the single-node baseline.
+7. **MemoryServer streaming API**: Benchmark the new batched push/query
+   endpoints and report latency savings over single-vector calls.
+8. **Checkpointed world model**: Train the multimodal world model with the
+   `checkpoint_blocks` flag and document memory reduction during training.
+9. **Self-play dataset fusion**: Feed trajectories from
+   `self_play_skill_loop` into `multimodal_world_model.train_world_model()`
+   to test world-model learning from mixed-modality self-play data.
+10. **Attention trace analysis**: Use the upcoming `AttentionVisualizer` to
+   inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
