@@ -34,8 +34,8 @@ Run the scripts directly with `python` to see parameter and FLOP estimates.
 
 ## Style
 
-This project imposes no strict lines-of-code limit. The only style rule comes from the AGENTS guidelines:
-keep lines under 120 characters whenever practical.
+This project imposes no strict line-length limit. The AGENTS guidelines instead emphasize writing modular
+code rather than enforcing a specific maximum line length.
 
 ## CI
 
