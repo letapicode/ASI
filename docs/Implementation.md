@@ -439,3 +439,9 @@ txt = generate_transcript(pairs[0][2])
   exploration rate during refactoring.
 - Rewrite `download_triples()` with asyncio to fetch dataset files
   concurrently.
+- Implement a `PrioritizedReplayBuffer` in `self_play_env.py` and adapt
+  `self_play_skill_loop.run_loop()` to sample transitions by reward.
+- Create `scripts/distributed_eval.py` to run `eval_harness` across multiple
+  processes or hosts and aggregate the results.
+- Extend `transformer_circuits.py` with an `AttentionVisualizer` class that
+  saves interactive attention heatmaps for interpretability experiments.

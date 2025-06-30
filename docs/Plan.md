@@ -187,6 +187,14 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    parameters in `MetaRLRefactorAgent` and track benchmark uplift.
 5. **Scalability metrics**: Update `eval_harness.py` to record GPU memory usage
    alongside pass/fail results.
+6. **Distributed memory benchmark**: Run `DistributedMemory` with four
+   `MemoryServer` nodes and measure query latency and throughput versus the
+   single-node baseline.
+7. **Self-play dataset fusion**: Feed trajectories from
+   `self_play_skill_loop` into `multimodal_world_model.train_world_model()`
+   to test world-model learning from mixed-modality self-play data.
+8. **Attention trace analysis**: Use the upcoming `AttentionVisualizer` to
+   inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
