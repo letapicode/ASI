@@ -426,3 +426,15 @@ txt = generate_transcript(pairs[0][2])
    or your own short experiments.
 6. **Document results** in both `docs/Plan.md` and this file. Describe what
    worked, what failed, and any insights gained.
+
+## Next Implementation Tasks
+
+- **Integration test for distributed memory**. Use `MemoryServer` and
+  `DistributedMemory` to replicate add/search operations across at least two
+  nodes. Measure retrieval throughput with `tests/test_distributed_memory.py`.
+- **Result logging in `eval_harness.py`**. Add an option `--json out.json` to
+  dump the scoreboard as JSON so progress can be aggregated over time.
+- **Unified multimodal pipeline**. Combine `data_ingest.py`,
+  `multimodal_world_model.py` and `world_model_rl.py` in a script under
+  `scripts/` that trains a toy world model on downloaded triples and prints
+  evaluation metrics.

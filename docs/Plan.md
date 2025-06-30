@@ -173,6 +173,20 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - **Document findings** in this file and in `docs/Implementation.md` so others
   can reproduce the experiments and build upon them.
 
+### Task backlog
+
+- **Distributed memory benchmarking**: run `train_infinite_context.py` with
+  `use_async=True` and measure how retrieval hit rate scales when adding a
+  remote `MemoryServer`.
+- **Automated evaluation reports**: extend `src/eval_harness.py` to export JSON
+  results and reference them from the pull request summary script.
+- **Multimodal world model demo**: collect a small set of text-image-audio
+  triples via `src/data_ingest.py` and train `src/multimodal_world_model.py` to
+  predict actions. Document the configuration in `docs/Implementation.md`.
+- **Safety loop experiment**: combine `collective_constitution.py`,
+  `iter_align.py` and `critic_rlhf.py` to test if iterative alignment closes
+  loopholes faster than RLHF alone.
+
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
 [3]: https://www.businessinsider.com/openai-orion-model-scaling-law-silicon-valley-chatgpt-2024-11?utm_source=chatgpt.com "OpenAI is reportedly struggling to improve its next big AI model. It's a warning for the entire AI industry."
