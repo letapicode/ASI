@@ -125,6 +125,11 @@ model = fit_breakpoint(params, loss)
 print(model.breakpoint, model.predict(params))
 ```
 
+## S-4 4-bit Quantized LoRA Training
+
+- `src/lora_quant.py` implements a small LoRA adapter stored in int4 precision.
+- `apply_quant_lora()` injects these adapters into an existing network so most parameters stay frozen during fine-tuning.
+
 ## C-1 RetNet Retention Kernel
 
 - `src/retnet_retention.py` implements a minimal retention module.
@@ -315,27 +320,42 @@ To reproduce the toy run step by step:
 - `select_action()` returns the highest-valued action with optional
   epsilon-greedy exploration.
 
-## S-4 Weight-Averaged Distillation
+## C-7 Hierarchical Retrieval Memory
 
-A future `swa_distill.py` module will combine multiple training checkpoints using
-stochastic weight averaging followed by knowledge distillation. The goal is to
-reduce the number of gradient steps while matching baseline perplexity.
+- `src/hierarchical_memory.py` and `src/link_slot_attention.py` provide a two-tier memory backed by FAISS.
+- The store compresses vectors before writing them to disk and loads the nearest neighbours on demand.
 
-## C-7 Self-Summarising Memory
+## A-5 Multi-Modal World Model
 
-The planned `self_summarising_memory.py` will summarise far-past tokens with a
-lightweight language model and store the summaries via `HierarchicalMemory`.
-This should retain factual recall with far less storage.
+- `src/multimodal_world_model.py` is planned to hold a unified transformer that ingests text, images and low-level actions.
+- The module will expose `train_world_model()` and `rollout()` helpers so RL agents can simulate diverse environments.
 
-## A-5 Automated Data Ingestion Pipeline
+## A-6 Embodied Skill Transfer
 
-An upcoming script `ingest_repos.py` will crawl trending ML repositories,
-convert any embedded pseudo-code through `paper_to_code.transpile()` and run the
-resulting modules with `autobench`. Statistics will merge into the existing
-scoreboard.
+- `src/robot_skill_transfer.py` will map web-scale video demonstrations to robot control commands.
+- `transfer_skills()` will fine-tune policies on a small set of real robot examples and evaluate task success.
 
-## L-5 Mechanistic Interpretability Filter
+## A-7 Self-Play World Model
 
-A proposed `interpretability_filter.py` will analyse token-level activations
-using attribution scores. It will block or flag outputs whenever anomaly scores
-exceed a learned threshold.
+- `src/self_play_env.py` defines a minimal environment and agent loop for automated skill discovery.
+- The helper `rollout_env()` runs the simulator and logs rewards so new policies can be trained from the generated traces.
+
+## L-5 Formal Verification Harness
+
+- `src/formal_verifier.py` sketches a small property checker that loads model snapshots and symbolically executes critical routines.
+- `verify_model()` asserts invariants like gradient norms and output bounds before the model is released.
+
+## M-1 Cross-Modal Fusion Architecture
+
+- Planned module `src/cross_modal_fusion.py` will embed text, images, and audio in one latent space.
+- A small training script will fine-tune a shared encoder-decoder using CLIP- and Whisper-style objectives.
+
+## M-2 World-Model RL Bridge
+
+- Future `src/world_model_rl.py` will learn a generative world model from logged trajectories and run model-based RL for rapid policy updates.
+- The prototype will interface with `gym` environments and support offline rollout generation.
+
+## M-3 Self-Calibration for Embodied Agents
+
+- `src/embodied_calibration.py` will adapt sensor and actuator parameters from a small set of real-world samples.
+- The helper will align simulation and hardware spaces so policies trained in simulation remain effective after deployment.
