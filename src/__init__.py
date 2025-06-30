@@ -39,7 +39,7 @@ from .robot_skill_transfer import (
     transfer_skills,
 )
 from .self_play_env import EnvStep, SimpleEnv, rollout_env
-from .self_play_skill_loop import self_play_skill_loop
+from .self_play_skill_loop import run_loop as run_self_play_skill_loop, self_play_skill_loop
 from .formal_verifier import (
     VerificationResult,
     check_grad_norm,
