@@ -10,6 +10,15 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 - `python -m src.paper_to_code` transpiles LaTeX pseudo-code to Python.
 - `python -m src.autobench` runs each test file in isolation and reports a summary.
 - `meta-rl-refactor` parses action/reward logs and suggests the next refactoring step.
+- `python -m asi.eval_harness` prints a pass/fail table for key metrics.
+
+Example output:
+
+```text
+Metric                       Value    Target   Status
+moe_load_balance_std         0.0200   0.0200   PASS
+Passed 1/1 metrics
+```
 
 Example:
 
