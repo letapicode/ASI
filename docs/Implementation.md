@@ -347,8 +347,8 @@ To reproduce the toy run step by step:
 
 ## A-8 Integrated Self-Play & Skill Transfer
 
-- The orchestrator in `src/self_play_skill_loop.py` will alternate `self_play_env.rollout_env()` with `robot_skill_transfer.transfer_skills()`.
-- Each cycle logs rewards and fine-tunes policies on a small batch of real examples.
+- `src/self_play_skill_loop.py` provides `run_loop()` which alternates `self_play_env.rollout_env()` with `robot_skill_transfer.transfer_skills()`.
+- Episode rewards and training accuracy are printed each cycle and the helper can be run via `python -m src.self_play_skill_loop`.
 
 ## A-9 Automated PR Conflict Checks
 
