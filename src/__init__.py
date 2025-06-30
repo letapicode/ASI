@@ -66,3 +66,4 @@ from .embodied_calibration import (
     calibrate,
 )
 from .lora_quant import LoRAQuantLinear, apply_quant_lora
+from .pr_conflict_checker import check_pr_conflicts
