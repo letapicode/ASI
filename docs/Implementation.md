@@ -314,3 +314,24 @@ To reproduce the toy run step by step:
   and updates action values.
 - `select_action()` returns the highest-valued action with optional
   epsilon-greedy exploration.
+
+## M-1 Cross-Modal Fusion Architecture
+
+- Planned module `src/cross_modal_fusion.py` will embed text, images, and audio
+  in one latent space.
+- A small training script will fine-tune a shared encoder-decoder using CLIP- and
+  Whisper-style objectives.
+
+## M-2 World-Model RL Bridge
+
+- Future `src/world_model_rl.py` will learn a generative world model from logged
+  trajectories and run model-based RL for rapid policy updates.
+- The prototype will interface with `gym` environments and support offline
+  rollout generation.
+
+## M-3 Self-Calibration for Embodied Agents
+
+- `src/embodied_calibration.py` will adapt sensor and actuator parameters from a
+  small set of real-world samples.
+- The helper will align simulation and hardware spaces so policies trained in
+  simulation remain effective after deployment.

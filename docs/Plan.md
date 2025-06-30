@@ -54,7 +54,17 @@ Citations point to the most recent public work so you can drill straight into th
 
 ---
 
-## 5  Will “just scaling Transformers” reach ASI?
+## 5  Multimodal & Embodied Algorithms
+
+| ID      | Algorithm-to-solve                      | What it must do                                                                               | Success criterion                                                                |
+| ------- | --------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **M-1** | **Cross-Modal Fusion Architecture**     | Learn a single latent space for text, images and audio                                         | ≥85 % F1 on zero-shot image↔text retrieval; audio caption BLEU within 5 % of SOTA |
+| **M-2** | **World-Model RL Bridge**               | Train a generative world model from logs and run model-based RL for fast policy updates        | Real robot tasks reach 90 % of offline policy reward after <10k physical steps   |
+| **M-3** | **Self-Calibration for Embodied Agents**| Adapt sensors and actuators from small real-world samples                                      | Simulation-trained policies retain ≥80 % success with <1k labelled real samples   |
+
+---
+
+## 6  Will “just scaling Transformers” reach ASI?
 
 * Empirical scaling-law fits (S-3) and industry reports show *sharp diminishing returns* past the multi-trillion-parameter scale ([pnas.org][22], [time.com][4]).
 * **Therefore:** Raw scaling is **necessary but not sufficient**.  Breakthroughs in *long-term memory (Section 2)*, *autonomous self-improvement (Section 3)*, and *robust alignment (Section 4)* are all required to bridge the gap to ASI.
