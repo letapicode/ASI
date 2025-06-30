@@ -347,7 +347,7 @@ To reproduce the toy run step by step:
 
 ## A-8 Integrated Self-Play & Skill Transfer
 
-- The orchestrator in `src/self_play_skill_loop.py` will alternate `self_play_env.rollout_env()` with `robot_skill_transfer.transfer_skills()`.
+- The orchestrator in `src/self_play_skill_loop.py` alternates `self_play_env.rollout_env()` with `robot_skill_transfer.transfer_skills()`.
 - Each cycle logs rewards and fine-tunes policies on a small batch of real examples.
 
 ## A-9 Automated PR Conflict Checks
@@ -382,7 +382,7 @@ To reproduce the toy run step by step:
 
 ## M-4 Cross-Modal Data Ingestion Pipeline
 
-- `src/data_ingest.py` will align text, image and audio pairs from open datasets.
+- `src/data_ingest.py` aligns text, image and audio pairs from open datasets.
 - Augmentation helpers generate crops and transcripts for training the multi-modal world model.
 
 ## Research workflow

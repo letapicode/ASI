@@ -66,3 +66,7 @@ from .embodied_calibration import (
     calibrate,
 )
 from .lora_quant import LoRAQuantLinear, apply_quant_lora
+from .self_play_skill_loop import SelfPlaySkillConfig, self_play_skill_loop
+from .pr_conflict_checker import list_conflicts
+from .eval_harness import gather_metrics, summarize
+from .data_ingest import IngestConfig, align_modalities, generate_augmentations
