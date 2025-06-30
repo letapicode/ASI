@@ -40,6 +40,8 @@ Citations point to the most recent public work so you can drill straight into th
 | **A-2** | **AutoBench Harness**                    | Sandbox every imported module, tag wins/losses    | Coverage ≥95 % pass; dashboard latency <2 min                                                                      |
 | **A-3** | **Meta-RL Refactor Agent**               | Decide “replace / refactor / rollback” on modules | ≥15 % average benchmark uplift in 30 days                                                                          |
 | **A-4** | **Quantum Amplitude-Estimation HPO**     | Use QAE to sample hyper-params with √N speed-up   | Same accuracy with ≤30 % wall-clock time vs classical Bayesian search ([arxiv.org][16])                            |
+| **A-5** | **Multi-Modal World Model (Generalist)** | Jointly learn text, image and action dynamics     | ≥50 % success on multi-modal RL benchmarks; retrieval ≤2 × text-only baseline ([arxiv.org][23]) |
+| **A-6** | **Embodied Skill Transfer (RT-2)**        | Map web-scale demonstrations to robot policies    | 80 % task success on a 100-skill benchmark after <1 h fine-tuning ([arxiv.org][24]) |
 
 ---
 
@@ -145,3 +147,5 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 [20]: https://ui.adsabs.harvard.edu/abs/2024arXiv240318341C/abstract?utm_source=chatgpt.com "IterAlign: Iterative Constitutional Alignment of Large Language Models"
 [21]: https://www.wired.com/story/openai-rlhf-ai-training?utm_source=chatgpt.com "OpenAI Wants AI to Help Humans Train AI"
 [22]: https://www.pnas.org/doi/10.1073/pnas.2413443122?utm_source=chatgpt.com "Scaling language model size yields diminishing returns for ... - PNAS"
+[23]: https://arxiv.org/abs/2205.06175?utm_source=chatgpt.com "A Generalist Agent"
+[24]: https://arxiv.org/abs/2307.15424?utm_source=chatgpt.com "RT-2: Vision-Language-Action Models"

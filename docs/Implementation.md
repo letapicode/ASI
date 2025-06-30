@@ -276,7 +276,17 @@ To reproduce the toy run step by step:
   search = QAEHyperparamSearch(eval_func, params)
   best, prob = search.search(num_samples=5, early_stop=0.8, max_workers=4)
   ```
-- See `docs/Plan.md` task **A-4** for context and goals.
+ - See `docs/Plan.md` task **A-4** for context and goals.
+
+## A-5 Multi-Modal World Model
+
+- `src/multimodal_world_model.py` is planned to hold a unified transformer that ingests text, images and low-level actions.
+- The module will expose `train_world_model()` and `rollout()` helpers so RL agents can simulate diverse environments.
+
+## A-6 Embodied Skill Transfer
+
+- `src/robot_skill_transfer.py` will map web-scale video demonstrations to robot control commands.
+- `transfer_skills()` will fine-tune policies on a small set of real robot examples and evaluate task success.
 
 ## Pull Request Monitoring
 
