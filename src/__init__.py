@@ -25,3 +25,9 @@ from .pull_request_monitor import (
     list_open_prs_async,
     check_mergeable_async,
 )
+from .cross_modal_fusion import CrossModalFusionModel, train_fusion_model
+from .world_model_rl import WorldModel, RandomPolicy, collect_dataset, train_world_model
+from .robot_skill_transfer import transfer_skills
+from .self_play_env import SimpleGrid, SelfPlayAgent, rollout_env
+from .embodied_calibration import calibrate
+from .formal_verifier import verify_model, weight_bound

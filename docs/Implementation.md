@@ -332,30 +332,30 @@ To reproduce the toy run step by step:
 
 ## A-6 Embodied Skill Transfer
 
-- `src/robot_skill_transfer.py` will map web-scale video demonstrations to robot control commands.
-- `transfer_skills()` will fine-tune policies on a small set of real robot examples and evaluate task success.
+ - `src/robot_skill_transfer.py` maps demonstrations to robot control commands.
+ - `transfer_skills()` fine-tunes policies on a small set of real robot examples and evaluates task success.
 
 ## A-7 Self-Play World Model
 
-- `src/self_play_env.py` defines a minimal environment and agent loop for automated skill discovery.
-- The helper `rollout_env()` runs the simulator and logs rewards so new policies can be trained from the generated traces.
+ - `src/self_play_env.py` defines a minimal environment and agent loop for automated skill discovery.
+ - `rollout_env()` runs the simulator and logs rewards so new policies can be trained from the generated traces.
 
 ## L-5 Formal Verification Harness
 
-- `src/formal_verifier.py` sketches a small property checker that loads model snapshots and symbolically executes critical routines.
-- `verify_model()` asserts invariants like gradient norms and output bounds before the model is released.
+ - `src/formal_verifier.py` implements a small property checker that loads model snapshots and evaluates custom invariants.
+ - `verify_model()` asserts invariants like gradient norms and output bounds before the model is released.
 
 ## M-1 Cross-Modal Fusion Architecture
 
-- Planned module `src/cross_modal_fusion.py` will embed text, images, and audio in one latent space.
-- A small training script will fine-tune a shared encoder-decoder using CLIP- and Whisper-style objectives.
+ - `src/cross_modal_fusion.py` embeds text, images, and audio in one latent space.
+ - `train_fusion_model()` performs CLIP- and Whisper-style contrastive training.
 
 ## M-2 World-Model RL Bridge
 
-- Future `src/world_model_rl.py` will learn a generative world model from logged trajectories and run model-based RL for rapid policy updates.
-- The prototype will interface with `gym` environments and support offline rollout generation.
+ - `src/world_model_rl.py` learns a generative world model from logged trajectories and runs model-based RL for rapid policy updates.
+ - The prototype interfaces with `gym` environments and supports offline rollout generation.
 
 ## M-3 Self-Calibration for Embodied Agents
 
-- `src/embodied_calibration.py` will adapt sensor and actuator parameters from a small set of real-world samples.
-- The helper will align simulation and hardware spaces so policies trained in simulation remain effective after deployment.
+ - `src/embodied_calibration.py` adapts sensor and actuator parameters from a small set of real-world samples.
+ - The helper aligns simulation and hardware spaces so policies trained in simulation remain effective after deployment.
