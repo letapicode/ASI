@@ -44,18 +44,28 @@ def record_attention_weights(model: nn.Module, x: torch.Tensor) -> Dict[str, tor
     """Run ``model`` on ``x`` and return attention weights keyed by module name."""
     weights: Dict[str, torch.Tensor] = {}
     handles: list[torch.utils.hooks.RemovableHandle] = []
+    patches = []
     for name, mod in model.named_modules():
         if isinstance(mod, nn.MultiheadAttention):
-            def hook(mod: nn.MultiheadAttention, inp, output, n=name):
-                # output is (attn, weights)
+            orig_forward = mod.forward
+
+            def wrapped_forward(*args, _orig=orig_forward, **kwargs):
+                kwargs["need_weights"] = True
+                kwargs.setdefault("average_attn_weights", False)
+                return _orig(*args, **kwargs)
+
+            def hook(_mod: nn.MultiheadAttention, _inp, output, n=name):
                 if isinstance(output, tuple) and len(output) == 2:
                     weights[n] = output[1].detach()
-                else:
-                    weights[n] = mod.attn_output_weights.detach()
+
+            mod.forward = wrapped_forward
             handles.append(mod.register_forward_hook(hook))
+            patches.append((mod, orig_forward))
     model(x)
     for h in handles:
         h.remove()
+    for mod, orig in patches:
+        mod.forward = orig
     return weights
 
 

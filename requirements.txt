@@ -6,3 +6,5 @@ faiss-cpu
 aiohttp
 grpcio
 grpcio-tools
+requests
+pillow
