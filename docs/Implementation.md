@@ -384,3 +384,15 @@ To reproduce the toy run step by step:
 
 - `src/data_ingest.py` will align text, image and audio pairs from open datasets.
 - Augmentation helpers generate crops and transcripts for training the multi-modal world model.
+
+## Research workflow
+
+1. **Select an algorithm** from `docs/Plan.md` that remains unsolved.
+2. **Review recent literature** to confirm the open problems and techniques.
+3. **Prototype the idea** by extending the relevant modules under `src/`.
+   Keep the code modular so unit tests in `tests/` can import the new component.
+4. **Run the test suite** with `pytest` after each change to catch regressions.
+5. **Benchmark the implementation** using the provided scripts under `scripts/`
+   or your own short experiments.
+6. **Document results** in both `docs/Plan.md` and this file. Describe what
+   worked, what failed, and any insights gained.

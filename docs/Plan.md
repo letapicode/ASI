@@ -156,6 +156,21 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   self-play and a sensor calibration routine.
 - `src/formal_verifier.py` checks model snapshots against custom invariants.
 
+### Recommended next steps
+
+- **Pinpoint a high-impact algorithm** from the tables above. Unsolved entries
+  under Sections 1–3 yield the biggest leverage on capability.
+- **Survey the latest papers** referenced in each section to understand the
+  current state of the art and gaps that remain.
+- **Formulate a clear research question** that ties the algorithm to a concrete
+  success criterion from the table.
+- **Prototype using the existing modules** in `src/` and keep the code modular
+  so new components plug into the test suite.
+- **Run `pytest`** after any code change to ensure baseline stability before
+  measuring performance on benchmarks.
+- **Document findings** in this file and in `docs/Implementation.md` so others
+  can reproduce the experiments and build upon them.
+
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
 [3]: https://www.businessinsider.com/openai-orion-model-scaling-law-silicon-valley-chatgpt-2024-11?utm_source=chatgpt.com "OpenAI is reportedly struggling to improve its next big AI model. It's a warning for the entire AI industry."
