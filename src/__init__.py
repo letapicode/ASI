@@ -25,3 +25,11 @@ from .pull_request_monitor import (
     list_open_prs_async,
     check_mergeable_async,
 )
+from .lora_quant import LoRAQuantLinear, apply_quant_lora
+from .cross_modal_fusion import CrossModalFusion
+from .multimodal_world_model import MultiModalWorldModel, train_world_model, rollout
+from .robot_skill_transfer import SkillTransferModel, transfer_skills
+from .self_play_env import SelfPlayEnv, rollout_env
+from .world_model_rl import collect_trajectories, ModelBasedAgent, train_model, evaluate
+from .embodied_calibration import CalibrationModel, calibrate
+from .formal_verifier import verify_model
