@@ -65,6 +65,12 @@ and `git merge-tree`, then prints an AutoBench-style table.
 python -m src.pr_conflict_checker letapicode/ASI
 ```
 
+If the package imports fail, run the standalone helper instead:
+
+```bash
+python scripts/pr_conflict_summary.py letapicode/ASI
+```
+
 Set `--token` to a GitHub token for higher API limits and `--remote` if your
 PRs live on a remote other than `origin`.
 ---
