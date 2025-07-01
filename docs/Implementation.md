@@ -336,6 +336,20 @@ To reproduce the toy run step by step:
 - `src/remote_memory.py` provides a small :class:`RemoteMemory` client that wraps
   these RPCs in a convenient Python interface.
 
+### Distributed Memory Benchmark
+
+`scripts/distributed_memory_benchmark.py` launches several `MemoryServer`
+instances and measures the add and query throughput of
+`DistributedMemory`. It first runs a single-node baseline and then
+starts the requested number of servers to compare distributed
+performance.
+
+Run the benchmark with four servers as:
+
+```bash
+python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
+```
+
 ## A-5 Multi-Modal World Model
 
 - `src/multimodal_world_model.py` now implements a unified transformer that ingests text, images and low-level actions.
