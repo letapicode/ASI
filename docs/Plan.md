@@ -219,7 +219,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     The router varies active expert counts based on GPU load and compares load
     balance with the static `SwitchRouter`.
 18. **Hierarchical SSD caching**: Add an `SSDCache` layer in `HierarchicalMemory`
-    that prefetches frequently accessed vectors for low-latency retrieval.
+    that prefetches frequently accessed vectors for low-latency retrieval. *Implemented
+    in `src/hierarchical_memory.py` with persistence utilities and unit tests.*
 19. **Generative noise filtering**: Use `AutoDatasetFilter` during data ingest to
     prune low-quality samples and track the effect on training stability.
 20. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
