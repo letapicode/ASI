@@ -112,6 +112,7 @@ from .transformer_circuits import (
     restore_attention_head,
     patched_head,
     head_importance,
+    AttentionVisualizer,
 )
 from .neural_arch_search import DistributedArchSearch
 from .graph_of_thought import GraphOfThought

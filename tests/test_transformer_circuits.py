@@ -1,8 +1,10 @@
 import unittest
+from pathlib import Path
 import torch
 from asi.transformer_circuits import (
     record_attention_weights,
     head_importance,
+    AttentionVisualizer,
 )
 
 
@@ -22,6 +24,16 @@ class TestTransformerCircuits(unittest.TestCase):
         imps = head_importance(self.model, self.input, 'layers.0.self_attn')
         self.assertEqual(imps.numel(), 2)
         self.assertTrue(torch.all(imps >= 0))
+
+    def test_attention_visualizer(self):
+        out = Path('tmp_vis')
+        vis = AttentionVisualizer(self.model, ['layers.0.self_attn'], out_dir=str(out))
+        weights = vis.run(self.input)
+        self.assertIn('layers.0.self_attn', weights)
+        self.assertTrue(any('layers_0_self_attn_h' in p.name for p in out.glob('*.png')))
+        for p in out.glob('*'):
+            p.unlink()
+        out.rmdir()
 
 
 if __name__ == '__main__':

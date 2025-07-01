@@ -203,7 +203,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 9. **Self-play dataset fusion**: Feed trajectories from
    `self_play_skill_loop` into `multimodal_world_model.train_world_model()`
    to test world-model learning from mixed-modality self-play data.
-10. **Attention trace analysis**: Use the upcoming `AttentionVisualizer` to
+10. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
 11. **Graph-of-thought planning**: Implement `GraphOfThought` (see
     `src/graph_of_thought.py`) and measure refactor quality gains over the
