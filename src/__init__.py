@@ -12,14 +12,12 @@ from .deliberative_alignment import DeliberativeAligner
 from .streaming_compression import ReservoirBuffer, StreamingCompressor
 from .hierarchical_memory import (
     HierarchicalMemory,
-    MemoryServer,
     push_remote,
     query_remote,
     push_remote_async,
     query_remote_async,
 )
 from .distributed_memory import DistributedMemory
-from .memory_service import serve
 from .remote_memory import RemoteMemory
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
@@ -28,6 +26,8 @@ from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 from .chunkwise_retrainer import ChunkWiseRetrainer
 from .scaling_law import BreakpointScalingLaw
 from .link_slot_attention import LinkSlotAttention
+from .mamba_block import MambaBlock
+from .retnet_retention import RetNetRetention
 from .hybrid_retention import HybridRetention
 
 from .pull_request_monitor import (
@@ -84,6 +84,7 @@ from .embodied_calibration import (
 from .lora_quant import LoRAQuantLinear, apply_quant_lora
 from .data_ingest import (
     download_triples,
+    download_triples_async,
     align_triples,
     random_crop,
     generate_transcript,

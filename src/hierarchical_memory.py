@@ -105,6 +105,17 @@ class HierarchicalMemory:
             comp = self.compressor.encoder(x).detach().cpu().numpy()
             self.store.add(comp, metadata)
 
+    def add_multimodal(
+        self,
+        text: torch.Tensor,
+        images: torch.Tensor,
+        audio: torch.Tensor,
+        metadata: Iterable[Any] | None = None,
+    ) -> None:
+        """Store averaged multimodal embeddings."""
+        vecs = (text + images + audio) / 3.0
+        self.add(vecs, metadata)
+
     def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
         """Remove vectors from the store by index or metadata tag."""
         if isinstance(self.store, AsyncFaissVectorStore):
@@ -127,6 +138,17 @@ class HierarchicalMemory:
             await self.store.aadd(comp, metadata)
         else:
             self.store.add(comp, metadata)
+
+    async def aadd_multimodal(
+        self,
+        text: torch.Tensor,
+        images: torch.Tensor,
+        audio: torch.Tensor,
+        metadata: Iterable[Any] | None = None,
+    ) -> None:
+        """Asynchronously store averaged multimodal embeddings."""
+        vecs = (text + images + audio) / 3.0
+        await self.aadd(vecs, metadata)
 
     async def adelete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
         """Asynchronously delete vectors from the store."""

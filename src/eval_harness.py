@@ -14,10 +14,11 @@ import torch
 
 
 def log_memory_usage() -> float:
-    """Return current GPU memory allocation in MB."""
+    """Return peak GPU memory usage in MB and reset stats."""
     if torch.cuda.is_available():
-        torch.cuda.synchronize()
-        return torch.cuda.memory_allocated() / 1024**2
+        mem = torch.cuda.max_memory_allocated() / (1024 ** 2)
+        torch.cuda.reset_peak_memory_stats()
+        return float(mem)
     return 0.0
 
 
@@ -225,7 +226,11 @@ def evaluate_modules(modules: Iterable[str]) -> Dict[str, Tuple[bool, str]]:
     for mod in modules:
         fn = EVALUATORS.get(mod, lambda: _eval_import_only(mod))
         try:
+            if torch.cuda.is_available():
+                torch.cuda.reset_peak_memory_stats()
             passed, info = fn()
+            mem = log_memory_usage()
+            info = f"{info} gpu={mem:.1f}MB"
         except Exception as exc:  # pragma: no cover - diagnostic path
             passed, info = False, f"error: {exc}"
         results[mod] = (passed, info)
@@ -241,7 +246,11 @@ async def evaluate_modules_async(modules: Iterable[str]) -> Dict[str, Tuple[bool
 
         async def run_fn(func: Callable[[], Tuple[bool, str]] = fn) -> Tuple[bool, str]:
             try:
-                return await loop.run_in_executor(None, func)
+                if torch.cuda.is_available():
+                    torch.cuda.reset_peak_memory_stats()
+                passed, info = await loop.run_in_executor(None, func)
+                mem = log_memory_usage()
+                return passed, f"{info} gpu={mem:.1f}MB"
             except Exception as exc:  # pragma: no cover - diagnostic path
                 return False, f"error: {exc}"
 
@@ -251,17 +260,13 @@ async def evaluate_modules_async(modules: Iterable[str]) -> Dict[str, Tuple[bool
     return {mod: res for mod, res in zip(modules, results_list)}
 
 
-def format_results(
-    results: Dict[str, Tuple[bool, str]], memory_mb: float | None = None
-) -> str:
+def format_results(results: Dict[str, Tuple[bool, str]]) -> str:
     total = len(results)
     passed = sum(1 for ok, _ in results.values() if ok)
     lines = [f"Passed {passed}/{total} modules"]
     for mod, (ok, info) in sorted(results.items()):
         status = "PASS" if ok else "FAIL"
         lines.append(f"{mod}: {status} - {info}")
-    if memory_mb is not None:
-        lines.append(f"GPU memory used: {memory_mb:.1f} MB")
     return "\n".join(lines)
 
 
@@ -287,7 +292,9 @@ def main(argv: list[str] | None = None) -> None:
     else:
         results = evaluate_modules(mods)
     mem = log_memory_usage()
-    print(format_results(results, memory_mb=mem))
+    out = format_results(results)
+    out += f"\nGPU memory used: {mem:.1f} MB"
+    print(out)
 
 
 if __name__ == "__main__":  # pragma: no cover
