@@ -134,7 +134,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   `summarize_results()` prints a concise scoreboard with snippets from failing
   outputs.
 - `src/meta_rl_refactor.py` implements a small Q-learning agent for **A-3**.
-- `src/quantum_hpo.py` provides a quantum amplitude-estimation search for **A-4**.
+- `src/quantum_hpo.py` provides a quantum amplitude-estimation search for **A-4**. It now accepts architecture parameters to evaluate candidate transformer components.
 - `src/rwkv_loop.py` demonstrates the infinite-context loop for **C-6**.
 - `src/chunkwise_retrainer.py` implements chunk-wise retraining on long transcripts.
 - `src/collective_constitution.py` aggregates crowd-sourced rules for **L-1**.
@@ -214,6 +214,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     via reinforcement learning to accelerate skill acquisition.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
     novel transformer components and report promising variants.
+    *Implemented in `src/quantum_hpo.py` with unit tests.*
 17. **Elastic mixture-of-experts routing**: Implement `ElasticMoERouter` to vary
     expert counts with GPU load and compare load balance with the static router.
 18. **Hierarchical SSD caching**: Add an `SSDCache` layer in `HierarchicalMemory`
