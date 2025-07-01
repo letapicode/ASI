@@ -205,6 +205,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     refactor quality gains over the baseline meta-RL agent.
 12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with
     `world_model_rl.rollout_policy()` and log constraint violations.
+    *Implemented as `src/neuro_symbolic_executor.py`.*
 13. **Self-healing distributed trainer**: Wrap `world_model_rl.train_world_model()`
     in a `DistributedTrainer` that automatically resumes from failures.
 14. **Edge-memory virtualization**: Stream context from `HierarchicalMemory`

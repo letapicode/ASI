@@ -457,7 +457,7 @@ txt = generate_transcript(pairs[0][2])
 - Prototype a `GraphOfThoughtPlanner` that composes reasoning steps into a
   searchable graph for code refactoring decisions.
 - Add a `NeuroSymbolicExecutor` module that runs logical constraints alongside
-  neural world-model rollouts.
+  neural world-model rollouts. **Implemented in `src/neuro_symbolic_executor.py`.**
 - Implement a `DistributedTrainer` that automatically restarts failed
   processes and coordinates checkpoints with `DistributedMemory`.
 - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemory`
