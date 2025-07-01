@@ -49,7 +49,7 @@ from .robot_skill_transfer import (
     SkillTransferModel,
     transfer_skills,
 )
-from .self_play_env import EnvStep, SimpleEnv, rollout_env
+from .self_play_env import EnvStep, SimpleEnv, PrioritizedReplayBuffer, rollout_env
 from .self_play_skill_loop import (
     SelfPlaySkillLoopConfig,
     run_loop,

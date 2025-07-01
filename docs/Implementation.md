@@ -446,7 +446,7 @@ txt = generate_transcript(pairs[0][2])
 - Create `scripts/distributed_memory_benchmark.py` that measures throughput of
   `DistributedMemory` across multiple nodes.
 - Implement a `PrioritizedReplayBuffer` in `self_play_env.py` and adapt
-  `self_play_skill_loop.run_loop()` to sample transitions by reward.
+  `self_play_skill_loop.run_loop()` to sample transitions by reward. **Implemented**
 - Create `scripts/distributed_eval.py` to run `eval_harness` across multiple
   processes or hosts and aggregate the results.
 - Extend `transformer_circuits.py` with an `AttentionVisualizer` class that

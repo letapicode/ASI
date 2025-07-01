@@ -34,9 +34,12 @@ class TestSelfPlaySkillLoop(unittest.TestCase):
         frames = [torch.randn(cfg.img_channels, 4, 4) for _ in range(2)]
         actions = [0, 1]
 
-        def fake_rollout(env, policy, steps=3):
+        def fake_rollout(env, policy, steps=3, return_actions=False):
             obs = [torch.zeros(env.state.shape) for _ in range(steps)]
             rewards = [1.0] * steps
+            actions = [0 for _ in range(steps)]
+            if return_actions:
+                return obs, rewards, actions
             return obs, rewards
 
         class DummyModel(torch.nn.Module):

@@ -5,7 +5,7 @@ from typing import Callable, Iterable, Sequence, Tuple, List
 
 import torch
 
-from .self_play_env import SimpleEnv, rollout_env
+from .self_play_env import SimpleEnv, rollout_env, PrioritizedReplayBuffer
 from .robot_skill_transfer import (
     SkillTransferConfig,
     VideoPolicyDataset,
@@ -39,7 +39,9 @@ def run_loop(
     """Run alternating self-play and skill transfer cycles."""
 
     env = SimpleEnv(cfg.env_state_dim)
-    dataset = VideoPolicyDataset(list(frames), list(actions))
+    buffer = PrioritizedReplayBuffer(capacity=cfg.steps * cfg.cycles)
+    for f, a in zip(frames, actions):
+        buffer.add(f, a, 1.0)
     transfer_cfg = SkillTransferConfig(
         img_channels=cfg.img_channels,
         action_dim=cfg.action_dim,
@@ -53,8 +55,14 @@ def run_loop(
     current_policy = policy
     model: SkillTransferModel | None = None
     for _ in range(cfg.cycles):
-        _, rewards = rollout_env(env, current_policy, steps=cfg.steps)
+        obs_list, rewards, acts = rollout_env(
+            env, current_policy, steps=cfg.steps, return_actions=True
+        )
+        for o, a, r in zip(obs_list, acts, rewards):
+            buffer.add(o, a, r)
         history.append(sum(rewards) / len(rewards) if rewards else 0.0)
+        sample_frames, sample_actions = buffer.sample(cfg.batch_size)
+        dataset = VideoPolicyDataset(sample_frames, sample_actions)
         model = transfer_skills(transfer_cfg, dataset)
 
         def new_policy(obs: torch.Tensor, m: SkillTransferModel = model) -> torch.Tensor:
