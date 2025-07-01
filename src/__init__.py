@@ -92,7 +92,9 @@ from .data_ingest import (
     random_crop_image,
     add_gaussian_noise,
     text_dropout,
+    synthesize_from_world_model,
 )
+from .generative_data_augmentor import GenerativeDataAugmentor
 from .transformer_circuits import (
     ActivationRecorder,
     record_attention_weights,

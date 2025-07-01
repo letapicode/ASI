@@ -5,10 +5,11 @@ from __future__ import annotations
 import random
 import wave
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Tuple, Callable
 
 import numpy as np
 import asyncio
+import torch
 import requests
 try:
     import aiohttp  # type: ignore
@@ -16,6 +17,10 @@ try:
 except Exception:  # pragma: no cover - optional
     _HAS_AIOHTTP = False
 from PIL import Image
+try:  # pragma: no cover - fallback for local import
+    from .generative_data_augmentor import GenerativeDataAugmentor
+except Exception:  # pragma: no cover - for tests
+    from generative_data_augmentor import GenerativeDataAugmentor  # type: ignore
 
 
 def download_file(url: str, dest: Path) -> None:
@@ -152,6 +157,19 @@ def text_dropout(text: str, p: float = 0.1) -> str:
     return " ".join(kept)
 
 
+def synthesize_from_world_model(
+    augmentor: GenerativeDataAugmentor,
+    seeds: Iterable[Tuple[str, np.ndarray]],
+    policy_fn: Callable[[torch.Tensor], torch.Tensor],
+    steps: int = 5,
+) -> List[Tuple[str, np.ndarray, np.ndarray]]:
+    """Generate synthetic triples for each ``(text, image)`` seed."""
+    triples: List[Tuple[str, np.ndarray, np.ndarray]] = []
+    for text, image in seeds:
+        triples.extend(augmentor.synthesize(text, image, policy_fn, steps=steps))
+    return triples
+
+
 __all__ = [
     "download_triples",
     "download_triples_async",
@@ -162,4 +180,5 @@ __all__ = [
     "random_crop_image",
     "add_gaussian_noise",
     "text_dropout",
+    "synthesize_from_world_model",
 ]
