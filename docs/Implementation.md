@@ -454,6 +454,7 @@ txt = generate_transcript(pairs[0][2])
   processes or hosts and aggregate the results.
 - Extend `transformer_circuits.py` with an `AttentionVisualizer` class that
   saves interactive attention heatmaps for interpretability experiments.
+  **Implemented** in `src/transformer_circuits.py` with unit tests.
 - Prototype a `GraphOfThoughtPlanner` that composes reasoning steps into a
   searchable graph for code refactoring decisions.
 - Add a `NeuroSymbolicExecutor` module that runs logical constraints alongside

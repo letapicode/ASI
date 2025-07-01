@@ -100,4 +100,5 @@ from .transformer_circuits import (
     restore_attention_head,
     patched_head,
     head_importance,
+    AttentionVisualizer,
 )

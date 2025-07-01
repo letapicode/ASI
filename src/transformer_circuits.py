@@ -1,6 +1,10 @@
 import contextlib
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Iterable, Tuple
+
+import numpy as np
+from PIL import Image
 
 import torch
 import torch.nn as nn
@@ -131,6 +135,39 @@ def head_importance(model: nn.Module, x: torch.Tensor, name: str) -> torch.Tenso
     return torch.tensor(diffs)
 
 
+class AttentionVisualizer:
+    """Save attention weights as heatmaps using existing hooks."""
+
+    def __init__(self, model: nn.Module, names: Iterable[str] | None = None, out_dir: str = "attn_vis") -> None:
+        if names is None:
+            names = [n for n, m in model.named_modules() if isinstance(m, nn.MultiheadAttention)]
+        self.model = model
+        self.names = list(names)
+        self.out_dir = Path(out_dir)
+        self.out_dir.mkdir(parents=True, exist_ok=True)
+
+    def _save_heatmap(self, attn: torch.Tensor, path: Path) -> None:
+        arr = attn.detach().cpu().numpy()
+        arr = arr - arr.min()
+        arr = arr / (arr.max() + 1e-6)
+        arr = (arr * 255).astype(np.uint8)
+        img = Image.fromarray(arr, mode="L")
+        img = img.resize((attn.size(1) * 8, attn.size(0) * 8), Image.NEAREST)
+        img.save(path)
+
+    def run(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
+        weights = record_attention_weights(self.model, x)
+        for name in self.names:
+            w = weights.get(name)
+            if w is None:
+                continue
+            avg = w.mean(dim=0)
+            for h, hmap in enumerate(avg):
+                fname = f"{name.replace('.', '_')}_h{h}.png"
+                self._save_heatmap(hmap, self.out_dir / fname)
+        return weights
+
+
 __all__ = [
     "ActivationRecorder",
     "record_attention_weights",
@@ -138,5 +175,6 @@ __all__ = [
     "restore_attention_head",
     "patched_head",
     "head_importance",
+    "AttentionVisualizer",
     "HeadPatch",
 ]
