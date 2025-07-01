@@ -214,8 +214,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     via reinforcement learning to accelerate skill acquisition.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
     novel transformer components and report promising variants.
-17. **Elastic mixture-of-experts routing**: Implement `ElasticMoERouter` to vary
-    expert counts with GPU load and compare load balance with the static router.
+17. **Elastic mixture-of-experts routing**: *Implemented in `src/elastic_moe_router.py`.*
+    The router varies active expert counts based on GPU load and compares load
+    balance with the static `SwitchRouter`.
 18. **Hierarchical SSD caching**: Add an `SSDCache` layer in `HierarchicalMemory`
     that prefetches frequently accessed vectors for low-latency retrieval.
 19. **Generative noise filtering**: Use `AutoDatasetFilter` during data ingest to
