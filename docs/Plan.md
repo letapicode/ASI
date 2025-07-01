@@ -178,7 +178,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 1. **Hybrid retention backbone**: Fuse `RetNetRetention` with `MambaBlock` and
    measure throughput and memory compared with the individual kernels.
-   *Implemented in `src/hybrid_retention.py`.*
+   *Implemented in `src/hybrid_retention.py` with unit tests.*
 2. **Cross-modal retrieval memory**: Store embeddings from
    `cross_modal_fusion.encode_all()` inside `HierarchicalMemory` and evaluate
    retrieval accuracy on 1&nbsp;M-token streams.
