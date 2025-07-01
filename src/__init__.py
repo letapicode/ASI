@@ -36,6 +36,7 @@ from .link_slot_attention import LinkSlotAttention
 from .mamba_block import MambaBlock
 from .retnet_retention import RetNetRetention
 from .hybrid_retention import HybridRetention
+from .adaptive_planner import GraphOfThoughtPlanner, AdaptivePlanner
 
 from .pull_request_monitor import (
     list_open_prs,
