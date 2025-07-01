@@ -62,5 +62,22 @@ class TestCrossModalFusion(unittest.TestCase):
         self.assertEqual(out.shape, (1, 4))
         self.assertEqual(meta[0]["modality"], "text")
 
+    def test_mixed_modality_retrieval(self):
+        triples = [
+            ("one", torch.randn(3, 16, 16), torch.randn(1, 32)),
+            ("two", torch.randn(3, 16, 16), torch.randn(1, 32)),
+        ]
+        ds = MultiModalDataset(triples, simple_tokenizer)
+        mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+        t, i, a = encode_all(self.model, ds, batch_size=1, memory=mem)
+
+        out, meta = mem.search_by_modality(a[0], k=1, modality="image")
+        self.assertEqual(meta[0]["id"], 0)
+        self.assertEqual(meta[0]["modality"], "image")
+
+        out, meta = mem.search_by_modality(t[1], k=1, modality="audio")
+        self.assertEqual(meta[0]["id"], 1)
+        self.assertEqual(meta[0]["modality"], "audio")
+
 if __name__ == "__main__":
     unittest.main()
