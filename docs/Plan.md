@@ -186,8 +186,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    with half the memory use.
 4. **QAE-guided refactoring**: Employ `QAEHyperparamSearch` to tune exploration
    parameters in `MetaRLRefactorAgent` and track benchmark uplift.
-5. **Scalability metrics**: Update `eval_harness.py` to record GPU memory usage
-   alongside pass/fail results.
+5. **Scalability metrics**: *(done)* `eval_harness.py` now records GPU memory
+   usage via `log_memory_usage()` and prints it alongside pass/fail results.
 6. **Distributed memory benchmark**: Run `DistributedMemory` with four
    `MemoryServer` nodes using `distributed_memory_benchmark.py` and measure
    query latency and throughput versus the single-node baseline.

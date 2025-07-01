@@ -434,7 +434,7 @@ txt = generate_transcript(pairs[0][2])
 - Extend `HierarchicalMemory` so `cross_modal_fusion.encode_all()` can store and
   retrieve multimodal embeddings.
 - Add a `log_memory_usage()` helper to `eval_harness.py` and print GPU memory
-  usage alongside accuracy metrics.
+  usage alongside accuracy metrics. **Implemented** in `src/eval_harness.py`.
 - Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the
   exploration rate during refactoring.
 - Rewrite `download_triples()` with asyncio to fetch dataset files
