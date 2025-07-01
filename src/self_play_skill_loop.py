@@ -14,7 +14,6 @@ from .robot_skill_transfer import (
 )
 
 
-
 @dataclass
 class SelfPlaySkillLoopConfig:
     """Configuration for :func:`run_loop`."""
@@ -61,11 +60,13 @@ def run_loop(
         for o, a, r in zip(obs_list, acts, rewards):
             buffer.add(o, a, r)
         history.append(sum(rewards) / len(rewards) if rewards else 0.0)
-        sample_frames, sample_actions = buffer.sample(cfg.batch_size)
+        sample_frames, sample_actions = buffer.sample_by_priority(cfg.batch_size)
         dataset = VideoPolicyDataset(sample_frames, sample_actions)
         model = transfer_skills(transfer_cfg, dataset)
 
-        def new_policy(obs: torch.Tensor, m: SkillTransferModel = model) -> torch.Tensor:
+        def new_policy(
+            obs: torch.Tensor, m: SkillTransferModel = model
+        ) -> torch.Tensor:
             with torch.no_grad():
                 logits = m(obs.unsqueeze(0))
                 return logits.argmax(dim=-1).squeeze(0)
