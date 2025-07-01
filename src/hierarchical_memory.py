@@ -348,6 +348,27 @@ if _HAS_GRPC:
             meta = [str(m) for m in meta]
             return memory_pb2.QueryReply(vectors=flat, metadata=meta)
 
+        def PushBatch(
+            self, request: memory_pb2.PushBatchRequest, context
+        ) -> memory_pb2.PushReply:  # noqa: N802
+            for item in request.items:
+                vec = torch.tensor(item.vector).reshape(1, -1)
+                meta = item.metadata if item.metadata else None
+                self.memory.add(vec, metadata=[meta])
+            return memory_pb2.PushReply(ok=True)
+
+        def QueryBatch(
+            self, request: memory_pb2.QueryBatchRequest, context
+        ) -> memory_pb2.QueryBatchReply:  # noqa: N802
+            replies = []
+            for q in request.items:
+                qt = torch.tensor(q.vector).reshape(1, -1)
+                out, meta = self.memory.search(qt, k=int(q.k))
+                flat = out.detach().cpu().view(-1).tolist()
+                meta = [str(m) for m in meta]
+                replies.append(memory_pb2.QueryReply(vectors=flat, metadata=meta))
+            return memory_pb2.QueryBatchReply(items=replies)
+
         def start(self) -> None:
             """Start serving requests."""
             self.server.start()
@@ -380,6 +401,54 @@ def query_remote(address: str, vector: torch.Tensor, k: int = 5, timeout: float 
         return vec, list(reply.metadata)
 
 
+def push_batch_remote(
+    address: str, vectors: torch.Tensor, metadata: Iterable[Any] | None = None, timeout: float = 5.0
+) -> bool:
+    """Send multiple ``vectors`` to a remote :class:`MemoryServer`."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    if vectors.ndim == 1:
+        vectors = vectors.unsqueeze(0)
+    metas = list(metadata) if metadata is not None else [None] * len(vectors)
+    with grpc.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        items = [
+            memory_pb2.PushRequest(
+                vector=v.detach().cpu().view(-1).tolist(),
+                metadata="" if m is None else str(m),
+            )
+            for v, m in zip(vectors, metas)
+        ]
+        req = memory_pb2.PushBatchRequest(items=items)
+        reply = stub.PushBatch(req, timeout=timeout)
+        return reply.ok
+
+
+def query_batch_remote(
+    address: str, vectors: torch.Tensor, k: int = 5, timeout: float = 5.0
+) -> Tuple[torch.Tensor, List[List[str]]]:
+    """Query ``vectors`` from a remote :class:`MemoryServer` in batch."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    if vectors.ndim == 1:
+        vectors = vectors.unsqueeze(0)
+    with grpc.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        items = [
+            memory_pb2.QueryRequest(vector=v.detach().cpu().view(-1).tolist(), k=k)
+            for v in vectors
+        ]
+        req = memory_pb2.QueryBatchRequest(items=items)
+        reply = stub.QueryBatch(req, timeout=timeout)
+        dim = vectors.size(-1)
+        outs = []
+        metas = []
+        for r in reply.items:
+            outs.append(torch.tensor(r.vectors).reshape(-1, dim))
+            metas.append(list(r.metadata))
+        return torch.stack(outs), metas
+
+
 async def push_remote_async(
     address: str, vector: torch.Tensor, metadata: Any | None = None, timeout: float = 5.0
 ) -> bool:
@@ -408,3 +477,51 @@ async def query_remote_async(
         reply = await stub.Query(req, timeout=timeout)
         vec = torch.tensor(reply.vectors).reshape(-1, vector.size(-1))
         return vec, list(reply.metadata)
+
+
+async def push_batch_remote_async(
+    address: str, vectors: torch.Tensor, metadata: Iterable[Any] | None = None, timeout: float = 5.0
+) -> bool:
+    """Asynchronously send multiple ``vectors`` to a remote :class:`MemoryServer`."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    if vectors.ndim == 1:
+        vectors = vectors.unsqueeze(0)
+    metas = list(metadata) if metadata is not None else [None] * len(vectors)
+    async with grpc.aio.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        items = [
+            memory_pb2.PushRequest(
+                vector=v.detach().cpu().view(-1).tolist(),
+                metadata="" if m is None else str(m),
+            )
+            for v, m in zip(vectors, metas)
+        ]
+        req = memory_pb2.PushBatchRequest(items=items)
+        reply = await stub.PushBatch(req, timeout=timeout)
+        return reply.ok
+
+
+async def query_batch_remote_async(
+    address: str, vectors: torch.Tensor, k: int = 5, timeout: float = 5.0
+) -> Tuple[torch.Tensor, List[List[str]]]:
+    """Asynchronously query ``vectors`` from a remote :class:`MemoryServer` in batch."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    if vectors.ndim == 1:
+        vectors = vectors.unsqueeze(0)
+    async with grpc.aio.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        items = [
+            memory_pb2.QueryRequest(vector=v.detach().cpu().view(-1).tolist(), k=k)
+            for v in vectors
+        ]
+        req = memory_pb2.QueryBatchRequest(items=items)
+        reply = await stub.QueryBatch(req, timeout=timeout)
+        dim = vectors.size(-1)
+        outs = []
+        metas = []
+        for r in reply.items:
+            outs.append(torch.tensor(r.vectors).reshape(-1, dim))
+            metas.append(list(r.metadata))
+        return torch.stack(outs), metas

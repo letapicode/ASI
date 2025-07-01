@@ -16,6 +16,10 @@ from .hierarchical_memory import (
     query_remote,
     push_remote_async,
     query_remote_async,
+    push_batch_remote,
+    query_batch_remote,
+    push_batch_remote_async,
+    query_batch_remote_async,
 )
 from .distributed_memory import DistributedMemory
 from .remote_memory import RemoteMemory
