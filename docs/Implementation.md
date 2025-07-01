@@ -484,8 +484,8 @@ txt = generate_transcript(pairs[0][2])
   pull request using GitHub Actions or a local cron job.
 - Combine `GraphOfThoughtPlanner` with `MetaRLRefactorAgent` in an `AdaptivePlanner`
   module that ranks and applies refactor suggestions automatically.
-- Develop a `NeuralArchSearch` module for distributed architecture search and
-  integrate it with `eval_harness.py` to score candidate models automatically.
+- `src/neural_arch_search.py` implements distributed architecture search and is
+  integrated with `eval_harness.py` to score candidate models automatically.
 - Implement a `SelfHealingTrainer` that monitors distributed jobs and restarts
   failed runs to maintain full compute utilization.
 - Extend `data_ingest.py` with an `offline_synthesizer` that uses the world

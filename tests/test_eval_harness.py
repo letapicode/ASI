@@ -16,7 +16,7 @@ class TestEvalHarness(unittest.TestCase):
         self.assertIn("formal_verifier", mods)
 
     def test_evaluate_subset(self):
-        subset = ["moe_router", "flash_attention3", "scaling_law"]
+        subset = ["moe_router", "flash_attention3", "scaling_law", "neural_arch_search"]
         results = evaluate_modules(subset)
         for name in subset:
             self.assertIn(name, results)

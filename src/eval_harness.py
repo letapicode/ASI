@@ -197,6 +197,22 @@ def _eval_autobench() -> Tuple[bool, str]:
     return ok, "sandboxed"
 
 
+def _eval_neural_arch_search() -> Tuple[bool, str]:
+    """Run a tiny distributed search to verify the module."""
+    from asi.neural_arch_search import DistributedArchSearch
+
+    space = {"layers": [1, 2], "hidden": [8, 16]}
+
+    def score(cfg: Dict[str, int]) -> float:
+        # Simple additive score favouring more layers and hidden units
+        return cfg["layers"] + cfg["hidden"] / 16
+
+    search = DistributedArchSearch(space, score, max_workers=1)
+    best, val = search.search(num_samples=4)
+    ok = "layers" in best and "hidden" in best
+    return ok, f"score={val:.2f}"
+
+
 EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "moe_router": _eval_moe_router,
     "flash_attention3": _eval_flash_attention3,
@@ -213,6 +229,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "topk_sparse_attention": _eval_topk_sparse_attention,
     "paper_to_code": _eval_paper_to_code,
     "autobench": _eval_autobench,
+    "neural_arch_search": _eval_neural_arch_search,
 }
 
 

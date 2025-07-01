@@ -108,4 +108,6 @@ from .transformer_circuits import (
     patched_head,
     head_importance,
 )
+from .neural_arch_search import DistributedArchSearch
 from .graph_of_thought import GraphOfThought
+
