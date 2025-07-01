@@ -24,12 +24,14 @@ class MetaRLRefactorAgent:
         epsilon: float = 0.1,
         alpha: float = 0.5,
         gamma: float = 0.9,
+        searcher: "QAEHyperparamSearch | None" = None,
     ) -> None:
         self.actions = tuple(actions)
         self.epsilon = epsilon
         self.alpha = alpha
         self.gamma = gamma
         self.q: dict[Tuple[Any, str], float] = {}
+        self.searcher = searcher
 
     def select_action(self, state: Any) -> str:
         """Choose an action using an epsilon-greedy policy."""
@@ -60,10 +62,36 @@ class MetaRLRefactorAgent:
     ) -> Tuple[float, float]:
         """Tune exploration rate using :class:`QAEHyperparamSearch`."""
         params = list(param_space)
-        search = QAEHyperparamSearch(eval_func, params)
+        search = self.searcher or QAEHyperparamSearch(eval_func, params)
+        search.eval_func = eval_func
+        search.param_space = params
         best, prob = search.search(num_samples=len(params), shots=shots, **search_kwargs)
         self.epsilon = float(best)
         return best, prob
+
+    def train(
+        self,
+        log_entries: Iterable[tuple[str, float]],
+        cycles: int = 1,
+        epsilon_space: Iterable[float] | None = None,
+        eval_func: Callable[[float], bool] | None = None,
+        shots: int = 32,
+        **search_kwargs: Any,
+    ) -> None:
+        """Train on ``log_entries`` for ``cycles`` iterations.
+
+        If ``eval_func`` is provided, ``tune_epsilon`` is called with
+        ``epsilon_space`` before each cycle.
+        """
+        entries = list(log_entries)
+        state = 0
+        for _ in range(cycles):
+            if eval_func is not None and epsilon_space is not None:
+                self.tune_epsilon(epsilon_space, eval_func, shots=shots, **search_kwargs)
+            for action, reward in entries:
+                next_state = state + 1
+                self.update(state, action, reward, next_state)
+                state = next_state
 
 
 def _load_log(path: str) -> List[tuple[str, float]]:
@@ -98,12 +126,12 @@ def main(argv: List[str] | None = None) -> None:
 
     entries = _load_log(args.log)
     agent = MetaRLRefactorAgent()
-    state = 0
-    for action, reward in entries:
-        next_state = state + 1
-        agent.update(state, action, reward, next_state)
-        state = next_state
 
+    def _dummy_eval(e: float) -> bool:
+        return True
+
+    agent.train(entries, epsilon_space=[0.1, 0.3, 0.5], eval_func=_dummy_eval)
+    state = len(entries)
     best = agent.select_action(state)
     print(f"Best action after {len(entries)} steps: {best}")
 
