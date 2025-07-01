@@ -8,6 +8,7 @@ import asyncio
 import re
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Tuple
+import psutil
 
 import numpy as np
 import torch
@@ -22,6 +23,18 @@ def parse_modules(plan_path: str | Path = "docs/Plan.md") -> list[str]:
     text = Path(plan_path).read_text(encoding="utf-8")
     mods = re.findall(r"`src/([\w_]+)\.py`", text)
     return sorted(set(mods))
+
+
+def log_memory_usage() -> str:
+    """Return current GPU or CPU memory usage as a string."""
+    if torch.cuda.is_available():
+        used = torch.cuda.memory_allocated()
+        total = torch.cuda.get_device_properties(0).total_memory
+    else:
+        proc = psutil.Process()
+        used = proc.memory_info().rss
+        total = psutil.virtual_memory().total
+    return f"mem={used / 1e6:.1f}M/{total / 1e6:.1f}M"
 
 
 # ---------------------------------------------------------------------------
@@ -220,6 +233,7 @@ def evaluate_modules(modules: Iterable[str]) -> Dict[str, Tuple[bool, str]]:
             passed, info = fn()
         except Exception as exc:  # pragma: no cover - diagnostic path
             passed, info = False, f"error: {exc}"
+        info = f"{info} {log_memory_usage()}"
         results[mod] = (passed, info)
     return results
 
@@ -233,7 +247,8 @@ async def evaluate_modules_async(modules: Iterable[str]) -> Dict[str, Tuple[bool
 
         async def run_fn(func: Callable[[], Tuple[bool, str]] = fn) -> Tuple[bool, str]:
             try:
-                return await loop.run_in_executor(None, func)
+                res = await loop.run_in_executor(None, func)
+                return res[0], f"{res[1]} {log_memory_usage()}"
             except Exception as exc:  # pragma: no cover - diagnostic path
                 return False, f"error: {exc}"
 
