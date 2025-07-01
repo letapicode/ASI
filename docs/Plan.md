@@ -227,7 +227,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 19. **Generative noise filtering**: Use `AutoDatasetFilter` during data ingest to
     prune low-quality samples and track the effect on training stability.
 20. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
-    new training triples from world-model rollouts and expand the dataset.
+    new training triples from world-model rollouts and expand the dataset. The
+    module integrates with `data_ingest` for easy ingestion.
 21. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
     to track benchmark progress automatically.
 22. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with

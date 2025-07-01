@@ -479,7 +479,8 @@ txt = generate_transcript(pairs[0][2])
 - Build an `AutoDatasetFilter` using generative noise detection to discard
   low-quality training samples before ingestion.
 - Implement a `GenerativeDataAugmentor` that rolls out the world model to
-  synthesize training triples and feeds them through `data_ingest`.
+  synthesize training triples and feeds them through `data_ingest`. **Implemented**
+  in `src/generative_data_augmentor.py`.
 - Add `continuous_eval.py` to schedule `eval_harness` and `autobench` after each
   pull request using GitHub Actions or a local cron job.
 - Combine `GraphOfThoughtPlanner` with `MetaRLRefactorAgent` in an `AdaptivePlanner`
