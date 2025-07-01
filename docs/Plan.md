@@ -201,8 +201,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    to test world-model learning from mixed-modality self-play data.
 10. **Attention trace analysis**: Use the upcoming `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
-11. **Graph-of-thought planning**: Prototype `GraphOfThoughtPlanner` and measure
-    refactor quality gains over the baseline meta-RL agent.
+11. **Graph-of-thought planning**: Implement `GraphOfThought` (see
+    `src/graph_of_thought.py`) and measure refactor quality gains over the
+    baseline meta-RL agent.
 12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with
     `world_model_rl.rollout_policy()` and log constraint violations.
 13. **Self-healing distributed trainer**: Wrap `world_model_rl.train_world_model()`
