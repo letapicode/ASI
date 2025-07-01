@@ -16,6 +16,55 @@ from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 
 
+class SSDCache:
+    """Simple SSD-backed vector cache."""
+
+    def __init__(self, dim: int, path: str | Path, max_size: int = 10000) -> None:
+        self.dim = dim
+        self.path = Path(path)
+        self.path.mkdir(parents=True, exist_ok=True)
+        self.max_size = max_size
+        self.file = self.path / "cache.npz"
+        if self.file.exists():
+            data = np.load(self.file, allow_pickle=True)
+            self.vectors = data["vectors"]
+            self.meta = data["meta"].tolist()
+        else:
+            self.vectors = np.empty((0, dim), dtype=np.float32)
+        self.meta: List[Any] = []
+
+    def add(self, vectors: np.ndarray, metadata: Iterable[Any] | None = None) -> None:
+        arr = np.asarray(vectors, dtype=np.float32)
+        if arr.ndim == 1:
+            arr = arr[None]
+        metas = list(metadata) if metadata is not None else [None] * arr.shape[0]
+        self.vectors = np.concatenate([self.vectors, arr], axis=0)[-self.max_size :]
+        self.meta = (self.meta + metas)[-self.max_size :]
+        self.save()
+
+    def search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, List[Any]]:
+        if self.vectors.size == 0:
+            return np.empty((0, self.dim), dtype=np.float32), []
+        q = np.asarray(query, dtype=np.float32).reshape(1, self.dim)
+        scores = self.vectors @ q.T
+        idx = np.argsort(scores.ravel())[::-1][:k]
+        return self.vectors[idx], [self.meta[i] for i in idx]
+
+    def save(self, path: str | Path | None = None) -> None:
+        file = Path(path) / "cache.npz" if path is not None else self.file
+        np.savez_compressed(file, vectors=self.vectors, meta=np.array(self.meta, dtype=object))
+
+    @classmethod
+    def load(cls, path: str | Path) -> "SSDCache":
+        path = Path(path)
+        data = np.load(path / "cache.npz", allow_pickle=True)
+        cache = cls(int(data["vectors"].shape[1]), path)
+        cache.vectors = data["vectors"]
+        cache.meta = data["meta"].tolist()
+        return cache
+
+
+
 class HierarchicalMemory:
     """Combine streaming compression with a vector store."""
 
@@ -26,6 +75,8 @@ class HierarchicalMemory:
         capacity: int,
         db_path: str | Path | None = None,
         use_async: bool = False,
+        cache_dir: str | Path | None = None,
+        cache_size: int = 1000,
     ) -> None:
         self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
         self.use_async = use_async
@@ -37,6 +88,9 @@ class HierarchicalMemory:
                 self.store = VectorStore(dim=compressed_dim)
             else:
                 self.store = FaissVectorStore(dim=compressed_dim, path=db_path)
+        self.cache: SSDCache | None = None
+        if cache_dir is not None:
+            self.cache = SSDCache(dim=dim, path=cache_dir, max_size=cache_size)
 
     def __len__(self) -> int:
         """Return the number of stored vectors."""
@@ -202,32 +256,66 @@ class HierarchicalMemory:
                 return asyncio.run(self.asearch(query, k))
             else:
                 return loop.create_task(self.asearch(query, k))
-        q = self.compressor.encoder(query).detach().cpu().numpy()
-        if q.ndim == 2:
-            q = q[0]
-        comp_vecs, meta = self.store.search(q, k)
-        if comp_vecs.shape[0] == 0:
+        if self.cache is not None:
+            c_vecs, c_meta = self.cache.search(query.detach().cpu().numpy(), k)
+        else:
+            c_vecs, c_meta = np.empty((0, query.size(-1)), dtype=np.float32), []
+        remaining = k - len(c_meta)
+        out_vecs = []
+        out_meta = []
+        if remaining > 0:
+            q = self.compressor.encoder(query).detach().cpu().numpy()
+            if q.ndim == 2:
+                q = q[0]
+            comp_vecs, meta = self.store.search(q, remaining)
+            if comp_vecs.shape[0] > 0:
+                comp_t = torch.from_numpy(comp_vecs)
+                decoded = self.compressor.decoder(comp_t).to(query.device)
+                out_vecs.append(decoded)
+                out_meta.extend(meta)
+                if self.cache is not None:
+                    self.cache.add(decoded.detach().cpu().numpy(), meta)
+        if c_meta:
+            out_vecs.insert(0, torch.from_numpy(c_vecs).to(query.device))
+            out_meta = c_meta + out_meta
+        if not out_vecs:
             empty = torch.empty(0, query.size(-1), device=query.device)
-            return empty, meta
-        comp_t = torch.from_numpy(comp_vecs)
-        decoded = self.compressor.decoder(comp_t)
-        return decoded.to(query.device), meta
+            return empty, []
+        vec = torch.cat(out_vecs, dim=0)
+        return vec, out_meta
 
     async def asearch(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
         """Asynchronously retrieve vectors and metadata."""
-        q = self.compressor.encoder(query).detach().cpu().numpy()
-        if q.ndim == 2:
-            q = q[0]
-        if isinstance(self.store, AsyncFaissVectorStore):
-            comp_vecs, meta = await self.store.asearch(q, k)
+        if self.cache is not None:
+            c_vecs, c_meta = self.cache.search(query.detach().cpu().numpy(), k)
         else:
-            comp_vecs, meta = self.store.search(q, k)
-        if comp_vecs.shape[0] == 0:
+            c_vecs, c_meta = np.empty((0, query.size(-1)), dtype=np.float32), []
+        remaining = k - len(c_meta)
+        out_vecs = []
+        out_meta = []
+        if remaining > 0:
+            q = self.compressor.encoder(query).detach().cpu().numpy()
+            if q.ndim == 2:
+                q = q[0]
+            if isinstance(self.store, AsyncFaissVectorStore):
+                comp_vecs, meta = await self.store.asearch(q, remaining)
+            else:
+                comp_vecs, meta = self.store.search(q, remaining)
+            if comp_vecs.shape[0] > 0:
+                comp_t = torch.from_numpy(comp_vecs)
+                decoded = self.compressor.decoder(comp_t).to(query.device)
+                out_vecs.append(decoded)
+                out_meta.extend(meta)
+                if self.cache is not None:
+                    self.cache.add(decoded.detach().cpu().numpy(), meta)
+        if c_meta:
+            out_vecs.insert(0, torch.from_numpy(c_vecs).to(query.device))
+            out_meta = c_meta + out_meta
+        if not out_vecs:
             empty = torch.empty(0, query.size(-1), device=query.device)
-            return empty, meta
-        comp_t = torch.from_numpy(comp_vecs)
-        decoded = self.compressor.decoder(comp_t)
-        return decoded.to(query.device), meta
+            return empty, []
+        vec = torch.cat(out_vecs, dim=0)
+        return vec, out_meta
 
     def save(self, path: str | Path) -> None:
         """Persist compressor state and vector store to ``path``."""
@@ -257,6 +345,10 @@ class HierarchicalMemory:
             self.store.save(path / "store")
         else:
             self.store.save(path / "store.npz")
+        if self.cache is not None:
+            cache_dir = path / "cache"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            self.cache.save(cache_dir)
 
     async def save_async(self, path: str | Path) -> None:
         """Asynchronously persist compressor state and vector store."""
@@ -279,6 +371,10 @@ class HierarchicalMemory:
             self.store.save(path / "store")
         else:
             self.store.save(path / "store.npz")
+        if self.cache is not None:
+            cache_dir = path / "cache"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            self.cache.save(cache_dir)
 
     @classmethod
     def load(cls, path: str | Path, use_async: bool = False) -> "HierarchicalMemory":
@@ -310,6 +406,9 @@ class HierarchicalMemory:
             mem.store = FaissVectorStore.load(store_dir)
         else:
             mem.store = VectorStore.load(path / "store.npz")
+        cache_dir = path / "cache"
+        if cache_dir.exists():
+            mem.cache = SSDCache.load(cache_dir)
         return mem
 
     @classmethod
@@ -338,6 +437,9 @@ class HierarchicalMemory:
                 mem.store = FaissVectorStore.load(store_dir)
         else:
             mem.store = VectorStore.load(path / "store.npz")
+        cache_dir = path / "cache"
+        if cache_dir.exists():
+            mem.cache = SSDCache.load(cache_dir)
         return mem
 
 
@@ -364,6 +466,27 @@ if _HAS_GRPC:
             flat = out.detach().cpu().view(-1).tolist()
             meta = [str(m) for m in meta]
             return memory_pb2.QueryReply(vectors=flat, metadata=meta)
+
+        def PushBatch(
+            self, request: memory_pb2.PushBatchRequest, context
+        ) -> memory_pb2.PushReply:  # noqa: N802
+            for item in request.items:
+                vec = torch.tensor(item.vector).reshape(1, -1)
+                meta = item.metadata if item.metadata else None
+                self.memory.add(vec, metadata=[meta])
+            return memory_pb2.PushReply(ok=True)
+
+        def QueryBatch(
+            self, request: memory_pb2.QueryBatchRequest, context
+        ) -> memory_pb2.QueryBatchReply:  # noqa: N802
+            replies = []
+            for q in request.items:
+                qt = torch.tensor(q.vector).reshape(1, -1)
+                out, meta = self.memory.search(qt, k=int(q.k))
+                flat = out.detach().cpu().view(-1).tolist()
+                meta = [str(m) for m in meta]
+                replies.append(memory_pb2.QueryReply(vectors=flat, metadata=meta))
+            return memory_pb2.QueryBatchReply(items=replies)
 
         def start(self) -> None:
             """Start serving requests."""
@@ -397,6 +520,54 @@ def query_remote(address: str, vector: torch.Tensor, k: int = 5, timeout: float 
         return vec, list(reply.metadata)
 
 
+def push_batch_remote(
+    address: str, vectors: torch.Tensor, metadata: Iterable[Any] | None = None, timeout: float = 5.0
+) -> bool:
+    """Send multiple ``vectors`` to a remote :class:`MemoryServer`."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    if vectors.ndim == 1:
+        vectors = vectors.unsqueeze(0)
+    metas = list(metadata) if metadata is not None else [None] * len(vectors)
+    with grpc.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        items = [
+            memory_pb2.PushRequest(
+                vector=v.detach().cpu().view(-1).tolist(),
+                metadata="" if m is None else str(m),
+            )
+            for v, m in zip(vectors, metas)
+        ]
+        req = memory_pb2.PushBatchRequest(items=items)
+        reply = stub.PushBatch(req, timeout=timeout)
+        return reply.ok
+
+
+def query_batch_remote(
+    address: str, vectors: torch.Tensor, k: int = 5, timeout: float = 5.0
+) -> Tuple[torch.Tensor, List[List[str]]]:
+    """Query ``vectors`` from a remote :class:`MemoryServer` in batch."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    if vectors.ndim == 1:
+        vectors = vectors.unsqueeze(0)
+    with grpc.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        items = [
+            memory_pb2.QueryRequest(vector=v.detach().cpu().view(-1).tolist(), k=k)
+            for v in vectors
+        ]
+        req = memory_pb2.QueryBatchRequest(items=items)
+        reply = stub.QueryBatch(req, timeout=timeout)
+        dim = vectors.size(-1)
+        outs = []
+        metas = []
+        for r in reply.items:
+            outs.append(torch.tensor(r.vectors).reshape(-1, dim))
+            metas.append(list(r.metadata))
+        return torch.stack(outs), metas
+
+
 async def push_remote_async(
     address: str, vector: torch.Tensor, metadata: Any | None = None, timeout: float = 5.0
 ) -> bool:
@@ -425,3 +596,51 @@ async def query_remote_async(
         reply = await stub.Query(req, timeout=timeout)
         vec = torch.tensor(reply.vectors).reshape(-1, vector.size(-1))
         return vec, list(reply.metadata)
+
+
+async def push_batch_remote_async(
+    address: str, vectors: torch.Tensor, metadata: Iterable[Any] | None = None, timeout: float = 5.0
+) -> bool:
+    """Asynchronously send multiple ``vectors`` to a remote :class:`MemoryServer`."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    if vectors.ndim == 1:
+        vectors = vectors.unsqueeze(0)
+    metas = list(metadata) if metadata is not None else [None] * len(vectors)
+    async with grpc.aio.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        items = [
+            memory_pb2.PushRequest(
+                vector=v.detach().cpu().view(-1).tolist(),
+                metadata="" if m is None else str(m),
+            )
+            for v, m in zip(vectors, metas)
+        ]
+        req = memory_pb2.PushBatchRequest(items=items)
+        reply = await stub.PushBatch(req, timeout=timeout)
+        return reply.ok
+
+
+async def query_batch_remote_async(
+    address: str, vectors: torch.Tensor, k: int = 5, timeout: float = 5.0
+) -> Tuple[torch.Tensor, List[List[str]]]:
+    """Asynchronously query ``vectors`` from a remote :class:`MemoryServer` in batch."""
+    if not _HAS_GRPC:
+        raise ImportError("grpcio is required for remote memory")
+    if vectors.ndim == 1:
+        vectors = vectors.unsqueeze(0)
+    async with grpc.aio.insecure_channel(address) as channel:
+        stub = memory_pb2_grpc.MemoryServiceStub(channel)
+        items = [
+            memory_pb2.QueryRequest(vector=v.detach().cpu().view(-1).tolist(), k=k)
+            for v in vectors
+        ]
+        req = memory_pb2.QueryBatchRequest(items=items)
+        reply = await stub.QueryBatch(req, timeout=timeout)
+        dim = vectors.size(-1)
+        outs = []
+        metas = []
+        for r in reply.items:
+            outs.append(torch.tensor(r.vectors).reshape(-1, dim))
+            metas.append(list(r.metadata))
+        return torch.stack(outs), metas

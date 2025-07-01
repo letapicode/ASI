@@ -26,6 +26,12 @@ class TestMoELayer(unittest.TestCase):
         out = layer(x)
         self.assertEqual(out.shape, x.shape)
 
+    def test_elastic_router_string(self):
+        layer = MoELayer(dim=8, hidden=16, num_experts=4, router="elastic")
+        x = torch.randn(1, 2, 8)
+        out = layer(x)
+        self.assertEqual(out.shape, x.shape)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -8,6 +8,9 @@ This repository includes starter modules for the first two algorithms listed in 
   - `HashRouter` uses hash-based gating to activate at most two experts per token.
   - `SwitchRouter` employs a learned linear gate and selects the top-k experts.
   Both expose `load_balance_std` and `expert_utilization` to inspect token distribution.
+  - `ElasticMoERouter` dynamically reduces the number of active experts when GPU
+    memory utilization gets high. It inherits from `SwitchRouter` and exposes
+    `active_experts` to track the current count.
 - `src/moe_layer.py` implements a small MoE feed-forward block using these routers. It accepts an optional
   `balance_weight` which multiplies the `balance_loss()` penalty derived from the router's assignments and
   returns it alongside the layer output.
@@ -40,10 +43,10 @@ print('counts:', router.expert_utilization(assign))
 `scripts/benchmark_moe.py` offers a minimal example comparing parameter counts and approximate
 training FLOPs with and without the MOE router.
 
-Run it from the project root. By default it uses `HashRouter`; pass `--router switch` to benchmark the learned router:
+Run it from the project root. By default it uses `HashRouter`; pass `--router switch` for the learned router or `--router elastic` for the adaptive variant:
 
 ```bash
-python scripts/benchmark_moe.py --router switch
+python scripts/benchmark_moe.py --router elastic
 ```
 
 Expected output shows the dense and MOE parameter counts along with their ratio and a rough FLOP
@@ -57,12 +60,12 @@ FLOP ratio: 8.5
 ```
 
 `scripts/moe_vs_dense.py` provides a similar toy benchmark implemented as a standalone module. It
-contrasts a dense feed-forward model with the MOE version. Pass `--router switch` to use the learned router.
+contrasts a dense feed-forward model with the MOE version. Pass `--router elastic` to exercise the adaptive router.
 
 Run it as:
 
 ```bash
-python scripts/moe_vs_dense.py --router switch
+python scripts/moe_vs_dense.py --router elastic
 ```
 
 The script prints the same parameter counts and a comparable FLOP ratio, labelled `Param ratio`. Both
@@ -454,22 +457,25 @@ txt = generate_transcript(pairs[0][2])
   processes or hosts and aggregate the results.
 - Extend `transformer_circuits.py` with an `AttentionVisualizer` class that
   saves interactive attention heatmaps for interpretability experiments.
-- Prototype a `GraphOfThoughtPlanner` that composes reasoning steps into a
-  searchable graph for code refactoring decisions.
+- **Implemented** a `GraphOfThoughtPlanner` via `GraphOfThought` (see
+  `src/graph_of_thought.py`) that composes reasoning steps into a searchable
+  graph for code refactoring decisions.
 - Add a `NeuroSymbolicExecutor` module that runs logical constraints alongside
-  neural world-model rollouts.
+  neural world-model rollouts. **Implemented in `src/neuro_symbolic_executor.py`.**
 - Implement a `DistributedTrainer` that automatically restarts failed
-  processes and coordinates checkpoints with `DistributedMemory`.
+  processes and coordinates checkpoints with `DistributedMemory`. **Implemented**
+  in `src/distributed_trainer.py` with tests.
 - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemory`
   so edge devices can handle large-context inference.
 - Create an `AdaptiveCurriculumScheduler` that blends curated data with
   self-play logs using reinforcement learning.
 - Extend `QAEHyperparamSearch` to explore novel transformer components during
   architecture search.
-- Implement an `ElasticMoERouter` that scales the number of active experts
+- **Implemented** an `ElasticMoERouter` that scales the number of active experts
   according to real-time GPU utilization.
 - Extend `HierarchicalMemory` with an `SSDCache` that prefetches high-frequency
-  vectors for faster retrieval.
+  vectors for faster retrieval. *Implemented with a disk-backed cache and
+  persistence helpers in `src/hierarchical_memory.py`.*
 - Build an `AutoDatasetFilter` using generative noise detection to discard
   low-quality training samples before ingestion.
 - Implement a `GenerativeDataAugmentor` that rolls out the world model to

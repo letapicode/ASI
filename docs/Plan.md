@@ -201,23 +201,29 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    to test world-model learning from mixed-modality self-play data.
 10. **Attention trace analysis**: Use the upcoming `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
-11. **Graph-of-thought planning**: Prototype `GraphOfThoughtPlanner` and measure
-    refactor quality gains over the baseline meta-RL agent.
+11. **Graph-of-thought planning**: Implement `GraphOfThought` (see
+    `src/graph_of_thought.py`) and measure refactor quality gains over the
+    baseline meta-RL agent.
 12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with
     `world_model_rl.rollout_policy()` and log constraint violations.
+    *Implemented as `src/neuro_symbolic_executor.py`.*
 13. **Self-healing distributed trainer**: Wrap `world_model_rl.train_world_model()`
     in a `DistributedTrainer` that automatically resumes from failures.
+    *Implemented in `src/distributed_trainer.py` with integration tests.*
 14. **Edge-memory virtualization**: Stream context from `HierarchicalMemory`
     through `RemoteMemory` so low-memory devices can handle large-context
     inference.
 15. **Adaptive curriculum scheduler**: Mix curated datasets with self-play logs
-    via reinforcement learning to accelerate skill acquisition.
+    via reinforcement learning to accelerate skill acquisition. Implemented in
+    `adaptive_curriculum.py` and used by `self_play_skill_loop`.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
     novel transformer components and report promising variants.
-17. **Elastic mixture-of-experts routing**: Implement `ElasticMoERouter` to vary
-    expert counts with GPU load and compare load balance with the static router.
+17. **Elastic mixture-of-experts routing**: *Implemented in `src/elastic_moe_router.py`.*
+    The router varies active expert counts based on GPU load and compares load
+    balance with the static `SwitchRouter`.
 18. **Hierarchical SSD caching**: Add an `SSDCache` layer in `HierarchicalMemory`
-    that prefetches frequently accessed vectors for low-latency retrieval.
+    that prefetches frequently accessed vectors for low-latency retrieval. *Implemented
+    in `src/hierarchical_memory.py` with persistence utilities and unit tests.*
 19. **Generative noise filtering**: Use `AutoDatasetFilter` during data ingest to
     prune low-quality samples and track the effect on training stability.
 20. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize

@@ -7,12 +7,14 @@ from asi.moe_router import (
     balance_loss_probs,
     token_drop_rate,
 )
+from asi.elastic_moe_router import ElasticMoERouter
 
 
 class TestBaseRouter(unittest.TestCase):
     def test_subclasses(self):
         self.assertTrue(issubclass(HashRouter, BaseRouter))
         self.assertTrue(issubclass(SwitchRouter, BaseRouter))
+        self.assertTrue(issubclass(ElasticMoERouter, BaseRouter))
 
 class TestHashRouter(unittest.TestCase):
     def test_load_balance(self):
@@ -38,6 +40,20 @@ class TestHashRouter(unittest.TestCase):
         x = torch.randn(1, 10, 32)
         assign, _ = router(x)
         self.assertEqual(assign.shape, (1, 10, 1))
+
+    def test_elastic_router_adjustment(self):
+        router = ElasticMoERouter(dim=16, num_experts=8, utilization_fn=lambda: 0.95)
+        x = torch.randn(1, 5, 16)
+        assign, _ = router(x)
+        self.assertLess(router.active_experts, router.num_experts)
+        self.assertEqual(assign.shape, (1, 5, router.k))
+
+    def test_elastic_low_util(self):
+        router = ElasticMoERouter(dim=16, num_experts=4, utilization_fn=lambda: 0.1)
+        x = torch.randn(1, 3, 16)
+        assign, _ = router(x)
+        self.assertEqual(router.active_experts, router.num_experts)
+        self.assertEqual(assign.shape, (1, 3, router.k))
 
     def test_token_drop_and_balance_probs(self):
         router = HashRouter(num_experts=4)

@@ -12,12 +12,18 @@ from .deliberative_alignment import DeliberativeAligner
 from .streaming_compression import ReservoirBuffer, StreamingCompressor
 from .hierarchical_memory import (
     HierarchicalMemory,
+    SSDCache,
     push_remote,
     query_remote,
     push_remote_async,
     query_remote_async,
+    push_batch_remote,
+    query_batch_remote,
+    push_batch_remote_async,
+    query_batch_remote_async,
 )
 from .distributed_memory import DistributedMemory
+from .distributed_trainer import DistributedTrainer, MemoryConfig
 from .remote_memory import RemoteMemory
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
@@ -55,6 +61,7 @@ from .self_play_skill_loop import (
     run_loop,
     self_play_skill_loop,
 )
+from .adaptive_curriculum import AdaptiveCurriculum
 from .formal_verifier import (
     VerificationResult,
     check_grad_norm,
@@ -102,3 +109,5 @@ from .transformer_circuits import (
     head_importance,
 )
 from .neural_arch_search import DistributedArchSearch
+from .graph_of_thought import GraphOfThought
+
