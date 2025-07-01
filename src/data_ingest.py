@@ -6,7 +6,13 @@ from pathlib import Path
 from typing import Iterable, List, Tuple
 
 import numpy as np
+import asyncio
 import requests
+try:
+    import aiohttp  # type: ignore
+    _HAS_AIOHTTP = True
+except Exception:  # pragma: no cover - optional
+    _HAS_AIOHTTP = False
 from PIL import Image
 
 
@@ -18,6 +24,14 @@ def download_file(url: str, dest: Path) -> None:
     dest.write_bytes(r.content)
 
 
+async def _download_file_async(session: aiohttp.ClientSession, url: str, dest: Path) -> None:
+    """Asynchronously download ``url`` to ``dest``."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    async with session.get(url, timeout=30) as resp:
+        resp.raise_for_status()
+        dest.write_bytes(await resp.read())
+
+
 def download_triples(
     text_urls: Iterable[str],
     img_urls: Iterable[str],
@@ -25,16 +39,36 @@ def download_triples(
     out_dir: str,
 ) -> List[Tuple[Path, Path, Path]]:
     """Download text, image and audio triples into ``out_dir``."""
-    triples: List[Tuple[Path, Path, Path]] = []
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(download_triples_async(text_urls, img_urls, audio_urls, out_dir))
+    else:
+        return loop.create_task(download_triples_async(text_urls, img_urls, audio_urls, out_dir))
+
+
+async def download_triples_async(
+    text_urls: Iterable[str],
+    img_urls: Iterable[str],
+    audio_urls: Iterable[str],
+    out_dir: str,
+) -> List[Tuple[Path, Path, Path]]:
+    """Asynchronously download text, image and audio triples."""
+    if not _HAS_AIOHTTP:
+        raise ImportError("aiohttp is required for async downloads")
     out = Path(out_dir)
-    for i, (t, iurl, a) in enumerate(zip(text_urls, img_urls, audio_urls)):
-        t_path = out / "text" / f"{i}.txt"
-        i_path = out / "images" / f"{i}.png"
-        a_path = out / "audio" / f"{i}.wav"
-        download_file(t, t_path)
-        download_file(iurl, i_path)
-        download_file(a, a_path)
-        triples.append((t_path, i_path, a_path))
+    triples: List[Tuple[Path, Path, Path]] = []
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for i, (t, iurl, a) in enumerate(zip(text_urls, img_urls, audio_urls)):
+            t_path = out / "text" / f"{i}.txt"
+            i_path = out / "images" / f"{i}.png"
+            a_path = out / "audio" / f"{i}.wav"
+            triples.append((t_path, i_path, a_path))
+            tasks.append(_download_file_async(session, t, t_path))
+            tasks.append(_download_file_async(session, iurl, i_path))
+            tasks.append(_download_file_async(session, a, a_path))
+        await asyncio.gather(*tasks)
     return triples
 
 
@@ -118,6 +152,7 @@ def text_dropout(text: str, p: float = 0.1) -> str:
 
 __all__ = [
     "download_triples",
+    "download_triples_async",
     "align_triples",
     "random_crop",
     "generate_transcript",

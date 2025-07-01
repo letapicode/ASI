@@ -1,7 +1,12 @@
 import unittest
 import asyncio
 
-from asi.eval_harness import parse_modules, evaluate_modules, evaluate_modules_async
+from asi.eval_harness import (
+    parse_modules,
+    evaluate_modules,
+    evaluate_modules_async,
+    log_memory_usage,
+)
 
 
 class TestEvalHarness(unittest.TestCase):
@@ -16,6 +21,7 @@ class TestEvalHarness(unittest.TestCase):
         for name in subset:
             self.assertIn(name, results)
             self.assertTrue(results[name][0], name)
+            self.assertIn("gpu=", results[name][1])
 
     def test_evaluate_subset_async(self):
         subset = ["moe_router", "flash_attention3"]
@@ -23,6 +29,11 @@ class TestEvalHarness(unittest.TestCase):
         for name in subset:
             self.assertIn(name, results)
             self.assertTrue(results[name][0], name)
+            self.assertIn("gpu=", results[name][1])
+
+    def test_log_memory_usage(self):
+        mem = log_memory_usage()
+        self.assertIsInstance(mem, float)
 
 
 if __name__ == "__main__":

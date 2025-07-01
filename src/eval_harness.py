@@ -13,6 +13,15 @@ import numpy as np
 import torch
 
 
+def log_memory_usage() -> float:
+    """Return peak GPU memory usage in MB and reset stats."""
+    if torch.cuda.is_available():
+        mem = torch.cuda.max_memory_allocated() / (1024 ** 2)
+        torch.cuda.reset_peak_memory_stats()
+        return float(mem)
+    return 0.0
+
+
 # ---------------------------------------------------------------------------
 # Module discovery
 # ---------------------------------------------------------------------------
@@ -217,7 +226,11 @@ def evaluate_modules(modules: Iterable[str]) -> Dict[str, Tuple[bool, str]]:
     for mod in modules:
         fn = EVALUATORS.get(mod, lambda: _eval_import_only(mod))
         try:
+            if torch.cuda.is_available():
+                torch.cuda.reset_peak_memory_stats()
             passed, info = fn()
+            mem = log_memory_usage()
+            info = f"{info} gpu={mem:.1f}MB"
         except Exception as exc:  # pragma: no cover - diagnostic path
             passed, info = False, f"error: {exc}"
         results[mod] = (passed, info)
@@ -233,7 +246,11 @@ async def evaluate_modules_async(modules: Iterable[str]) -> Dict[str, Tuple[bool
 
         async def run_fn(func: Callable[[], Tuple[bool, str]] = fn) -> Tuple[bool, str]:
             try:
-                return await loop.run_in_executor(None, func)
+                if torch.cuda.is_available():
+                    torch.cuda.reset_peak_memory_stats()
+                passed, info = await loop.run_in_executor(None, func)
+                mem = log_memory_usage()
+                return passed, f"{info} gpu={mem:.1f}MB"
             except Exception as exc:  # pragma: no cover - diagnostic path
                 return False, f"error: {exc}"
 

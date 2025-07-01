@@ -116,6 +116,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   that returns a dataclass `BreakpointModel` with piecewise slopes.
 - `src/retnet_retention.py` implements a RetNet-style retention kernel for **C-1**.
 - `src/mamba_block.py` provides a simplified Mamba state-space block for **C-2**.
+- `src/hybrid_retention.py` merges the Mamba update with RetNet-style decay.
 - `src/hyena_filter.py` implements the implicit-FFT filter for **C-3**.
 - `src/streaming_compression.py` maintains a reservoir buffer with a small
   autoencoder for **streaming compression**.
@@ -156,7 +157,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/self_play_env.py` and `src/embodied_calibration.py` offer a sandbox for
   self-play and a sensor calibration routine.
 - `src/formal_verifier.py` checks model snapshots against custom invariants.
-- `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard. The CLI now supports a `--concurrent` flag to run evaluations asynchronously via `evaluate_modules_async()`.
+- `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard. The CLI now supports a `--concurrent` flag to run evaluations asynchronously via `evaluate_modules_async()` and reports GPU memory with `log_memory_usage()`.
 - `src/transformer_circuits.py` records attention weights and lets researchers ablate individual heads for interpretability experiments.
 
 ### Recommended next steps
@@ -186,8 +187,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    with half the memory use.
 4. **QAE-guided refactoring**: Employ `QAEHyperparamSearch` to tune exploration
    parameters in `MetaRLRefactorAgent` and track benchmark uplift.
-5. **Scalability metrics**: Update `eval_harness.py` to record GPU memory usage
-   alongside pass/fail results.
+5. **Scalability metrics**: `eval_harness.py` now records GPU memory usage
+   alongside pass/fail results via `log_memory_usage()`.
 6. **Distributed memory benchmark**: Run `DistributedMemory` with four
    `MemoryServer` nodes using `distributed_memory_benchmark.py` and measure
    query latency and throughput versus the single-node baseline.

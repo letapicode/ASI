@@ -99,3 +99,6 @@ from .transformer_circuits import (
     patched_head,
     head_importance,
 )
+from .mamba_block import MambaBlock
+from .retnet_retention import RetNetRetention
+from .hybrid_retention import HybridRetention
