@@ -19,6 +19,11 @@ spec_rst = importlib.util.spec_from_loader(loader_rst.name, loader_rst)
 robot_skill_transfer = importlib.util.module_from_spec(spec_rst)
 sys.modules['asi.robot_skill_transfer'] = robot_skill_transfer
 loader_rst.exec_module(robot_skill_transfer)
+loader_ac = importlib.machinery.SourceFileLoader('asi.adaptive_curriculum', 'src/adaptive_curriculum.py')
+spec_ac = importlib.util.spec_from_loader(loader_ac.name, loader_ac)
+adaptive_curriculum = importlib.util.module_from_spec(spec_ac)
+sys.modules['asi.adaptive_curriculum'] = adaptive_curriculum
+loader_ac.exec_module(adaptive_curriculum)
 loader = importlib.machinery.SourceFileLoader('asi.self_play_skill_loop', 'src/self_play_skill_loop.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 self_play_skill_loop = importlib.util.module_from_spec(spec)
@@ -26,6 +31,7 @@ sys.modules['asi.self_play_skill_loop'] = self_play_skill_loop
 loader.exec_module(self_play_skill_loop)
 run_loop = self_play_skill_loop.run_loop
 SelfPlaySkillLoopConfig = self_play_skill_loop.SelfPlaySkillLoopConfig
+AdaptiveCurriculum = self_play_skill_loop.AdaptiveCurriculum
 
 
 class TestSelfPlaySkillLoop(unittest.TestCase):
@@ -50,7 +56,20 @@ class TestSelfPlaySkillLoop(unittest.TestCase):
             return DummyModel()
 
         policy = lambda obs: torch.zeros_like(obs)
-        with patch.object(self_play_skill_loop, "rollout_env", fake_rollout), patch.object(self_play_skill_loop, "transfer_skills", fake_transfer):
+
+        class DummyCurriculum:
+            def __init__(self, *a, **kw):
+                pass
+
+            def sample(self, bs):
+                return frames[:bs], actions[:bs], 0
+
+            def update(self, idx, reward):
+                pass
+
+        with patch.object(self_play_skill_loop, "rollout_env", fake_rollout), \
+             patch.object(self_play_skill_loop, "transfer_skills", fake_transfer), \
+             patch.object(self_play_skill_loop, "AdaptiveCurriculum", DummyCurriculum):
             rewards, model = run_loop(cfg, policy, frames, actions)
         self.assertEqual(len(rewards), 2)
         self.assertIsInstance(model, DummyModel)

@@ -41,6 +41,24 @@ class TestMetaRLRefactorAgent(unittest.TestCase):
         self.assertGreaterEqual(prob, 0.0)
         self.assertEqual(agent.epsilon, best)
 
+    def test_train_with_searcher(self):
+        class DummySearch:
+            def __init__(self) -> None:
+                self.calls = 0
+                self.eval_func = lambda x: True
+                self.param_space = []
+
+            def search(self, *args, **kwargs):
+                self.calls += 1
+                return 0.5, 1.0
+
+        searcher = DummySearch()
+        agent = MetaRLRefactorAgent(searcher=searcher)
+        entries = [("replace", 1.0)]
+        agent.train(entries, epsilon_space=[0.1, 0.5], eval_func=lambda e: True)
+        self.assertEqual(searcher.calls, 1)
+        self.assertEqual(agent.epsilon, 0.5)
+
 
 class TestMetaRLRefactorCLI(unittest.TestCase):
     def test_cli_runs(self):

@@ -4,6 +4,20 @@ package asi;
 service MemoryService {
   rpc Push (PushRequest) returns (PushReply);
   rpc Query (QueryRequest) returns (QueryReply);
+  rpc PushBatch (PushBatchRequest) returns (PushReply);
+  rpc QueryBatch (QueryBatchRequest) returns (QueryBatchReply);
+}
+
+message PushBatchRequest {
+  repeated PushRequest items = 1;
+}
+
+message QueryBatchRequest {
+  repeated QueryRequest items = 1;
+}
+
+message QueryBatchReply {
+  repeated QueryReply items = 1;
 }
 
 message PushRequest {

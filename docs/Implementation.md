@@ -8,6 +8,9 @@ This repository includes starter modules for the first two algorithms listed in 
   - `HashRouter` uses hash-based gating to activate at most two experts per token.
   - `SwitchRouter` employs a learned linear gate and selects the top-k experts.
   Both expose `load_balance_std` and `expert_utilization` to inspect token distribution.
+  - `ElasticMoERouter` dynamically reduces the number of active experts when GPU
+    memory utilization gets high. It inherits from `SwitchRouter` and exposes
+    `active_experts` to track the current count.
 - `src/moe_layer.py` implements a small MoE feed-forward block using these routers. It accepts an optional
   `balance_weight` which multiplies the `balance_loss()` penalty derived from the router's assignments and
   returns it alongside the layer output.
@@ -40,10 +43,10 @@ print('counts:', router.expert_utilization(assign))
 `scripts/benchmark_moe.py` offers a minimal example comparing parameter counts and approximate
 training FLOPs with and without the MOE router.
 
-Run it from the project root. By default it uses `HashRouter`; pass `--router switch` to benchmark the learned router:
+Run it from the project root. By default it uses `HashRouter`; pass `--router switch` for the learned router or `--router elastic` for the adaptive variant:
 
 ```bash
-python scripts/benchmark_moe.py --router switch
+python scripts/benchmark_moe.py --router elastic
 ```
 
 Expected output shows the dense and MOE parameter counts along with their ratio and a rough FLOP
@@ -57,12 +60,12 @@ FLOP ratio: 8.5
 ```
 
 `scripts/moe_vs_dense.py` provides a similar toy benchmark implemented as a standalone module. It
-contrasts a dense feed-forward model with the MOE version. Pass `--router switch` to use the learned router.
+contrasts a dense feed-forward model with the MOE version. Pass `--router elastic` to exercise the adaptive router.
 
 Run it as:
 
 ```bash
-python scripts/moe_vs_dense.py --router switch
+python scripts/moe_vs_dense.py --router elastic
 ```
 
 The script prints the same parameter counts and a comparable FLOP ratio, labelled `Param ratio`. Both
@@ -336,6 +339,20 @@ To reproduce the toy run step by step:
 - `src/remote_memory.py` provides a small :class:`RemoteMemory` client that wraps
   these RPCs in a convenient Python interface.
 
+### Distributed Memory Benchmark
+
+`scripts/distributed_memory_benchmark.py` launches several `MemoryServer`
+instances and measures the add and query throughput of
+`DistributedMemory`. It first runs a single-node baseline and then
+starts the requested number of servers to compare distributed
+performance.
+
+Run the benchmark with four servers as:
+
+```bash
+python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
+```
+
 ## A-5 Multi-Modal World Model
 
 - `src/multimodal_world_model.py` now implements a unified transformer that ingests text, images and low-level actions.
@@ -365,6 +382,7 @@ To reproduce the toy run step by step:
 
 - `src/eval_harness.py` gathers benchmark metrics from each module and compares them with the targets in `docs/Plan.md`.
 - Running `python -m src.eval_harness` prints a pass/fail table for the whole project.
+- For larger experiments run `scripts/distributed_eval.py --workers 4` (or pass `--hosts`) to split the evaluations across processes or nodes.
 
 ## L-5 Formal Verification Harness
 
@@ -441,7 +459,7 @@ txt = generate_transcript(pairs[0][2])
 - Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the
   exploration rate during refactoring.
 - Rewrite `download_triples()` with asyncio to fetch dataset files
-  concurrently.
+  concurrently. **Implemented** with an async helper using `aiohttp`.
 - Add streaming RPCs to `MemoryServer` so batches of vectors can be pushed and
   queried in one call. Update `memory.proto` and the `RemoteMemory` client.
 - Implement optional gradient checkpointing in `multimodal_world_model.py` via a
@@ -451,35 +469,42 @@ txt = generate_transcript(pairs[0][2])
 - Implement a `PrioritizedReplayBuffer` in `self_play_env.py` and adapt
   `self_play_skill_loop.run_loop()` to sample transitions by reward. **Implemented**
 - Create `scripts/distributed_eval.py` to run `eval_harness` across multiple
-  processes or hosts and aggregate the results.
+  processes or hosts and aggregate the results. **Implemented**
 - Extend `transformer_circuits.py` with an `AttentionVisualizer` class that
   saves interactive attention heatmaps for interpretability experiments.
+  **Implemented** in `src/transformer_circuits.py` with unit tests.
 - Prototype a `GraphOfThoughtPlanner` that composes reasoning steps into a
   searchable graph for code refactoring decisions.
+- **Implemented** a `GraphOfThoughtPlanner` via `GraphOfThought` (see
+  `src/graph_of_thought.py`) that composes reasoning steps into a searchable
+  graph for code refactoring decisions.
 - Add a `NeuroSymbolicExecutor` module that runs logical constraints alongside
-  neural world-model rollouts.
+  neural world-model rollouts. **Implemented in `src/neuro_symbolic_executor.py`.**
 - Implement a `DistributedTrainer` that automatically restarts failed
-  processes and coordinates checkpoints with `DistributedMemory`.
+  processes and coordinates checkpoints with `DistributedMemory`. **Implemented**
+  in `src/distributed_trainer.py` with tests.
 - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemory`
-  so edge devices can handle large-context inference.
+  so edge devices can handle large-context inference. **Implemented**
 - Create an `AdaptiveCurriculumScheduler` that blends curated data with
   self-play logs using reinforcement learning.
 - Extend `QAEHyperparamSearch` to explore novel transformer components during
   architecture search.
-- Implement an `ElasticMoERouter` that scales the number of active experts
+- **Implemented** an `ElasticMoERouter` that scales the number of active experts
   according to real-time GPU utilization.
 - Extend `HierarchicalMemory` with an `SSDCache` that prefetches high-frequency
-  vectors for faster retrieval.
+  vectors for faster retrieval. *Implemented with a disk-backed cache and
+  persistence helpers in `src/hierarchical_memory.py`.*
 - Build an `AutoDatasetFilter` using generative noise detection to discard
   low-quality training samples before ingestion.
 - Implement a `GenerativeDataAugmentor` that rolls out the world model to
-  synthesize training triples and feeds them through `data_ingest`.
+  synthesize training triples and feeds them through `data_ingest`. **Implemented**
+  in `src/generative_data_augmentor.py`.
 - Add `continuous_eval.py` to schedule `eval_harness` and `autobench` after each
   pull request using GitHub Actions or a local cron job.
 - Combine `GraphOfThoughtPlanner` with `MetaRLRefactorAgent` in an `AdaptivePlanner`
   module that ranks and applies refactor suggestions automatically.
-- Develop a `NeuralArchSearch` module for distributed architecture search and
-  integrate it with `eval_harness.py` to score candidate models automatically.
+- `src/neural_arch_search.py` implements distributed architecture search and is
+  integrated with `eval_harness.py` to score candidate models automatically.
 - Implement a `SelfHealingTrainer` that monitors distributed jobs and restarts
   failed runs to maintain full compute utilization.
 - Extend `data_ingest.py` with an `offline_synthesizer` that uses the world

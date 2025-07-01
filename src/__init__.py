@@ -12,23 +12,32 @@ from .deliberative_alignment import DeliberativeAligner
 from .streaming_compression import ReservoirBuffer, StreamingCompressor
 from .hierarchical_memory import (
     HierarchicalMemory,
+    SSDCache,
     push_remote,
     query_remote,
     push_remote_async,
     query_remote_async,
+    push_batch_remote,
+    query_batch_remote,
+    push_batch_remote_async,
+    query_batch_remote_async,
 )
 from .distributed_memory import DistributedMemory
+from .distributed_trainer import DistributedTrainer, MemoryConfig
 from .remote_memory import RemoteMemory
+from .edge_memory_client import EdgeMemoryClient
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .iter_align import IterativeAligner
 from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 from .chunkwise_retrainer import ChunkWiseRetrainer
+from .self_healing_trainer import SelfHealingTrainer
 from .scaling_law import BreakpointScalingLaw
 from .link_slot_attention import LinkSlotAttention
 from .mamba_block import MambaBlock
 from .retnet_retention import RetNetRetention
 from .hybrid_retention import HybridRetention
+from .adaptive_planner import GraphOfThoughtPlanner, AdaptivePlanner
 
 from .pull_request_monitor import (
     list_open_prs,
@@ -55,6 +64,7 @@ from .self_play_skill_loop import (
     run_loop,
     self_play_skill_loop,
 )
+from .adaptive_curriculum import AdaptiveCurriculum
 from .formal_verifier import (
     VerificationResult,
     check_grad_norm,
@@ -92,7 +102,9 @@ from .data_ingest import (
     random_crop_image,
     add_gaussian_noise,
     text_dropout,
+    synthesize_from_world_model,
 )
+from .generative_data_augmentor import GenerativeDataAugmentor
 from .transformer_circuits import (
     ActivationRecorder,
     record_attention_weights,
@@ -100,4 +112,8 @@ from .transformer_circuits import (
     restore_attention_head,
     patched_head,
     head_importance,
+    AttentionVisualizer,
 )
+from .neural_arch_search import DistributedArchSearch
+from .graph_of_thought import GraphOfThought
+

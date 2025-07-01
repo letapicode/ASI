@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 import asyncio
+from pathlib import Path
 import torch
 
 from asi.hierarchical_memory import (
@@ -10,6 +11,10 @@ from asi.hierarchical_memory import (
     query_remote,
     push_remote_async,
     query_remote_async,
+    push_batch_remote,
+    query_batch_remote,
+    push_batch_remote_async,
+    query_batch_remote_async,
 )
 try:
     import grpc  # noqa: F401
@@ -100,6 +105,18 @@ class TestHierarchicalMemory(unittest.TestCase):
             mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
             self.assertEqual(len(mem2), 2)
 
+    def test_ssd_cache_persistence(self):
+        torch.manual_seed(0)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, cache_dir=tmpdir)
+            data = torch.randn(1, 4)
+            mem.add(data, metadata=["a"])
+            mem.search(data[0], k=1)
+            self.assertTrue(Path(tmpdir, "cache.npz").exists())
+            mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, cache_dir=tmpdir)
+            out, meta = mem2.search(data[0], k=1)
+            self.assertEqual(meta, ["a"])
+
     def test_modalities(self):
         torch.manual_seed(0)
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
@@ -110,6 +127,20 @@ class TestHierarchicalMemory(unittest.TestCase):
         out, meta = mem.search_by_modality(q, k=1, modality="text")
         self.assertEqual(out.shape, (1, 4))
         self.assertEqual(meta[0]["modality"], "text")
+
+    def test_ssd_cache_saved_with_memory(self):
+        torch.manual_seed(0)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cache_dir = Path(tmpdir) / "c"
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, cache_dir=cache_dir)
+            data = torch.randn(1, 4)
+            mem.add(data, metadata=["z"])
+            mem.search(data[0], k=1)
+            mem_dir = Path(tmpdir) / "mem"
+            mem.save(mem_dir)
+            loaded = HierarchicalMemory.load(mem_dir)
+            out, meta = loaded.search(data[0], k=1)
+            self.assertEqual(meta, ["z"])
 
     def test_sync_methods_inside_event_loop(self):
         torch.manual_seed(0)
@@ -162,6 +193,23 @@ class TestHierarchicalMemory(unittest.TestCase):
         self.assertEqual(meta[0], "r")
         server.stop(0)
 
+    def test_grpc_server_batch(self):
+        if not _HAS_GRPC:
+            self.skipTest("grpcio not available")
+
+        torch.manual_seed(0)
+        mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+        server = MemoryServer(mem, address="localhost:50072", max_workers=1)
+        server.start()
+
+        data = torch.randn(2, 4)
+        ok = push_batch_remote("localhost:50072", data, metadata=["x", "y"])
+        self.assertTrue(ok)
+        vec, meta = query_batch_remote("localhost:50072", data, k=1)
+        self.assertEqual(vec.shape, (2, 1, 4))
+        self.assertEqual(len(meta), 2)
+        server.stop(0)
+
     def test_grpc_server_async(self):
         if not _HAS_GRPC:
             self.skipTest("grpcio not available")
@@ -178,6 +226,30 @@ class TestHierarchicalMemory(unittest.TestCase):
             vec, meta = await query_remote_async("localhost:50071", data[0], k=1)
             self.assertEqual(vec.shape, (1, 4))
             self.assertEqual(meta[0], "r")
+            server.stop(0)
+
+        asyncio.run(run())
+
+    def test_grpc_server_async_batch(self):
+        if not _HAS_GRPC:
+            self.skipTest("grpcio not available")
+
+        torch.manual_seed(0)
+
+        async def run() -> None:
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+            server = MemoryServer(mem, address="localhost:50073", max_workers=1)
+            server.start()
+            data = torch.randn(2, 4)
+            ok = await push_batch_remote_async(
+                "localhost:50073", data, metadata=["m", "n"]
+            )
+            self.assertTrue(ok)
+            vec, meta = await query_batch_remote_async(
+                "localhost:50073", data, k=1
+            )
+            self.assertEqual(vec.shape, (2, 1, 4))
+            self.assertEqual(len(meta), 2)
             server.stop(0)
 
         asyncio.run(run())
