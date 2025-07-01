@@ -43,3 +43,8 @@ code rather than enforcing a specific maximum line length.
 
 Automated tests run on GitHub Actions. The workflow installs the project in editable mode and executes `pytest`.
 See [.github/workflows/test.yml](.github/workflows/test.yml) for details.
+
+Continuous evaluation runs `scripts/continuous_eval.py` after each pull request.
+The script invokes `eval_harness` and `autobench` to track benchmark progress.
+See [.github/workflows/continuous_eval.yml](.github/workflows/continuous_eval.yml)
+for the GitHub Actions setup or schedule it locally with `cron`.
