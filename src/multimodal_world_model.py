@@ -53,8 +53,8 @@ class DynamicsModel(nn.Module):
         self.reward_head = nn.Linear(embed_dim, 1)
 
     def forward(self, state: torch.Tensor, action: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        a = self.action_emb(action).unsqueeze(1)
-        h = self.dec(tgt=a, memory=state.unsqueeze(1)).squeeze(1)
+        a = self.action_emb(action).unsqueeze(0)  # (1, embed_dim)
+        h = self.dec(tgt=a.unsqueeze(0), memory=state.unsqueeze(0)).squeeze(0)
         next_state = self.state_proj(h)
         reward = self.reward_head(h).squeeze(-1)
         return next_state, reward

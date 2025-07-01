@@ -408,6 +408,27 @@ img = random_crop(Image.open(pairs[0][1]), (32, 32))
 txt = generate_transcript(pairs[0][2])
 ```
 
+`offline_synthesizer()` rolls out the multimodal world model to generate
+simplified synthetic triples offline:
+
+```python
+from asi.multimodal_world_model import MultiModalWorldModel, MultiModalWorldModelConfig
+from asi.data_ingest import offline_synthesizer
+import torch
+import numpy as np
+
+cfg = MultiModalWorldModelConfig(vocab_size=10, img_channels=1, action_dim=2)
+wm = MultiModalWorldModel(cfg)
+
+def policy(state):
+    return torch.zeros((), dtype=torch.long)
+
+def tokenizer(t: str):
+    return [ord(c) % cfg.vocab_size for c in t]
+
+triples = offline_synthesizer(wm, tokenizer, "hello", np.zeros((1, 4, 4)), policy, steps=2)
+```
+
 ## L-6 Mechanistic Interpretability Tools
 
 - `src/transformer_circuits.py` provides utilities to record attention weights

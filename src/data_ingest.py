@@ -152,6 +152,63 @@ def text_dropout(text: str, p: float = 0.1) -> str:
     return " ".join(kept)
 
 
+def offline_synthesizer(
+    model: "MultiModalWorldModel",
+    tokenizer,
+    start_text: str,
+    start_image: np.ndarray,
+    policy_fn,
+    steps: int = 3,
+) -> List[Tuple[str, np.ndarray, np.ndarray]]:
+    """Generate synthetic text, image and audio triples via world-model rollout.
+
+    The function performs a short rollout of ``model`` starting from
+    ``start_text`` and ``start_image``. Each predicted latent state is
+    deterministically mapped back to toy text, image and audio
+    representations so that downstream modules can consume the data without
+    requiring a heavy decoder.
+
+    Parameters
+    ----------
+    model:
+        Trained :class:`~asi.multimodal_world_model.MultiModalWorldModel`.
+    tokenizer:
+        Callable used to tokenize text inputs for the world model.
+    start_text:
+        Initial text prompt.
+    start_image:
+        Initial image array.
+    policy_fn:
+        Function mapping latent states to actions.
+    steps:
+        Number of rollout steps to generate.
+
+    Returns
+    -------
+    list[tuple[str, np.ndarray, np.ndarray]]
+        Synthetic ``(text, image, audio)`` triples.
+    """
+
+    from asi.multimodal_world_model import rollout  # avoid local import issues
+    import torch
+
+    t = torch.tensor(tokenizer(start_text), dtype=torch.long).unsqueeze(0)
+    img = torch.tensor(start_image, dtype=torch.float32).unsqueeze(0)
+
+    states, _ = rollout(model, t, img, policy_fn, steps=steps)
+
+    triples: List[Tuple[str, np.ndarray, np.ndarray]] = []
+    for s in states:
+        vec = s.cpu().numpy().ravel()
+        txt = " ".join(str(int(x)) for x in vec[:5])
+        side = int(np.sqrt(vec.size)) or 1
+        img_arr = vec[: side * side].reshape(side, side)
+        aud_arr = vec.copy()
+        triples.append((txt, img_arr, aud_arr))
+
+    return triples
+
+
 __all__ = [
     "download_triples",
     "download_triples_async",
@@ -162,4 +219,5 @@ __all__ = [
     "random_crop_image",
     "add_gaussian_noise",
     "text_dropout",
+    "offline_synthesizer",
 ]
