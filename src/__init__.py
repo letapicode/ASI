@@ -12,6 +12,7 @@ from .deliberative_alignment import DeliberativeAligner
 from .streaming_compression import ReservoirBuffer, StreamingCompressor
 from .hierarchical_memory import (
     HierarchicalMemory,
+    SSDCache,
     push_remote,
     query_remote,
     push_remote_async,

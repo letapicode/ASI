@@ -469,7 +469,8 @@ txt = generate_transcript(pairs[0][2])
 - Implement an `ElasticMoERouter` that scales the number of active experts
   according to real-time GPU utilization.
 - Extend `HierarchicalMemory` with an `SSDCache` that prefetches high-frequency
-  vectors for faster retrieval.
+  vectors for faster retrieval. *Implemented with a disk-backed cache and
+  persistence helpers in `src/hierarchical_memory.py`.*
 - Build an `AutoDatasetFilter` using generative noise detection to discard
   low-quality training samples before ingestion.
 - Implement a `GenerativeDataAugmentor` that rolls out the world model to

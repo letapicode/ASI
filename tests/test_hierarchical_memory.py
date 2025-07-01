@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 import asyncio
+from pathlib import Path
 import torch
 
 from asi.hierarchical_memory import (
@@ -100,6 +101,18 @@ class TestHierarchicalMemory(unittest.TestCase):
             mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
             self.assertEqual(len(mem2), 2)
 
+    def test_ssd_cache_persistence(self):
+        torch.manual_seed(0)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, cache_dir=tmpdir)
+            data = torch.randn(1, 4)
+            mem.add(data, metadata=["a"])
+            mem.search(data[0], k=1)
+            self.assertTrue(Path(tmpdir, "cache.npz").exists())
+            mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, cache_dir=tmpdir)
+            out, meta = mem2.search(data[0], k=1)
+            self.assertEqual(meta, ["a"])
+
     def test_modalities(self):
         torch.manual_seed(0)
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
@@ -110,6 +123,20 @@ class TestHierarchicalMemory(unittest.TestCase):
         out, meta = mem.search_by_modality(q, k=1, modality="text")
         self.assertEqual(out.shape, (1, 4))
         self.assertEqual(meta[0]["modality"], "text")
+
+    def test_ssd_cache_saved_with_memory(self):
+        torch.manual_seed(0)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cache_dir = Path(tmpdir) / "c"
+            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, cache_dir=cache_dir)
+            data = torch.randn(1, 4)
+            mem.add(data, metadata=["z"])
+            mem.search(data[0], k=1)
+            mem_dir = Path(tmpdir) / "mem"
+            mem.save(mem_dir)
+            loaded = HierarchicalMemory.load(mem_dir)
+            out, meta = loaded.search(data[0], k=1)
+            self.assertEqual(meta, ["z"])
 
     def test_sync_methods_inside_event_loop(self):
         torch.manual_seed(0)
