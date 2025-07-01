@@ -101,3 +101,4 @@ from .transformer_circuits import (
     patched_head,
     head_importance,
 )
+from .graph_of_thought import GraphOfThought
