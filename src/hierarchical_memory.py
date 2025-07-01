@@ -29,6 +29,7 @@ class HierarchicalMemory:
     ) -> None:
         self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
         self.use_async = use_async
+        self._next_id = 0
         if use_async:
             self.store = AsyncFaissVectorStore(dim=compressed_dim, path=db_path)
         else:
@@ -59,7 +60,11 @@ class HierarchicalMemory:
                 break
         if n is None:
             return
-        metas = list(metadata) if metadata is not None else [None] * n
+        if metadata is None:
+            metas = [self._next_id + i for i in range(n)]
+            self._next_id += n
+        else:
+            metas = list(metadata)
         if len(metas) != n:
             raise ValueError("metadata length mismatch")
         if text is not None:
@@ -68,6 +73,15 @@ class HierarchicalMemory:
             self.add(images, [{"id": m, "modality": "image"} for m in metas])
         if audio is not None:
             self.add(audio, [{"id": m, "modality": "audio"} for m in metas])
+
+    def add_from_fusion(
+        self,
+        encoded: Tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        metadata: Iterable[Any] | None = None,
+    ) -> None:
+        """Add embeddings returned by ``encode_all``."""
+        text, images, audio = encoded
+        self.add_modalities(text, images, audio, metadata)
 
     def search_by_modality(
         self, query: torch.Tensor, k: int = 5, modality: str | None = None
@@ -219,6 +233,7 @@ class HierarchicalMemory:
             "count": self.compressor.buffer.count,
             "encoder": self.compressor.encoder.state_dict(),
             "decoder": self.compressor.decoder.state_dict(),
+            "next_id": self._next_id,
         }
         torch.save(comp_state, path / "compressor.pt")
         if isinstance(self.store, FaissVectorStore):
@@ -238,6 +253,7 @@ class HierarchicalMemory:
             "count": self.compressor.buffer.count,
             "encoder": self.compressor.encoder.state_dict(),
             "decoder": self.compressor.decoder.state_dict(),
+            "next_id": self._next_id,
         }
         torch.save(comp_state, path / "compressor.pt")
         if isinstance(self.store, AsyncFaissVectorStore):
@@ -271,6 +287,7 @@ class HierarchicalMemory:
         mem.compressor.decoder.load_state_dict(state["decoder"])
         mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
         mem.compressor.buffer.count = int(state["count"])
+        mem._next_id = int(state.get("next_id", 0))
         store_dir = path / "store"
         if store_dir.exists():
             mem.store = FaissVectorStore.load(store_dir)
@@ -295,6 +312,7 @@ class HierarchicalMemory:
         mem.compressor.decoder.load_state_dict(state["decoder"])
         mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
         mem.compressor.buffer.count = int(state["count"])
+        mem._next_id = int(state.get("next_id", 0))
         store_dir = path / "store"
         if store_dir.exists():
             if use_async:
