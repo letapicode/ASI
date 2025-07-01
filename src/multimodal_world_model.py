@@ -6,6 +6,7 @@ from typing import Iterable, Tuple, Any
 import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
+from torch.utils.checkpoint import checkpoint
 
 
 class ActionEncoder(nn.Module):
@@ -67,6 +68,7 @@ class MultiModalWorldModelConfig:
     action_dim: int
     embed_dim: int = 128
     lr: float = 1e-4
+    checkpoint_blocks: bool = False
 
 
 class MultiModalWorldModel(nn.Module):
@@ -78,14 +80,26 @@ class MultiModalWorldModel(nn.Module):
         self.dyn = DynamicsModel(cfg.embed_dim, cfg.action_dim)
         self.cfg = cfg
 
+    def encode_obs(self, text: torch.Tensor, image: torch.Tensor) -> torch.Tensor:
+        if self.cfg.checkpoint_blocks:
+            return checkpoint(self.obs_enc, text, image)
+        return self.obs_enc(text, image)
+
+    def predict_dynamics(
+        self, state: torch.Tensor, action: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        if self.cfg.checkpoint_blocks:
+            return checkpoint(self.dyn, state, action)
+        return self.dyn(state, action)
+
     def forward(
         self,
         text: torch.Tensor,
         image: torch.Tensor,
         action: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        state = self.obs_enc(text, image)
-        return self.dyn(state, action)
+        state = self.encode_obs(text, image)
+        return self.predict_dynamics(state, action)
 
 
 class TrajectoryDataset(Dataset):
@@ -126,9 +140,9 @@ def train_world_model(
                 nimg.to(device),
                 r.to(device),
             )
-            state = model.obs_enc(t, img)
-            target = model.obs_enc(nt, nimg)
-            pred_state, pred_reward = model.dyn(state, a)
+            state = model.encode_obs(t, img)
+            target = model.encode_obs(nt, nimg)
+            pred_state, pred_reward = model.predict_dynamics(state, a)
             loss = loss_fn(pred_state, target) + loss_fn(pred_reward, r)
             opt.zero_grad()
             loss.backward()
@@ -149,9 +163,9 @@ def rollout(
     rewards = []
     with torch.no_grad():
         for _ in range(steps):
-            state = model.obs_enc(text, img)
+            state = model.encode_obs(text, img)
             action = policy_fn(state)
-            next_state, reward = model.dyn(state, action)
+            next_state, reward = model.predict_dynamics(state, action)
             states.append(next_state.cpu())
             rewards.append(float(reward.item()))
             text = text  # placeholder for decoded update

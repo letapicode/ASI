@@ -194,8 +194,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    query latency and throughput versus the single-node baseline.
 7. **MemoryServer streaming API**: Benchmark the new batched push/query
    endpoints and report latency savings over single-vector calls.
-8. **Checkpointed world model**: Train the multimodal world model with the
-   `checkpoint_blocks` flag and document memory reduction during training.
+8. **Checkpointed world model**: *(done)* the multimodal world model now
+   supports a `checkpoint_blocks` flag which reduces memory usage during
+   training.
 9. **Self-play dataset fusion**: Feed trajectories from
    `self_play_skill_loop` into `multimodal_world_model.train_world_model()`
    to test world-model learning from mixed-modality self-play data.
