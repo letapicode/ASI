@@ -17,6 +17,7 @@ pair_modalities = di.pair_modalities
 random_crop_image = di.random_crop_image
 add_gaussian_noise = di.add_gaussian_noise
 text_dropout = di.text_dropout
+filter_dataset = di.filter_dataset
 import numpy as np
 
 
@@ -45,6 +46,20 @@ class TestDataIngest(unittest.TestCase):
 
         out = text_dropout('the quick brown fox', p=1.0)
         self.assertTrue(out)
+
+    def test_filter_dataset(self):
+        with tempfile.TemporaryDirectory() as root:
+            paths = []
+            for i in range(3):
+                p = Path(root) / f"g{i}.txt"
+                p.write_text("hello world")
+                paths.append(p)
+            noise = Path(root) / "noise.txt"
+            noise.write_text("asdf qwer zxcv")
+            paths.append(noise)
+            kept = filter_dataset(paths, threshold=-2.5)
+            self.assertIn(paths[0], kept)
+            self.assertNotIn(noise, kept)
 
 
 if __name__ == '__main__':

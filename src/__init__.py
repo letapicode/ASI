@@ -92,6 +92,7 @@ from .data_ingest import (
     random_crop_image,
     add_gaussian_noise,
     text_dropout,
+    filter_dataset,
 )
 from .transformer_circuits import (
     ActivationRecorder,
