@@ -209,6 +209,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     *Implemented as `src/neuro_symbolic_executor.py`.*
 13. **Self-healing distributed trainer**: Wrap `world_model_rl.train_world_model()`
     in a `DistributedTrainer` that automatically resumes from failures.
+    *Implemented in `src/distributed_trainer.py` with integration tests.*
 14. **Edge-memory virtualization**: Stream context from `HierarchicalMemory`
     through `RemoteMemory` so low-memory devices can handle large-context
     inference.
