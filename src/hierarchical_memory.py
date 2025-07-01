@@ -41,6 +41,54 @@ class HierarchicalMemory:
         """Return the number of stored vectors."""
         return len(self.store)
 
+    # ------------------------------------------------------------------
+    # Multimodal helpers
+
+    def add_modalities(
+        self,
+        text: torch.Tensor | None = None,
+        images: torch.Tensor | None = None,
+        audio: torch.Tensor | None = None,
+        metadata: Iterable[Any] | None = None,
+    ) -> None:
+        """Add text/image/audio embeddings with modality metadata."""
+        n = None
+        for t in (text, images, audio):
+            if t is not None:
+                n = t.shape[0]
+                break
+        if n is None:
+            return
+        metas = list(metadata) if metadata is not None else [None] * n
+        if len(metas) != n:
+            raise ValueError("metadata length mismatch")
+        if text is not None:
+            self.add(text, [{"id": m, "modality": "text"} for m in metas])
+        if images is not None:
+            self.add(images, [{"id": m, "modality": "image"} for m in metas])
+        if audio is not None:
+            self.add(audio, [{"id": m, "modality": "audio"} for m in metas])
+
+    def search_by_modality(
+        self, query: torch.Tensor, k: int = 5, modality: str | None = None
+    ) -> Tuple[torch.Tensor, List[Any]]:
+        """Retrieve vectors filtered by modality."""
+        vecs, metas = self.search(query, k=max(k, len(self)))
+        if modality is None:
+            return vecs[:k], metas[:k]
+        out_vecs = []
+        out_meta = []
+        for v, m in zip(vecs, metas):
+            if isinstance(m, dict) and m.get("modality") == modality:
+                out_vecs.append(v)
+                out_meta.append(m)
+                if len(out_vecs) >= k:
+                    break
+        if not out_vecs:
+            empty = torch.empty(0, query.size(-1), device=query.device)
+            return empty, []
+        return torch.stack(out_vecs), out_meta
+
     def add(self, x: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:
         """Compress and store embeddings with optional metadata."""
         if isinstance(self.store, AsyncFaissVectorStore):

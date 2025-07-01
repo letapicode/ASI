@@ -16,10 +16,10 @@ MultiModalDataset = cmf.MultiModalDataset
 encode_all = cmf.encode_all
 train_fusion_model = cmf.train_fusion_model
 
+from asi.hierarchical_memory import HierarchicalMemory
 
 def simple_tokenizer(text: str):
     return [ord(c) % 50 for c in text]
-
 
 class TestCrossModalFusion(unittest.TestCase):
     def setUp(self):
@@ -48,16 +48,19 @@ class TestCrossModalFusion(unittest.TestCase):
         self.assertIsNone(i)
         self.assertIsNone(a)
 
-    def test_dataset_and_encode_all(self):
+    def test_encode_and_store(self):
         triples = [
             ("hello", torch.randn(3, 16, 16), torch.randn(1, 32)),
             ("world", torch.randn(3, 16, 16), torch.randn(1, 32)),
         ]
         ds = MultiModalDataset(triples, simple_tokenizer)
-        vecs = encode_all(self.model, ds, batch_size=1)
+        mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+        vecs = encode_all(self.model, ds, batch_size=1, memory=mem)
         self.assertEqual(vecs[0].shape[0], len(ds))
-        self.assertEqual(vecs[0].shape[1], 4)
-
+        q = vecs[0][0]
+        out, meta = mem.search_by_modality(q, k=1, modality="text")
+        self.assertEqual(out.shape, (1, 4))
+        self.assertEqual(meta[0]["modality"], "text")
 
 if __name__ == "__main__":
     unittest.main()

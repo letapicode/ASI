@@ -1,5 +1,18 @@
 import random
-from typing import Any, Iterable, Tuple, List
+from typing import Any, Iterable, Tuple, List, Callable
+
+try:  # Allow execution as script without package context
+    from .quantum_hpo import QAEHyperparamSearch
+except Exception:  # pragma: no cover - fallback for direct module load
+    import importlib.util as _ilu
+    from pathlib import Path as _Path
+
+    _qpath = _Path(__file__).resolve().parent / "quantum_hpo.py"
+    spec = _ilu.spec_from_file_location("quantum_hpo", _qpath)
+    module = _ilu.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)  # type: ignore[attr-defined]
+    QAEHyperparamSearch = module.QAEHyperparamSearch
 
 
 class MetaRLRefactorAgent:
@@ -37,6 +50,20 @@ class MetaRLRefactorAgent:
         next_q = max(self.q.get((next_state, a), 0.0) for a in self.actions)
         target = reward + self.gamma * next_q
         self.q[(state, action)] = current + self.alpha * (target - current)
+
+    def tune_epsilon(
+        self,
+        param_space: Iterable[float],
+        eval_func: Callable[[float], bool],
+        shots: int = 32,
+        **search_kwargs: Any,
+    ) -> Tuple[float, float]:
+        """Tune exploration rate using :class:`QAEHyperparamSearch`."""
+        params = list(param_space)
+        search = QAEHyperparamSearch(eval_func, params)
+        best, prob = search.search(num_samples=len(params), shots=shots, **search_kwargs)
+        self.epsilon = float(best)
+        return best, prob
 
 
 def _load_log(path: str) -> List[tuple[str, float]]:

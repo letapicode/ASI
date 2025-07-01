@@ -100,6 +100,17 @@ class TestHierarchicalMemory(unittest.TestCase):
             mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
             self.assertEqual(len(mem2), 2)
 
+    def test_modalities(self):
+        torch.manual_seed(0)
+        mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+        text = torch.randn(2, 4)
+        images = torch.randn(2, 4)
+        mem.add_modalities(text, images, metadata=["a", "b"])
+        q = text[0]
+        out, meta = mem.search_by_modality(q, k=1, modality="text")
+        self.assertEqual(out.shape, (1, 4))
+        self.assertEqual(meta[0]["modality"], "text")
+
     def test_sync_methods_inside_event_loop(self):
         torch.manual_seed(0)
 
