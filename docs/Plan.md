@@ -212,7 +212,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     through `RemoteMemory` so low-memory devices can handle large-context
     inference.
 15. **Adaptive curriculum scheduler**: Mix curated datasets with self-play logs
-    via reinforcement learning to accelerate skill acquisition.
+    via reinforcement learning to accelerate skill acquisition. Implemented in
+    `adaptive_curriculum.py` and used by `self_play_skill_loop`.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
     novel transformer components and report promising variants.
 17. **Elastic mixture-of-experts routing**: *Implemented in `src/elastic_moe_router.py`.*

@@ -60,6 +60,7 @@ from .self_play_skill_loop import (
     run_loop,
     self_play_skill_loop,
 )
+from .adaptive_curriculum import AdaptiveCurriculum
 from .formal_verifier import (
     VerificationResult,
     check_grad_norm,
