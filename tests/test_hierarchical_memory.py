@@ -100,6 +100,17 @@ class TestHierarchicalMemory(unittest.TestCase):
             mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
             self.assertEqual(len(mem2), 2)
 
+    def test_add_multimodal(self):
+        torch.manual_seed(0)
+        mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+        t = torch.randn(2, 4)
+        i = torch.randn(2, 4)
+        a = torch.randn(2, 4)
+        mem.add_multimodal(t, i, a, metadata=["m1", "m2"])
+        out, meta = mem.search(t[0], k=1)
+        self.assertEqual(len(meta), 1)
+        self.assertIn(meta[0], ["m1", "m2"])
+
     def test_sync_methods_inside_event_loop(self):
         torch.manual_seed(0)
 

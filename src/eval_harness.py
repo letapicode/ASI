@@ -13,6 +13,16 @@ import numpy as np
 import torch
 
 
+def log_memory_usage() -> float:
+    """Return peak GPU memory usage in MB, resetting the counter."""
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+        mem = torch.cuda.max_memory_allocated() / (1024 ** 2)
+        torch.cuda.reset_peak_memory_stats()
+        return float(mem)
+    return 0.0
+
+
 # ---------------------------------------------------------------------------
 # Module discovery
 # ---------------------------------------------------------------------------
@@ -250,6 +260,8 @@ def format_results(results: Dict[str, Tuple[bool, str]]) -> str:
     for mod, (ok, info) in sorted(results.items()):
         status = "PASS" if ok else "FAIL"
         lines.append(f"{mod}: {status} - {info}")
+    mem = log_memory_usage()
+    lines.append(f"GPU memory used: {mem:.1f} MB")
     return "\n".join(lines)
 
 

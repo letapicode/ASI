@@ -140,8 +140,15 @@ print(model.breakpoint, model.predict(params))
 ## C-2 Mamba State-Space Block
 
 - `src/mamba_block.py` implements a simplified state-space module with a gated recurrent update.
-- The block runs in linear time over the sequence and maintains a per-batch hidden state.
-- It serves as a minimal reference for experiments targeting the Mamba architecture described in the paper.
+    - The block runs in linear time over the sequence and maintains a per-batch hidden state.
+    - It serves as a minimal reference for experiments targeting the Mamba architecture described in the paper.
+
+## HybridRetention Module
+
+- `src/hybrid_retention.py` fuses the gating update from `MambaBlock` with the
+  decay kernel in `RetNetRetention`.
+- `forward(q, k, v)` returns the sum of the Mamba block output and the
+  retention result.
 
 ## C-3 Hyena Filter
 
@@ -189,8 +196,10 @@ print(model.breakpoint, model.predict(params))
  ``asyncio.Task`` so callers can ``await`` the scheduled operation. The
  explicit async variants (`aadd`, `adelete`, `asearch`, `save_async`,
  `load_async`) remain available for direct use.
- `HierarchicalMemory` defines `__len__` so `len(mem)` reports the number of
- stored vectors.
+`HierarchicalMemory` defines `__len__` so `len(mem)` reports the number of
+stored vectors.
+`add_multimodal()` averages text, image and audio embeddings so that
+`cross_modal_fusion.encode_all()` outputs can be stored directly for retrieval.
 
 ## C-4 MegaByte Patching
 
@@ -365,6 +374,8 @@ To reproduce the toy run step by step:
 
 - `src/eval_harness.py` gathers benchmark metrics from each module and compares them with the targets in `docs/Plan.md`.
 - Running `python -m src.eval_harness` prints a pass/fail table for the whole project.
+- The helper `log_memory_usage()` reports peak GPU memory in megabytes and is
+  appended to the results table.
 
 ## L-5 Formal Verification Harness
 
@@ -389,7 +400,9 @@ To reproduce the toy run step by step:
 ## M-4 Cross-Modal Data Ingestion Pipeline
 
 - `src/data_ingest.py` provides helpers for downloading and aligning text, image and audio triples.
-- Use `download_triples()` to fetch sample files and `align_triples()` to pair them by basename.
+- `download_triples()` now fetches files concurrently using ``aiohttp``. Call
+  `adownload_triples()` inside an event loop. Use `align_triples()` to pair
+  them by basename.
 - `random_crop()` returns a random image crop while `generate_transcript()` summarises audio duration.
 
 Example usage:

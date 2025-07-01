@@ -28,6 +28,9 @@ from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 from .chunkwise_retrainer import ChunkWiseRetrainer
 from .scaling_law import BreakpointScalingLaw
 from .link_slot_attention import LinkSlotAttention
+from .retnet_retention import RetNetRetention
+from .mamba_block import MambaBlock
+from .hybrid_retention import HybridRetention
 
 from .pull_request_monitor import (
     list_open_prs,
@@ -83,6 +86,7 @@ from .embodied_calibration import (
 from .lora_quant import LoRAQuantLinear, apply_quant_lora
 from .data_ingest import (
     download_triples,
+    adownload_triples,
     align_triples,
     random_crop,
     generate_transcript,

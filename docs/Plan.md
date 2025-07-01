@@ -177,17 +177,20 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 ### Short-Term Research Tasks
 
 1. **Hybrid retention backbone**: Fuse `RetNetRetention` with `MambaBlock` and
-   measure throughput and memory compared with the individual kernels.
+   measure throughput and memory compared with the individual kernels. The new
+   module `src/hybrid_retention.py` implements this combination.
 2. **Cross-modal retrieval memory**: Store embeddings from
    `cross_modal_fusion.encode_all()` inside `HierarchicalMemory` and evaluate
-   retrieval accuracy on 1&nbsp;M-token streams.
+   retrieval accuracy on 1&nbsp;M-token streams. The helper
+   `HierarchicalMemory.add_multimodal()` handles averaged text, image and audio
+   vectors.
 3. **LoRA-quantized world model**: Apply `apply_quant_lora()` to the
    multimodal world model and confirm the RL bridge still meets reward targets
    with half the memory use.
 4. **QAE-guided refactoring**: Employ `QAEHyperparamSearch` to tune exploration
    parameters in `MetaRLRefactorAgent` and track benchmark uplift.
 5. **Scalability metrics**: Update `eval_harness.py` to record GPU memory usage
-   alongside pass/fail results.
+   alongside pass/fail results using `log_memory_usage()`.
 6. **Distributed memory benchmark**: Run `DistributedMemory` with four
    `MemoryServer` nodes using `distributed_memory_benchmark.py` and measure
    query latency and throughput versus the single-node baseline.

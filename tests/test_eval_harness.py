@@ -1,7 +1,12 @@
 import unittest
 import asyncio
 
-from asi.eval_harness import parse_modules, evaluate_modules, evaluate_modules_async
+from asi.eval_harness import (
+    parse_modules,
+    evaluate_modules,
+    evaluate_modules_async,
+    log_memory_usage,
+)
 
 
 class TestEvalHarness(unittest.TestCase):
@@ -23,6 +28,11 @@ class TestEvalHarness(unittest.TestCase):
         for name in subset:
             self.assertIn(name, results)
             self.assertTrue(results[name][0], name)
+
+    def test_log_memory_usage(self):
+        mem = log_memory_usage()
+        self.assertIsInstance(mem, float)
+        self.assertGreaterEqual(mem, 0.0)
 
 
 if __name__ == "__main__":
