@@ -25,6 +25,7 @@ from .hierarchical_memory import (
 from .distributed_memory import DistributedMemory
 from .distributed_trainer import DistributedTrainer, MemoryConfig
 from .remote_memory import RemoteMemory
+from .edge_memory_client import EdgeMemoryClient
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .iter_align import IterativeAligner
