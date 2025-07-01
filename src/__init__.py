@@ -28,6 +28,7 @@ from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 from .chunkwise_retrainer import ChunkWiseRetrainer
 from .scaling_law import BreakpointScalingLaw
 from .link_slot_attention import LinkSlotAttention
+from .hybrid_retention import HybridRetention
 
 from .pull_request_monitor import (
     list_open_prs,

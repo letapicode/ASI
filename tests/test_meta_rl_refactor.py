@@ -13,6 +13,7 @@ spec = importlib.util.spec_from_loader(loader.name, loader)
 meta_rl_refactor = importlib.util.module_from_spec(spec)
 loader.exec_module(meta_rl_refactor)
 MetaRLRefactorAgent = meta_rl_refactor.MetaRLRefactorAgent
+QAEHyperparamSearch = meta_rl_refactor.QAEHyperparamSearch
 
 
 
@@ -26,6 +27,19 @@ class TestMetaRLRefactorAgent(unittest.TestCase):
         self.assertGreater(agent.q[(s1, "replace")], 0.0)
         action = agent.select_action(s1)
         self.assertEqual(action, "replace")
+
+    def test_tune_epsilon(self):
+        calls = []
+
+        def eval_func(eps: float) -> bool:
+            calls.append(eps)
+            return eps > 0.2
+
+        agent = MetaRLRefactorAgent(epsilon=0.5)
+        best, prob = agent.tune_epsilon([0.1, 0.3, 0.5], eval_func, shots=5)
+        self.assertIn(best, [0.3, 0.5])
+        self.assertGreaterEqual(prob, 0.0)
+        self.assertEqual(agent.epsilon, best)
 
 
 class TestMetaRLRefactorCLI(unittest.TestCase):

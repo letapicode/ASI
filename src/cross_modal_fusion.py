@@ -1,9 +1,12 @@
 from dataclasses import dataclass
-from typing import Iterable, Tuple, Any
+from typing import Iterable, Tuple, Any, TYPE_CHECKING
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
+
+if TYPE_CHECKING:  # pragma: no cover - for type hints
+    from .hierarchical_memory import HierarchicalMemory
 
 
 class TextEncoder(nn.Module):
@@ -158,24 +161,28 @@ def encode_all(
     model: CrossModalFusion,
     dataset: Dataset,
     batch_size: int = 8,
+    memory: "HierarchicalMemory | None" = None,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Return all modality embeddings."""
+    """Return all modality embeddings and optionally store them."""
     loader = DataLoader(dataset, batch_size=batch_size)
     device = next(model.parameters()).device
     model.eval()
     text_vecs, img_vecs, aud_vecs = [], [], []
     with torch.no_grad():
-        for tokens, imgs, aud in loader:
+        for idx, (tokens, imgs, aud) in enumerate(loader):
             tokens, imgs, aud = tokens.to(device), imgs.to(device), aud.to(device)
             t_emb, i_emb, a_emb = model(tokens, imgs, aud)
             text_vecs.append(t_emb.cpu())
             img_vecs.append(i_emb.cpu())
             aud_vecs.append(a_emb.cpu())
-    return (
-        torch.cat(text_vecs, dim=0),
-        torch.cat(img_vecs, dim=0),
-        torch.cat(aud_vecs, dim=0),
-    )
+            if memory is not None:
+                start = idx * batch_size
+                metas = [start + i for i in range(tokens.size(0))]
+                memory.add_modalities(t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), metas)
+    all_t = torch.cat(text_vecs, dim=0)
+    all_i = torch.cat(img_vecs, dim=0)
+    all_a = torch.cat(aud_vecs, dim=0)
+    return all_t, all_i, all_a
 
 
 __all__ = [
