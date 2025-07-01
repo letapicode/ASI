@@ -209,7 +209,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     in a `DistributedTrainer` that automatically resumes from failures.
 14. **Edge-memory virtualization**: Stream context from `HierarchicalMemory`
     through `RemoteMemory` so low-memory devices can handle large-context
-    inference.
+    inference. *Implemented in `src/edge_memory_client.py` with tests.*
 15. **Adaptive curriculum scheduler**: Mix curated datasets with self-play logs
     via reinforcement learning to accelerate skill acquisition.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore

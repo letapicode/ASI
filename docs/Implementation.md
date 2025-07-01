@@ -461,7 +461,7 @@ txt = generate_transcript(pairs[0][2])
 - Implement a `DistributedTrainer` that automatically restarts failed
   processes and coordinates checkpoints with `DistributedMemory`.
 - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemory`
-  so edge devices can handle large-context inference.
+  so edge devices can handle large-context inference. **Implemented**
 - Create an `AdaptiveCurriculumScheduler` that blends curated data with
   self-play logs using reinforcement learning.
 - Extend `QAEHyperparamSearch` to explore novel transformer components during
