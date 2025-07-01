@@ -18,6 +18,7 @@ from .hierarchical_memory import (
     query_remote_async,
 )
 from .distributed_memory import DistributedMemory
+from .distributed_trainer import DistributedTrainer, MemoryConfig
 from .remote_memory import RemoteMemory
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore

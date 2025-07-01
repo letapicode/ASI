@@ -459,7 +459,8 @@ txt = generate_transcript(pairs[0][2])
 - Add a `NeuroSymbolicExecutor` module that runs logical constraints alongside
   neural world-model rollouts.
 - Implement a `DistributedTrainer` that automatically restarts failed
-  processes and coordinates checkpoints with `DistributedMemory`.
+  processes and coordinates checkpoints with `DistributedMemory`. **Implemented**
+  in `src/distributed_trainer.py` with tests.
 - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemory`
   so edge devices can handle large-context inference.
 - Create an `AdaptiveCurriculumScheduler` that blends curated data with
