@@ -13,6 +13,14 @@ import numpy as np
 import torch
 
 
+def log_memory_usage() -> float:
+    """Return current GPU memory allocation in MB."""
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+        return torch.cuda.memory_allocated() / 1024**2
+    return 0.0
+
+
 # ---------------------------------------------------------------------------
 # Module discovery
 # ---------------------------------------------------------------------------
@@ -243,13 +251,17 @@ async def evaluate_modules_async(modules: Iterable[str]) -> Dict[str, Tuple[bool
     return {mod: res for mod, res in zip(modules, results_list)}
 
 
-def format_results(results: Dict[str, Tuple[bool, str]]) -> str:
+def format_results(
+    results: Dict[str, Tuple[bool, str]], memory_mb: float | None = None
+) -> str:
     total = len(results)
     passed = sum(1 for ok, _ in results.values() if ok)
     lines = [f"Passed {passed}/{total} modules"]
     for mod, (ok, info) in sorted(results.items()):
         status = "PASS" if ok else "FAIL"
         lines.append(f"{mod}: {status} - {info}")
+    if memory_mb is not None:
+        lines.append(f"GPU memory used: {memory_mb:.1f} MB")
     return "\n".join(lines)
 
 
@@ -274,7 +286,8 @@ def main(argv: list[str] | None = None) -> None:
         results = asyncio.run(evaluate_modules_async(mods))
     else:
         results = evaluate_modules(mods)
-    print(format_results(results))
+    mem = log_memory_usage()
+    print(format_results(results, memory_mb=mem))
 
 
 if __name__ == "__main__":  # pragma: no cover
