@@ -382,6 +382,7 @@ python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
 
 - `src/eval_harness.py` gathers benchmark metrics from each module and compares them with the targets in `docs/Plan.md`.
 - Running `python -m src.eval_harness` prints a pass/fail table for the whole project.
+- For larger experiments run `scripts/distributed_eval.py --workers 4` (or pass `--hosts`) to split the evaluations across processes or nodes.
 
 ## L-5 Formal Verification Harness
 
@@ -468,7 +469,7 @@ txt = generate_transcript(pairs[0][2])
 - Implement a `PrioritizedReplayBuffer` in `self_play_env.py` and adapt
   `self_play_skill_loop.run_loop()` to sample transitions by reward. **Implemented**
 - Create `scripts/distributed_eval.py` to run `eval_harness` across multiple
-  processes or hosts and aggregate the results.
+  processes or hosts and aggregate the results. **Implemented**
 - Extend `transformer_circuits.py` with an `AttentionVisualizer` class that
   saves interactive attention heatmaps for interpretability experiments.
 - **Implemented** a `GraphOfThoughtPlanner` via `GraphOfThought` (see
