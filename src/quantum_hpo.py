@@ -1,4 +1,5 @@
 import random
+import itertools
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Iterable, Tuple, Any
 
@@ -48,11 +49,17 @@ def amplitude_estimate_bayesian(
 
 
 class QAEHyperparamSearch:
-    """Hyper-parameter search using simulated amplitude estimation."""
+    """Hyper-parameter and architecture search using simulated amplitude estimation."""
 
-    def __init__(self, eval_func: Callable[[Any], bool], param_space: Iterable[Any]):
+    def __init__(
+        self,
+        eval_func: Callable[..., bool],
+        param_space: Iterable[Any],
+        arch_space: Iterable[Any] | None = None,
+    ) -> None:
         self.eval_func = eval_func
         self.param_space = list(param_space)
+        self.arch_space = list(arch_space) if arch_space is not None else [None]
 
     def search(
         self,
@@ -62,7 +69,7 @@ class QAEHyperparamSearch:
         early_stop: float | None = None,
         max_workers: int | None = None,
     ) -> Tuple[Any, float]:
-        """Evaluate parameters and return the best one.
+        """Evaluate parameters and architectures and return the best one.
 
         Args:
             num_samples: Number of parameter settings to evaluate.
@@ -75,7 +82,9 @@ class QAEHyperparamSearch:
                 ``ThreadPoolExecutor`` with the given worker count.
 
         Returns:
-            Tuple of ``(best_param, estimated_probability)``.
+            Tuple of ``(best_param, estimated_probability)`` or
+            ``((best_arch, best_param), estimated_probability)`` if
+            architecture search is enabled.
 
         Raises:
             ValueError: If ``num_samples`` or ``shots`` are non-positive, or
@@ -91,39 +100,51 @@ class QAEHyperparamSearch:
         if max_workers is not None and max_workers < 1:
             raise ValueError("max_workers must be positive")
 
-        candidates = random.sample(self.param_space, min(num_samples, len(self.param_space)))
+        combos = list(itertools.product(self.arch_space, self.param_space))
+        candidates = random.sample(combos, min(num_samples, len(combos)))
+        best_arch = None
         best_param = None
         best_prob = -1.0
 
-        def evaluate(param: Any) -> Tuple[Any, float]:
+        def evaluate(candidate: Tuple[Any, Any]) -> Tuple[Any, Any, float]:
+            arch, param = candidate
             if method == "bayesian":
                 prob = amplitude_estimate_bayesian(
-                    lambda: self.eval_func(param), shots
+                    lambda: self.eval_func(arch, param) if arch is not None else self.eval_func(param),
+                    shots,
                 )
             elif method == "standard":
-                prob = amplitude_estimate(lambda: self.eval_func(param), shots)
+                prob = amplitude_estimate(
+                    lambda: self.eval_func(arch, param) if arch is not None else self.eval_func(param),
+                    shots,
+                )
             else:
                 raise ValueError(f"Unknown method: {method}")
-            return param, prob
+            return arch, param, prob
 
         if max_workers and max_workers > 1:
             with ThreadPoolExecutor(max_workers=max_workers) as ex:
-                futures = {ex.submit(evaluate, p): p for p in candidates}
+                futures = {ex.submit(evaluate, c): c for c in candidates}
                 for fut in as_completed(futures):
-                    param, prob = fut.result()
+                    arch, param, prob = fut.result()
                     if prob > best_prob:
                         best_prob = prob
+                        best_arch = arch
                         best_param = param
                     if early_stop is not None and prob >= early_stop:
                         for f in futures:
                             f.cancel()
                         break
         else:
-            for param in candidates:
-                param, prob = evaluate(param)
+            for candidate in candidates:
+                arch, param, prob = evaluate(candidate)
                 if prob > best_prob:
                     best_prob = prob
+                    best_arch = arch
                     best_param = param
                 if early_stop is not None and prob >= early_stop:
                     break
-        return best_param, best_prob
+
+        if self.arch_space == [None]:
+            return best_param, best_prob
+        return (best_arch, best_param), best_prob
