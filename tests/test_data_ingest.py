@@ -18,6 +18,8 @@ random_crop_image = di.random_crop_image
 add_gaussian_noise = di.add_gaussian_noise
 text_dropout = di.text_dropout
 import numpy as np
+import asyncio
+from unittest.mock import patch
 
 
 class TestDataIngest(unittest.TestCase):
@@ -45,6 +47,36 @@ class TestDataIngest(unittest.TestCase):
 
         out = text_dropout('the quick brown fox', p=1.0)
         self.assertTrue(out)
+
+    def test_download_triples(self):
+        async def fake_download(session, url, dest):
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(url)
+
+        with tempfile.TemporaryDirectory() as root:
+            urls = ['u1']
+            with patch.object(di, '_download_file_async', fake_download):
+                triples = di.download_triples(urls, urls, urls, root)
+            self.assertEqual(len(triples), 1)
+            t, i, a = triples[0]
+            self.assertTrue(t.exists() and i.exists() and a.exists())
+            self.assertEqual(t.read_text(), 'u1')
+
+    def test_download_triples_event_loop(self):
+        async def fake_download(session, url, dest):
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(url)
+
+        async def run():
+            with tempfile.TemporaryDirectory() as root:
+                urls = ['u']
+                with patch.object(di, '_download_file_async', fake_download):
+                    task = di.download_triples(urls, urls, urls, root)
+                    self.assertTrue(asyncio.isfuture(task))
+                    triples = await task
+                    self.assertEqual(len(triples), 1)
+
+        asyncio.run(run())
 
 
 if __name__ == '__main__':

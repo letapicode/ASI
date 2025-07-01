@@ -74,6 +74,8 @@ Citations point to the most recent public work so you can drill straight into th
 | **M-3** | **Self-Calibration for Embodied Agents**| Adapt sensors and actuators from small real-world samples                           | Simulation-trained policies retain ≥80 % success with <1k labelled real samples   |
 | **M-4** | **Cross-Modal Data Ingestion Pipeline** | Pair text, images and audio from open datasets with augmentations | Prepare 1 M aligned triples in under 1 h with retrieval F1 near baseline |
 
+The helper `download_triples()` now uses `aiohttp` to fetch files concurrently, speeding up dataset preparation.
+
 ---
 
 ## 6  Will “just scaling Transformers” reach ASI?

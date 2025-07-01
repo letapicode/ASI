@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from __future__ import annotations
-
 import random
 import wave
 from pathlib import Path
@@ -40,13 +38,17 @@ def download_triples(
     audio_urls: Iterable[str],
     out_dir: str,
 ) -> List[Tuple[Path, Path, Path]]:
-    """Download text, image and audio triples into ``out_dir``."""
+    """Download text, image and audio triples into ``out_dir`` concurrently."""
+
+    async def run() -> List[Tuple[Path, Path, Path]]:
+        return await download_triples_async(text_urls, img_urls, audio_urls, out_dir)
+
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
-        return asyncio.run(download_triples_async(text_urls, img_urls, audio_urls, out_dir))
+        return asyncio.run(run())
     else:
-        return loop.create_task(download_triples_async(text_urls, img_urls, audio_urls, out_dir))
+        return loop.create_task(run())
 
 
 async def download_triples_async(

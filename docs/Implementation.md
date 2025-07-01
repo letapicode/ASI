@@ -441,7 +441,7 @@ txt = generate_transcript(pairs[0][2])
 - Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the
   exploration rate during refactoring.
 - Rewrite `download_triples()` with asyncio to fetch dataset files
-  concurrently.
+  concurrently. **Implemented** with an async helper using `aiohttp`.
 - Add streaming RPCs to `MemoryServer` so batches of vectors can be pushed and
   queried in one call. Update `memory.proto` and the `RemoteMemory` client.
 - Implement optional gradient checkpointing in `multimodal_world_model.py` via a
