@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from . import memory_pb2 as memory__pb2
+import memory_pb2 as memory__pb2
 
 GRPC_GENERATED_VERSION = '1.73.1'
 GRPC_VERSION = grpc.__version__
@@ -44,6 +44,16 @@ class MemoryServiceStub(object):
                 request_serializer=memory__pb2.QueryRequest.SerializeToString,
                 response_deserializer=memory__pb2.QueryReply.FromString,
                 _registered_method=True)
+        self.PushBatch = channel.unary_unary(
+                '/asi.MemoryService/PushBatch',
+                request_serializer=memory__pb2.PushBatchRequest.SerializeToString,
+                response_deserializer=memory__pb2.PushReply.FromString,
+                _registered_method=True)
+        self.QueryBatch = channel.unary_unary(
+                '/asi.MemoryService/QueryBatch',
+                request_serializer=memory__pb2.QueryBatchRequest.SerializeToString,
+                response_deserializer=memory__pb2.QueryBatchReply.FromString,
+                _registered_method=True)
 
 
 class MemoryServiceServicer(object):
@@ -61,6 +71,18 @@ class MemoryServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def PushBatch(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def QueryBatch(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MemoryServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -73,6 +95,16 @@ def add_MemoryServiceServicer_to_server(servicer, server):
                     servicer.Query,
                     request_deserializer=memory__pb2.QueryRequest.FromString,
                     response_serializer=memory__pb2.QueryReply.SerializeToString,
+            ),
+            'PushBatch': grpc.unary_unary_rpc_method_handler(
+                    servicer.PushBatch,
+                    request_deserializer=memory__pb2.PushBatchRequest.FromString,
+                    response_serializer=memory__pb2.PushReply.SerializeToString,
+            ),
+            'QueryBatch': grpc.unary_unary_rpc_method_handler(
+                    servicer.QueryBatch,
+                    request_deserializer=memory__pb2.QueryBatchRequest.FromString,
+                    response_serializer=memory__pb2.QueryBatchReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -129,6 +161,60 @@ class MemoryService(object):
             '/asi.MemoryService/Query',
             memory__pb2.QueryRequest.SerializeToString,
             memory__pb2.QueryReply.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def PushBatch(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/asi.MemoryService/PushBatch',
+            memory__pb2.PushBatchRequest.SerializeToString,
+            memory__pb2.PushReply.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def QueryBatch(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/asi.MemoryService/QueryBatch',
+            memory__pb2.QueryBatchRequest.SerializeToString,
+            memory__pb2.QueryBatchReply.FromString,
             options,
             channel_credentials,
             insecure,

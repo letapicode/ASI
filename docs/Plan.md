@@ -74,6 +74,8 @@ Citations point to the most recent public work so you can drill straight into th
 | **M-3** | **Self-Calibration for Embodied Agents**| Adapt sensors and actuators from small real-world samples                           | Simulation-trained policies retain ≥80 % success with <1k labelled real samples   |
 | **M-4** | **Cross-Modal Data Ingestion Pipeline** | Pair text, images and audio from open datasets with augmentations | Prepare 1 M aligned triples in under 1 h with retrieval F1 near baseline |
 
+The helper `download_triples()` now uses `aiohttp` to fetch files concurrently, speeding up dataset preparation.
+
 ---
 
 ## 6  Will “just scaling Transformers” reach ASI?
@@ -157,6 +159,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   self-play and a sensor calibration routine.
 - `src/formal_verifier.py` checks model snapshots against custom invariants.
 - `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard. The CLI now supports a `--concurrent` flag to run evaluations asynchronously via `evaluate_modules_async()`.
+- `scripts/distributed_eval.py` runs the harness across multiple processes or hosts and aggregates the results for large-scale testing.
 - `src/transformer_circuits.py` records attention weights and lets researchers ablate individual heads for interpretability experiments.
 
 ### Recommended next steps
@@ -194,40 +197,48 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    query latency and throughput versus the single-node baseline.
 7. **MemoryServer streaming API**: Benchmark the new batched push/query
    endpoints and report latency savings over single-vector calls.
-8. **Checkpointed world model**: Train the multimodal world model with the
-   `checkpoint_blocks` flag and document memory reduction during training.
+8. **Checkpointed world model**: *(done)* the multimodal world model now
+   supports a `checkpoint_blocks` flag which reduces memory usage during
+   training.
 9. **Self-play dataset fusion**: Feed trajectories from
    `self_play_skill_loop` into `multimodal_world_model.train_world_model()`
    to test world-model learning from mixed-modality self-play data.
 10. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
-11. **Graph-of-thought planning**: Prototype `GraphOfThoughtPlanner` and measure
-    refactor quality gains over the baseline meta-RL agent.
+11. **Graph-of-thought planning**: Implement `GraphOfThought` (see
+    `src/graph_of_thought.py`) and measure refactor quality gains over the
+    baseline meta-RL agent.
 12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with
     `world_model_rl.rollout_policy()` and log constraint violations.
+    *Implemented as `src/neuro_symbolic_executor.py`.*
 13. **Self-healing distributed trainer**: Wrap `world_model_rl.train_world_model()`
     in a `DistributedTrainer` that automatically resumes from failures.
+    *Implemented in `src/distributed_trainer.py` with integration tests.*
 14. **Edge-memory virtualization**: Stream context from `HierarchicalMemory`
     through `RemoteMemory` so low-memory devices can handle large-context
-    inference.
+    inference. *Implemented in `src/edge_memory_client.py` with tests.*
 15. **Adaptive curriculum scheduler**: Mix curated datasets with self-play logs
-    via reinforcement learning to accelerate skill acquisition.
+    via reinforcement learning to accelerate skill acquisition. Implemented in
+    `adaptive_curriculum.py` and used by `self_play_skill_loop`.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
     novel transformer components and report promising variants.
-17. **Elastic mixture-of-experts routing**: Implement `ElasticMoERouter` to vary
-    expert counts with GPU load and compare load balance with the static router.
+17. **Elastic mixture-of-experts routing**: *Implemented in `src/elastic_moe_router.py`.*
+    The router varies active expert counts based on GPU load and compares load
+    balance with the static `SwitchRouter`.
 18. **Hierarchical SSD caching**: Add an `SSDCache` layer in `HierarchicalMemory`
-    that prefetches frequently accessed vectors for low-latency retrieval.
+    that prefetches frequently accessed vectors for low-latency retrieval. *Implemented
+    in `src/hierarchical_memory.py` with persistence utilities and unit tests.*
 19. **Generative noise filtering**: Use `AutoDatasetFilter` during data ingest to
     prune low-quality samples and track the effect on training stability.
 20. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
-    new training triples from world-model rollouts and expand the dataset.
+    new training triples from world-model rollouts and expand the dataset. The
+    module integrates with `data_ingest` for easy ingestion.
 21. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
     to track benchmark progress automatically.
 22. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with
     `MetaRLRefactorAgent` to auto-rank refactor strategies.
-23. **Neural architecture search**: Evaluate `NeuralArchSearch` across candidate
-    module configurations and report accuracy vs. compute costs.
+23. **Neural architecture search**: Evaluate `src/neural_arch_search.py` across
+    candidate module configurations and report accuracy vs. compute costs.
 24. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
     restart failed jobs automatically and track overall utilization.
 25. **World-model data synthesis**: Use the `offline_synthesizer` to generate

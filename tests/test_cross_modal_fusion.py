@@ -23,6 +23,7 @@ def simple_tokenizer(text: str):
 
 class TestCrossModalFusion(unittest.TestCase):
     def setUp(self):
+        torch.manual_seed(0)
         cfg = CrossModalFusionConfig(
             vocab_size=50,
             text_dim=8,

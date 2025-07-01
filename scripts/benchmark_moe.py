@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from src.moe_router import HashRouter, SwitchRouter
+from src.elastic_moe_router import ElasticMoERouter
 import argparse
 
 # Simple feed-forward network for demonstration
@@ -13,6 +14,8 @@ class ToyModel(nn.Module):
         if self.moe:
             if router_type == "switch":
                 self.router = SwitchRouter(dim=dim, num_experts=num_experts)
+            elif router_type == "elastic":
+                self.router = ElasticMoERouter(dim=dim, num_experts=num_experts)
             else:
                 self.router = HashRouter(num_experts)
             self.experts = nn.ModuleList([
@@ -52,7 +55,12 @@ def run(dim=256, hidden=512, tokens=1024, num_experts=0, router_type="hash"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Benchmark MOE vs dense model")
-    parser.add_argument("--router", choices=["hash", "switch"], default="hash", help="Router type for MOE")
+    parser.add_argument(
+        "--router",
+        choices=["hash", "switch", "elastic"],
+        default="hash",
+        help="Router type for MOE",
+    )
     parser.add_argument("--experts", type=int, default=16, help="Number of experts")
     args = parser.parse_args()
 

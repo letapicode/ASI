@@ -1,0 +1,39 @@
+import os
+import os
+import tempfile
+import unittest
+from pathlib import Path
+
+import torch
+
+from asi.distributed_trainer import DistributedTrainer, MemoryConfig
+from asi.distributed_memory import DistributedMemory
+
+
+def flaky_train(memory: DistributedMemory, step: int) -> None:
+    """Simulate a worker that fails once then succeeds."""
+    marker = os.environ.get("FAIL_ONCE")
+    if marker and not Path(marker).exists():
+        Path(marker).write_text("x")
+        raise RuntimeError("fail once")
+    tensor = torch.ones(1, memory.compressor.encoder.in_features) * (step + 1)
+    memory.add(tensor, metadata=[f"s{step}"])
+
+
+class TestDistributedTrainer(unittest.TestCase):
+    def test_restart_and_checkpoint(self):
+        cfg = MemoryConfig(dim=4, compressed_dim=2, capacity=10)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.environ["FAIL_ONCE"] = str(Path(tmpdir) / "marker")
+            trainer = DistributedTrainer(flaky_train, cfg, tmpdir, max_restarts=2)
+            trainer.run(steps=2)
+            ckpt1 = Path(tmpdir) / "step1" / "memory" / "compressor.pt"
+            ckpt2 = Path(tmpdir) / "step2" / "memory" / "compressor.pt"
+            self.assertTrue(ckpt1.exists())
+            self.assertTrue(ckpt2.exists())
+            mem = DistributedMemory.load(Path(tmpdir) / "step2" / "memory")
+            self.assertGreaterEqual(len(mem), 1)
+
+
+if __name__ == "__main__":
+    unittest.main()
