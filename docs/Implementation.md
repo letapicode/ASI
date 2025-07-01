@@ -430,11 +430,14 @@ txt = generate_transcript(pairs[0][2])
 ### Upcoming Implementation Tasks
 
 - Create a `HybridRetention` module that combines the linear update from
-  `MambaBlock` with the decay kernel in `RetNetRetention`.
+  `MambaBlock` with the decay kernel in `RetNetRetention`. **Implemented** in
+  `src/hybrid_retention.py` with a unit test.
 - Extend `HierarchicalMemory` so `cross_modal_fusion.encode_all()` can store and
-  retrieve multimodal embeddings.
+  retrieve averaged multimodal embeddings via `add_multimodal`.
+- Rewrite `download_triples()` with asyncio as `download_triples_async` for faster
+  dataset fetching.
 - Add a `log_memory_usage()` helper to `eval_harness.py` and print GPU memory
-  usage alongside accuracy metrics. **Implemented** in `src/eval_harness.py`.
+  usage alongside accuracy metrics.
 - Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the
   exploration rate during refactoring.
 - Rewrite `download_triples()` with asyncio to fetch dataset files
