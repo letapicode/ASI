@@ -90,17 +90,34 @@ class HierarchicalMemory:
         vecs, metas = self.search(query, k=max(k, len(self)))
         if modality is None:
             return vecs[:k], metas[:k]
-        out_vecs = []
-        out_meta = []
+        target_id = None
         for v, m in zip(vecs, metas):
-            if isinstance(m, dict) and m.get("modality") == modality:
-                out_vecs.append(v)
-                out_meta.append(m)
-                if len(out_vecs) >= k:
-                    break
-        if not out_vecs:
+            if isinstance(m, dict) and torch.allclose(v, query, atol=1e-6):
+                target_id = m.get("id")
+                break
+        matches = [
+            (v, m)
+            for v, m in zip(vecs, metas)
+            if isinstance(m, dict) and m.get("modality") == modality and (
+                target_id is None or m.get("id") == target_id
+            )
+        ]
+        if matches:
+            vecs_f, metas_f = zip(*matches[:k])
+            return torch.stack(list(vecs_f)), list(metas_f)
+        # fallback to similarity ranking
+        scores = (vecs @ query.view(-1)).cpu()
+        filtered = [
+            (s.item(), v, m)
+            for s, v, m in zip(scores, vecs, metas)
+            if isinstance(m, dict) and m.get("modality") == modality
+        ]
+        if not filtered:
             empty = torch.empty(0, query.size(-1), device=query.device)
             return empty, []
+        filtered.sort(key=lambda x: x[0], reverse=True)
+        out_vecs = [v for _, v, _ in filtered[:k]]
+        out_meta = [m for _, _, m in filtered[:k]]
         return torch.stack(out_vecs), out_meta
 
     def add(self, x: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:

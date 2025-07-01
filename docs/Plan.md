@@ -226,8 +226,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     to track benchmark progress automatically.
 22. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with
     `MetaRLRefactorAgent` to auto-rank refactor strategies.
-23. **Neural architecture search**: Evaluate `NeuralArchSearch` across candidate
-    module configurations and report accuracy vs. compute costs.
+23. **Neural architecture search**: Evaluate `src/neural_arch_search.py` across
+    candidate module configurations and report accuracy vs. compute costs.
 24. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
     restart failed jobs automatically and track overall utilization.
 25. **World-model data synthesis**: Use the `offline_synthesizer` to generate

@@ -101,3 +101,4 @@ from .transformer_circuits import (
     patched_head,
     head_importance,
 )
+from .neural_arch_search import DistributedArchSearch
