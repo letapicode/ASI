@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from __future__ import annotations
-
 import random
 import wave
 from pathlib import Path
@@ -16,6 +14,7 @@ try:
 except Exception:  # pragma: no cover - optional
     _HAS_AIOHTTP = False
 from PIL import Image
+from .auto_dataset_filter import filter_text_files
 
 
 def download_file(url: str, dest: Path) -> None:
@@ -152,6 +151,11 @@ def text_dropout(text: str, p: float = 0.1) -> str:
     return " ".join(kept)
 
 
+def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0) -> List[Path]:
+    """Return ``text_files`` filtered by generative noise score."""
+    return filter_text_files(text_files, threshold=threshold)
+
+
 __all__ = [
     "download_triples",
     "download_triples_async",
@@ -162,4 +166,5 @@ __all__ = [
     "random_crop_image",
     "add_gaussian_noise",
     "text_dropout",
+    "filter_dataset",
 ]
