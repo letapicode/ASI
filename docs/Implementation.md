@@ -345,6 +345,13 @@ To reproduce the toy run step by step:
 - `src/remote_memory.py` provides a small :class:`RemoteMemory` client that wraps
   these RPCs in a convenient Python interface.
 
+## C-9 Hopfield Associative Memory
+
+- `src/hopfield_memory.py` implements a small Hopfield network with
+  ``store()`` and ``retrieve()`` helpers for binary patterns.
+- `HierarchicalMemory` accepts ``use_hopfield=True`` to keep a tiny in-memory
+  associative cache backed by this network.
+
 ### Distributed Memory Benchmark
 
 `scripts/distributed_memory_benchmark.py` launches several `MemoryServer`
