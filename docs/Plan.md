@@ -282,6 +282,17 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 37. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
+38. **Temporal decay memory**: Add a `TemporalVectorCompressor` that weights
+    embeddings by recency. Evaluate retrieval accuracy drop <3% compared with
+    the existing `StreamingCompressor` on 1&nbsp;M-token streams.
+39. **Cross-lingual data ingestion**: Integrate a `CrossLingualTranslator`
+    into `data_ingest` so text is stored in multiple languages. Measure BLEU
+    >30 on public benchmarks and track retrieval gains from the augmented
+    triples.
+40. **World-model distillation**: Implement a `WorldModelDistiller` that
+    compresses the large world model into a smaller student network. Target
+    <5% reward loss on the embodied RL benchmarks while reducing model size by
+    ≥4×.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
