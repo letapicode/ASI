@@ -305,6 +305,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 49. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines.
 50. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
 51. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
+52. **Secure federated learner**: Train models across remote peers using encrypted gradient aggregation. Accuracy should stay within 2% of centralized training.
+53. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Throughput must scale nearly linearly across four GPUs.
+54. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
 [3]: https://www.businessinsider.com/openai-orion-model-scaling-law-silicon-valley-chatgpt-2024-11?utm_source=chatgpt.com "OpenAI is reportedly struggling to improve its next big AI model. It's a warning for the entire AI industry."
