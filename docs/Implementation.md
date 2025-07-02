@@ -538,3 +538,6 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   failed runs to maintain full compute utilization. **Implemented in `src/self_healing_trainer.py`.**
 - Extend `data_ingest.py` with an `offline_synthesizer` that uses the world
   model to generate synthetic multimodal triples for training. **Implemented as `data_ingest.offline_synthesizer`.**
+- Implement a `FederatedMemoryExchange` service that synchronizes vectors across multiple `MemoryServer` nodes. Provide a `scripts/federated_memory_sync.py` utility to benchmark cross-node synchronization throughput.
+- Create a `CausalGraphLearner` module that infers directed relations from `world_model_rl` transitions and logs the resulting edges for planning.
+- Add a `SelfAlignmentEvaluator` to `eval_harness.py` that runs `deliberative_alignment.check_alignment()` on generated outputs and reports the metrics alongside existing benchmarks.

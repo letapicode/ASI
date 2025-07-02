@@ -250,6 +250,13 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 25. **World-model data synthesis**: Use the `offline_synthesizer` to generate
     synthetic multimodal triples and measure retrieval improvements. *Implemented
     in `data_ingest.offline_synthesizer`.*
+26. **Federated memory exchange**: Synchronize retrieval vectors across
+    multiple `MemoryServer` nodes and benchmark cross-node accuracy.
+27. **Causal graph learner**: Train `CausalGraphLearner` on `world_model_rl`
+    transitions and report planning gains from the inferred edges.
+28. **Self-alignment evaluator**: Integrate
+    `deliberative_alignment.check_alignment()` into `eval_harness` and track
+    alignment metrics alongside existing benchmarks.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
