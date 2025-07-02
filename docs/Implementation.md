@@ -529,12 +529,12 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `GenerativeDataAugmentor` that rolls out the world model to
   synthesize training triples and feeds them through `data_ingest`. **Implemented**
   in `src/generative_data_augmentor.py`.
-- Add `continuous_eval.py` to schedule `eval_harness` and `autobench` after each pull request using GitHub Actions or a local cron job. **Implemented**
+- Add `continuous_eval.py` to schedule `eval_harness` and `autobench` after each pull request using GitHub Actions or a local cron job. **Implemented in `scripts/continuous_eval.py`.**
 - Combine `GraphOfThoughtPlanner` with `MetaRLRefactorAgent` in an `AdaptivePlanner`
-  module that ranks and applies refactor suggestions automatically.
+  module that ranks and applies refactor suggestions automatically. **Implemented in `src/adaptive_planner.py`.**
 - `src/neural_arch_search.py` implements distributed architecture search and is
-  integrated with `eval_harness.py` to score candidate models automatically.
+  integrated with `eval_harness.py` to score candidate models automatically. **Implemented in `src/neural_arch_search.py`.**
 - Implement a `SelfHealingTrainer` that monitors distributed jobs and restarts
-  failed runs to maintain full compute utilization.
+  failed runs to maintain full compute utilization. **Implemented in `src/self_healing_trainer.py`.**
 - Extend `data_ingest.py` with an `offline_synthesizer` that uses the world
-  model to generate synthetic multimodal triples for training.
+  model to generate synthetic multimodal triples for training. **Implemented as `data_ingest.offline_synthesizer`.**

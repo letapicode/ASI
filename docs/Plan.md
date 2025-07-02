@@ -236,15 +236,20 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     new training triples from world-model rollouts and expand the dataset. The
     module integrates with `data_ingest` for easy ingestion.
 21. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
-    to track benchmark progress automatically.
+    to track benchmark progress automatically. *Implemented in
+    `scripts/continuous_eval.py`.*
 22. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with
-    `MetaRLRefactorAgent` to auto-rank refactor strategies.
+    `MetaRLRefactorAgent` to auto-rank refactor strategies. *Implemented in
+    `src/adaptive_planner.py`.*
 23. **Neural architecture search**: Evaluate `src/neural_arch_search.py` across
     candidate module configurations and report accuracy vs. compute costs.
+    *Implemented in `src/neural_arch_search.py`.*
 24. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
     restart failed jobs automatically and track overall utilization.
+    *Implemented in `src/self_healing_trainer.py`.*
 25. **World-model data synthesis**: Use the `offline_synthesizer` to generate
-    synthetic multimodal triples and measure retrieval improvements.
+    synthetic multimodal triples and measure retrieval improvements. *Implemented
+    in `data_ingest.offline_synthesizer`.*
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
