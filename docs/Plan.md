@@ -306,8 +306,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 49. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines.
 50. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
 51. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
-52. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
-53. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
+52. **Gradient compression for distributed training**: Implement a `GradientCompressor`
+    with top-k sparsification or quantized gradients and integrate it with
+    `DistributedTrainer`.
+53. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
+54. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
