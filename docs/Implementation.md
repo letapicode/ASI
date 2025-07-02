@@ -538,3 +538,6 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   failed runs to maintain full compute utilization. **Implemented in `src/self_healing_trainer.py`.**
 - Extend `data_ingest.py` with an `offline_synthesizer` that uses the world
   model to generate synthetic multimodal triples for training. **Implemented as `data_ingest.offline_synthesizer`.**
+- Add a `LocalitySensitiveHashIndex` option in `vector_store.py` so `HierarchicalMemory` can perform approximate nearest neighbor search with sub-linear query time.
+- Create an `EmbeddingVisualizer` module that runs UMAP/t-SNE on cross-modal embeddings and serves interactive plots through a minimal web interface.
+- Implement a `MultiAgentCoordinator` that synchronizes multiple `MetaRLRefactorAgent` instances and schedules cooperative refactoring tasks across repositories.

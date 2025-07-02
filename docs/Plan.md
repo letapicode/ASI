@@ -250,6 +250,14 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 25. **World-model data synthesis**: Use the `offline_synthesizer` to generate
     synthetic multimodal triples and measure retrieval improvements. *Implemented
     in `data_ingest.offline_synthesizer`.*
+26. **LSH retrieval index**: Add `LocalitySensitiveHashIndex` in `vector_store.py` so
+    `HierarchicalMemory` can perform approximate nearest neighbor search with
+    sub-linear query time.
+27. **Embedding visualizer**: Build a module to project cross-modal embeddings
+    using UMAP/t-SNE and expose the plots via a lightweight web viewer.
+28. **Multi-agent coordinator**: Prototype a `MultiAgentCoordinator` that
+    synchronizes multiple refactor agents and schedules collaborative
+    improvements across repositories.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
