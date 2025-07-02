@@ -517,9 +517,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemory`
   so edge devices can handle large-context inference. **Implemented**
 - Create an `AdaptiveCurriculum` that blends curated data with
-  self-play logs using reinforcement learning.
+  self-play logs using reinforcement learning. **Implemented in `src/adaptive_curriculum.py` with tests.**
 - Extend `QAEHyperparamSearch` to explore novel transformer components during
-  architecture search.
+  architecture search. **Implemented in `src/quantum_hpo.py` with unit tests.**
 - **Implemented** an `ElasticMoERouter` that scales the number of active experts
   according to real-time GPU utilization.
 - Extend `HierarchicalMemory` with an `SSDCache` that prefetches high-frequency
