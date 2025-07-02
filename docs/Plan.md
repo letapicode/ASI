@@ -277,8 +277,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 33. **LSH retrieval index**: Add `LocalitySensitiveHashIndex` in `vector_store.py` so
     `HierarchicalMemory` can perform approximate nearest neighbor search with
     sub-linear query time.
-34. **Embedding visualizer**: Build a module to project cross-modal embeddings
-    using UMAP/t-SNE and expose the plots via a lightweight web viewer.
+34. **Embedding visualizer**: Build a module to project cross-modal embeddings using UMAP/t-SNE and expose the plots via a lightweight web viewer. Implemented in `src/embedding_visualizer.py`.
 35. **Multi-agent coordinator**: Prototype a `MultiAgentCoordinator` that
     synchronizes multiple refactor agents and schedules collaborative
     improvements across repositories.

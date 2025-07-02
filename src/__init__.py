@@ -128,3 +128,4 @@ from .hierarchical_planner import HierarchicalPlanner
 from .federated_memory_server import FederatedMemoryServer
 from .differential_privacy_optimizer import DifferentialPrivacyOptimizer, DifferentialPrivacyConfig
 
+from .embedding_visualizer import EmbeddingVisualizer
