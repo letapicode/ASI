@@ -494,6 +494,12 @@ triples = offline_synthesizer(wm, tokenizer, "hello", np.zeros((1, 4, 4)), polic
 - Extend `transformer_circuits.py` with an `AttentionVisualizer` class that
   saves interactive attention heatmaps for interpretability experiments.
   **Implemented** in `src/transformer_circuits.py` with unit tests.
+- `scripts/attention_analysis.py` loads a saved model and text file, hooks
+  `AttentionVisualizer`, and writes the resulting heatmaps. Run it as:
+
+```bash
+python scripts/attention_analysis.py --model model.pt --input sample.txt --out-dir vis
+```
 - Prototype a `GraphOfThoughtPlanner` that composes reasoning steps into a
   searchable graph for code refactoring decisions.
 - **Implemented** a `GraphOfThoughtPlanner` via `GraphOfThought` (see
