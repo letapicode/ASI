@@ -178,7 +178,7 @@ def encode_all(
             if memory is not None:
                 start = idx * batch_size
                 metas = [start + i for i in range(tokens.size(0))]
-                memory.add_modalities(t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), metas)
+                memory.add_multimodal(t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), metas)
     all_t = torch.cat(text_vecs, dim=0)
     all_i = torch.cat(img_vecs, dim=0)
     all_a = torch.cat(aud_vecs, dim=0)
