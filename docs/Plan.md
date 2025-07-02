@@ -305,6 +305,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 49. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines.
 50. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
 51. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
+52. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
+53. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
+54. **Parameter-efficient model editing**: Implement `GradientPatchEditor` to fix wrong outputs with minimal updates; >90% targeted fix rate with <1% perplexity change.
+55. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
 [3]: https://www.businessinsider.com/openai-orion-model-scaling-law-silicon-valley-chatgpt-2024-11?utm_source=chatgpt.com "OpenAI is reportedly struggling to improve its next big AI model. It's a warning for the entire AI industry."
