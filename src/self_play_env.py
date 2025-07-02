@@ -32,8 +32,7 @@ class SimpleEnv:
 
 
 class PrioritizedReplayBuffer:
-    """Replay buffer that samples transitions with probability proportional
-    to positive reward."""
+    """Replay buffer that samples transitions according to reward."""
 
     def __init__(self, capacity: int) -> None:
         self.capacity = capacity
@@ -48,15 +47,26 @@ class PrioritizedReplayBuffer:
             self.data[self.pos] = item
         self.pos = (self.pos + 1) % self.capacity
 
-    def sample(self, batch_size: int) -> Tuple[List[torch.Tensor], List[int]]:
+    def _sample_indices(self, batch_size: int) -> List[int]:
         if not self.data:
             raise ValueError("buffer empty")
-        weights = torch.tensor([max(r, 1e-6) for (_, _, r) in self.data], dtype=torch.float)
+        weights = torch.tensor(
+            [max(r, 1e-6) for (_, _, r) in self.data], dtype=torch.float
+        )
         probs = weights / weights.sum()
-        idx = torch.multinomial(probs, batch_size, replacement=True).tolist()
+        return torch.multinomial(probs, batch_size, replacement=True).tolist()
+
+    def sample(self, batch_size: int) -> Tuple[List[torch.Tensor], List[int]]:
+        idx = self._sample_indices(batch_size)
         frames = [self.data[i][0] for i in idx]
         actions = [self.data[i][1] for i in idx]
         return frames, actions
+
+    def sample_by_priority(
+        self, batch_size: int
+    ) -> Tuple[List[torch.Tensor], List[int]]:
+        """Explicit prioritized sampling API."""
+        return self.sample(batch_size)
 
 
 def rollout_env(
@@ -64,7 +74,10 @@ def rollout_env(
     policy: Callable[[torch.Tensor], torch.Tensor],
     steps: int = 20,
     return_actions: bool = False,
-) -> Tuple[list[torch.Tensor], list[float]] | Tuple[list[torch.Tensor], list[float], list[int]]:
+) -> (
+    Tuple[list[torch.Tensor], list[float]]
+    | Tuple[list[torch.Tensor], list[float], list[int]]
+):
     """Run environment with policy returning actions."""
     obs = env.reset()
     observations: list[torch.Tensor] = []

@@ -226,11 +226,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 17. **Elastic mixture-of-experts routing**: *Implemented in `src/elastic_moe_router.py`.*
     The router varies active expert counts based on GPU load and compares load
     balance with the static `SwitchRouter`.
-18. **Hierarchical SSD caching**: Add an `SSDCache` layer in `HierarchicalMemory`
-    that prefetches frequently accessed vectors for low-latency retrieval. *Implemented
-    in `src/hierarchical_memory.py` with persistence utilities and unit tests.*
-19. **Generative noise filtering**: Use `AutoDatasetFilter` during data ingest to
-    prune low-quality samples and track the effect on training stability.
+    that prefetches frequently accessed vectors for low-latency retrieval.
+19. **Generative noise filtering**: `AutoDatasetFilter` now runs during data
+    ingest to prune low-quality samples using generative noise detection and
+    track the effect on training stability.
 20. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
     new training triples from world-model rollouts and expand the dataset. The
     module integrates with `data_ingest` for easy ingestion.

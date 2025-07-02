@@ -6,14 +6,12 @@ from typing import Callable, Iterable, Sequence, Tuple, List
 import torch
 
 from .self_play_env import SimpleEnv, rollout_env, PrioritizedReplayBuffer
-from .adaptive_curriculum import AdaptiveCurriculum
 from .robot_skill_transfer import (
     SkillTransferConfig,
     VideoPolicyDataset,
     SkillTransferModel,
     transfer_skills,
 )
-
 
 
 @dataclass
@@ -41,10 +39,8 @@ def run_loop(
 
     env = SimpleEnv(cfg.env_state_dim)
     buffer = PrioritizedReplayBuffer(capacity=cfg.steps * cfg.cycles)
-    curated = VideoPolicyDataset(list(frames), list(actions))
     for f, a in zip(frames, actions):
         buffer.add(f, a, 1.0)
-    curriculum = AdaptiveCurriculum(curated, buffer)
     transfer_cfg = SkillTransferConfig(
         img_channels=cfg.img_channels,
         action_dim=cfg.action_dim,
@@ -63,14 +59,14 @@ def run_loop(
         )
         for o, a, r in zip(obs_list, acts, rewards):
             buffer.add(o, a, r)
-        mean_r = sum(rewards) / len(rewards) if rewards else 0.0
-        history.append(mean_r)
-        sample_frames, sample_actions, idx = curriculum.sample(cfg.batch_size)
+        history.append(sum(rewards) / len(rewards) if rewards else 0.0)
+        sample_frames, sample_actions = buffer.sample_by_priority(cfg.batch_size)
         dataset = VideoPolicyDataset(sample_frames, sample_actions)
         model = transfer_skills(transfer_cfg, dataset)
-        curriculum.update(idx, mean_r)
 
-        def new_policy(obs: torch.Tensor, m: SkillTransferModel = model) -> torch.Tensor:
+        def new_policy(
+            obs: torch.Tensor, m: SkillTransferModel = model
+        ) -> torch.Tensor:
             with torch.no_grad():
                 logits = m(obs.unsqueeze(0))
                 return logits.argmax(dim=-1).squeeze(0)
