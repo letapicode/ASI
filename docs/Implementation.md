@@ -399,6 +399,7 @@ python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
 
 - `src/cross_modal_fusion.py` embeds text, images and audio in one latent space.
 - `train_fusion_model()` fine-tunes a shared encoder-decoder using CLIP- and Whisper-style objectives and `encode_all()` returns embeddings for retrieval.
+- Run `scripts/export_onnx.py` to export the fusion and world models as ONNX graphs.
 
 ## M-2 World-Model RL Bridge
 
@@ -574,3 +575,4 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `ContextWindowProfiler` that measures memory footprint and wall-clock time at various sequence lengths. Integrate it with `eval_harness` to track the cost of long-context runs.
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.
 - Add an optional `SafetyPolicyMonitor` hook in `self_play_skill_loop` that runs `deliberative_alignment` each cycle and logs policy violations.
+- Add `export_to_onnx()` in `src/onnx_utils.py` and `scripts/export_onnx.py` to save ONNX graphs for `MultiModalWorldModel` and `CrossModalFusion`. Run `python scripts/export_onnx.py --out-dir models` to generate them.
