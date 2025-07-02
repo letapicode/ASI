@@ -538,3 +538,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   failed runs to maintain full compute utilization. **Implemented in `src/self_healing_trainer.py`.**
 - Extend `data_ingest.py` with an `offline_synthesizer` that uses the world
   model to generate synthetic multimodal triples for training. **Implemented as `data_ingest.offline_synthesizer`.**
+- Add an `ActiveDataSelector` to `data_ingest.py` that scores incoming triples by predictive entropy and filters out low-information samples before storage.
+- Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval.
+- Develop a `HierarchicalPlanner` combining `GraphOfThought` with `world_model_rl.rollout_policy` to compose multi-stage plans.
+- Integrate a `DifferentialPrivacyOptimizer` into training loops so models can optionally clip gradients and inject noise during updates.

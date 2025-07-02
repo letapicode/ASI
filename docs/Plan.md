@@ -250,6 +250,16 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 25. **World-model data synthesis**: Use the `offline_synthesizer` to generate
     synthetic multimodal triples and measure retrieval improvements. *Implemented
     in `data_ingest.offline_synthesizer`.*
+26. **Federated memory backend**: Implement a `FederatedMemoryServer` that
+    replicates vector stores across peers via gRPC streaming consensus for
+    decentralized retrieval.
+27. **Active data selection**: Add an `ActiveDataSelector` to score incoming
+    triples by predictive entropy and keep only high-information samples.
+28. **Hierarchical graph planner**: Combine `GraphOfThought` with
+    `world_model_rl.rollout_policy` to generate multi-stage plans for
+    refactoring and exploration.
+29. **Differential privacy optimizer**: Integrate gradient clipping and noise
+    injection into training loops so models can train with privacy guarantees.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
