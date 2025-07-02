@@ -11,7 +11,7 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     _HAS_GRPC = False
 
-from .streaming_compression import StreamingCompressor
+from .streaming_compression import StreamingCompressor, TemporalVectorCompressor
 from .vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
@@ -111,8 +111,14 @@ class HierarchicalMemory:
         lsh_planes: int = 16,
         cache_dir: str | Path | None = None,
         cache_size: int = 1000,
+        temporal_decay: float | None = None,
     ) -> None:
-        self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
+        if temporal_decay is None:
+            self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
+        else:
+            self.compressor = TemporalVectorCompressor(
+                dim, compressed_dim, capacity, decay=temporal_decay
+            )
         self.use_async = use_async
         self._next_id = 0
         if use_hopfield:
@@ -379,6 +385,7 @@ class HierarchicalMemory:
             "encoder": self.compressor.encoder.state_dict(),
             "decoder": self.compressor.decoder.state_dict(),
             "next_id": self._next_id,
+            "decay": getattr(self.compressor, "decay", None),
         }
         torch.save(comp_state, path / "compressor.pt")
         if isinstance(self.store, FaissVectorStore):
@@ -407,6 +414,7 @@ class HierarchicalMemory:
             "encoder": self.compressor.encoder.state_dict(),
             "decoder": self.compressor.decoder.state_dict(),
             "next_id": self._next_id,
+            "decay": getattr(self.compressor, "decay", None),
         }
         torch.save(comp_state, path / "compressor.pt")
         if isinstance(self.store, AsyncFaissVectorStore):
@@ -443,6 +451,7 @@ class HierarchicalMemory:
             compressed_dim=int(state["compressed_dim"]),
             capacity=int(state["capacity"]),
             use_async=use_async,
+            temporal_decay=state.get("decay"),
         )
         mem.compressor.encoder.load_state_dict(state["encoder"])
         mem.compressor.decoder.load_state_dict(state["decoder"])
@@ -479,6 +488,7 @@ class HierarchicalMemory:
             compressed_dim=int(state["compressed_dim"]),
             capacity=int(state["capacity"]),
             use_async=use_async,
+            temporal_decay=state.get("decay"),
         )
         mem.compressor.encoder.load_state_dict(state["encoder"])
         mem.compressor.decoder.load_state_dict(state["decoder"])

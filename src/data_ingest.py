@@ -49,6 +49,21 @@ class ActiveDataSelector:
         return kept
 
 
+class CrossLingualTranslator:
+    """Translate text to multiple languages using simple placeholders."""
+
+    def __init__(self, languages: Iterable[str]) -> None:
+        self.languages = list(languages)
+
+    def translate(self, text: str, lang: str) -> str:
+        if lang not in self.languages:
+            raise ValueError(f"unsupported language: {lang}")
+        return f"[{lang}] {text}"
+
+    def translate_all(self, text: str) -> Dict[str, str]:
+        return {l: self.translate(text, l) for l in self.languages}
+
+
 def download_file(url: str, dest: Path) -> None:
     """Download ``url`` into ``dest``."""
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -264,4 +279,5 @@ __all__ = [
     "offline_synthesizer",
     "filter_dataset",
     "ActiveDataSelector",
+    "CrossLingualTranslator",
 ]

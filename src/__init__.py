@@ -111,6 +111,7 @@ from .data_ingest import (
     offline_synthesizer,
     filter_dataset,
     ActiveDataSelector,
+    CrossLingualTranslator,
 )
 from .generative_data_augmentor import GenerativeDataAugmentor
 from .causal_graph_learner import CausalGraphLearner
@@ -137,9 +138,11 @@ from .duplicate_detector import DuplicateDetector
 from .telemetry import TelemetryLogger, FineGrainedProfiler
 from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner
-from .streaming_compression import AdaptiveCompressor
+from .streaming_compression import AdaptiveCompressor, TemporalVectorCompressor
 from .context_profiler import profile_model
 from .gpu_aware_scheduler import GPUAwareScheduler
 from .dataset_bias_detector import compute_word_freq, bias_score
 from .auto_labeler import AutoLabeler
 from .graphql_memory_gateway import GraphQLMemoryGateway
+from .world_model_distiller import DistillConfig, distill_world_model
+from .summarizing_memory import SummarizingMemory
