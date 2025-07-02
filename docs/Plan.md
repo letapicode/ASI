@@ -248,6 +248,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     restart failed jobs automatically and track overall utilization.
     *Implemented in `src/self_healing_trainer.py`.*
 25. **World-model data synthesis**: Use the `offline_synthesizer` to generate
+
+26. **Compressed vector store**: Implement a `PQVectorStore` using FAISS `IndexIVFPQ` and integrate with `HierarchicalMemory`. Benchmark retrieval accuracy vs. `FaissVectorStore`.
+27. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`.
     synthetic multimodal triples and measure retrieval improvements. *Implemented
     in `data_ingest.offline_synthesizer`.*
 

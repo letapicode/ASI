@@ -487,10 +487,13 @@ triples = offline_synthesizer(wm, tokenizer, "hello", np.zeros((1, 4, 4)), polic
   concurrently. **Implemented** with an async helper using `aiohttp`.
 - Add streaming RPCs to `MemoryServer` so batches of vectors can be pushed and
   queried in one call. Update `memory.proto` and the `RemoteMemory` client.
+  **Implemented** via `push_batch_remote()` and `query_batch_remote()` in
+  `src/hierarchical_memory.py`.
 - Implement optional gradient checkpointing in `multimodal_world_model.py` via a
-  `checkpoint_blocks` flag to cut training memory.
+  `checkpoint_blocks` flag to cut training memory. **Implemented** in
+  `src/multimodal_world_model.py`.
 - Create `scripts/distributed_memory_benchmark.py` that measures throughput of
-  `DistributedMemory` across multiple nodes.
+  `DistributedMemory` across multiple nodes. **Implemented**
 - Implement a `PrioritizedReplayBuffer` in `self_play_env.py` and adapt
   `self_play_skill_loop.run_loop()` to sample transitions by reward. **Implemented**
 - Create `scripts/distributed_eval.py` to run `eval_harness` across multiple
@@ -538,3 +541,6 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   failed runs to maintain full compute utilization. **Implemented in `src/self_healing_trainer.py`.**
 - Extend `data_ingest.py` with an `offline_synthesizer` that uses the world
   model to generate synthetic multimodal triples for training. **Implemented as `data_ingest.offline_synthesizer`.**
+
+- Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`.
+- Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`.
