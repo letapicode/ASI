@@ -94,6 +94,7 @@ from .embodied_calibration import (
     calibrate,
 )
 from .lora_quant import LoRAQuantLinear, apply_quant_lora
+from .gradient_compression import GradientCompressionConfig, GradientCompressor
 from .data_ingest import (
     download_triples,
     download_triples_async,
