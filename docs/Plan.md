@@ -283,6 +283,16 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
 
+38. **Summarizing memory compression**: Condense rarely accessed vectors with
+    a small language model before persisting them to disk. Success is a ≥50 %
+    reduction in storage while retrieval accuracy drops <5 %.
+39. **Telemetry instrumentation**: Record GPU/CPU utilization and network
+    throughput across distributed nodes using OpenTelemetry and expose the
+    metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster.
+40. **License compliance checker**: Parse dataset sources for license text
+    during ingestion and block incompatible samples. Every stored triple should
+    include a valid license entry.
+
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
 [3]: https://www.businessinsider.com/openai-orion-model-scaling-law-silicon-valley-chatgpt-2024-11?utm_source=chatgpt.com "OpenAI is reportedly struggling to improve its next big AI model. It's a warning for the entire AI industry."
