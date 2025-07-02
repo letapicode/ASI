@@ -193,9 +193,13 @@ print(model.breakpoint, model.predict(params))
  they block with ``asyncio.run``. Inside a running loop they return an
  ``asyncio.Task`` so callers can ``await`` the scheduled operation. The
  explicit async variants (`aadd`, `adelete`, `asearch`, `save_async`,
- `load_async`) remain available for direct use.
- `HierarchicalMemory` defines `__len__` so `len(mem)` reports the number of
- stored vectors.
+`load_async`) remain available for direct use.
+`HierarchicalMemory` defines `__len__` so `len(mem)` reports the number of
+stored vectors.
+- `src/memory_profiler.py` hooks into `HierarchicalMemory` and records query
+  counts, hit/miss ratios and latency. Call `start_profiling()` on a memory
+  instance to begin collecting metrics and `report_stats()` to dump them as JSON
+  or CSV.
 
 ## C-4 MegaByte Patching
 
