@@ -200,9 +200,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 8. **Checkpointed world model**: *(done)* the multimodal world model now
    supports a `checkpoint_blocks` flag which reduces memory usage during
    training.
-9. **Self-play dataset fusion**: Feed trajectories from
-   `self_play_skill_loop` into `multimodal_world_model.train_world_model()`
-   to test world-model learning from mixed-modality self-play data.
+9. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
+   trajectories from `self_play_skill_loop.run_loop` and feeds them into
+   `train_world_model` for mixed-modality experiments.
 10. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
 11. **Graph-of-thought planning**: Implement `GraphOfThought` (see

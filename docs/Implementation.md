@@ -398,6 +398,10 @@ python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
 
 - `src/world_model_rl.py` learns a generative world model from logged trajectories and runs model-based RL for rapid policy updates.
 - The prototype interfaces with ``gym``-like data and provides ``rollout_policy()`` for offline rollout generation.
+- `train_with_self_play()` runs ``self_play_skill_loop.run_loop`` to collect
+  transitions, converts them into ``TrajectoryDataset`` entries and calls
+  ``train_world_model``.
+
 
 ## M-3 Self-Calibration for Embodied Agents
 

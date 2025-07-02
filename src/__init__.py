@@ -81,8 +81,10 @@ from .cross_modal_fusion import (
 from .world_model_rl import (
     RLBridgeConfig,
     TransitionDataset,
+    TrajectoryDataset,
     WorldModel as RLWorldModel,
     train_world_model as train_rl_world_model,
+    train_with_self_play,
     rollout_policy,
 )
 from .embodied_calibration import (
