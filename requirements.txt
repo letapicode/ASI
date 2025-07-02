@@ -8,3 +8,6 @@ grpcio
 grpcio-tools
 requests
 pillow
+scikit-learn
+umap-learn
+plotly
