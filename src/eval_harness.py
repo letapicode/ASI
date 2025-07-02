@@ -213,6 +213,16 @@ def _eval_neural_arch_search() -> Tuple[bool, str]:
     return ok, f"score={val:.2f}"
 
 
+def _eval_self_alignment() -> Tuple[bool, str]:
+    """Check simple alignment using :class:`DeliberativeAligner`."""
+    from asi.deliberative_alignment import DeliberativeAligner
+
+    aligner = DeliberativeAligner("no violence")
+    steps = ["We greet the user.", "We provide help."]
+    ok = aligner.check(steps)
+    return ok, "aligned" if ok else "violations"
+
+
 EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "moe_router": _eval_moe_router,
     "flash_attention3": _eval_flash_attention3,
@@ -230,6 +240,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "paper_to_code": _eval_paper_to_code,
     "autobench": _eval_autobench,
     "neural_arch_search": _eval_neural_arch_search,
+    "self_alignment": _eval_self_alignment,
 }
 
 

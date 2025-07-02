@@ -45,6 +45,11 @@ class TestEvalHarness(unittest.TestCase):
         self.assertIn("GPU memory used", out)
         self.assertIn("gpu=", out)
 
+    def test_self_alignment_evaluator(self):
+        results = evaluate_modules(["self_alignment"])
+        self.assertIn("self_alignment", results)
+        self.assertTrue(results["self_alignment"][0])
+
 
 if __name__ == "__main__":
     unittest.main()

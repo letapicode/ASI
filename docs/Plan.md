@@ -253,17 +253,22 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     in `data_ingest.offline_synthesizer`.*
 26. **Federated memory exchange**: Synchronize retrieval vectors across
     multiple `MemoryServer` nodes and benchmark cross-node accuracy.
+    *Implemented in `src/federated_memory_exchange.py` with
+    `scripts/federated_memory_sync.py`.*
 27. **Causal graph learner**: Train `CausalGraphLearner` on `world_model_rl`
     transitions and report planning gains from the inferred edges.
+    *Implemented in `src/causal_graph_learner.py`.*
 28. **Self-alignment evaluator**: Integrate
     `deliberative_alignment.check_alignment()` into `eval_harness` and track
-    alignment metrics alongside existing benchmarks.
+    alignment metrics alongside existing benchmarks. *Implemented in
+    `src/eval_harness.py` as `SelfAlignmentEvaluator`.*
 
 29. **Federated memory backend**: Implement a `FederatedMemoryServer` that
     replicates vector stores across peers via gRPC streaming consensus for
     decentralized retrieval.
 30. **Active data selection**: Add an `ActiveDataSelector` to score incoming
     triples by predictive entropy and keep only high-information samples.
+    *Implemented in `data_ingest.ActiveDataSelector`.*
 31. **Hierarchical graph planner**: Combine `GraphOfThought` with
     `world_model_rl.rollout_policy` to generate multi-stage plans for
     refactoring and exploration.
