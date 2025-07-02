@@ -553,3 +553,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `MultiAgentCoordinator` that synchronizes multiple `MetaRLRefactorAgent` instances and schedules cooperative refactoring tasks across repositories.
 - Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`.
 - Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`.
+- Implement a `TemporalVectorCompressor` in `streaming_compression.py` with a
+  decay factor so `HierarchicalMemory` can prioritize recent context. Benchmark
+  retrieval accuracy against the existing compressor.
+- Add a `CrossLingualTranslator` helper in `data_ingest.py` to translate text
+  into multiple languages during ingestion and store the augmented triples.
+- Create a `WorldModelDistiller` module and a `scripts/distill_world_model.py`
+  utility to train smaller student models from the large world model.
