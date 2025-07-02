@@ -10,6 +10,7 @@ from typing import Callable, Any, Dict
 import torch
 
 from .gradient_compression import GradientCompressionConfig, GradientCompressor
+from .telemetry import TelemetryLogger
 
 from .distributed_memory import DistributedMemory
 
@@ -65,6 +66,7 @@ class DistributedTrainer:
         checkpoint_dir: str,
         max_restarts: int = 3,
         grad_compression: GradientCompressionConfig | None = None,
+        telemetry: TelemetryLogger | None = None,
     ) -> None:
         self.train_fn = train_fn
         self.mem_cfg = mem_cfg.__dict__ if isinstance(mem_cfg, MemoryConfig) else mem_cfg
@@ -72,11 +74,14 @@ class DistributedTrainer:
         self.max_restarts = max_restarts
         self.step = 0
         self.grad_compression = grad_compression.__dict__ if isinstance(grad_compression, GradientCompressionConfig) else grad_compression
+        self.telemetry = telemetry
 
     def run(self, steps: int) -> None:
         """Execute ``train_fn`` for ``steps`` iterations with restart logic."""
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         restarts = 0
+        if self.telemetry:
+            self.telemetry.start()
         while self.step < steps:
             proc = mp.Process(
                 target=_worker_process,
@@ -97,6 +102,12 @@ class DistributedTrainer:
                 continue
             restarts = 0
             self.step += 1
+            if self.telemetry:
+                stats = self.telemetry.get_stats()
+                stats["step"] = self.step
+                print("telemetry", stats)
+        if self.telemetry:
+            self.telemetry.stop()
 
 
 __all__ = ["DistributedTrainer", "MemoryConfig", "GradientCompressionConfig"]

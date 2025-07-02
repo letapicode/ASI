@@ -5,6 +5,8 @@ from typing import Callable, Iterable, Sequence, Tuple, List
 
 import torch
 
+from .deliberative_alignment import DeliberativeAligner
+
 try:
     from .self_play_env import SimpleEnv, rollout_env, PrioritizedReplayBuffer
     from .robot_skill_transfer import (
@@ -21,6 +23,18 @@ except Exception:  # pragma: no cover - fallback for tests
         SkillTransferModel,
         transfer_skills,
     )
+
+
+class SafetyPolicyMonitor:
+    """Check alignment each cycle."""
+
+    def __init__(self, policy: str) -> None:
+        self.aligner = DeliberativeAligner(policy)
+        self.violations: list[str] = []
+
+    def check(self, transcript: str) -> None:
+        if not self.aligner.check(transcript.split("\n")):
+            self.violations.append(transcript)
 
 
 @dataclass
@@ -43,6 +57,7 @@ def run_loop(
     policy: Callable[[torch.Tensor], torch.Tensor],
     frames: Iterable[torch.Tensor],
     actions: Iterable[int],
+    monitor: SafetyPolicyMonitor | None = None,
 ) -> Tuple[List[float], SkillTransferModel]:
     """Run alternating self-play and skill transfer cycles."""
 
@@ -68,6 +83,9 @@ def run_loop(
         )
         for o, a, r in zip(obs_list, acts, rewards):
             buffer.add(o, a, r)
+        if monitor is not None:
+            transcript = "\n".join(f"{o.tolist()}:{a}" for o, a in zip(obs_list, acts))
+            monitor.check(transcript)
         history.append(sum(rewards) / len(rewards) if rewards else 0.0)
         sample_frames, sample_actions = buffer.sample_by_priority(cfg.batch_size)
         dataset = VideoPolicyDataset(sample_frames, sample_actions)
@@ -93,6 +111,7 @@ def self_play_skill_loop(
     real_dataset: VideoPolicyDataset,
     cycles: int = 3,
     steps: int = 20,
+    monitor: SafetyPolicyMonitor | None = None,
 ) -> list[list[float]]:
     """Backward-compatible wrapper around :func:`run_loop`."""
 
@@ -107,7 +126,9 @@ def self_play_skill_loop(
         steps=steps,
         cycles=cycles,
     )
-    rewards, _ = run_loop(cfg, policy, real_dataset.frames, real_dataset.actions)
+    rewards, _ = run_loop(
+        cfg, policy, real_dataset.frames, real_dataset.actions, monitor
+    )
     return [[r] for r in rewards]
 
 
@@ -129,4 +150,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         print(f"Cycle {i}: mean reward {r:.4f}")
 
 
-__all__ = ["run_loop", "SelfPlaySkillLoopConfig", "self_play_skill_loop"]
+__all__ = [
+    "run_loop",
+    "SelfPlaySkillLoopConfig",
+    "self_play_skill_loop",
+    "SafetyPolicyMonitor",
+]
