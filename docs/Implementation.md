@@ -193,9 +193,13 @@ print(model.breakpoint, model.predict(params))
  they block with ``asyncio.run``. Inside a running loop they return an
  ``asyncio.Task`` so callers can ``await`` the scheduled operation. The
  explicit async variants (`aadd`, `adelete`, `asearch`, `save_async`,
- `load_async`) remain available for direct use.
- `HierarchicalMemory` defines `__len__` so `len(mem)` reports the number of
- stored vectors.
+`load_async`) remain available for direct use.
+`HierarchicalMemory` defines `__len__` so `len(mem)` reports the number of
+stored vectors.
+- `src/memory_profiler.py` hooks into `HierarchicalMemory` and records query
+  counts, hit/miss ratios and latency. Call `start_profiling()` on a memory
+  instance to begin collecting metrics and `report_stats()` to dump them as JSON
+  or CSV.
 
 ## C-4 MegaByte Patching
 
@@ -341,6 +345,13 @@ To reproduce the toy run step by step:
 - `src/remote_memory.py` provides a small :class:`RemoteMemory` client that wraps
   these RPCs in a convenient Python interface.
 
+## C-9 Hopfield Associative Memory
+
+- `src/hopfield_memory.py` implements a small Hopfield network with
+  ``store()`` and ``retrieve()`` helpers for binary patterns.
+- `HierarchicalMemory` accepts ``use_hopfield=True`` to keep a tiny in-memory
+  associative cache backed by this network.
+
 ### Distributed Memory Benchmark
 
 `scripts/distributed_memory_benchmark.py` launches several `MemoryServer`
@@ -395,6 +406,7 @@ python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
 
 - `src/cross_modal_fusion.py` embeds text, images and audio in one latent space.
 - `train_fusion_model()` fine-tunes a shared encoder-decoder using CLIP- and Whisper-style objectives and `encode_all()` returns embeddings for retrieval.
+- Run `scripts/export_onnx.py` to export the fusion and world models as ONNX graphs.
 
 ## M-2 World-Model RL Bridge
 
@@ -573,3 +585,4 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `ContextWindowProfiler` that measures memory footprint and wall-clock time at various sequence lengths. Integrate it with `eval_harness` to track the cost of long-context runs.
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.
 - Add an optional `SafetyPolicyMonitor` hook in `self_play_skill_loop` that runs `deliberative_alignment` each cycle and logs policy violations.
+- Add `export_to_onnx()` in `src/onnx_utils.py` and `scripts/export_onnx.py` to save ONNX graphs for `MultiModalWorldModel` and `CrossModalFusion`. Run `python scripts/export_onnx.py --out-dir models` to generate them.

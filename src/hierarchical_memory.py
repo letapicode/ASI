@@ -14,6 +14,7 @@ except Exception:  # pragma: no cover - optional dependency
 from .streaming_compression import StreamingCompressor
 from .vector_store import VectorStore, FaissVectorStore
 from .async_vector_store import AsyncFaissVectorStore
+from .hopfield_memory import HopfieldMemory
 
 
 class SSDCache:
@@ -64,6 +65,34 @@ class SSDCache:
         return cache
 
 
+class HopfieldStore:
+    """Wrapper around :class:`HopfieldMemory` with a VectorStore-like API."""
+
+    def __init__(self, dim: int) -> None:
+        self.mem = HopfieldMemory(dim)
+        self._meta: List[Any] = []
+
+    def __len__(self) -> int:
+        return len(self._meta)
+
+    def add(self, vectors: np.ndarray, metadata: Iterable[Any] | None = None) -> None:
+        arr = np.asarray(vectors, dtype=np.float32)
+        if arr.ndim == 1:
+            arr = arr[None, :]
+        self.mem.store(arr)
+        metas = list(metadata) if metadata is not None else [None] * arr.shape[0]
+        self._meta.extend(metas)
+
+    def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
+        pass  # deletion not supported
+
+    def search(self, query: np.ndarray, k: int = 1) -> Tuple[np.ndarray, List[Any]]:
+        vec = self.mem.retrieve(query, steps=10)
+        out = np.asarray(vec, dtype=np.float32).reshape(1, -1)
+        metas = self._meta[:1] if self._meta else [None]
+        return out, metas
+
+
 
 class HierarchicalMemory:
     """Combine streaming compression with a vector store."""
@@ -75,13 +104,16 @@ class HierarchicalMemory:
         capacity: int,
         db_path: str | Path | None = None,
         use_async: bool = False,
+        use_hopfield: bool = False,
         cache_dir: str | Path | None = None,
         cache_size: int = 1000,
     ) -> None:
         self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
         self.use_async = use_async
         self._next_id = 0
-        if use_async:
+        if use_hopfield:
+            self.store = HopfieldStore(dim=compressed_dim)
+        elif use_async:
             self.store = AsyncFaissVectorStore(dim=compressed_dim, path=db_path)
         else:
             if db_path is None:
@@ -343,7 +375,7 @@ class HierarchicalMemory:
         torch.save(comp_state, path / "compressor.pt")
         if isinstance(self.store, FaissVectorStore):
             self.store.save(path / "store")
-        else:
+        elif not isinstance(self.store, HopfieldStore):
             self.store.save(path / "store.npz")
         if self.cache is not None:
             cache_dir = path / "cache"
@@ -369,7 +401,7 @@ class HierarchicalMemory:
             await self.store.save_async(path / "store")
         elif isinstance(self.store, FaissVectorStore):
             self.store.save(path / "store")
-        else:
+        elif not isinstance(self.store, HopfieldStore):
             self.store.save(path / "store.npz")
         if self.cache is not None:
             cache_dir = path / "cache"
@@ -404,8 +436,10 @@ class HierarchicalMemory:
         store_dir = path / "store"
         if store_dir.exists():
             mem.store = FaissVectorStore.load(store_dir)
-        else:
+        elif (path / "store.npz").exists():
             mem.store = VectorStore.load(path / "store.npz")
+        else:
+            mem.store = HopfieldStore(dim=int(state["compressed_dim"]))
         cache_dir = path / "cache"
         if cache_dir.exists():
             mem.cache = SSDCache.load(cache_dir)
@@ -435,8 +469,10 @@ class HierarchicalMemory:
                 mem.store = await AsyncFaissVectorStore.load_async(store_dir)
             else:
                 mem.store = FaissVectorStore.load(store_dir)
-        else:
+        elif (path / "store.npz").exists():
             mem.store = VectorStore.load(path / "store.npz")
+        else:
+            mem.store = HopfieldStore(dim=int(state["compressed_dim"]))
         cache_dir = path / "cache"
         if cache_dir.exists():
             mem.cache = SSDCache.load(cache_dir)

@@ -30,6 +30,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-6** | **RWKV infinite-context training loop**         | Constant-memory recurrence with token-shift trick                  | Train 7 B RWKV on 4 M-token samples, VRAM ≤80 GB; effective context ≥2 M at inference ([wiki.rwkv.com][12], [arxiv.org][13]) |
 | **C-7** | **Hierarchical Retrieval Memory**         | Cache long-tail tokens in a disk-backed vector DB                     | Retrieval hit rate ≥85 % at 1 M tokens |
 | **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service (see `MemoryServer`, `RemoteMemory`) | Throughput scales to 4+ nodes with <1.2× single-node latency |
+| **C-9** | **Hopfield Associative Memory** | Store binary patterns as attractors and recall them from noisy cues | Recall accuracy >95 % on 32-bit vectors with up to 20 % noise |
 
 **Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.
 
@@ -308,6 +309,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 52. **Gradient compression for distributed training**: Implement a `GradientCompressor`
     with top-k sparsification or quantized gradients and integrate it with
     `DistributedTrainer`.
+53. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
+54. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
+
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
 [3]: https://www.businessinsider.com/openai-orion-model-scaling-law-silicon-valley-chatgpt-2024-11?utm_source=chatgpt.com "OpenAI is reportedly struggling to improve its next big AI model. It's a warning for the entire AI industry."
