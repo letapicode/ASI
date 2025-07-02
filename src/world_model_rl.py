@@ -1,16 +1,41 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Any
 
-from .self_play_env import SimpleEnv
-from .self_play_skill_loop import SelfPlaySkillLoopConfig, run_loop as _run_loop
-from .robot_skill_transfer import SkillTransferModel
-from . import self_play_skill_loop
-from .differential_privacy_optimizer import (
-    DifferentialPrivacyOptimizer,
-    DifferentialPrivacyConfig,
-)
+try:
+    from .self_play_env import SimpleEnv
+    from .self_play_skill_loop import SelfPlaySkillLoopConfig, run_loop as _run_loop
+    from .robot_skill_transfer import SkillTransferModel
+    from . import self_play_skill_loop
+    from .differential_privacy_optimizer import (
+        DifferentialPrivacyOptimizer,
+        DifferentialPrivacyConfig,
+    )
+except Exception:  # pragma: no cover - fallback for tests
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    base = Path(__file__).parent
+
+    def _load(name: str) -> Any:
+        spec = importlib.util.spec_from_file_location(name, base / f"{name}.py")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[name] = mod
+        assert spec.loader is not None
+        spec.loader.exec_module(mod)  # type: ignore
+        return mod
+
+    SimpleEnv = _load("self_play_env").SimpleEnv  # type: ignore
+    SkillTransferModel = _load("robot_skill_transfer").SkillTransferModel  # type: ignore
+    skl = _load("self_play_skill_loop")
+    SelfPlaySkillLoopConfig = skl.SelfPlaySkillLoopConfig  # type: ignore
+    _run_loop = skl.run_loop  # type: ignore
+    self_play_skill_loop = skl
+    dpo = _load("differential_privacy_optimizer")
+    DifferentialPrivacyOptimizer = dpo.DifferentialPrivacyOptimizer  # type: ignore
+    DifferentialPrivacyConfig = dpo.DifferentialPrivacyConfig
 
 import torch
 from torch import nn

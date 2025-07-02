@@ -4,8 +4,16 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 import math
+
+try:
+    from .duplicate_detector import DuplicateDetector
+except Exception:  # pragma: no cover - for tests
+    try:
+        from duplicate_detector import DuplicateDetector  # type: ignore
+    except Exception:
+        DuplicateDetector = None  # type: ignore
 
 
 class AutoDatasetFilter:
@@ -46,15 +54,35 @@ class AutoDatasetFilter:
         return [t for t in text_list if self.score(t) >= self.threshold]
 
 
-def filter_text_files(text_paths: Iterable[str | Path], threshold: float = -3.0) -> List[Path]:
-    """Filter text files in ``text_paths`` using :class:`AutoDatasetFilter`."""
+def filter_text_files(
+    text_paths: Iterable[str | Path],
+    threshold: float = -3.0,
+    duplicate_detector: Optional[DuplicateDetector] = None,
+) -> List[Path]:
+    """Filter ``text_paths`` using :class:`AutoDatasetFilter` and optional duplicate removal."""
     paths = [Path(p) for p in text_paths]
     texts = [p.read_text() for p in paths]
+
+    if duplicate_detector is not None:
+        keep_mask = []
+        kept_texts = []
+        kept_paths = []
+        for t, p in zip(texts, paths):
+            if not duplicate_detector.is_duplicate_text(t):
+                kept_texts.append(t)
+                kept_paths.append(p)
+        texts = kept_texts
+        paths = kept_paths
+
     filt = AutoDatasetFilter(threshold=threshold)
     filt.fit(texts)
     if not filt.probs:
         return paths
-    return [p for p, t in zip(paths, texts) if filt.score(t) >= threshold]
+    kept = []
+    for p, t in zip(paths, texts):
+        if filt.score(t) >= threshold:
+            kept.append(p)
+    return kept
 
 
 __all__ = ["AutoDatasetFilter", "filter_text_files"]

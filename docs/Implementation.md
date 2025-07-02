@@ -568,7 +568,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 **Implemented in `src/embedding_visualizer.py`.**
 - Implement a `MultiAgentCoordinator` that synchronizes multiple `MetaRLRefactorAgent` instances and schedules cooperative refactoring tasks across repositories. **Implemented in `src/multi_agent_coordinator.py` with unit tests.**
 - Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`. **Implemented in `src/pq_vector_store.py` and integrated with `HierarchicalMemory`.**
-- Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`.
+- Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`. **Implemented in `src/duplicate_detector.py` and integrated with `filter_text_files()`.**
 - Implement a `TemporalVectorCompressor` in `streaming_compression.py` with a
   decay factor so `HierarchicalMemory` can prioritize recent context. Benchmark
   retrieval accuracy against the existing compressor.

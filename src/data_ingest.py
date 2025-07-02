@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 import wave
 from pathlib import Path
-from typing import Iterable, List, Tuple, Callable
+from typing import Iterable, List, Tuple, Callable, Any
 
 import numpy as np
 import asyncio
@@ -18,8 +18,15 @@ from PIL import Image
 try:  # pragma: no cover - fallback for local import
     from .generative_data_augmentor import GenerativeDataAugmentor
 except Exception:  # pragma: no cover - for tests
-    from generative_data_augmentor import GenerativeDataAugmentor  # type: ignore
-from .auto_dataset_filter import filter_text_files
+    try:
+        from generative_data_augmentor import GenerativeDataAugmentor  # type: ignore
+    except Exception:  # pragma: no cover - last resort stub
+        class GenerativeDataAugmentor:  # type: ignore
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+            def synthesize(self, *args: Any, **kwargs: Any) -> list[tuple[str, np.ndarray, np.ndarray]]:
+                return []
 
 
 class ActiveDataSelector:
@@ -224,6 +231,22 @@ def offline_synthesizer(
 
 def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0) -> List[Path]:
     """Return ``text_files`` filtered by generative noise score."""
+    try:
+        from .auto_dataset_filter import filter_text_files
+    except Exception:  # pragma: no cover - for tests
+        import importlib.util
+        import sys
+        from pathlib import Path
+
+        spec = importlib.util.spec_from_file_location(
+            "auto_dataset_filter", Path(__file__).with_name("auto_dataset_filter.py")
+        )
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["auto_dataset_filter"] = module
+        assert spec.loader is not None
+        spec.loader.exec_module(module)  # type: ignore
+        from auto_dataset_filter import filter_text_files  # type: ignore
+
     return filter_text_files(text_files, threshold=threshold)
 
 
