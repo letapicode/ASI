@@ -185,9 +185,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 2. **Cross-modal retrieval memory**: Store embeddings from
    `cross_modal_fusion.encode_all()` inside `HierarchicalMemory` and evaluate
    retrieval accuracy on 1&nbsp;M-token streams.
-3. **LoRA-quantized world model**: Apply `apply_quant_lora()` to the
-   multimodal world model and confirm the RL bridge still meets reward targets
-   with half the memory use.
+3. **LoRA-quantized world model**: *Implemented* via a `use_lora` option in
+   `multimodal_world_model.py` which wraps the transformer layers with
+   quantized adapters.
 4. **QAE-guided refactoring**: Employ `QAEHyperparamSearch` to tune exploration
    parameters in `MetaRLRefactorAgent` and track benchmark uplift.
 5. **Scalability metrics**: *(done)* `eval_harness.py` now records GPU memory

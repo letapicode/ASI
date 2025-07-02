@@ -132,6 +132,8 @@ print(model.breakpoint, model.predict(params))
 
 - `src/lora_quant.py` implements a small LoRA adapter stored in int4 precision.
 - `apply_quant_lora()` injects these adapters into an existing network so most parameters stay frozen during fine-tuning.
+- `multimodal_world_model.py` now exposes a `use_lora` flag to wrap its transformer
+  layers with these quantized adapters.
 
 ## C-1 RetNet Retention Kernel
 

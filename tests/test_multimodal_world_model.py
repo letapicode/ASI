@@ -47,6 +47,21 @@ class TestCheckpointedWorldModel(unittest.TestCase):
             self.assertTrue(cp.called)
             self.assertLess(after, before)
 
+    def test_lora_forward_runs(self):
+        from asi.lora_quant import LoRAQuantLinear
+
+        cfg = MultiModalWorldModelConfig(
+            vocab_size=10,
+            img_channels=3,
+            action_dim=4,
+            use_lora=True,
+        )
+        model = MultiModalWorldModel(cfg)
+        self.assertIsInstance(model.dyn.state_proj, LoRAQuantLinear)
+        state, reward = model(self.text, self.img, self.action)
+        self.assertEqual(state.shape, (1, cfg.embed_dim))
+        self.assertEqual(reward.shape, (1,))
+
 
 if __name__ == '__main__':
     unittest.main()

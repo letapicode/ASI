@@ -7,6 +7,7 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.checkpoint import checkpoint
+from .lora_quant import apply_quant_lora
 
 
 class ActionEncoder(nn.Module):
@@ -69,6 +70,7 @@ class MultiModalWorldModelConfig:
     embed_dim: int = 128
     lr: float = 1e-4
     checkpoint_blocks: bool = False
+    use_lora: bool = False
 
 
 class MultiModalWorldModel(nn.Module):
@@ -79,6 +81,24 @@ class MultiModalWorldModel(nn.Module):
         self.obs_enc = ObservationEncoder(cfg.vocab_size, cfg.img_channels, cfg.embed_dim)
         self.dyn = DynamicsModel(cfg.embed_dim, cfg.action_dim)
         self.cfg = cfg
+        if cfg.use_lora:
+            apply_quant_lora(
+                self.obs_enc,
+                ["linear1", "linear2", "out_proj", "q_proj", "k_proj", "v_proj"],
+            )
+            apply_quant_lora(
+                self.dyn,
+                [
+                    "linear1",
+                    "linear2",
+                    "out_proj",
+                    "q_proj",
+                    "k_proj",
+                    "v_proj",
+                    "state_proj",
+                    "reward_head",
+                ],
+            )
 
     def encode_obs(self, text: torch.Tensor, image: torch.Tensor) -> torch.Tensor:
         if self.cfg.checkpoint_blocks:
