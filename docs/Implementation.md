@@ -586,3 +586,13 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.
 - Add an optional `SafetyPolicyMonitor` hook in `self_play_skill_loop` that runs `deliberative_alignment` each cycle and logs policy violations.
 - Add `export_to_onnx()` in `src/onnx_utils.py` and `scripts/export_onnx.py` to save ONNX graphs for `MultiModalWorldModel` and `CrossModalFusion`. Run `python scripts/export_onnx.py --out-dir models` to generate them.
+- Implement a `SecureFederatedLearner` that aggregates encrypted gradients from remote peers so training can proceed without sharing raw data. Provide a `scripts/federated_train.py` CLI.
+- Add a `GPUAwareScheduler` module to monitor GPU memory and compute load and dispatch jobs accordingly. Integrate it with `DistributedTrainer`.
+- Develop an `AdversarialRobustnessSuite` that generates adversarial prompts and reports failure cases through `eval_harness`.
+- Implement a `DatasetBiasDetector` module that computes representation metrics and integrates with `AutoDatasetFilter`. Provide a `dataset_bias_report.py` utility for bias analysis.
+- Create a `FederatedWorldModelTrainer` that averages gradients across nodes for distributed world-model training. Include `scripts/federated_world_model_train.py`.
+- Add a `GradientPatchEditor` helper to apply small updates that fix incorrect outputs without full fine-tuning.
+- Extend `graph_of_thought.py` with a `ReasoningDebugger` that flags contradictions or loops in reasoning traces.
+- Implement a `GraphQLMemoryGateway` that exposes `MemoryServer` retrieval endpoints via GraphQL. Provide `scripts/graphql_memory_server.py` to benchmark query overhead.
+- Add a `FineGrainedProfiler` in `telemetry.py` to record per-module compute and memory usage and stream the metrics through `TelemetryLogger`.
+- Create an `AutoLabeler` that invokes the world model during ingestion to generate weak labels for unlabeled triples.
