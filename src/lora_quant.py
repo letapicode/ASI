@@ -47,6 +47,15 @@ class LoRAQuantLinear(nn.Module):
         self.register_buffer("scale_a", None)
         self.register_buffer("scale_b", None)
 
+    @property
+    def weight(self) -> torch.Tensor:
+        """Expose base weight for compatibility."""
+        return self.base.weight
+
+    @property
+    def bias(self) -> torch.Tensor | None:
+        return self.base.bias
+
     def quantize(self):
         """Quantize LoRA weights and store them as buffers."""
         if self.r == 0:

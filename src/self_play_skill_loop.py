@@ -5,13 +5,22 @@ from typing import Callable, Iterable, Sequence, Tuple, List
 
 import torch
 
-from .self_play_env import SimpleEnv, rollout_env, PrioritizedReplayBuffer
-from .robot_skill_transfer import (
-    SkillTransferConfig,
-    VideoPolicyDataset,
-    SkillTransferModel,
-    transfer_skills,
-)
+try:
+    from .self_play_env import SimpleEnv, rollout_env, PrioritizedReplayBuffer
+    from .robot_skill_transfer import (
+        SkillTransferConfig,
+        VideoPolicyDataset,
+        SkillTransferModel,
+        transfer_skills,
+    )
+except Exception:  # pragma: no cover - fallback for tests
+    from self_play_env import SimpleEnv, rollout_env, PrioritizedReplayBuffer  # type: ignore
+    from robot_skill_transfer import (
+        SkillTransferConfig,  # type: ignore
+        VideoPolicyDataset,
+        SkillTransferModel,
+        transfer_skills,
+    )
 
 
 @dataclass

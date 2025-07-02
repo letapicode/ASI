@@ -133,3 +133,4 @@ except Exception:  # pragma: no cover - optional
 from .differential_privacy_optimizer import DifferentialPrivacyOptimizer, DifferentialPrivacyConfig
 
 from .embedding_visualizer import EmbeddingVisualizer
+from .duplicate_detector import DuplicateDetector

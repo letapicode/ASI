@@ -7,7 +7,24 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.checkpoint import checkpoint
-from .lora_quant import apply_quant_lora
+try:
+    from .lora_quant import apply_quant_lora
+except Exception:  # pragma: no cover - fallback for tests
+    try:
+        from asi.lora_quant import apply_quant_lora  # type: ignore
+    except Exception:
+        import importlib.util
+        import sys
+        from pathlib import Path
+
+        spec = importlib.util.spec_from_file_location(
+            "lora_quant", Path(__file__).with_name("lora_quant.py")
+        )
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["lora_quant"] = module
+        assert spec.loader is not None
+        spec.loader.exec_module(module)  # type: ignore
+        from lora_quant import apply_quant_lora  # type: ignore
 
 
 class ActionEncoder(nn.Module):
@@ -55,8 +72,8 @@ class DynamicsModel(nn.Module):
         self.reward_head = nn.Linear(embed_dim, 1)
 
     def forward(self, state: torch.Tensor, action: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        a = self.action_emb(action).unsqueeze(0)  # (1, embed_dim)
-        h = self.dec(tgt=a.unsqueeze(0), memory=state.unsqueeze(0)).squeeze(0)
+        a = self.action_emb(action).unsqueeze(0)  # (1, B, E)
+        h = self.dec(tgt=a, memory=state.unsqueeze(0)).squeeze(0)
         next_state = self.state_proj(h)
         reward = self.reward_head(h).squeeze(-1)
         return next_state, reward
