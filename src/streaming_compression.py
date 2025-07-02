@@ -93,3 +93,33 @@ class AdaptiveCompressor(StreamingCompressor):
 
 
 __all__.append("AdaptiveCompressor")
+
+
+class TemporalVectorCompressor(StreamingCompressor):
+    """Compressor that exponentially decays old vectors."""
+
+    def __init__(
+        self, dim: int, compressed_dim: int, capacity: int, decay: float = 0.99
+    ) -> None:
+        super().__init__(dim, compressed_dim, capacity)
+        self.decay = decay
+        self.weights: List[float] = []
+
+    def add(self, x: torch.Tensor) -> None:  # type: ignore[override]
+        if x.dim() == 1:
+            x = x.unsqueeze(0)
+        for row in x:
+            self.buffer.count += 1
+            self.weights = [w * self.decay for w in self.weights]
+            if len(self.buffer.data) < self.buffer.capacity:
+                self.buffer.data.append(row.detach().clone())
+                self.weights.append(1.0)
+            else:
+                self.buffer.data.append(row.detach().clone())
+                self.weights.append(1.0)
+                idx = self.weights.index(min(self.weights))
+                self.buffer.data.pop(idx)
+                self.weights.pop(idx)
+
+
+__all__.extend(["TemporalVectorCompressor"])
