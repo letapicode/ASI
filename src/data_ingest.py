@@ -19,6 +19,7 @@ try:  # pragma: no cover - fallback for local import
     from .generative_data_augmentor import GenerativeDataAugmentor
 except Exception:  # pragma: no cover - for tests
     from generative_data_augmentor import GenerativeDataAugmentor  # type: ignore
+from .auto_dataset_filter import filter_text_files
 
 
 def download_file(url: str, dest: Path) -> None:
@@ -158,7 +159,6 @@ def text_dropout(text: str, p: float = 0.1) -> str:
         kept.append(words[0])
     return " ".join(kept)
 
-
 def synthesize_from_world_model(
     augmentor: GenerativeDataAugmentor,
     seeds: Iterable[Tuple[str, np.ndarray]],
@@ -172,6 +172,41 @@ def synthesize_from_world_model(
     return triples
 
 
+def offline_synthesizer(
+    model: "MultiModalWorldModel",
+    tokenizer,
+    start_text: str,
+    start_image: np.ndarray,
+    policy_fn,
+    steps: int = 3,
+) -> List[Tuple[str, np.ndarray, np.ndarray]]:
+    """Generate synthetic text, image and audio triples via world-model rollout."""
+
+    from asi.multimodal_world_model import rollout  # avoid local import issues
+    import torch
+
+    t = torch.tensor(tokenizer(start_text), dtype=torch.long).unsqueeze(0)
+    img = torch.tensor(start_image, dtype=torch.float32).unsqueeze(0)
+
+    states, _ = rollout(model, t, img, policy_fn, steps=steps)
+
+    triples: List[Tuple[str, np.ndarray, np.ndarray]] = []
+    for s in states:
+        vec = s.cpu().numpy().ravel()
+        txt = " ".join(str(int(x)) for x in vec[:5])
+        side = int(np.sqrt(vec.size)) or 1
+        img_arr = vec[: side * side].reshape(side, side)
+        aud_arr = vec.copy()
+        triples.append((txt, img_arr, aud_arr))
+
+    return triples
+
+
+def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0) -> List[Path]:
+    """Return ``text_files`` filtered by generative noise score."""
+    return filter_text_files(text_files, threshold=threshold)
+
+
 __all__ = [
     "download_triples",
     "download_triples_async",
@@ -183,4 +218,6 @@ __all__ = [
     "add_gaussian_noise",
     "text_dropout",
     "synthesize_from_world_model",
+    "offline_synthesizer",
+    "filter_dataset",
 ]

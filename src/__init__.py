@@ -103,6 +103,8 @@ from .data_ingest import (
     add_gaussian_noise,
     text_dropout,
     synthesize_from_world_model,
+    offline_synthesizer,
+    filter_dataset,
 )
 from .generative_data_augmentor import GenerativeDataAugmentor
 from .transformer_circuits import (
