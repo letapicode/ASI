@@ -7,6 +7,10 @@ from .self_play_env import SimpleEnv
 from .self_play_skill_loop import SelfPlaySkillLoopConfig, run_loop as _run_loop
 from .robot_skill_transfer import SkillTransferModel
 from . import self_play_skill_loop
+from .differential_privacy_optimizer import (
+    DifferentialPrivacyOptimizer,
+    DifferentialPrivacyConfig,
+)
 
 import torch
 from torch import nn
@@ -59,10 +63,17 @@ class WorldModel(nn.Module):
         return next_state, reward
 
 
-def train_world_model(cfg: RLBridgeConfig, dataset: Dataset) -> WorldModel:
+def train_world_model(
+    cfg: RLBridgeConfig,
+    dataset: Dataset,
+    dp_cfg: DifferentialPrivacyConfig | None = None,
+) -> WorldModel:
     model = WorldModel(cfg)
     loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
-    opt = torch.optim.Adam(model.parameters(), lr=cfg.lr)
+    if dp_cfg is None:
+        opt: torch.optim.Optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
+    else:
+        opt = DifferentialPrivacyOptimizer(model.parameters(), dp_cfg)
     loss_fn = nn.MSELoss()
     device = next(model.parameters()).device
     model.train()
@@ -101,6 +112,7 @@ def train_with_self_play(
     policy: Callable[[torch.Tensor], torch.Tensor],
     frames: Iterable[torch.Tensor],
     actions: Iterable[int],
+    dp_cfg: DifferentialPrivacyConfig | None = None,
 ) -> tuple[WorldModel, SkillTransferModel]:
     """Run self-play to gather transitions and fit a world model."""
 
@@ -141,7 +153,7 @@ def train_with_self_play(
         self_play_skill_loop.rollout_env = orig  # type: ignore
 
     dataset = TrajectoryDataset(transitions)
-    wm = train_world_model(rl_cfg, dataset)
+    wm = train_world_model(rl_cfg, dataset, dp_cfg)
     return wm, skill_model
 
 

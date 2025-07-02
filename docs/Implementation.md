@@ -557,9 +557,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Create a `CausalGraphLearner` module that infers directed relations from `world_model_rl` transitions and logs the resulting edges for planning. **Implemented in `src/causal_graph_learner.py`.**
 - Add a `SelfAlignmentEvaluator` to `eval_harness.py` that runs `deliberative_alignment.check_alignment()` on generated outputs and reports the metrics alongside existing benchmarks. **Implemented as `_eval_self_alignment()` in `src/eval_harness.py`.**
 - Add an `ActiveDataSelector` to `data_ingest.py` that scores incoming triples by predictive entropy and filters out low-information samples before storage. **Implemented in `data_ingest.ActiveDataSelector`.**
-- Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval.
-- Develop a `HierarchicalPlanner` combining `GraphOfThought` with `world_model_rl.rollout_policy` to compose multi-stage plans.
-- Integrate a `DifferentialPrivacyOptimizer` into training loops so models can optionally clip gradients and inject noise during updates.
+- Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval. **Implemented in `src/federated_memory_server.py`.**
+- Develop a `HierarchicalPlanner` combining `GraphOfThought` with `world_model_rl.rollout_policy` to compose multi-stage plans. **Implemented in `src/hierarchical_planner.py`.**
+- Integrate a `DifferentialPrivacyOptimizer` into training loops so models can optionally clip gradients and inject noise during updates. **Implemented in `src/differential_privacy_optimizer.py` and integrated with `world_model_rl.train_world_model`.**
 - Add a `GradientCompressor` utility that performs top-k or quantized gradient
   compression. `DistributedTrainer` uses it when ``grad_compression`` is
   provided.

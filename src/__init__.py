@@ -124,5 +124,7 @@ from .transformer_circuits import (
 )
 from .neural_arch_search import DistributedArchSearch
 from .onnx_utils import export_to_onnx
-from .graph_of_thought import GraphOfThought
+from .hierarchical_planner import HierarchicalPlanner
+from .federated_memory_server import FederatedMemoryServer
+from .differential_privacy_optimizer import DifferentialPrivacyOptimizer, DifferentialPrivacyConfig
 
