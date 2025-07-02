@@ -3,7 +3,7 @@ import tempfile
 import unittest
 import numpy as np
 
-from asi.vector_store import VectorStore, FaissVectorStore
+from asi.vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
 
 class TestVectorStore(unittest.TestCase):
     def test_add_and_search(self):
@@ -44,6 +44,20 @@ class TestVectorStore(unittest.TestCase):
             vecs, meta = loaded.search(np.array([0.0, 1.0]), k=1)
             np.testing.assert_allclose(vecs, np.array([[0.0, 1.0]], dtype=np.float32))
             self.assertEqual(meta, ["b"])
+
+    def test_lsh_index(self):
+        store = LocalitySensitiveHashIndex(dim=2, num_planes=4)
+        store.add(np.array([[1.0, 0.0], [0.0, 1.0]]), metadata=["a", "b"])
+        vecs, meta = store.search(np.array([1.0, 0.1]), k=1)
+        self.assertEqual(vecs.shape, (1, 2))
+        self.assertEqual(len(meta), 1)
+        self.assertIn(meta[0], ["a", "b"])
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store.save(tmpdir)
+            loaded = LocalitySensitiveHashIndex.load(tmpdir)
+            v2, m2 = loaded.search(np.array([0.1, 1.0]), k=1)
+            self.assertEqual(v2.shape, (1, 2))
+            self.assertEqual(len(m2), 1)
 
 if __name__ == "__main__":
     unittest.main()

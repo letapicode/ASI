@@ -563,7 +563,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add a `GradientCompressor` utility that performs top-k or quantized gradient
   compression. `DistributedTrainer` uses it when ``grad_compression`` is
   provided.
-- Add a `LocalitySensitiveHashIndex` option in `vector_store.py` so `HierarchicalMemory` can perform approximate nearest neighbor search with sub-linear query time.
+- Add a `LocalitySensitiveHashIndex` option in `vector_store.py` so `HierarchicalMemory` can perform approximate nearest neighbor search with sub-linear query time. **Implemented in `vector_store.LocalitySensitiveHashIndex` and wired through `HierarchicalMemory`.**
 - Create an `EmbeddingVisualizer` module that runs UMAP/t-SNE on cross-modal embeddings and serves interactive plots through a minimal web interface.
 - Implement a `MultiAgentCoordinator` that synchronizes multiple `MetaRLRefactorAgent` instances and schedules cooperative refactoring tasks across repositories.
 - Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`.

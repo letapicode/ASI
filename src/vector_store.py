@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Iterable, List, Tuple, Any
+from typing import Iterable, List, Tuple, Any, Dict
 from pathlib import Path
 
 class VectorStore:
@@ -186,3 +186,115 @@ class FaissVectorStore:
         path = Path(path)
         store = cls(int(faiss.read_index(str(path / "index.faiss")).d), path)
         return store
+
+
+class LocalitySensitiveHashIndex:
+    """Approximate vector store using LSH buckets."""
+
+    def __init__(self, dim: int, num_planes: int = 16) -> None:
+        self.dim = dim
+        self.num_planes = num_planes
+        self.hyperplanes = np.random.randn(num_planes, dim).astype(np.float32)
+        self.buckets: Dict[int, list[int]] = {}
+        self.vectors: list[np.ndarray] = []
+        self.meta: list[Any] = []
+
+    def __len__(self) -> int:
+        return len(self.meta)
+
+    def _hash(self, vec: np.ndarray) -> int:
+        signs = (vec @ self.hyperplanes.T) > 0
+        h = 0
+        for i, s in enumerate(signs):
+            if s:
+                h |= 1 << i
+        return int(h)
+
+    def add(self, vectors: np.ndarray, metadata: Iterable[Any] | None = None) -> None:
+        arr = np.asarray(vectors, dtype=np.float32)
+        if arr.ndim == 1:
+            arr = arr[None, :]
+        if arr.shape[1] != self.dim:
+            raise ValueError("vector dimension mismatch")
+        metas = list(metadata) if metadata is not None else [None] * arr.shape[0]
+        if len(metas) != arr.shape[0]:
+            raise ValueError("metadata length mismatch")
+        start_idx = len(self.vectors)
+        for i, vec in enumerate(arr):
+            idx = start_idx + i
+            h = self._hash(vec)
+            self.buckets.setdefault(h, []).append(idx)
+            self.vectors.append(vec)
+        self.meta.extend(metas)
+
+    def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
+        if index is None and tag is None:
+            raise ValueError("index or tag must be specified")
+        if isinstance(index, Iterable) and not isinstance(index, (bytes, str, bytearray)):
+            indices = sorted(int(i) for i in index)
+        elif index is not None:
+            indices = [int(index)]
+        else:
+            indices = [i for i, m in enumerate(self.meta) if m == tag]
+        if not indices:
+            return
+        mask = np.ones(len(self.vectors), dtype=bool)
+        for i in indices:
+            if 0 <= i < len(mask):
+                mask[i] = False
+        self.vectors = [v for j, v in enumerate(self.vectors) if mask[j]]
+        self.meta = [m for j, m in enumerate(self.meta) if mask[j]]
+        self.buckets.clear()
+        for idx, vec in enumerate(self.vectors):
+            h = self._hash(vec)
+            self.buckets.setdefault(h, []).append(idx)
+
+    def search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, List[Any]]:
+        if len(self.vectors) == 0:
+            return np.empty((0, self.dim), dtype=np.float32), []
+        q = np.asarray(query, dtype=np.float32).reshape(1, self.dim)
+        h = self._hash(q[0])
+        candidates = self.buckets.get(h, [])
+        if not candidates:
+            # fall back to linear search
+            mat = np.asarray(self.vectors)
+            scores = mat @ q.T
+            idx = np.argsort(scores.ravel())[::-1][:k]
+            return mat[idx], [self.meta[i] for i in idx]
+        mat = np.asarray([self.vectors[i] for i in candidates])
+        scores = mat @ q.T
+        idx = np.argsort(scores.ravel())[::-1][:k]
+        selected = [candidates[i] for i in idx]
+        return mat[idx], [self.meta[i] for i in selected]
+
+    def save(self, path: str | Path) -> None:
+        path = Path(path)
+        path.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(
+            path / "lsh.npz",
+            dim=self.dim,
+            planes=self.hyperplanes,
+            vectors=np.asarray(self.vectors, dtype=np.float32),
+            meta=np.array(self.meta, dtype=object),
+        )
+
+    @classmethod
+    def load(cls, path: str | Path) -> "LocalitySensitiveHashIndex":
+        path = Path(path)
+        data = np.load(path / "lsh.npz", allow_pickle=True)
+        store = cls(int(data["dim"]), data["planes"].shape[0])
+        store.hyperplanes = data["planes"]
+        store.vectors = data["vectors"].tolist()
+        store.meta = data["meta"].tolist()
+        store.buckets.clear()
+        for idx, vec in enumerate(store.vectors):
+            h = store._hash(vec)
+            store.buckets.setdefault(h, []).append(idx)
+        return store
+
+
+__all__ = [
+    "VectorStore",
+    "FaissVectorStore",
+    "LocalitySensitiveHashIndex",
+]
