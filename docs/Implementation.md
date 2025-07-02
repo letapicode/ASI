@@ -517,7 +517,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemory`
   so edge devices can handle large-context inference. **Implemented**
 - Create an `AdaptiveCurriculum` that blends curated data with
-  self-play logs using reinforcement learning.
+  self-play logs using reinforcement learning. **Implemented** in [`src/adaptive_curriculum.py`](../src/adaptive_curriculum.py).
 - Extend `QAEHyperparamSearch` to explore novel transformer components during
   architecture search.
 - **Implemented** an `ElasticMoERouter` that scales the number of active experts
@@ -535,6 +535,6 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - `src/neural_arch_search.py` implements distributed architecture search and is
   integrated with `eval_harness.py` to score candidate models automatically.
 - Implement a `SelfHealingTrainer` that monitors distributed jobs and restarts
-  failed runs to maintain full compute utilization.
+  failed runs to maintain full compute utilization. **Implemented** in [`src/self_healing_trainer.py`](../src/self_healing_trainer.py).
 - Extend `data_ingest.py` with an `offline_synthesizer` that uses the world
-  model to generate synthetic multimodal triples for training.
+  model to generate synthetic multimodal triples for training. **Implemented** in [`src/data_ingest.py`](../src/data_ingest.py).
