@@ -481,12 +481,8 @@ triples = offline_synthesizer(wm, tokenizer, "hello", np.zeros((1, 4, 4)), polic
   retrieve averaged multimodal embeddings via `add_multimodal`. **Implemented**:
   `encode_all()` now calls `memory.add_multimodal()` when a memory instance is
   passed, enabling lookup on the fused embedding.
-- Rewrite `download_triples()` with asyncio as `download_triples_async` for faster
-  dataset fetching.
-- Add a `log_memory_usage()` helper to `eval_harness.py` and print GPU memory
-  usage alongside accuracy metrics.
-- Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the
-  exploration rate during refactoring.
+- Add a `log_memory_usage()` helper to `eval_harness.py` and print GPU memory usage alongside accuracy metrics. **Implemented**
+- Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the exploration rate during refactoring. **Implemented**
 - Rewrite `download_triples()` with asyncio to fetch dataset files
   concurrently. **Implemented** with an async helper using `aiohttp`.
 - Add streaming RPCs to `MemoryServer` so batches of vectors can be pushed and
@@ -529,13 +525,11 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Extend `HierarchicalMemory` with an `SSDCache` that prefetches high-frequency
   vectors for faster retrieval. *Implemented with a disk-backed cache and
   persistence helpers in `src/hierarchical_memory.py`.*
-- Build an `AutoDatasetFilter` using generative noise detection to discard
-  low-quality training samples before ingestion.
+- Build an `AutoDatasetFilter` using generative noise detection to discard low-quality training samples before ingestion. **Implemented**
 - Implement a `GenerativeDataAugmentor` that rolls out the world model to
   synthesize training triples and feeds them through `data_ingest`. **Implemented**
   in `src/generative_data_augmentor.py`.
-- Add `continuous_eval.py` to schedule `eval_harness` and `autobench` after each
-  pull request using GitHub Actions or a local cron job.
+- Add `continuous_eval.py` to schedule `eval_harness` and `autobench` after each pull request using GitHub Actions or a local cron job. **Implemented**
 - Combine `GraphOfThoughtPlanner` with `MetaRLRefactorAgent` in an `AdaptivePlanner`
   module that ranks and applies refactor suggestions automatically.
 - `src/neural_arch_search.py` implements distributed architecture search and is
