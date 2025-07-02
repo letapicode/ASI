@@ -311,6 +311,16 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `DistributedTrainer`.
 53. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
 54. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
+55. **Secure federated learner**: Train models across remote peers using encrypted gradient aggregation. Accuracy should stay within 2% of centralized training.
+56. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Throughput must scale nearly linearly across four GPUs.
+57. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
+58. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
+59. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
+60. **Parameter-efficient model editing**: Implement `GradientPatchEditor` to fix wrong outputs with minimal updates; >90% targeted fix rate with <1% perplexity change.
+61. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
+62. **GraphQL memory gateway**: Expose `MemoryServer` queries through a GraphQL API and keep retrieval accuracy unchanged with <1.2× latency.
+63. **Fine-grained telemetry profiler**: Record per-module compute and memory via `FineGrainedProfiler` and ensure overhead stays below 3%.
+64. **Auto-labeling pipeline**: Use the world model to generate weak labels for unlabeled triples during ingestion and measure dataset quality improvements.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
