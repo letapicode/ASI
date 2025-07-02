@@ -13,6 +13,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 from .streaming_compression import StreamingCompressor
 from .vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
+from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .hopfield_memory import HopfieldMemory
 
@@ -106,6 +107,7 @@ class HierarchicalMemory:
         use_async: bool = False,
         use_hopfield: bool = False,
         use_lsh: bool = False,
+        use_pq: bool = False,
         lsh_planes: int = 16,
         cache_dir: str | Path | None = None,
         cache_size: int = 1000,
@@ -119,6 +121,8 @@ class HierarchicalMemory:
             self.store = AsyncFaissVectorStore(dim=compressed_dim, path=db_path)
         elif use_lsh:
             self.store = LocalitySensitiveHashIndex(dim=compressed_dim, num_planes=lsh_planes)
+        elif use_pq:
+            self.store = PQVectorStore(dim=compressed_dim, path=db_path)
         else:
             if db_path is None:
                 self.store = VectorStore(dim=compressed_dim)
@@ -379,6 +383,8 @@ class HierarchicalMemory:
         torch.save(comp_state, path / "compressor.pt")
         if isinstance(self.store, FaissVectorStore):
             self.store.save(path / "store")
+        elif isinstance(self.store, PQVectorStore):
+            self.store.save(path / "pq_store")
         elif isinstance(self.store, LocalitySensitiveHashIndex):
             self.store.save(path / "lsh_store")
         elif not isinstance(self.store, HopfieldStore):
@@ -407,6 +413,8 @@ class HierarchicalMemory:
             await self.store.save_async(path / "store")
         elif isinstance(self.store, FaissVectorStore):
             self.store.save(path / "store")
+        elif isinstance(self.store, PQVectorStore):
+            self.store.save(path / "pq_store")
         elif isinstance(self.store, LocalitySensitiveHashIndex):
             self.store.save(path / "lsh_store")
         elif not isinstance(self.store, HopfieldStore):
@@ -442,9 +450,12 @@ class HierarchicalMemory:
         mem.compressor.buffer.count = int(state["count"])
         mem._next_id = int(state.get("next_id", 0))
         store_dir = path / "store"
+        pq_dir = path / "pq_store"
         lsh_dir = path / "lsh_store"
         if lsh_dir.exists():
             mem.store = LocalitySensitiveHashIndex.load(lsh_dir)
+        elif pq_dir.exists():
+            mem.store = PQVectorStore.load(pq_dir)
         elif store_dir.exists():
             mem.store = FaissVectorStore.load(store_dir)
         elif (path / "store.npz").exists():
@@ -475,9 +486,12 @@ class HierarchicalMemory:
         mem.compressor.buffer.count = int(state["count"])
         mem._next_id = int(state.get("next_id", 0))
         store_dir = path / "store"
+        pq_dir = path / "pq_store"
         lsh_dir = path / "lsh_store"
         if lsh_dir.exists():
             mem.store = LocalitySensitiveHashIndex.load(lsh_dir)
+        elif pq_dir.exists():
+            mem.store = PQVectorStore.load(pq_dir)
         elif store_dir.exists():
             if use_async:
                 mem.store = await AsyncFaissVectorStore.load_async(store_dir)

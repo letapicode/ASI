@@ -4,6 +4,7 @@ import unittest
 import numpy as np
 
 from asi.vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
+from asi.pq_vector_store import PQVectorStore
 
 class TestVectorStore(unittest.TestCase):
     def test_add_and_search(self):
@@ -43,6 +44,16 @@ class TestVectorStore(unittest.TestCase):
             loaded = FaissVectorStore.load(tmpdir)
             vecs, meta = loaded.search(np.array([0.0, 1.0]), k=1)
             np.testing.assert_allclose(vecs, np.array([[0.0, 1.0]], dtype=np.float32))
+            self.assertEqual(meta, ["b"])
+
+    def test_pq_persistence(self):
+        store = PQVectorStore(dim=2, nlist=2, m=1)
+        store.add(np.array([[1.0, 0.0], [0.0, 1.0]]), metadata=["a", "b"])
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store.save(tmpdir)
+            loaded = PQVectorStore.load(tmpdir)
+            vecs, meta = loaded.search(np.array([0.0, 1.0]), k=1)
+            self.assertEqual(vecs.shape, (1, 2))
             self.assertEqual(meta, ["b"])
 
     def test_lsh_index(self):
