@@ -487,10 +487,13 @@ triples = offline_synthesizer(wm, tokenizer, "hello", np.zeros((1, 4, 4)), polic
   concurrently. **Implemented** with an async helper using `aiohttp`.
 - Add streaming RPCs to `MemoryServer` so batches of vectors can be pushed and
   queried in one call. Update `memory.proto` and the `RemoteMemory` client.
+  **Implemented** via `push_batch_remote()` and `query_batch_remote()` in
+  `src/hierarchical_memory.py`.
 - Implement optional gradient checkpointing in `multimodal_world_model.py` via a
-  `checkpoint_blocks` flag to cut training memory.
+  `checkpoint_blocks` flag to cut training memory. **Implemented** in
+  `src/multimodal_world_model.py`.
 - Create `scripts/distributed_memory_benchmark.py` that measures throughput of
-  `DistributedMemory` across multiple nodes.
+  `DistributedMemory` across multiple nodes. **Implemented**
 - Implement a `PrioritizedReplayBuffer` in `self_play_env.py` and adapt
   `self_play_skill_loop.run_loop()` to sample transitions by reward. **Implemented**
 - Create `scripts/distributed_eval.py` to run `eval_harness` across multiple
@@ -541,3 +544,12 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `FederatedMemoryExchange` service that synchronizes vectors across multiple `MemoryServer` nodes. Provide a `scripts/federated_memory_sync.py` utility to benchmark cross-node synchronization throughput.
 - Create a `CausalGraphLearner` module that infers directed relations from `world_model_rl` transitions and logs the resulting edges for planning.
 - Add a `SelfAlignmentEvaluator` to `eval_harness.py` that runs `deliberative_alignment.check_alignment()` on generated outputs and reports the metrics alongside existing benchmarks.
+- Add an `ActiveDataSelector` to `data_ingest.py` that scores incoming triples by predictive entropy and filters out low-information samples before storage.
+- Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval.
+- Develop a `HierarchicalPlanner` combining `GraphOfThought` with `world_model_rl.rollout_policy` to compose multi-stage plans.
+- Integrate a `DifferentialPrivacyOptimizer` into training loops so models can optionally clip gradients and inject noise during updates.
+- Add a `LocalitySensitiveHashIndex` option in `vector_store.py` so `HierarchicalMemory` can perform approximate nearest neighbor search with sub-linear query time.
+- Create an `EmbeddingVisualizer` module that runs UMAP/t-SNE on cross-modal embeddings and serves interactive plots through a minimal web interface.
+- Implement a `MultiAgentCoordinator` that synchronizes multiple `MetaRLRefactorAgent` instances and schedules cooperative refactoring tasks across repositories.
+- Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`.
+- Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`.
