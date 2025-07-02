@@ -23,6 +23,7 @@ from .hierarchical_memory import (
     query_batch_remote_async,
 )
 from .distributed_memory import DistributedMemory
+from .federated_memory_exchange import FederatedMemoryExchange
 from .distributed_trainer import DistributedTrainer, MemoryConfig
 from .remote_memory import RemoteMemory
 from .edge_memory_client import EdgeMemoryClient
@@ -108,8 +109,10 @@ from .data_ingest import (
     synthesize_from_world_model,
     offline_synthesizer,
     filter_dataset,
+    ActiveDataSelector,
 )
 from .generative_data_augmentor import GenerativeDataAugmentor
+from .causal_graph_learner import CausalGraphLearner
 from .transformer_circuits import (
     ActivationRecorder,
     record_attention_weights,

@@ -22,6 +22,26 @@ except Exception:  # pragma: no cover - for tests
 from .auto_dataset_filter import filter_text_files
 
 
+class ActiveDataSelector:
+    """Filter triples based on predictive entropy."""
+
+    def __init__(self, threshold: float = 1.0) -> None:
+        self.threshold = threshold
+
+    def score(self, probs: np.ndarray) -> float:
+        """Return entropy of ``probs``."""
+        p = probs / (probs.sum() + 1e-8)
+        return float(-(p * np.log(p + 1e-8)).sum())
+
+    def select(self, triples: Iterable[Tuple[Any, Any, Any]], probs: Iterable[np.ndarray]) -> list[Tuple[Any, Any, Any]]:
+        """Return samples whose entropy exceeds ``threshold``."""
+        kept = []
+        for t, p in zip(triples, probs):
+            if self.score(np.asarray(p, dtype=float)) >= self.threshold:
+                kept.append(t)
+        return kept
+
+
 def download_file(url: str, dest: Path) -> None:
     """Download ``url`` into ``dest``."""
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -220,4 +240,5 @@ __all__ = [
     "synthesize_from_world_model",
     "offline_synthesizer",
     "filter_dataset",
+    "ActiveDataSelector",
 ]
