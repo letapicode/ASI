@@ -553,3 +553,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `MultiAgentCoordinator` that synchronizes multiple `MetaRLRefactorAgent` instances and schedules cooperative refactoring tasks across repositories.
 - Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`.
 - Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`.
+- Add an `AdaptiveCompressor` that tunes the compression ratio in `StreamingCompressor`
+  based on retrieval frequency so rarely accessed vectors use fewer bytes.
+- Create a `PromptOptimizer` module that rewrites prompts via reinforcement
+  learning and tracks evaluation improvements automatically.
+- Integrate a `TrainingAnomalyDetector` with `SelfHealingTrainer` to roll back
+  or restart runs when loss spikes beyond a configurable threshold.

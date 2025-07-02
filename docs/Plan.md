@@ -282,6 +282,14 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 37. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
+38. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust
+    the compression ratio in `StreamingCompressor` based on retrieval
+    frequency.
+39. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt
+    revisions via reinforcement learning and measure evaluation gains.
+40. **Training anomaly detection**: Extend `SelfHealingTrainer` with a
+    `TrainingAnomalyDetector` to roll back or restart runs when metrics
+    diverge.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
