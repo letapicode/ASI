@@ -28,6 +28,7 @@ from .distributed_trainer import DistributedTrainer, MemoryConfig
 from .remote_memory import RemoteMemory
 from .edge_memory_client import EdgeMemoryClient
 from .vector_store import VectorStore, FaissVectorStore
+from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .iter_align import IterativeAligner
 from .critic_rlhf import CriticScorer, CriticRLHFTrainer
@@ -125,7 +126,10 @@ from .transformer_circuits import (
 from .neural_arch_search import DistributedArchSearch
 from .onnx_utils import export_to_onnx
 from .hierarchical_planner import HierarchicalPlanner
-from .federated_memory_server import FederatedMemoryServer
+try:
+    from .federated_memory_server import FederatedMemoryServer
+except Exception:  # pragma: no cover - optional
+    FederatedMemoryServer = None
 from .differential_privacy_optimizer import DifferentialPrivacyOptimizer, DifferentialPrivacyConfig
 
 from .embedding_visualizer import EmbeddingVisualizer
