@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Iterable
 
+from .self_play_env import SimpleEnv
+from .self_play_skill_loop import SelfPlaySkillLoopConfig, run_loop as _run_loop
+from .robot_skill_transfer import SkillTransferModel
+from . import self_play_skill_loop
+
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
@@ -19,7 +24,7 @@ class RLBridgeConfig:
 
 
 class TransitionDataset(Dataset):
-    """Logged (state, action, next_state, reward) tuples."""
+    """Logged ``(state, action, next_state, reward)`` tuples."""
 
     def __init__(self, transitions: Iterable[tuple[torch.Tensor, int, torch.Tensor, float]]):
         self.data = list(transitions)
@@ -29,6 +34,12 @@ class TransitionDataset(Dataset):
 
     def __getitem__(self, idx: int):
         return self.data[idx]
+
+
+class TrajectoryDataset(TransitionDataset):
+    """Alias for :class:`TransitionDataset` used by self-play helpers."""
+
+    pass
 
 
 class WorldModel(nn.Module):
@@ -84,10 +95,62 @@ def rollout_policy(model: WorldModel, policy: Callable[[torch.Tensor], torch.Ten
     return states, rewards
 
 
+def train_with_self_play(
+    rl_cfg: RLBridgeConfig,
+    sp_cfg: "SelfPlaySkillLoopConfig",
+    policy: Callable[[torch.Tensor], torch.Tensor],
+    frames: Iterable[torch.Tensor],
+    actions: Iterable[int],
+) -> tuple[WorldModel, SkillTransferModel]:
+    """Run self-play to gather transitions and fit a world model."""
+
+    transitions: list[tuple[torch.Tensor, int, torch.Tensor, float]] = []
+
+    def record_rollout(
+        env: "SimpleEnv",
+        pol: Callable[[torch.Tensor], torch.Tensor],
+        steps: int = sp_cfg.steps,
+        return_actions: bool = False,
+    ):
+        obs = env.reset()
+        observations: list[torch.Tensor] = []
+        rewards: list[float] = []
+        acts: list[int] = []
+        for _ in range(steps):
+            a = pol(obs)
+            step = env.step(a)
+            transitions.append(
+                (obs.clone(), int(a if not isinstance(a, torch.Tensor) else a.item()), step.observation.clone(), step.reward)
+            )
+            observations.append(step.observation)
+            rewards.append(step.reward)
+            if return_actions:
+                acts.append(int(a if not isinstance(a, torch.Tensor) else a.item()))
+            obs = step.observation
+            if step.done:
+                break
+        if return_actions:
+            return observations, rewards, acts
+        return observations, rewards
+
+    orig = self_play_skill_loop.rollout_env
+    self_play_skill_loop.rollout_env = record_rollout  # type: ignore
+    try:
+        _, skill_model = _run_loop(sp_cfg, policy, frames, actions)
+    finally:
+        self_play_skill_loop.rollout_env = orig  # type: ignore
+
+    dataset = TrajectoryDataset(transitions)
+    wm = train_world_model(rl_cfg, dataset)
+    return wm, skill_model
+
+
 __all__ = [
     "RLBridgeConfig",
     "TransitionDataset",
+    "TrajectoryDataset",
     "WorldModel",
     "train_world_model",
+    "train_with_self_play",
     "rollout_policy",
 ]
