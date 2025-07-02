@@ -469,10 +469,12 @@ triples = offline_synthesizer(wm, tokenizer, "hello", np.zeros((1, 4, 4)), polic
 ### Upcoming Implementation Tasks
 
 - Create a `HybridRetention` module that combines the linear update from
-  `MambaBlock` with the decay kernel in `RetNetRetention`. **Implemented** in
+- `MambaBlock` with the decay kernel in `RetNetRetention`. **Implemented** in
   `src/hybrid_retention.py` with a unit test.
 - Extend `HierarchicalMemory` so `cross_modal_fusion.encode_all()` can store and
-  retrieve averaged multimodal embeddings via `add_multimodal`.
+  retrieve averaged multimodal embeddings via `add_multimodal`. **Implemented**:
+  `encode_all()` now calls `memory.add_multimodal()` when a memory instance is
+  passed, enabling lookup on the fused embedding.
 - Rewrite `download_triples()` with asyncio as `download_triples_async` for faster
   dataset fetching.
 - Add a `log_memory_usage()` helper to `eval_harness.py` and print GPU memory

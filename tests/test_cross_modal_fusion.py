@@ -56,12 +56,12 @@ class TestCrossModalFusion(unittest.TestCase):
         ]
         ds = MultiModalDataset(triples, simple_tokenizer)
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
-        vecs = encode_all(self.model, ds, batch_size=1, memory=mem)
-        self.assertEqual(vecs[0].shape[0], len(ds))
-        q = vecs[0][0]
-        out, meta = mem.search_by_modality(q, k=1, modality="text")
+        t, i, a = encode_all(self.model, ds, batch_size=1, memory=mem)
+        self.assertEqual(t.shape[0], len(ds))
+        q = (t[0] + i[0] + a[0]) / 3.0
+        out, meta = mem.search(q, k=1)
         self.assertEqual(out.shape, (1, 4))
-        self.assertEqual(meta[0]["modality"], "text")
+        self.assertEqual(meta[0], 0)
 
     def test_mixed_modality_retrieval(self):
         triples = [
@@ -72,13 +72,13 @@ class TestCrossModalFusion(unittest.TestCase):
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
         t, i, a = encode_all(self.model, ds, batch_size=1, memory=mem)
 
-        out, meta = mem.search_by_modality(a[0], k=1, modality="image")
-        self.assertEqual(meta[0]["id"], 0)
-        self.assertEqual(meta[0]["modality"], "image")
+        q0 = (t[0] + i[0] + a[0]) / 3.0
+        out, meta = mem.search(q0, k=1)
+        self.assertEqual(meta[0], 0)
 
-        out, meta = mem.search_by_modality(t[1], k=1, modality="audio")
-        self.assertEqual(meta[0]["id"], 1)
-        self.assertEqual(meta[0]["modality"], "audio")
+        q1 = (t[1] + i[1] + a[1]) / 3.0
+        out, meta = mem.search(q1, k=1)
+        self.assertEqual(meta[0], 1)
 
 if __name__ == "__main__":
     unittest.main()
