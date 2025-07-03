@@ -585,6 +585,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add a `DatasetVersioner` module that logs dataset hashes and transformation steps. Extend `data_ingest` so all downloads and synthetic samples record their provenance in a version file.
 - Implement a `ContextWindowProfiler` that measures memory footprint and wall-clock time at various sequence lengths. Integrate it with `eval_harness` to track the cost of long-context runs.
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.
+  **Implemented** via `adaptive_evict` in `HierarchicalMemory` with `get_stats()` to report usage metrics.
 - Add an optional `SafetyPolicyMonitor` hook in `self_play_skill_loop` that runs `deliberative_alignment` each cycle and logs policy violations.
 - Add `export_to_onnx()` in `src/onnx_utils.py` and `scripts/export_onnx.py` to save ONNX graphs for `MultiModalWorldModel` and `CrossModalFusion`. Run `python scripts/export_onnx.py --out-dir models` to generate them.
 - Implement a `SecureFederatedLearner` that aggregates encrypted gradients from remote peers so training can proceed without sharing raw data. Provide a `scripts/federated_train.py` CLI.
