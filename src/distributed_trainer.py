@@ -6,11 +6,13 @@ import multiprocessing as mp
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Callable, Any, Dict
+import time
 
 import torch
 
 from .gradient_compression import GradientCompressionConfig, GradientCompressor
 from .telemetry import TelemetryLogger
+from .gpu_aware_scheduler import GPUAwareScheduler
 
 from .distributed_memory import DistributedMemory
 
@@ -67,6 +69,7 @@ class DistributedTrainer:
         max_restarts: int = 3,
         grad_compression: GradientCompressionConfig | None = None,
         telemetry: TelemetryLogger | None = None,
+        scheduler: GPUAwareScheduler | None = None,
     ) -> None:
         self.train_fn = train_fn
         self.mem_cfg = mem_cfg.__dict__ if isinstance(mem_cfg, MemoryConfig) else mem_cfg
@@ -75,6 +78,7 @@ class DistributedTrainer:
         self.step = 0
         self.grad_compression = grad_compression.__dict__ if isinstance(grad_compression, GradientCompressionConfig) else grad_compression
         self.telemetry = telemetry
+        self.scheduler = scheduler
 
     def run(self, steps: int) -> None:
         """Execute ``train_fn`` for ``steps`` iterations with restart logic."""
@@ -93,7 +97,16 @@ class DistributedTrainer:
                     self.grad_compression,
                 ),
             )
-            proc.start()
+            if self.scheduler is not None:
+                started = mp.Event()
+                def _start() -> None:
+                    proc.start()
+                    started.set()
+                self.scheduler.add(_start)
+                while not started.is_set():
+                    time.sleep(self.scheduler.check_interval)
+            else:
+                proc.start()
             proc.join()
             if proc.exitcode != 0:
                 restarts += 1

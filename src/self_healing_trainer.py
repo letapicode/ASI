@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import multiprocessing as mp
 from typing import Callable, Any
+from .training_anomaly_detector import TrainingAnomalyDetector
 
 
 class SelfHealingTrainer:
@@ -11,24 +12,26 @@ class SelfHealingTrainer:
 
     def __init__(
         self,
-        worker_fn: Callable[[int, int, Any], None],
+        worker_fn: Callable[[int, int, Any], float | None],
         world_size: int,
         max_restarts: int = 1,
+        anomaly_detector: TrainingAnomalyDetector | None = None,
         **worker_kwargs: Any,
     ) -> None:
         self.worker_fn = worker_fn
         self.world_size = world_size
         self.max_restarts = max_restarts
         self.worker_kwargs = worker_kwargs
+        self.anomaly_detector = anomaly_detector
         self._restarts = [0] * world_size
         self._procs: list[mp.Process | None] = [None] * world_size
 
     def _worker_wrapper(self, rank: int, queue: mp.Queue) -> None:
         try:
-            self.worker_fn(rank, self.world_size, **self.worker_kwargs)
-            queue.put((rank, 0))
+            loss = self.worker_fn(rank, self.world_size, **self.worker_kwargs)
+            queue.put((rank, 0, 0.0 if loss is None else float(loss)))
         except Exception:  # pragma: no cover - runtime failure path
-            queue.put((rank, 1))
+            queue.put((rank, 1, 0.0))
 
     def _start_worker(self, rank: int, queue: mp.Queue) -> None:
         proc = mp.Process(target=self._worker_wrapper, args=(rank, queue))
@@ -42,7 +45,7 @@ class SelfHealingTrainer:
             self._start_worker(r, queue)
         finished = 0
         while finished < self.world_size:
-            rank, status = queue.get()
+            rank, status, loss = queue.get()
             proc = self._procs[rank]
             if proc is not None:
                 proc.join()
@@ -50,6 +53,14 @@ class SelfHealingTrainer:
                 self._restarts[rank] += 1
                 self._start_worker(rank, queue)
                 continue
+            if status == 0 and self.anomaly_detector is not None:
+                if self.anomaly_detector.record(loss):
+                    if self._restarts[rank] < self.max_restarts:
+                        self._restarts[rank] += 1
+                        self._start_worker(rank, queue)
+                        continue
+                    else:
+                        status = 1
             if status != 0:
                 for p in self._procs:
                     if p is not None and p.is_alive():

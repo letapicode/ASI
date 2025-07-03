@@ -223,6 +223,18 @@ def _eval_self_alignment() -> Tuple[bool, str]:
     return ok, "aligned" if ok else "violations"
 
 
+def _eval_adversarial_robustness() -> Tuple[bool, str]:
+    """Generate a simple adversarial example and verify output."""
+    from asi.adversarial_robustness import AdversarialRobustnessSuite
+
+    def model(p: str) -> float:
+        return float(len(p))
+
+    suite = AdversarialRobustnessSuite(model)
+    adv = suite.generate("hello", ["hello", "hi", "hey"])
+    return adv == "hi", f"adv={adv}"
+
+
 EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "moe_router": _eval_moe_router,
     "flash_attention3": _eval_flash_attention3,
@@ -241,6 +253,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "autobench": _eval_autobench,
     "neural_arch_search": _eval_neural_arch_search,
     "self_alignment": _eval_self_alignment,
+    "adversarial_robustness": _eval_adversarial_robustness,
 }
 
 
