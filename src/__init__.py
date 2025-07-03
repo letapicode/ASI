@@ -97,6 +97,7 @@ from .embodied_calibration import (
 )
 from .lora_quant import LoRAQuantLinear, apply_quant_lora
 from .gradient_compression import GradientCompressionConfig, GradientCompressor
+from .low_rank_adapter import LowRankLinear, apply_low_rank_adaptation
 from .data_ingest import (
     download_triples,
     download_triples_async,
