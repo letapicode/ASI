@@ -147,6 +147,11 @@ from .auto_labeler import AutoLabeler
 from .graphql_memory_gateway import GraphQLMemoryGateway
 from .world_model_distiller import DistillConfig, distill_world_model
 from .summarizing_memory import SummarizingMemory
+from .sensorimotor_pretrainer import (
+    SensorimotorPretrainConfig,
+    SensorimotorLogDataset,
+    pretrain_sensorimotor,
+)
 from .prompt_optimizer import PromptOptimizer
 from .training_anomaly_detector import TrainingAnomalyDetector
 from .gradient_patch_editor import GradientPatchEditor, PatchConfig
@@ -157,3 +162,4 @@ from .federated_world_model_trainer import (
 )
 from .adversarial_robustness import AdversarialRobustnessSuite
 from .graph_of_thought import ReasoningDebugger
+from .multi_stage_oversight import MultiStageOversight
