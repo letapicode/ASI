@@ -15,6 +15,15 @@ except Exception:  # pragma: no cover - for tests
     except Exception:
         DuplicateDetector = None  # type: ignore
 
+try:
+    from .dataset_bias_detector import text_bias_score
+except Exception:  # pragma: no cover - for tests
+    try:
+        from dataset_bias_detector import text_bias_score  # type: ignore
+    except Exception:
+        def text_bias_score(text: str) -> float:
+            return 0.0
+
 
 class AutoDatasetFilter:
     """Simple unigram language model for noise detection."""
@@ -58,6 +67,7 @@ def filter_text_files(
     text_paths: Iterable[str | Path],
     threshold: float = -3.0,
     duplicate_detector: Optional[DuplicateDetector] = None,
+    bias_threshold: float | None = None,
 ) -> List[Path]:
     """Filter ``text_paths`` using :class:`AutoDatasetFilter` and optional duplicate removal."""
     paths = [Path(p) for p in text_paths]
@@ -80,7 +90,9 @@ def filter_text_files(
         return paths
     kept = []
     for p, t in zip(paths, texts):
-        if filt.score(t) >= threshold:
+        if filt.score(t) >= threshold and (
+            bias_threshold is None or text_bias_score(t) >= bias_threshold
+        ):
             kept.append(p)
     return kept
 
