@@ -5,7 +5,22 @@ from typing import Callable, Iterable, Sequence, Tuple, List
 
 import torch
 
-from .deliberative_alignment import DeliberativeAligner
+try:
+    from .deliberative_alignment import DeliberativeAligner
+except Exception:  # pragma: no cover - fallback for tests
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    base = Path(__file__).parent
+    spec = importlib.util.spec_from_file_location(
+        "deliberative_alignment", base / "deliberative_alignment.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["deliberative_alignment"] = mod
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)  # type: ignore
+    DeliberativeAligner = mod.DeliberativeAligner
 
 try:
     from .self_play_env import SimpleEnv, rollout_env, PrioritizedReplayBuffer
