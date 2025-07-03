@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from pathlib import Path
-from typing import Iterable, Any, Tuple, List
+from typing import Iterable, Any, Tuple, List, Dict
 
 try:
     import grpc  # type: ignore
@@ -112,6 +112,7 @@ class HierarchicalMemory:
         cache_dir: str | Path | None = None,
         cache_size: int = 1000,
         temporal_decay: float | None = None,
+        evict_limit: int | None = None,
     ) -> None:
         if temporal_decay is None:
             self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
@@ -137,6 +138,8 @@ class HierarchicalMemory:
         self.cache: SSDCache | None = None
         if cache_dir is not None:
             self.cache = SSDCache(dim=dim, path=cache_dir, max_size=cache_size)
+        self.evict_limit = evict_limit
+        self._usage: Dict[Any, int] = {}
 
     def __len__(self) -> int:
         """Return the number of stored vectors."""
@@ -234,7 +237,14 @@ class HierarchicalMemory:
         else:
             self.compressor.add(x)
             comp = self.compressor.encoder(x).detach().cpu().numpy()
-            self.store.add(comp, metadata)
+            metas = list(metadata) if metadata is not None else []
+            if not metas:
+                metas = [self._next_id + i for i in range(comp.shape[0])]
+                self._next_id += comp.shape[0]
+            self.store.add(comp, metas)
+            for m in metas:
+                self._usage[m] = 0
+            self._evict_if_needed()
 
     def add_multimodal(
         self,
@@ -246,6 +256,16 @@ class HierarchicalMemory:
         """Store averaged multimodal embeddings."""
         vecs = (text + images + audio) / 3.0
         self.add(vecs, metadata)
+
+    def _evict_if_needed(self) -> None:
+        if self.evict_limit is None:
+            return
+        while len(self.store) > self.evict_limit:
+            if not self._usage:
+                break
+            victim = min(self._usage.items(), key=lambda x: x[1])[0]
+            self.store.delete(tag=victim)
+            self._usage.pop(victim, None)
 
     def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
         """Remove vectors from the store by index or metadata tag."""
@@ -260,15 +280,8 @@ class HierarchicalMemory:
                 return loop.create_task(self.adelete(index, tag))
         else:
             self.store.delete(index=index, tag=tag)
-
-    async def aadd(self, x: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:
-        """Asynchronously compress and store embeddings."""
-        self.compressor.add(x)
-        comp = self.compressor.encoder(x).detach().cpu().numpy()
-        if isinstance(self.store, AsyncFaissVectorStore):
-            await self.store.aadd(comp, metadata)
-        else:
-            self.store.add(comp, metadata)
+        if tag in self._usage:
+            self._usage.pop(tag, None)
 
     async def aadd_multimodal(
         self,
@@ -290,6 +303,8 @@ class HierarchicalMemory:
             await loop.run_in_executor(None, self.store.delete, index, tag)
         else:
             self.store.delete(index=index, tag=tag)
+        if tag in self._usage:
+            self._usage.pop(tag, None)
 
     def search(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
         """Retrieve top-k decoded vectors and their metadata."""
@@ -328,6 +343,9 @@ class HierarchicalMemory:
             empty = torch.empty(0, query.size(-1), device=query.device)
             return empty, []
         vec = torch.cat(out_vecs, dim=0)
+        for m in out_meta:
+            if m in self._usage:
+                self._usage[m] += 1
         return vec, out_meta
 
     async def asearch(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
@@ -361,6 +379,9 @@ class HierarchicalMemory:
             empty = torch.empty(0, query.size(-1), device=query.device)
             return empty, []
         vec = torch.cat(out_vecs, dim=0)
+        for m in out_meta:
+            if m in self._usage:
+                self._usage[m] += 1
         return vec, out_meta
 
     def save(self, path: str | Path) -> None:
@@ -386,6 +407,8 @@ class HierarchicalMemory:
             "decoder": self.compressor.decoder.state_dict(),
             "next_id": self._next_id,
             "decay": getattr(self.compressor, "decay", None),
+            "evict_limit": self.evict_limit,
+            "usage": self._usage,
         }
         torch.save(comp_state, path / "compressor.pt")
         if isinstance(self.store, FaissVectorStore):
@@ -415,6 +438,8 @@ class HierarchicalMemory:
             "decoder": self.compressor.decoder.state_dict(),
             "next_id": self._next_id,
             "decay": getattr(self.compressor, "decay", None),
+            "evict_limit": self.evict_limit,
+            "usage": self._usage,
         }
         torch.save(comp_state, path / "compressor.pt")
         if isinstance(self.store, AsyncFaissVectorStore):
@@ -458,6 +483,8 @@ class HierarchicalMemory:
         mem.compressor.buffer.data = [t.clone() for t in state["buffer"]]
         mem.compressor.buffer.count = int(state["count"])
         mem._next_id = int(state.get("next_id", 0))
+        mem.evict_limit = state.get("evict_limit")
+        mem._usage = {int(k): int(v) for k, v in state.get("usage", {}).items()}
         store_dir = path / "store"
         pq_dir = path / "pq_store"
         lsh_dir = path / "lsh_store"
