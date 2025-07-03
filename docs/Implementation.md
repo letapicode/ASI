@@ -598,3 +598,11 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `GraphQLMemoryGateway` that exposes `MemoryServer` retrieval endpoints via GraphQL. Provide `scripts/graphql_memory_server.py` to benchmark query overhead.
 - Add a `FineGrainedProfiler` in `telemetry.py` to record per-module compute and memory usage and stream the metrics through `TelemetryLogger`.
 - Create an `AutoLabeler` that invokes the world model during ingestion to generate weak labels for unlabeled triples.
+- Implement a `SensorimotorPretrainer` that performs self-supervised pretraining
+  of `MultiModalWorldModel` on raw sensor logs. Provided
+  `pretrain_sensorimotor()` in `src/sensorimotor_pretrainer.py` with a unit
+  test.
+- Add a `MultiStageOversight` helper combining `CollectiveConstitution`,
+  `DeliberativeAligner`, `CriticRLHFTrainer`, and formal verification checks to
+  enforce multi-stage safety. Implemented in `src/multi_stage_oversight.py` with
+  tests.
