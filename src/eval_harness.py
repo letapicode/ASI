@@ -235,6 +235,27 @@ def _eval_adversarial_robustness() -> Tuple[bool, str]:
     return adv == "hi", f"adv={adv}"
 
 
+def _eval_context_profiler() -> Tuple[bool, str]:
+    """Profile a toy model at two context lengths."""
+    from torch import nn
+    from asi.context_profiler import ContextWindowProfiler
+
+    class Toy(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.emb = nn.Embedding(50, 8)
+            self.fc = nn.Linear(8, 2)
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:  # noqa: D401
+            return self.fc(self.emb(x)).mean(dim=1)
+
+    model = Toy()
+    profiler = ContextWindowProfiler(model)
+    stats = profiler.profile([8, 16])
+    ok = all("cpu_time" in s and "gpu_mem" in s for s in stats)
+    return ok, f"runs={len(stats)}"
+
+
 EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "moe_router": _eval_moe_router,
     "flash_attention3": _eval_flash_attention3,
@@ -254,6 +275,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "neural_arch_search": _eval_neural_arch_search,
     "self_alignment": _eval_self_alignment,
     "adversarial_robustness": _eval_adversarial_robustness,
+    "context_profiler": _eval_context_profiler,
 }
 
 

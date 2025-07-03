@@ -325,6 +325,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 62. **GraphQL memory gateway**: Expose `MemoryServer` queries through a GraphQL API and keep retrieval accuracy unchanged with <1.2× latency.
 63. **Fine-grained telemetry profiler**: Record per-module compute and memory via `FineGrainedProfiler` and ensure overhead stays below 3%.
 64. **Auto-labeling pipeline**: Use the world model to generate weak labels for unlabeled triples during ingestion and measure dataset quality improvements.
+65. **Context window profiler**: Measure memory and latency across sequence lengths. Implemented in `src/context_profiler.py` and integrated with `eval_harness.py`.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."

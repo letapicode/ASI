@@ -5,7 +5,9 @@ from __future__ import annotations
 import time
 import torch
 
-from .hierarchical_memory import HierarchicalMemory
+from dataclasses import dataclass
+from typing import Iterable, List, Dict
+
 from .telemetry import FineGrainedProfiler
 
 
@@ -27,4 +29,28 @@ def profile_model(model: torch.nn.Module, lengths: list[int]) -> list[dict[str, 
     return results
 
 
-__all__ = ["profile_model"]
+@dataclass
+class ContextWindowProfiler:
+    """Profile a model across multiple sequence lengths."""
+
+    model: torch.nn.Module
+
+    def profile(self, lengths: Iterable[int]) -> List[Dict[str, float]]:
+        """Return runtime stats for each length in ``lengths``."""
+        device = next(self.model.parameters()).device
+        results: List[Dict[str, float]] = []
+        for L in lengths:
+            x = torch.randint(0, 100, (1, int(L)), device=device)
+            stats: Dict[str, float] = {"length": float(L)}
+
+            def cb(cpu: float, gpu: float) -> None:
+                stats["cpu_time"] = cpu
+                stats["gpu_mem"] = gpu
+
+            with FineGrainedProfiler(cb):
+                self.model(x)
+            results.append(stats)
+        return results
+
+
+__all__ = ["profile_model", "ContextWindowProfiler"]
