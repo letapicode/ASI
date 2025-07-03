@@ -597,4 +597,4 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Extend `graph_of_thought.py` with a `ReasoningDebugger` that flags contradictions or loops in reasoning traces.
 - Implement a `GraphQLMemoryGateway` that exposes `MemoryServer` retrieval endpoints via GraphQL. Provide `scripts/graphql_memory_server.py` to benchmark query overhead.
 - Add a `FineGrainedProfiler` in `telemetry.py` to record per-module compute and memory usage and stream the metrics through `TelemetryLogger`.
-- Create an `AutoLabeler` that invokes the world model during ingestion to generate weak labels for unlabeled triples.
+- Create an `AutoLabeler` that invokes the world model during ingestion to generate weak labels for unlabeled triples. **Implemented in `src/auto_labeler.py` with unit tests.**
