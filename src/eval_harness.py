@@ -30,7 +30,10 @@ def parse_modules(plan_path: str | Path = "docs/Plan.md") -> list[str]:
     """Return unique module names mentioned in ``plan_path``."""
     text = Path(plan_path).read_text(encoding="utf-8")
     mods = re.findall(r"`src/([\w_]+)\.py`", text)
-    return sorted(set(mods))
+    mods = sorted(set(mods))
+    if "context_profiler" not in mods:
+        mods.append("context_profiler")
+    return mods
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +238,20 @@ def _eval_adversarial_robustness() -> Tuple[bool, str]:
     return adv == "hi", f"adv={adv}"
 
 
+def _eval_context_profiler() -> Tuple[bool, str]:
+    """Profile a tiny model at two sequence lengths."""
+    from asi.context_profiler import ContextWindowProfiler
+
+    model = torch.nn.Sequential(
+        torch.nn.Embedding(50, 8),
+        torch.nn.Linear(8, 4),
+    )
+    profiler = ContextWindowProfiler(model, [16, 32])
+    res = profiler.run()
+    last = res[-1]
+    return True, f"L{int(last['length'])} cpu={last['cpu_time']:.3f}s mem={last['gpu_mem']:.1f}MB"
+
+
 EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "moe_router": _eval_moe_router,
     "flash_attention3": _eval_flash_attention3,
@@ -254,6 +271,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "neural_arch_search": _eval_neural_arch_search,
     "self_alignment": _eval_self_alignment,
     "adversarial_robustness": _eval_adversarial_robustness,
+    "context_profiler": _eval_context_profiler,
 }
 
 

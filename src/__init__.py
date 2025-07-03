@@ -139,7 +139,7 @@ from .telemetry import TelemetryLogger, FineGrainedProfiler
 from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner
 from .streaming_compression import AdaptiveCompressor, TemporalVectorCompressor
-from .context_profiler import profile_model
+from .context_profiler import ContextWindowProfiler, profile_model
 from .gpu_aware_scheduler import GPUAwareScheduler
 from .dataset_bias_detector import compute_word_freq, bias_score
 from .auto_labeler import AutoLabeler
