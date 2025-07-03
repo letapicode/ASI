@@ -113,6 +113,8 @@ class HierarchicalMemory:
         cache_size: int = 1000,
         temporal_decay: float | None = None,
         evict_limit: int | None = None,
+        adaptive_evict: bool = False,
+        evict_check_interval: int = 100,
     ) -> None:
         if temporal_decay is None:
             self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
@@ -140,6 +142,11 @@ class HierarchicalMemory:
             self.cache = SSDCache(dim=dim, path=cache_dir, max_size=cache_size)
         self.evict_limit = evict_limit
         self._usage: Dict[Any, int] = {}
+        self.adaptive_evict = adaptive_evict
+        self.evict_check_interval = max(1, evict_check_interval)
+        self.hit_count = 0
+        self.miss_count = 0
+        self.query_count = 0
 
     def __len__(self) -> int:
         """Return the number of stored vectors."""
@@ -267,6 +274,33 @@ class HierarchicalMemory:
             self.store.delete(tag=victim)
             self._usage.pop(victim, None)
 
+    def _update_eviction(self) -> None:
+        """Adjust ``evict_limit`` based on hit rate."""
+        total = self.hit_count + self.miss_count
+        if total == 0 or self.evict_limit is None:
+            return
+        rate = self.hit_count / total
+        if rate < 0.5 and self.evict_limit > 1:
+            self.evict_limit = max(1, int(self.evict_limit * 0.9))
+        elif rate > 0.9:
+            self.evict_limit = int(self.evict_limit * 1.1) + 1
+        self.hit_count = 0
+        self.miss_count = 0
+        self.query_count = 0
+        self._evict_if_needed()
+
+    def get_stats(self) -> Dict[str, float]:
+        """Return current hit/miss statistics."""
+        total = self.hit_count + self.miss_count
+        rate = self.hit_count / total if total else 0.0
+        return {
+            "queries": float(total),
+            "hits": float(self.hit_count),
+            "misses": float(self.miss_count),
+            "hit_rate": rate,
+            "evict_limit": float(self.evict_limit or 0),
+        }
+
     def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
         """Remove vectors from the store by index or metadata tag."""
         if isinstance(self.store, AsyncFaissVectorStore):
@@ -341,11 +375,25 @@ class HierarchicalMemory:
             out_meta = c_meta + out_meta
         if not out_vecs:
             empty = torch.empty(0, query.size(-1), device=query.device)
+            self.miss_count += 1
+            self.query_count += 1
+            if (
+                self.adaptive_evict
+                and self.query_count % self.evict_check_interval == 0
+            ):
+                self._update_eviction()
             return empty, []
         vec = torch.cat(out_vecs, dim=0)
         for m in out_meta:
             if m in self._usage:
                 self._usage[m] += 1
+        self.hit_count += 1
+        self.query_count += 1
+        if (
+            self.adaptive_evict
+            and self.query_count % self.evict_check_interval == 0
+        ):
+            self._update_eviction()
         return vec, out_meta
 
     async def asearch(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
@@ -377,11 +425,25 @@ class HierarchicalMemory:
             out_meta = c_meta + out_meta
         if not out_vecs:
             empty = torch.empty(0, query.size(-1), device=query.device)
+            self.miss_count += 1
+            self.query_count += 1
+            if (
+                self.adaptive_evict
+                and self.query_count % self.evict_check_interval == 0
+            ):
+                self._update_eviction()
             return empty, []
         vec = torch.cat(out_vecs, dim=0)
         for m in out_meta:
             if m in self._usage:
                 self._usage[m] += 1
+        self.hit_count += 1
+        self.query_count += 1
+        if (
+            self.adaptive_evict
+            and self.query_count % self.evict_check_interval == 0
+        ):
+            self._update_eviction()
         return vec, out_meta
 
     def save(self, path: str | Path) -> None:

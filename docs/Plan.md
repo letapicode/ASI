@@ -230,87 +230,90 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 18. **SSD-backed retrieval cache**: Extend `HierarchicalMemory` with an
     `SSDCache` that prefetches frequently accessed vectors for low-latency
     retrieval. *Implemented in `src/hierarchical_memory.py`.*
-19. **Generative noise filtering**: `AutoDatasetFilter` now runs during data
+19. **Adaptive eviction policy**: `HierarchicalMemory` now tracks hit/miss rates
+    and adjusts `evict_limit` automatically. Use `adaptive_evict=True` to enable
+    and inspect stats via `get_stats()`.
+20. **Generative noise filtering**: `AutoDatasetFilter` now runs during data
     ingest to prune low-quality samples using generative noise detection and
     track the effect on training stability.
-20. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
+21. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
     new training triples from world-model rollouts and expand the dataset. The
     module integrates with `data_ingest` for easy ingestion.
-21. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
+22. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
     to track benchmark progress automatically. *Implemented in
     `scripts/continuous_eval.py`.*
-22. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with
+23. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with
     `MetaRLRefactorAgent` to auto-rank refactor strategies. *Implemented in
     `src/adaptive_planner.py`.*
-23. **Neural architecture search**: Evaluate `src/neural_arch_search.py` across
+24. **Neural architecture search**: Evaluate `src/neural_arch_search.py` across
     candidate module configurations and report accuracy vs. compute costs.
     *Implemented in `src/neural_arch_search.py`.*
-24. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
+25. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
     restart failed jobs automatically and track overall utilization.
     *Implemented in `src/self_healing_trainer.py`.*
-25. **World-model data synthesis**: Use the `offline_synthesizer` to generate
+26. **World-model data synthesis**: Use the `offline_synthesizer` to generate
     synthetic multimodal triples and measure retrieval improvements. *Implemented
     in `data_ingest.offline_synthesizer`.*
-26. **Federated memory exchange**: Synchronize retrieval vectors across
+27. **Federated memory exchange**: Synchronize retrieval vectors across
     multiple `MemoryServer` nodes and benchmark cross-node accuracy.
     *Implemented in `src/federated_memory_exchange.py` with
     `scripts/federated_memory_sync.py`.*
-27. **Causal graph learner**: Train `CausalGraphLearner` on `world_model_rl`
+28. **Causal graph learner**: Train `CausalGraphLearner` on `world_model_rl`
     transitions and report planning gains from the inferred edges.
     *Implemented in `src/causal_graph_learner.py`.*
-28. **Self-alignment evaluator**: Integrate
+29. **Self-alignment evaluator**: Integrate
     `deliberative_alignment.check_alignment()` into `eval_harness` and track
     alignment metrics alongside existing benchmarks. *Implemented in
     `src/eval_harness.py` as `SelfAlignmentEvaluator`.*
 
-29. **Federated memory backend**: Implement a `FederatedMemoryServer` that
+30. **Federated memory backend**: Implement a `FederatedMemoryServer` that
     replicates vector stores across peers via gRPC streaming consensus for
     decentralized retrieval.
-30. **Active data selection**: Add an `ActiveDataSelector` to score incoming
+31. **Active data selection**: Add an `ActiveDataSelector` to score incoming
     triples by predictive entropy and keep only high-information samples.
     *Implemented in `data_ingest.ActiveDataSelector`.*
-31. **Hierarchical graph planner**: Combine `GraphOfThought` with
+32. **Hierarchical graph planner**: Combine `GraphOfThought` with
     `world_model_rl.rollout_policy` to generate multi-stage plans for
     refactoring and exploration.
-32. **Differential privacy optimizer**: Integrate gradient clipping and noise
+33. **Differential privacy optimizer**: Integrate gradient clipping and noise
     injection into training loops so models can train with privacy guarantees.
-33. **LSH retrieval index**: Add `LocalitySensitiveHashIndex` in `vector_store.py` so
+34. **LSH retrieval index**: Add `LocalitySensitiveHashIndex` in `vector_store.py` so
     `HierarchicalMemory` can perform approximate nearest neighbor search with
     sub-linear query time.
-34. **Embedding visualizer**: Build a module to project cross-modal embeddings using UMAP/t-SNE and expose the plots via a lightweight web viewer. Implemented in `src/embedding_visualizer.py`.
-35. **Multi-agent coordinator**: Prototype a `MultiAgentCoordinator` that
+35. **Embedding visualizer**: Build a module to project cross-modal embeddings using UMAP/t-SNE and expose the plots via a lightweight web viewer. Implemented in `src/embedding_visualizer.py`.
+36. **Multi-agent coordinator**: Prototype a `MultiAgentCoordinator` that
     synchronizes multiple refactor agents and schedules collaborative
     improvements across repositories.
-36. **Compressed vector store**: Implement a `PQVectorStore` using FAISS `IndexIVFPQ`
+37. **Compressed vector store**: Implement a `PQVectorStore` using FAISS `IndexIVFPQ`
     and integrate with `HierarchicalMemory`. Benchmark retrieval accuracy vs.
     `FaissVectorStore`.
-37. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
+38. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
-38. **Temporal decay memory**: Add a `TemporalVectorCompressor` that weights
+39. **Temporal decay memory**: Add a `TemporalVectorCompressor` that weights
     embeddings by recency. Evaluate retrieval accuracy drop <3% compared with
     the existing `StreamingCompressor` on 1&nbsp;M-token streams.
-39. **Cross-lingual data ingestion**: Integrate a `CrossLingualTranslator`
+40. **Cross-lingual data ingestion**: Integrate a `CrossLingualTranslator`
     into `data_ingest` so text is stored in multiple languages. Measure BLEU
     >30 on public benchmarks and track retrieval gains from the augmented
     triples.
-40. **World-model distillation**: Implement a `WorldModelDistiller` that
+41. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
     ≥4×.
 
-41. **Summarizing memory compression**: Condense rarely accessed vectors with a small language model before persisting them to disk. Success is a ≥50 % reduction in storage while retrieval accuracy drops <5 %.
-42. **Telemetry instrumentation**: Record GPU/CPU utilization and network throughput across distributed nodes using OpenTelemetry and expose the metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster.
-43. **License compliance checker**: Parse dataset sources for license text during ingestion and block incompatible samples. Every stored triple should include a valid license entry.
-44. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
-45. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt revisions via reinforcement learning and measure evaluation gains.
-46. **Training anomaly detection**: Extend `SelfHealingTrainer` with a `TrainingAnomalyDetector` to roll back or restart runs when metrics diverge.
-47. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
-48. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length.
-49. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines.
-50. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
-51. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
-52. **Gradient compression for distributed training**: Implement a `GradientCompressor`
+42. **Summarizing memory compression**: Condense rarely accessed vectors with a small language model before persisting them to disk. Success is a ≥50 % reduction in storage while retrieval accuracy drops <5 %.
+43. **Telemetry instrumentation**: Record GPU/CPU utilization and network throughput across distributed nodes using OpenTelemetry and expose the metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster.
+44. **License compliance checker**: Parse dataset sources for license text during ingestion and block incompatible samples. Every stored triple should include a valid license entry.
+45. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
+46. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt revisions via reinforcement learning and measure evaluation gains.
+47. **Training anomaly detection**: Extend `SelfHealingTrainer` with a `TrainingAnomalyDetector` to roll back or restart runs when metrics diverge.
+48. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
+49. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length.
+50. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines.
+51. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
+52. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
+53. **Gradient compression for distributed training**: Implement a `GradientCompressor`
     with top-k sparsification or quantized gradients and integrate it with
     `DistributedTrainer`.
 53. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
