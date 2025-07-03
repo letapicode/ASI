@@ -582,6 +582,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add an `AdaptiveCompressor` that tunes the compression ratio in `StreamingCompressor` based on retrieval frequency so rarely accessed vectors use fewer bytes.
 - Create a `PromptOptimizer` module that rewrites prompts via reinforcement learning and tracks evaluation improvements automatically.
 - Integrate a `TrainingAnomalyDetector` with `SelfHealingTrainer` to roll back or restart runs when loss spikes beyond a configurable threshold.
+- Implement a `ParameterEfficientAdapter` that applies low-rank adapters to target modules for cross-task fine-tuning. **Implemented in `src/parameter_efficient_adapter.py` with tests.**
 - Add a `DatasetVersioner` module that logs dataset hashes and transformation steps. Extend `data_ingest` so all downloads and synthetic samples record their provenance in a version file.
 - Implement a `ContextWindowProfiler` that measures memory footprint and wall-clock time at various sequence lengths. **Implemented as `src/context_profiler.py` and integrated with `eval_harness.py`.**
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.
