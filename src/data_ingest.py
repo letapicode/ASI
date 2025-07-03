@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 import wave
 from pathlib import Path
-from typing import Iterable, List, Tuple, Callable, Any
+from typing import Iterable, List, Tuple, Callable, Any, Optional
 
 import numpy as np
 import asyncio
@@ -15,6 +15,7 @@ try:
 except Exception:  # pragma: no cover - optional
     _HAS_AIOHTTP = False
 from PIL import Image
+from .dataset_versioner import DatasetVersioner
 try:  # pragma: no cover - fallback for local import
     from .generative_data_augmentor import GenerativeDataAugmentor
 except Exception:  # pragma: no cover - for tests
@@ -85,11 +86,14 @@ def download_triples(
     img_urls: Iterable[str],
     audio_urls: Iterable[str],
     out_dir: str,
+    versioner: Optional[DatasetVersioner] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Download text, image and audio triples into ``out_dir`` concurrently."""
 
     async def run() -> List[Tuple[Path, Path, Path]]:
-        return await download_triples_async(text_urls, img_urls, audio_urls, out_dir)
+        return await download_triples_async(
+            text_urls, img_urls, audio_urls, out_dir, versioner
+        )
 
     try:
         loop = asyncio.get_running_loop()
@@ -104,6 +108,7 @@ async def download_triples_async(
     img_urls: Iterable[str],
     audio_urls: Iterable[str],
     out_dir: str,
+    versioner: Optional[DatasetVersioner] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Asynchronously download text, image and audio triples."""
     if not _HAS_AIOHTTP:
@@ -121,6 +126,9 @@ async def download_triples_async(
             tasks.append(_download_file_async(session, iurl, i_path))
             tasks.append(_download_file_async(session, a, a_path))
         await asyncio.gather(*tasks)
+    if versioner is not None:
+        flat = [p for tri in triples for p in tri]
+        versioner.record(flat, note="download_triples")
     return triples
 
 
@@ -221,6 +229,8 @@ def offline_synthesizer(
     start_image: np.ndarray,
     policy_fn,
     steps: int = 3,
+    save_dir: Optional[str | Path] = None,
+    versioner: Optional[DatasetVersioner] = None,
 ) -> List[Tuple[str, np.ndarray, np.ndarray]]:
     """Generate synthetic text, image and audio triples via world-model rollout."""
 
@@ -233,13 +243,28 @@ def offline_synthesizer(
     states, _ = rollout(model, t, img, policy_fn, steps=steps)
 
     triples: List[Tuple[str, np.ndarray, np.ndarray]] = []
-    for s in states:
+    saved: List[Tuple[Path, Path, Path]] = []
+    for idx, s in enumerate(states):
         vec = s.cpu().numpy().ravel()
         txt = " ".join(str(int(x)) for x in vec[:5])
         side = int(np.sqrt(vec.size)) or 1
         img_arr = vec[: side * side].reshape(side, side)
         aud_arr = vec.copy()
         triples.append((txt, img_arr, aud_arr))
+        if save_dir is not None:
+            out = Path(save_dir)
+            out.mkdir(parents=True, exist_ok=True)
+            t_p = out / f"syn_{idx}.txt"
+            i_p = out / f"syn_{idx}.npy"
+            a_p = out / f"syn_{idx}.npy.audio"
+            t_p.write_text(txt)
+            np.save(i_p, img_arr)
+            np.save(a_p, aud_arr)
+            saved.append((t_p, i_p, a_p))
+
+    if save_dir is not None and versioner is not None and saved:
+        flat = [p for tri in saved for p in tri]
+        versioner.record(flat, note="offline_synthesizer")
 
     return triples
 

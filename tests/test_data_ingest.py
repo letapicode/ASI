@@ -2,6 +2,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+import json
 import importlib.machinery
 import importlib.util
 import sys
@@ -20,6 +21,7 @@ add_gaussian_noise = di.add_gaussian_noise
 text_dropout = di.text_dropout
 offline_synthesizer = di.offline_synthesizer
 filter_dataset = di.filter_dataset
+DatasetVersioner = di.DatasetVersioner
 import numpy as np
 import asyncio
 from unittest.mock import patch
@@ -75,6 +77,21 @@ class TestDataIngest(unittest.TestCase):
             self.assertTrue(t.exists() and i.exists() and a.exists())
             self.assertEqual(t.read_text(), 'u1')
 
+    def test_download_triples_version(self):
+        async def fake_download(session, url, dest):
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(url)
+
+        with tempfile.TemporaryDirectory() as root:
+            urls = ['u1']
+            ver = DatasetVersioner(root)
+            with patch.object(di, '_download_file_async', fake_download):
+                di.download_triples(urls, urls, urls, root, versioner=ver)
+            vf = Path(root) / 'dataset_version.json'
+            self.assertTrue(vf.exists())
+            data = json.loads(vf.read_text())
+            self.assertEqual(len(data['files']), 3)
+
     def test_download_triples_event_loop(self):
         async def fake_download(session, url, dest):
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -109,6 +126,27 @@ class TestDataIngest(unittest.TestCase):
         self.assertIsInstance(t, str)
         self.assertIsInstance(i, np.ndarray)
         self.assertIsInstance(a, np.ndarray)
+
+    def test_offline_synthesizer_version(self):
+        cfg = MultiModalWorldModelConfig(vocab_size=10, img_channels=1, action_dim=2, embed_dim=8)
+        wm = MultiModalWorldModel(cfg)
+
+        def policy(state):
+            return torch.zeros((), dtype=torch.long)
+
+        def tokenizer(t: str):
+            return [ord(c) % cfg.vocab_size for c in t]
+
+        with tempfile.TemporaryDirectory() as root:
+            ver = DatasetVersioner(root)
+            di.offline_synthesizer(
+                wm, tokenizer, 'hi', np.zeros((1, 4, 4), dtype=np.float32), policy,
+                steps=1, save_dir=root, versioner=ver
+            )
+            vf = Path(root) / 'dataset_version.json'
+            self.assertTrue(vf.exists())
+            data = json.loads(vf.read_text())
+            self.assertEqual(len(data['files']), 3)
 
     def test_filter_dataset(self):
         with tempfile.TemporaryDirectory() as root:
