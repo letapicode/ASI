@@ -1,0 +1,70 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Iterable, List
+
+import torch
+from torch.utils.data import DataLoader, Dataset
+
+from .world_model_rl import RLBridgeConfig, WorldModel, TransitionDataset
+from .secure_federated_learner import SecureFederatedLearner
+
+@dataclass
+class FederatedTrainerConfig:
+    rounds: int = 1
+    local_epochs: int = 1
+    lr: float = 1e-4
+
+class FederatedWorldModelTrainer:
+    """Train a world model across nodes via secure gradient averaging."""
+
+    def __init__(
+        self,
+        cfg: RLBridgeConfig,
+        datasets: Iterable[Dataset],
+        learner: SecureFederatedLearner | None = None,
+        trainer_cfg: FederatedTrainerConfig | None = None,
+    ) -> None:
+        self.cfg = cfg
+        self.datasets = list(datasets)
+        self.learner = learner or SecureFederatedLearner()
+        self.tcfg = trainer_cfg or FederatedTrainerConfig()
+        self.model = WorldModel(cfg)
+
+    # --------------------------------------------------
+    def _local_gradients(self, dataset: Dataset) -> List[torch.Tensor]:
+        loader = DataLoader(dataset, batch_size=self.cfg.batch_size, shuffle=True)
+        params = [p for p in self.model.parameters() if p.requires_grad]
+        grads = [torch.zeros_like(p) for p in params]
+        opt = torch.optim.SGD(params, lr=self.tcfg.lr)
+        loss_fn = torch.nn.MSELoss()
+        for _ in range(self.tcfg.local_epochs):
+            for s, a, ns, r in loader:
+                pred_s, pred_r = self.model(s, a)
+                loss = loss_fn(pred_s, ns) + loss_fn(pred_r, r)
+                opt.zero_grad()
+                loss.backward()
+                for g, p in zip(grads, params):
+                    g += p.grad.detach().clone()
+                opt.step()
+        return [g / len(loader) for g in grads]
+
+    def train(self) -> WorldModel:
+        params = [p for p in self.model.parameters() if p.requires_grad]
+        for _ in range(self.tcfg.rounds):
+            enc_grads = []
+            for ds in self.datasets:
+                grads = self._local_gradients(ds)
+                flat = torch.cat([g.view(-1) for g in grads])
+                enc = self.learner.encrypt(flat)
+                enc_grads.append(enc)
+            agg = self.learner.aggregate([self.learner.decrypt(g) for g in enc_grads])
+            start = 0
+            for p in params:
+                num = p.numel()
+                g = agg[start : start + num].view_as(p)
+                p.data -= self.tcfg.lr * g
+                start += num
+        return self.model
+
+__all__ = ["FederatedWorldModelTrainer", "FederatedTrainerConfig"]

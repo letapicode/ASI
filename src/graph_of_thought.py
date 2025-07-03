@@ -77,6 +77,41 @@ class GraphOfThought:
         return graph
 
 
+class ReasoningDebugger:
+    """Detect contradictory steps and loops in a reasoning graph."""
+
+    def __init__(self, graph: GraphOfThought) -> None:
+        self.graph = graph
+
+    def find_loops(self) -> list[list[int]]:
+        loops = []
+        for start in self.graph.nodes:
+            path = []
+            visited = set()
+            node = start
+            while node not in visited:
+                visited.add(node)
+                nexts = self.graph.edges.get(node, [])
+                if not nexts:
+                    break
+                node = nexts[0]
+                path.append(node)
+                if node == start:
+                    loops.append([start] + path)
+                    break
+        return loops
+
+    def find_contradictions(self) -> list[tuple[int, int]]:
+        contrad = []
+        texts = {i: n.text.lower() for i, n in self.graph.nodes.items()}
+        for i, t1 in texts.items():
+            neg = f"not {t1}"
+            for j, t2 in texts.items():
+                if i != j and t2 == neg:
+                    contrad.append((i, j))
+        return contrad
+
+
 def main(argv: Sequence[str] | None = None) -> None:
     """CLI entry point for planning code refactors."""
     import argparse
