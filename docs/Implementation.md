@@ -571,39 +571,62 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`. **Implemented in `src/duplicate_detector.py` and integrated with `filter_text_files()`.**
 - Implement a `TemporalVectorCompressor` in `streaming_compression.py` with a
   decay factor so `HierarchicalMemory` can prioritize recent context. Benchmark
-  retrieval accuracy against the existing compressor.
+  retrieval accuracy against the existing compressor. **Implemented in
+  `src/streaming_compression.py`.**
 - Add a `CrossLingualTranslator` helper in `data_ingest.py` to translate text
   into multiple languages during ingestion and store the augmented triples.
+  **Implemented in `data_ingest.CrossLingualTranslator`.**
 - Create a `WorldModelDistiller` module and a `scripts/distill_world_model.py`
   utility to train smaller student models from the large world model.
+  **Implemented in `src/world_model_distiller.py` with the script
+  `scripts/distill_world_model.py`.**
 - Implement a `SummarizingMemory` helper that compresses infrequently used vectors with a small language-model summarizer. Provide `scripts/summarize_memory_benchmark.py` to measure storage savings and retrieval accuracy.
+  **Implemented in `src/summarizing_memory.py` with the benchmarking script
+  `scripts/summarize_memory_benchmark.py`.**
 - Add a `TelemetryLogger` in `telemetry.py` that exports GPU, CPU and network metrics via OpenTelemetry and Prometheus. Integrate the logger with `DistributedTrainer` and `MemoryServer`.
   `MemoryServer` now starts and stops a provided `TelemetryLogger` automatically.
+  **Implemented in `src/telemetry.py`.**
 - Extend `data_ingest.py` with a `LicenseInspector` that parses dataset metadata for license terms and rejects incompatible samples. Include a `scripts/license_check.py` CLI to audit stored triples.
+  **Implemented in `src/license_inspector.py` with the CLI `scripts/license_check.py`.**
 - Add an `AdaptiveCompressor` that tunes the compression ratio in `StreamingCompressor` based on retrieval frequency so rarely accessed vectors use fewer bytes.
+  **Implemented as `AdaptiveCompressor` in `src/streaming_compression.py`.**
 - Create a `PromptOptimizer` module that rewrites prompts via reinforcement learning and tracks evaluation improvements automatically.
+  **Implemented in `src/prompt_optimizer.py`.**
 - Integrate a `TrainingAnomalyDetector` with `SelfHealingTrainer` to roll back or restart runs when loss spikes beyond a configurable threshold.
+  **Implemented via `TrainingAnomalyDetector` in `src/training_anomaly_detector.py`.**
 - Implement a `ParameterEfficientAdapter` that applies low-rank adapters to target modules for cross-task fine-tuning. **Implemented in `src/parameter_efficient_adapter.py` with tests.**
 - Add a `DatasetVersioner` module that logs dataset hashes and transformation steps. Extend `data_ingest` so all downloads and synthetic samples record their provenance in a version file.
+  **Implemented in `src/dataset_versioner.py` and wired through `data_ingest`.**
 - Implement a `ContextWindowProfiler` that measures memory footprint and wall-clock time at various sequence lengths. **Implemented as `src/context_profiler.py` and integrated with `eval_harness.py`.**
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.
   **Implemented** via `adaptive_evict` in `HierarchicalMemory` with `get_stats()` to report usage metrics.
 - Add an optional `SafetyPolicyMonitor` hook in `self_play_skill_loop` that runs `deliberative_alignment` each cycle and logs policy violations.
+  **Implemented in `src/self_play_skill_loop.py`.**
 - Add `export_to_onnx()` in `src/onnx_utils.py` and `scripts/export_onnx.py` to save ONNX graphs for `MultiModalWorldModel` and `CrossModalFusion`. Run `python scripts/export_onnx.py --out-dir models` to generate them.
 - Implement a `SecureFederatedLearner` that aggregates encrypted gradients from remote peers so training can proceed without sharing raw data. Provide a `scripts/federated_train.py` CLI.
+  **Implemented in `src/secure_federated_learner.py` with `scripts/federated_train.py`.**
 - Add a `GPUAwareScheduler` module to monitor GPU memory and compute load and dispatch jobs accordingly. Integrate it with `DistributedTrainer`.
+  **Implemented in `src/gpu_aware_scheduler.py` and used by `DistributedTrainer`.**
 - Develop an `AdversarialRobustnessSuite` that generates adversarial prompts and reports failure cases through `eval_harness`.
+  **Implemented in `src/adversarial_robustness.py`.**
 - Implement a `DatasetBiasDetector` module that computes representation metrics and integrates with `AutoDatasetFilter`. Provide a `dataset_bias_report.py` utility for bias analysis.
+  **Implemented in `src/dataset_bias_detector.py` with `scripts/dataset_bias_report.py`.**
 - Create a `FederatedWorldModelTrainer` that averages gradients across nodes for distributed world-model training. Include `scripts/federated_world_model_train.py`.
+  **Implemented in `src/federated_world_model_trainer.py` with script `scripts/federated_world_model_train.py`.**
 - Add a `GradientPatchEditor` helper to apply small updates that fix incorrect outputs without full fine-tuning.
+  **Implemented in `src/gradient_patch_editor.py`.**
 - Extend `graph_of_thought.py` with a `ReasoningDebugger` that flags contradictions or loops in reasoning traces.
+  **Implemented in `src/graph_of_thought.py`.**
 - Implement a `GraphQLMemoryGateway` that exposes `MemoryServer` retrieval endpoints via GraphQL. Provide `scripts/graphql_memory_server.py` to benchmark query overhead.
+  **Implemented in `src/graphql_memory_gateway.py` with `scripts/graphql_memory_server.py`.**
 - Add a `FineGrainedProfiler` in `telemetry.py` to record per-module compute and memory usage and stream the metrics through `TelemetryLogger`.
+  **Implemented in `src/telemetry.py`.**
 - Create an `AutoLabeler` that invokes the world model during ingestion to generate weak labels for unlabeled triples.
+  **Implemented in `src/auto_labeler.py`.**
 - Implement a `SensorimotorPretrainer` that performs self-supervised pretraining
   of `MultiModalWorldModel` on raw sensor logs. Provided
   `pretrain_sensorimotor()` in `src/sensorimotor_pretrainer.py` with a unit
-  test.
+  test. **Implemented.**
 - Add a `MultiStageOversight` helper combining `CollectiveConstitution`,
   `DeliberativeAligner`, `CriticRLHFTrainer`, and formal verification checks to
   enforce multi-stage safety. Implemented in `src/multi_stage_oversight.py` with
