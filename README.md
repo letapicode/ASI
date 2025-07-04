@@ -44,6 +44,19 @@ logger = TelemetryLogger(port=8000)
 server = serve(mem, "localhost:50070", telemetry=logger)
 ```
 
+To search across languages, wrap the memory with `CrossLingualMemory` and
+provide a `CrossLingualTranslator`:
+
+```python
+from asi.cross_lingual_memory import CrossLingualMemory
+from asi.data_ingest import CrossLingualTranslator
+
+translator = CrossLingualTranslator(["es"])
+mem = CrossLingualMemory(dim=4, compressed_dim=2, capacity=10, translator=translator)
+mem.add("hello")
+mem.search("[es] hello")
+```
+
 Visit `http://localhost:8000` to view Prometheus metrics.
 
 `RiskDashboard` combines these metrics with ethical risk scores from

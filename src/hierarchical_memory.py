@@ -17,6 +17,7 @@ from .vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIn
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .hopfield_memory import HopfieldMemory
+from .data_ingest import CrossLingualTranslator
 
 
 class SSDCache:
@@ -117,6 +118,7 @@ class HierarchicalMemory:
         adaptive_evict: bool = False,
         evict_check_interval: int = 100,
         use_kg: bool = False,
+        translator: "CrossLingualTranslator | None" = None,
     ) -> None:
         if temporal_decay is None:
             self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
@@ -151,6 +153,7 @@ class HierarchicalMemory:
         self.query_count = 0
         self.kg: KnowledgeGraphMemory | None = KnowledgeGraphMemory() if use_kg else None
         self.last_trace: dict | None = None
+        self.translator = translator
 
     def __len__(self) -> int:
         """Return the number of stored vectors."""
