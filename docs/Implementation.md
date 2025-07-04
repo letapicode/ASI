@@ -684,6 +684,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add a `ComputeBudgetTracker` that records GPU hours and memory usage via
   `TelemetryLogger` and feeds the estimated energy cost into
   `RiskScoreboard`. **Implemented in `src/compute_budget_tracker.py` with tests.**
+- Add an `AdaptiveMicroBatcher` that monitors GPU memory via `TelemetryLogger`
+  and adjusts micro-batch sizes automatically. `DistributedTrainer` and
+  `EdgeRLTrainer` accept it through the optional `micro_batcher` argument.
 - Combine `SelfHealingTrainer` and `MultiAgentCoordinator` in a simplified
   `CollaborativeHealingLoop` for cooperative recovery.
 
