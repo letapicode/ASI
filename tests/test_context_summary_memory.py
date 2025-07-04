@@ -22,7 +22,7 @@ class TestContextSummaryMemory(unittest.TestCase):
         mem.summarize_context()
         vecs, meta = mem.search(data[0], k=2)
         self.assertEqual(vecs.shape[0], len(meta))
-        self.assertTrue(any(isinstance(m, str) and m.startswith("ctxsum:") for m in meta))
+        self.assertTrue(any(isinstance(m, dict) and "ctxsum" in m for m in meta))
         self.assertTrue(torch.allclose(vecs[0], torch.ones(2)))
 
 

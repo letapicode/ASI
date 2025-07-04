@@ -592,6 +592,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   `scripts/summarize_memory_benchmark.py`.**
 - Implement a `ContextSummaryMemory` that replaces far-past vectors with text summaries and re-expands them when retrieved. Unit test `tests/test_context_summary_memory.py` verifies summarization and expansion.
   **Implemented in `src/context_summary_memory.py` with tests.**
+- Extend `ContextSummaryMemory` with a `translator` argument so summaries are stored in multiple languages and returned in the query language. Tested in `tests/test_cross_lingual_summary_memory.py`.
 - Implement a `KnowledgeGraphMemory` that stores `(subject, predicate, object)` triples and hooks into `HierarchicalMemory` via `use_kg=True`. Unit tests cover insertion and retrieval.
   **Implemented in `src/knowledge_graph_memory.py` with `tests/test_knowledge_graph_memory.py`.**
 - Add a `TelemetryLogger` in `telemetry.py` that exports GPU, CPU and network metrics via OpenTelemetry and Prometheus. Integrate the logger with `DistributedTrainer` and `MemoryServer`.
