@@ -198,21 +198,23 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    usage via `log_memory_usage()` and prints it alongside pass/fail results.
 6. **Compute budget tracking**: Use `ComputeBudgetTracker` to log GPU hours and
    energy cost for each run and stop training when the budget is exhausted.
-7. **Distributed memory benchmark**: Run `DistributedMemory` with four
+7. **Budget-aware scheduler**: Automatically lower batch size and learning rate
+   via `BudgetAwareScheduler` when `remaining()` falls below a threshold.
+8. **Distributed memory benchmark**: Run `DistributedMemory` with four
    `MemoryServer` nodes using `distributed_memory_benchmark.py` and measure
    query latency and throughput versus the single-node baseline.
-8. **MemoryServer streaming API**: Benchmark the new batched push/query
+9. **MemoryServer streaming API**: Benchmark the new batched push/query
    endpoints and report latency savings over single-vector calls.
-9. **Checkpointed world model**: *(done)* the multimodal world model now
+10. **Checkpointed world model**: *(done)* the multimodal world model now
    supports a `checkpoint_blocks` flag which reduces memory usage during
    training.
-10. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
+11. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
    trajectories from `self_play_skill_loop.run_loop` and feeds them into
    `train_world_model` for mixed-modality experiments.
-11. **Attention trace analysis**: Use the new `AttentionVisualizer` to
+12. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
     `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard.
-12. **Graph-of-thought planning**: Implement `GraphOfThought` (see
+13. **Graph-of-thought planning**: Implement `GraphOfThought` (see
     `src/graph_of_thought.py`) and measure refactor quality gains over the
     baseline meta-RL agent.
 12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with
