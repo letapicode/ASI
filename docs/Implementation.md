@@ -643,3 +643,18 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   `DeliberativeAligner`, `CriticRLHFTrainer`, and formal verification checks to
   enforce multi-stage safety. Implemented in `src/multi_stage_oversight.py` with
   tests.
+- Introduce `DifferentialPrivacyMemory` that injects Gaussian noise into
+  embeddings before storage to reduce privacy leakage.
+  **Implemented in `src/dp_memory.py`.**
+- Implement `MultiModalEval` in `eval_harness.py` to report recall@k for text,
+  image and audio in a single run. Enable with `--multimodal`.
+  **Implemented in `src/eval_harness.py`.**
+- Create `MultiAgentGraphPlanner` that wraps `GraphOfThoughtPlanner` with
+  `MultiAgentCoordinator` for collaborative graph planning.
+  **Implemented in `src/multi_agent_graph_planner.py`.**
+- Add a `WorldModelDebugger` that patches the world model when rollout errors
+  exceed a threshold using `GradientPatchEditor`.
+  **Implemented in `src/world_model_debugger.py`.**
+- Provide a `ModelVersionManager` to log model hashes alongside dataset
+  versions for full reproducibility.
+  **Implemented in `src/model_version_manager.py`.**

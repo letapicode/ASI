@@ -197,6 +197,42 @@ def _eval_autobench() -> Tuple[bool, str]:
     return ok, "sandboxed"
 
 
+class MultiModalEval:
+    """Compute recall@k for text, image and audio in one run."""
+
+    def __init__(self, model, dataset, k: int = 1, batch_size: int = 4) -> None:
+        self.model = model
+        self.dataset = dataset
+        self.k = k
+        self.batch_size = batch_size
+
+    def run(self) -> Dict[str, float]:
+        from asi.hierarchical_memory import HierarchicalMemory
+        from asi.cross_modal_fusion import encode_all
+
+        mem = HierarchicalMemory(
+            dim=self.model.cfg.latent_dim,
+            compressed_dim=max(1, self.model.cfg.latent_dim // 2),
+            capacity=len(self.dataset) * 2,
+        )
+        t_vecs, i_vecs, a_vecs = encode_all(
+            self.model, self.dataset, batch_size=self.batch_size, memory=mem
+        )
+        recalls: Dict[str, float] = {}
+        for name, vecs in {
+            "text": t_vecs,
+            "image": i_vecs,
+            "audio": a_vecs,
+        }.items():
+            correct = 0
+            for idx in range(len(self.dataset)):
+                out, meta = mem.search(vecs[idx], k=self.k)
+                if meta and meta[0] == idx:
+                    correct += 1
+            recalls[name] = correct / len(self.dataset)
+        return recalls
+
+
 def _eval_neural_arch_search() -> Tuple[bool, str]:
     """Run a tiny distributed search to verify the module."""
     from asi.neural_arch_search import DistributedArchSearch
@@ -347,6 +383,11 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Run evaluations concurrently using asyncio",
     )
+    parser.add_argument(
+        "--multimodal",
+        action="store_true",
+        help="Run multi-modal retrieval benchmark",
+    )
     args = parser.parse_args(argv)
 
     mods = parse_modules(args.plan)
@@ -354,6 +395,33 @@ def main(argv: list[str] | None = None) -> None:
         results = asyncio.run(evaluate_modules_async(mods))
     else:
         results = evaluate_modules(mods)
+    if args.multimodal:
+        from asi.cross_modal_fusion import (
+            CrossModalFusionConfig,
+            CrossModalFusion,
+            MultiModalDataset,
+        )
+
+        def _tok(t: str, vs: int) -> list[int]:
+            return [ord(c) % vs for c in t]
+
+        cfg = CrossModalFusionConfig(
+            vocab_size=50,
+            text_dim=8,
+            img_channels=3,
+            audio_channels=1,
+            latent_dim=4,
+        )
+        model = CrossModalFusion(cfg)
+        samples = [
+            ("aa", torch.randn(3, 16, 16), torch.randn(1, 32)),
+            ("bb", torch.randn(3, 16, 16), torch.randn(1, 32)),
+        ]
+        ds = MultiModalDataset(samples, lambda t: _tok(t, cfg.vocab_size))
+        mm = MultiModalEval(model, ds, k=1, batch_size=1)
+        mm_stats = mm.run()
+        stats = ", ".join(f"{k}:{v:.2f}" for k, v in mm_stats.items())
+        print(f"MultiModalEval -> {stats}")
     mem = log_memory_usage()
     out = format_results(results)
     out += f"\nGPU memory used: {mem:.1f} MB"

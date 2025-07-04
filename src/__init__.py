@@ -175,5 +175,9 @@ from .multi_stage_oversight import MultiStageOversight
 from .knowledge_graph_memory import KnowledgeGraphMemory
 from .memory_dashboard import MemoryDashboard
 from .multi_agent_coordinator import MultiAgentCoordinator, RLNegotiator, NegotiationProtocol
+from .dp_memory import DifferentialPrivacyMemory
 from .privacy_budget_manager import PrivacyBudgetManager
 from .causal_reasoner import CausalReasoner
+from .multi_agent_graph_planner import MultiAgentGraphPlanner
+from .world_model_debugger import WorldModelDebugger
+from .model_version_manager import ModelVersionManager

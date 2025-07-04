@@ -11,6 +11,8 @@ from asi.distributed_memory import DistributedMemory
 from asi.memory_service import serve
 from asi.link_slot_attention import LinkSlotAttention
 from asi.chunkwise_retrainer import ChunkWiseRetrainer
+from asi.dataset_versioner import DatasetVersioner
+from asi.model_version_manager import ModelVersionManager
 
 
 def load_dataset(path: str = "data/tinyshakespeare.txt") -> tuple[torch.Tensor, int]:
@@ -128,6 +130,9 @@ def main() -> None:
     model = InfiniteContextModel(vocab_size=vocab, dim=32, remotes=args.remote_memory)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     trainer = ChunkWiseRetrainer(model, optimizer, chunk_size=64)
+    dv = DatasetVersioner(args.checkpoint_dir)
+    dv.record([], note="training")
+    mvm = ModelVersionManager(args.checkpoint_dir, dv)
 
     server = None
     if args.serve_memory:
@@ -141,6 +146,7 @@ def main() -> None:
             f"eval ppl {ppl:.2f} | memory {mem} | hit rate {hit:.2f}"
         )
         save_checkpoint(model, optimizer, args.checkpoint_dir, epoch)
+        mvm.record(model, epoch)
 
     if server is not None:
         server.stop(0)
