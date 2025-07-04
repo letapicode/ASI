@@ -48,7 +48,9 @@ Visit `http://localhost:8000` to view Prometheus metrics.
 
 `RiskDashboard` combines these metrics with ethical risk scores from
 `RiskScoreboard` and serves them via the same HTTP interface. Launch it with
-`scripts/memory_dashboard.py`.
+`scripts/memory_dashboard.py`. The script also starts an
+`InterpretabilityDashboard` on the next port to display attention heatmaps and
+memory statistics in a simple web UI.
 
 ## Testing
 
