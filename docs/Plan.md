@@ -162,6 +162,22 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard. The CLI now supports a `--concurrent` flag to run evaluations asynchronously via `evaluate_modules_async()`.
 - `scripts/distributed_eval.py` runs the harness across multiple processes or hosts and aggregates the results for large-scale testing.
 - `src/transformer_circuits.py` records attention weights and lets researchers ablate individual heads for interpretability experiments.
+- `src/gradient_compression.py` defines `GradientCompressor` for optional top-k or quantized gradient compression used by `DistributedTrainer`.
+- `src/streaming_compression.py` now includes `AdaptiveCompressor` and `TemporalVectorCompressor` for dynamic context compression.
+- `src/world_model_distiller.py` with `scripts/distill_world_model.py` distills large world models into smaller students.
+- `src/summarizing_memory.py` implements `SummarizingMemory`; see `scripts/summarize_memory_benchmark.py` for metrics.
+- `src/telemetry.py` provides `TelemetryLogger` and `FineGrainedProfiler` for hardware metrics.
+- `src/license_inspector.py` and `src/dataset_versioner.py` track dataset licenses and provenance.
+- `src/prompt_optimizer.py` optimizes prompts via reinforcement learning and `src/training_anomaly_detector.py` catches loss spikes.
+- `src/gpu_aware_scheduler.py` dispatches jobs based on GPU load.
+- `src/adversarial_robustness.py` generates adversarial prompts for `eval_harness`.
+- `src/dataset_bias_detector.py` with `scripts/dataset_bias_report.py` measures dataset bias.
+- `src/secure_federated_learner.py` and `src/federated_world_model_trainer.py` support secure distributed training.
+- `src/gradient_patch_editor.py` applies small gradient-based fixes.
+- `src/graphql_memory_gateway.py` exposes memory retrieval via GraphQL.
+- `src/auto_labeler.py` creates weak labels for new samples.
+- `src/sensorimotor_pretrainer.py` pretrains the world model on sensor logs.
+- `src/graph_of_thought.py` now includes a `ReasoningDebugger` for trace analysis.
 
 ### Recommended next steps
 
