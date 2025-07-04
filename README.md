@@ -28,6 +28,23 @@ meta-rl-refactor sample_log.csv
 
 Run the scripts directly with `python` to see parameter and FLOP estimates.
 
+## Telemetry
+
+`MemoryServer` can record resource usage via `TelemetryLogger`. Metrics start
+and stop automatically with the server:
+
+```python
+from asi.hierarchical_memory import HierarchicalMemory
+from asi.memory_service import serve
+from asi.telemetry import TelemetryLogger
+
+mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+logger = TelemetryLogger(port=8000)
+server = serve(mem, "localhost:50070", telemetry=logger)
+```
+
+Visit `http://localhost:8000` to view Prometheus metrics.
+
 ## Testing
 
 1. Install requirements: `pip install -r requirements.txt`.

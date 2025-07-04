@@ -303,7 +303,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     ≥4×.
 
 42. **Summarizing memory compression**: Condense rarely accessed vectors with a small language model before persisting them to disk. Success is a ≥50 % reduction in storage while retrieval accuracy drops <5 %.
-43. **Telemetry instrumentation**: Record GPU/CPU utilization and network throughput across distributed nodes using OpenTelemetry and expose the metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster.
+43. **Telemetry instrumentation**: Record GPU/CPU utilization and network throughput across distributed nodes using OpenTelemetry and expose the metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster. *`MemoryServer` now accepts a `TelemetryLogger` to start and stop metrics automatically.*
 44. **License compliance checker**: Parse dataset sources for license text during ingestion and block incompatible samples. Every stored triple should include a valid license entry.
 45. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
 46. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt revisions via reinforcement learning and measure evaluation gains.
