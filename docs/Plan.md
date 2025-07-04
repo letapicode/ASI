@@ -214,7 +214,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard.
 12. **Graph-of-thought planning**: Implement `GraphOfThought` (see
     `src/graph_of_thought.py`) and measure refactor quality gains over the
-    baseline meta-RL agent.
+    baseline meta-RL agent. The `ReasoningDebugger` now aggregates loops and
+    contradictions across multiple agents.
 12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with
     `world_model_rl.rollout_policy()` and log constraint violations.
     *Implemented as `src/neuro_symbolic_executor.py`.*

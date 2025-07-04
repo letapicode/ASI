@@ -627,7 +627,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   **Implemented in `src/federated_world_model_trainer.py` with script `scripts/federated_world_model_train.py`.**
 - Add a `GradientPatchEditor` helper to apply small updates that fix incorrect outputs without full fine-tuning.
   **Implemented in `src/gradient_patch_editor.py`.**
-- Extend `graph_of_thought.py` with a `ReasoningDebugger` that flags contradictions or loops in reasoning traces.
+- Extend `graph_of_thought.py` with a `ReasoningDebugger` that consolidates contradictions and loops from multiple agents.
   **Implemented in `src/graph_of_thought.py`.**
 - Implement a `GraphQLMemoryGateway` that exposes `MemoryServer` retrieval endpoints via GraphQL. Provide `scripts/graphql_memory_server.py` to benchmark query overhead.
   **Implemented in `src/graphql_memory_gateway.py` with `scripts/graphql_memory_server.py`.**
