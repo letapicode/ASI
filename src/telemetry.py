@@ -8,7 +8,23 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, Callable
 
 import psutil
-import torch
+try:  # pragma: no cover - optional torch dependency
+    import torch  # type: ignore
+except Exception:  # pragma: no cover - allow running without torch
+    class _DummyCuda:
+        @staticmethod
+        def is_available() -> bool:
+            return False
+
+        @staticmethod
+        def utilization() -> float:
+            return 0.0
+
+        @staticmethod
+        def memory_allocated() -> int:
+            return 0
+
+    torch = type("torch", (), {"cuda": _DummyCuda})()  # type: ignore
 try:
     from prometheus_client import Gauge, start_http_server
     _HAS_PROM = True

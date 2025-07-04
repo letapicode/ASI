@@ -18,6 +18,26 @@ except Exception:  # pragma: no cover - fallback for direct import
     _spec.loader.exec_module(_mod)  # type: ignore[attr-defined]
     MetaRLRefactorAgent = _mod.MetaRLRefactorAgent
 
+try:  # pragma: no cover - allow running as standalone module
+    from .compute_budget_tracker import ComputeBudgetTracker
+except Exception:  # pragma: no cover - fallback for direct import
+    import importlib.util as _ilu2
+    from pathlib import Path as _Path2
+
+    import types as _types2
+    import sys as _sys2
+
+    _cb_path = _Path2(__file__).resolve().parent / "compute_budget_tracker.py"
+    _spec2 = _ilu2.spec_from_file_location("compute_budget_tracker", _cb_path)
+    _mod2 = _ilu2.module_from_spec(_spec2)
+    if "asi" not in _sys2.modules:
+        _sys2.modules["asi"] = _types2.ModuleType("asi")
+    _mod2.__package__ = "asi"
+    _sys2.modules["compute_budget_tracker"] = _mod2
+    assert _spec2 and _spec2.loader
+    _spec2.loader.exec_module(_mod2)  # type: ignore[attr-defined]
+    ComputeBudgetTracker = _mod2.ComputeBudgetTracker
+
 __all__ = ["MultiAgentCoordinator", "NegotiationProtocol", "RLNegotiator"]
 
 
@@ -43,7 +63,10 @@ class RLNegotiator(NegotiationProtocol):
         self._last: Dict[str, str] = {}
 
     async def assign(
-        self, agents: Mapping[str, MetaRLRefactorAgent], tasks: Iterable[str]
+        self,
+        agents: Mapping[str, MetaRLRefactorAgent],
+        tasks: Iterable[str],
+        tracker: ComputeBudgetTracker | None = None,
     ) -> Mapping[str, str]:
         names = list(agents.keys())
         out: Dict[str, str] = {}
@@ -51,8 +74,13 @@ class RLNegotiator(NegotiationProtocol):
             if random.random() < self.epsilon:
                 out[t] = random.choice(names)
             else:
-                qvals = [self.q.get((n, t), 0.0) for n in names]
-                out[t] = names[int(np.argmax(qvals))]
+                scores = []
+                for n in names:
+                    qv = self.q.get((n, t), 0.0)
+                    if tracker is not None:
+                        qv += tracker.remaining(n)
+                    scores.append(qv)
+                out[t] = names[int(np.argmax(scores))]
         self._last = out
         return out
 
@@ -77,9 +105,11 @@ class MultiAgentCoordinator:
         self,
         agents: Mapping[str, MetaRLRefactorAgent] | None = None,
         negotiator: NegotiationProtocol | None = None,
+        budget: ComputeBudgetTracker | None = None,
     ) -> None:
         self.agents: dict[str, MetaRLRefactorAgent] = dict(agents or {})
         self.negotiator = negotiator
+        self.budget = budget
         self.log: list[tuple[str, str, str, float]] = []
 
     def register(self, name: str, agent: MetaRLRefactorAgent) -> None:
@@ -100,6 +130,8 @@ class MultiAgentCoordinator:
         reward = reward_fn(repo, action) if reward_fn is not None else 0.0
         agent.update(repo, action, reward, repo)
         self.log.append((name, repo, action, reward))
+        if self.budget is not None:
+            self.budget.consume(name, 0.01, 0.0)
         return reward
 
     async def schedule_round(
@@ -118,7 +150,7 @@ class MultiAgentCoordinator:
             if tasks:
                 await asyncio.gather(*tasks)
         else:
-            assign = await self.negotiator.assign(self.agents, repos)
+            assign = await self.negotiator.assign(self.agents, repos, self.budget)
             tasks = [
                 self._apply_action(agent_name, self.agents[agent_name], repo, apply_fn, reward_fn)
                 for repo, agent_name in assign.items()
