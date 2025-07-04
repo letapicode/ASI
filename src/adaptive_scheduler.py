@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 import time
 from collections import deque
-from typing import Callable, Deque, Dict
+from typing import Callable, Deque, Any
 
 try:  # pragma: no cover - optional torch dependency
     import torch  # type: ignore
@@ -18,19 +18,20 @@ except Exception:  # pragma: no cover - allow running without torch
             return 0
 
         @staticmethod
-        def get_device_properties(_: int):
-            class P:
+        def get_device_properties(_: int) -> Any:
+            class _P:
                 total_memory = 1
-            return P()
+
+            return _P()
 
     torch = type("torch", (), {"cuda": _DummyCuda})()  # type: ignore
 
 from .compute_budget_tracker import ComputeBudgetTracker
-from .accelerator_scheduler import AcceleratorScheduler
+from .telemetry import TelemetryLogger
 
 
-class AdaptiveScheduler(AcceleratorScheduler):
-    """Accelerator-aware scheduler with compute budget checks and progress gating."""
+class AdaptiveScheduler:
+    """GPU-aware scheduler with compute budget checks and carbon-aware dispatch."""
 
     def __init__(
         self,
@@ -43,11 +44,21 @@ class AdaptiveScheduler(AcceleratorScheduler):
     ) -> None:
         self.budget = budget
         self.run_id = run_id
+        self.telemetry: TelemetryLogger = budget.telemetry
         self.history: Deque[float] = deque(maxlen=window)
         self.min_improvement = min_improvement
+        self.max_mem = max_mem
+        self.check_interval = check_interval
+        self.queue: list[tuple[Callable[[], None], float]] = []
         self._stop = threading.Event()
+        self.thread = threading.Thread(target=self._loop, daemon=True)
         self.budget.start(run_id)
-        super().__init__(max_util=max_mem, check_interval=check_interval)
+        self.thread.start()
+
+    # --------------------------------------------------------------
+    def add(self, job: Callable[[], None], region: str | None = None) -> None:
+        cost = self.telemetry.get_carbon_intensity(region)
+        self.queue.append((job, cost))
 
     # --------------------------------------------------------------
     def record_improvement(self, val: float) -> None:
@@ -65,23 +76,26 @@ class AdaptiveScheduler(AcceleratorScheduler):
         return False
 
     # --------------------------------------------------------------
-    def _loop(self) -> None:  # type: ignore[override]
+    def _loop(self) -> None:
         while not self._stop.is_set():
-            if not any(self.queues[acc] for acc in self.queues):
+            if not self.queue:
                 time.sleep(self.check_interval)
                 continue
             if self._should_pause():
                 time.sleep(self.check_interval)
                 continue
-            ran = False
-            for acc, queue in self.queues.items():
-                if queue and self._utilization(acc) < self.max_util:
-                    job = queue.popleft()
-                    res = job()
-                    if isinstance(res, (int, float)):
-                        self.record_improvement(float(res))
-                    ran = True
-            if not ran:
+            mem = (
+                torch.cuda.memory_allocated() / torch.cuda.get_device_properties(0).total_memory
+                if torch.cuda.is_available()
+                else 0.0
+            )
+            if mem < self.max_mem:
+                idx = min(range(len(self.queue)), key=lambda i: self.queue[i][1])
+                job, _ = self.queue.pop(idx)
+                res = job()
+                if isinstance(res, (int, float)):
+                    self.record_improvement(float(res))
+            else:
                 time.sleep(self.check_interval)
         self.budget.stop()
 
@@ -93,9 +107,8 @@ class AdaptiveScheduler(AcceleratorScheduler):
         self.budget.stop()
 
     # --------------------------------------------------------------
-    def report_load(self) -> Dict[str, float]:
-        """Return current accelerator utilisation."""
-        return self.get_utilization()
+    def report_load(self) -> dict[str, float]:
+        return self.telemetry.get_stats()
 
 
 __all__ = ["AdaptiveScheduler"]

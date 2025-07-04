@@ -72,6 +72,28 @@ class GraphOfThought:
         key = keyword.lower()
         return self.search(start, lambda node: key in node.text.lower(), explain)
 
+    def self_reflect(self) -> str:
+        """Return a concise summary of all reasoning steps."""
+        incoming = {dst for dsts in self.edges.values() for dst in dsts}
+        starts = [n for n in self.nodes if n not in incoming]
+        if not starts:
+            starts = sorted(self.nodes)
+        visited = set()
+        paths = []
+        for start in sorted(starts):
+            node = start
+            texts = []
+            while node not in visited:
+                visited.add(node)
+                texts.append(self.nodes[node].text)
+                nexts = self.edges.get(node)
+                if not nexts:
+                    break
+                node = nexts[0]
+            if texts:
+                paths.append(" -> ".join(texts))
+        return "; ".join(paths)
+
     @classmethod
     def from_json(cls, path: str) -> "GraphOfThought":
         """Load graph from a JSON file."""

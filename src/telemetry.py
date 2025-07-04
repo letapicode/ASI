@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, Optional
 
 import psutil
 from .carbon_tracker import CarbonFootprintTracker
@@ -35,10 +35,12 @@ except Exception:  # pragma: no cover - optional
 
 @dataclass
 class TelemetryLogger:
-    """Collect and export basic hardware metrics."""
+    """Collect and export basic hardware metrics with optional carbon lookup."""
 
     interval: float = 1.0
     port: int | None = None
+    region: Optional[str] = None
+    carbon_data: Dict[str, float] | None = None
     metrics: Dict[str, Any] = field(default_factory=dict)
     carbon_tracker: CarbonFootprintTracker | None = None
 
@@ -61,6 +63,8 @@ class TelemetryLogger:
             }
         else:
             self.metrics = {}
+        if self.carbon_data is None:
+            self.carbon_data = {"default": 0.4}
 
     # --------------------------------------------------------------
     def _collect(self) -> None:
@@ -123,6 +127,12 @@ class TelemetryLogger:
         if self.carbon_tracker is not None:
             stats.update(self.carbon_tracker.get_stats())
         return stats
+
+    def get_carbon_intensity(self, region: Optional[str] = None) -> float:
+        """Return carbon intensity (kgCO2/kWh) for the given region."""
+        region = region or self.region or "default"
+        assert self.carbon_data is not None
+        return float(self.carbon_data.get(region, self.carbon_data.get("default", 0.4)))
 
 
 class FineGrainedProfiler:

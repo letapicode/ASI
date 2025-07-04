@@ -592,10 +592,13 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   `scripts/summarize_memory_benchmark.py`.**
 - Implement a `ContextSummaryMemory` that replaces far-past vectors with text summaries and re-expands them when retrieved. Unit test `tests/test_context_summary_memory.py` verifies summarization and expansion.
   **Implemented in `src/context_summary_memory.py` with tests.**
+- Extend `ContextSummaryMemory` with a `translator` argument so summaries are stored in multiple languages and returned in the query language. Tested in `tests/test_cross_lingual_summary_memory.py`.
 - Implement a `KnowledgeGraphMemory` that stores `(subject, predicate, object)` triples and hooks into `HierarchicalMemory` via `use_kg=True`. Unit tests cover insertion and retrieval.
   **Implemented in `src/knowledge_graph_memory.py` with `tests/test_knowledge_graph_memory.py`.**
 - Implement a `FederatedKGMemoryServer` that replicates `KnowledgeGraphMemory` across peers using CRDT-based updates. Endpoints `Push`, `PushBatch`, `Query` and `Sync` ensure replicas converge after partitions.
   **Implemented in `src/federated_kg_memory.py` with tests.**
+  `KnowledgeGraphMemory` accepts an optional timestamp for each triple and `query_triples()` can filter by a time range.
+  **Implemented in `src/knowledge_graph_memory.py` with `tests/test_knowledge_graph_memory.py` and `tests/test_time_aware_kg.py`.**
 - Add a `TelemetryLogger` in `telemetry.py` that exports GPU, CPU and network metrics via OpenTelemetry and Prometheus. Integrate the logger with `DistributedTrainer` and `MemoryServer`.
   `MemoryServer` now starts and stops a provided `TelemetryLogger` automatically.
   **Implemented in `src/telemetry.py`.**
@@ -676,6 +679,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   **Implemented in `src/model_card.py` with CLI `scripts/generate_model_card.py`.**
 - Extend `GraphOfThought` with `summarize_trace()` and an `explain` flag so
   reasoning steps can be rendered in plain language for debugging.
+- Add `self_reflect()` to `GraphOfThought` which outputs a concise summary of
+  reasoning steps. `ReasoningHistoryLogger` stores these summaries with
+  timestamps for later inspection.
 - Provide a `ResourceBroker` module coordinating multiple clusters and a demo
   script `scripts/resource_broker_demo.py`. The broker now reports per-accelerator
   utilisation via `get_load()` and allows allocating jobs to specific
@@ -694,6 +700,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   counters and reports kWh and CO₂ emissions. `TelemetryLogger` can start this
   tracker and `ComputeBudgetTracker` now exposes per-run carbon usage.
   **Implemented in `src/carbon_tracker.py` with tests.**
+- Add an `AdaptiveMicroBatcher` that monitors GPU memory via `TelemetryLogger`
+  and adjusts micro-batch sizes automatically. `DistributedTrainer` and
+  `EdgeRLTrainer` accept it through the optional `micro_batcher` argument.
 - Combine `SelfHealingTrainer` and `MultiAgentCoordinator` in a simplified
   `CollaborativeHealingLoop` for cooperative recovery.
 

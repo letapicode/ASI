@@ -16,6 +16,15 @@ sys.modules[loader.name] = graph_mod
 loader.exec_module(graph_mod)
 GraphOfThought = graph_mod.GraphOfThought
 
+logger_loader = importlib.machinery.SourceFileLoader(
+    'reasoning_history', 'src/reasoning_history.py'
+)
+logger_spec = importlib.util.spec_from_loader(logger_loader.name, logger_loader)
+logger_mod = importlib.util.module_from_spec(logger_spec)
+sys.modules[logger_loader.name] = logger_mod
+logger_loader.exec_module(logger_mod)
+ReasoningHistoryLogger = logger_mod.ReasoningHistoryLogger
+
 
 class TestGraphOfThought(unittest.TestCase):
     def test_add_and_search(self):
@@ -35,6 +44,22 @@ class TestGraphOfThought(unittest.TestCase):
         g.connect(a, b)
         path = g.plan_refactor(a, keyword="refactor")
         self.assertEqual(path, [])
+
+    def test_self_reflect_and_logger(self):
+        g = GraphOfThought()
+        a = g.add_step("start")
+        b = g.add_step("middle")
+        c = g.add_step("end")
+        g.connect(a, b)
+        g.connect(b, c)
+        summary = g.self_reflect()
+        self.assertEqual(summary, "start -> middle -> end")
+
+        logger = ReasoningHistoryLogger()
+        logger.log(summary)
+        hist = logger.get_history()
+        self.assertEqual(len(hist), 1)
+        self.assertEqual(hist[0][1], summary)
 
 
 class TestGraphOfThoughtCLI(unittest.TestCase):

@@ -461,7 +461,10 @@ def auto_label_triples(
 
 
 def ingest_translated_triples(
-    triples: Iterable[Tuple[str | Path, str | Path, str | Path]],
+    triples: Iterable[
+        Tuple[str | Path, str | Path, str | Path]
+        | Tuple[str | Path, str | Path, str | Path, float]
+    ],
     tokenizer,
     model: "CrossModalFusion",
     memory: "HierarchicalMemory",
@@ -482,7 +485,12 @@ def ingest_translated_triples(
     items: List[Tuple[str, Any, Any]] = []
     metas: List[Dict[str, str]] = []
 
-    for t_path, i_path, a_path in triples:
+    for triple in triples:
+        if len(triple) == 4:
+            t_path, i_path, a_path, ts = triple
+        else:
+            t_path, i_path, a_path = triple
+            ts = None
         text = Path(t_path).read_text()
         if str(i_path).endswith(".npy"):
             image = np.load(i_path)
@@ -500,7 +508,10 @@ def ingest_translated_triples(
         )
         for lang, txt in translations.items():
             items.append((txt, image, audio))
-            metas.append({"lang": lang})
+            meta = {"lang": lang}
+            if ts is not None:
+                meta["timestamp"] = float(ts)
+            metas.append(meta)
 
     dataset = MultiModalDataset(items, tokenizer)
     t_vecs, i_vecs, a_vecs = encode_all(model, dataset, batch_size=batch_size)
