@@ -618,7 +618,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `SecureFederatedLearner` that aggregates encrypted gradients from remote peers so training can proceed without sharing raw data. Provide a `scripts/federated_train.py` CLI.
   **Implemented in `src/secure_federated_learner.py` with `scripts/federated_train.py`.**
 - Add a `GPUAwareScheduler` module to monitor GPU memory and compute load and dispatch jobs accordingly. Integrate it with `DistributedTrainer`.
-  **Implemented in `src/gpu_aware_scheduler.py` and used by `DistributedTrainer`.**
+  Combine it with `ComputeBudgetTracker` in `adaptive_scheduler.py` so jobs pause when the GPU-hour budget runs out and resume once progress improves.
+  **Implemented in `src/gpu_aware_scheduler.py` and extended by `src/adaptive_scheduler.py` for use in `DistributedTrainer`.**
 - Develop an `AdversarialRobustnessSuite` that generates adversarial prompts and reports failure cases through `eval_harness`.
   **Implemented in `src/adversarial_robustness.py`.**
 - Implement a `DatasetBiasDetector` module that computes representation metrics and integrates with `AutoDatasetFilter`. Provide a `dataset_bias_report.py` utility for bias analysis.
