@@ -51,6 +51,8 @@ Citations point to the most recent public work so you can drill straight into th
 | **A-9** | **Automated PR Conflict Checks** | Summarize merge conflicts for all open pull requests | Detection completes in <2 min per repo |
 | **A-10** | **Goal-Oriented Evaluation Harness** | Benchmark each algorithm against its success criteria | Single command prints pass/fail scoreboard |
 
+`SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
+
 ---
 
 ## 4  Alignment & Control Algorithms
@@ -209,6 +211,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    `train_world_model` for mixed-modality experiments.
 11. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
+    `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard.
 12. **Graph-of-thought planning**: Implement `GraphOfThought` (see
     `src/graph_of_thought.py`) and measure refactor quality gains over the
     baseline meta-RL agent.
@@ -265,6 +268,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     transitions and report planning gains from the inferred edges.
     *Implemented in `src/causal_graph_learner.py`.*
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
+    The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
 29. **Self-alignment evaluator**: Integrate
     `deliberative_alignment.check_alignment()` into `eval_harness` and track
     alignment metrics alongside existing benchmarks. *Implemented in
@@ -316,6 +320,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 48. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
 49. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
 50. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines. *Implemented in `src/dataset_lineage_manager.py`.*
+    Use `DataProvenanceLedger` to append a signed hash of each lineage record. Run `scripts/check_provenance.py <root>` to verify the ledger.
 51. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
 52. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
 53. **Gradient compression for distributed training**: Implement a `GradientCompressor`

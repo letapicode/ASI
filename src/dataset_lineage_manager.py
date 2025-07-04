@@ -6,6 +6,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Iterable, List, Dict
 
+from .data_provenance_ledger import DataProvenanceLedger
+
 
 def _hash_file(path: Path) -> str:
     h = hashlib.sha256()
@@ -28,6 +30,7 @@ class DatasetLineageManager:
     def __init__(self, root: str | Path) -> None:
         self.root = Path(root)
         self.log_path = self.root / "dataset_lineage.json"
+        self.ledger = DataProvenanceLedger(self.root)
         if self.log_path.exists():
             data = json.loads(self.log_path.read_text())
             self.steps: List[LineageStep] = [LineageStep(**d) for d in data]
@@ -47,6 +50,8 @@ class DatasetLineageManager:
         self.log_path.write_text(
             json.dumps([asdict(s) for s in self.steps], indent=2)
         )
+        rec = json.dumps(asdict(step), sort_keys=True)
+        self.ledger.append(rec)
 
     # --------------------------------------------------------------
     def load(self) -> List[LineageStep]:

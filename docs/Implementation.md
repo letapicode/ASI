@@ -677,3 +677,15 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   `RiskScoreboard`. **Implemented in `src/compute_budget_tracker.py` with tests.**
 - Combine `SelfHealingTrainer` and `MultiAgentCoordinator` in a simplified
   `CollaborativeHealingLoop` for cooperative recovery.
+
+## Fairness Evaluator
+
+`src/fairness_evaluator.py` computes demographic parity and equal opportunity gaps from per-group label statistics. The evaluation harness exposes these metrics via the `fairness_evaluator` entry.
+
+## LoRA Merger
+
+`src/lora_merger.py` merges multiple LoRA checkpoints by weighted averaging. Use `scripts/merge_lora.py` to create a single adapter file before loading it in the model.
+
+## Edge RL Trainer
+
+`src/edge_rl_trainer.py` trains world models under a compute budget. It checks `ComputeBudgetTracker.remaining()` each step and stops when resources run low. See `scripts/train_edge_rl.py` for a usage example.

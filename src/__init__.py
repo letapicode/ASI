@@ -186,5 +186,13 @@ from .resource_broker import ResourceBroker
 from .research_ingest import run_ingestion, suggest_modules
 from .quantum_sampler import sample_actions_qae
 from .risk_scoreboard import RiskScoreboard
+from .semantic_drift_detector import SemanticDriftDetector
+from .data_provenance_ledger import DataProvenanceLedger
+from .fairness_evaluator import FairnessEvaluator
+from .risk_dashboard import RiskDashboard
+from .graph_neural_reasoner import GraphNeuralReasoner
+from .lora_merger import merge_adapters
+from .edge_rl_trainer import EdgeRLTrainer
+from .retrieval_explainer import RetrievalExplainer
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker

@@ -4,6 +4,9 @@ import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Iterable, Dict, Any
+import torch
+
+from .retrieval_explainer import RetrievalExplainer
 
 from .hierarchical_memory import MemoryServer
 
@@ -39,7 +42,23 @@ class MemoryDashboard:
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:  # noqa: D401
-                data = json.dumps(dashboard.aggregate()).encode()
+                if self.path == "/trace" and dashboard.servers:
+                    trace = dashboard.servers[0].memory.last_trace
+                    if trace is None:
+                        data = b"{}"
+                    else:
+                        vecs, meta, scores = (
+                            None,
+                            trace.get("provenance", []),
+                            trace.get("scores", []),
+                        )
+                        data = json.dumps(
+                            RetrievalExplainer.format(
+                                torch.tensor([]), torch.tensor([]), scores, meta
+                            )
+                        ).encode()
+                else:
+                    data = json.dumps(dashboard.aggregate()).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
