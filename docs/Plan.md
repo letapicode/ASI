@@ -329,7 +329,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 53. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
 54. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
 55. **Secure federated learner**: Train models across remote peers using encrypted gradient aggregation. Accuracy should stay within 2% of centralized training.
-56. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Throughput must scale nearly linearly across four GPUs.
+56. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Combined with `ComputeBudgetTracker`, the new `AdaptiveScheduler` automatically pauses or resumes runs based on remaining GPU hours and historical improvement.
 57. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
 58. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
 59. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
