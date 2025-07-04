@@ -194,20 +194,22 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    parameters in `MetaRLRefactorAgent` and track benchmark uplift.
 5. **Scalability metrics**: *(done)* `eval_harness.py` now records GPU memory
    usage via `log_memory_usage()` and prints it alongside pass/fail results.
-6. **Distributed memory benchmark**: Run `DistributedMemory` with four
+6. **Compute budget tracking**: Use `ComputeBudgetTracker` to log GPU hours and
+   energy cost for each run and stop training when the budget is exhausted.
+7. **Distributed memory benchmark**: Run `DistributedMemory` with four
    `MemoryServer` nodes using `distributed_memory_benchmark.py` and measure
    query latency and throughput versus the single-node baseline.
-7. **MemoryServer streaming API**: Benchmark the new batched push/query
+8. **MemoryServer streaming API**: Benchmark the new batched push/query
    endpoints and report latency savings over single-vector calls.
-8. **Checkpointed world model**: *(done)* the multimodal world model now
+9. **Checkpointed world model**: *(done)* the multimodal world model now
    supports a `checkpoint_blocks` flag which reduces memory usage during
    training.
-9. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
+10. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
    trajectories from `self_play_skill_loop.run_loop` and feeds them into
    `train_world_model` for mixed-modality experiments.
-10. **Attention trace analysis**: Use the new `AttentionVisualizer` to
+11. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
-11. **Graph-of-thought planning**: Implement `GraphOfThought` (see
+12. **Graph-of-thought planning**: Implement `GraphOfThought` (see
     `src/graph_of_thought.py`) and measure refactor quality gains over the
     baseline meta-RL agent.
 12. **Neuro-symbolic world model**: Integrate `NeuroSymbolicExecutor` with

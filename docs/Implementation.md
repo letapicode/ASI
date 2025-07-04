@@ -672,5 +672,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a mocked `quantum_sampler.sample_actions_qae()` and integrate it as
   an optional sampler in `train_with_self_play`.
 - Compute an overall risk metric via the new `RiskScoreboard` module.
+- Add a `ComputeBudgetTracker` that records GPU hours and memory usage via
+  `TelemetryLogger` and feeds the estimated energy cost into
+  `RiskScoreboard`. **Implemented in `src/compute_budget_tracker.py` with tests.**
 - Combine `SelfHealingTrainer` and `MultiAgentCoordinator` in a simplified
   `CollaborativeHealingLoop` for cooperative recovery.
