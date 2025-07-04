@@ -1,6 +1,8 @@
 import unittest
 import torch
 import time
+import json
+import http.client
 import importlib.machinery
 import importlib.util
 import types
@@ -36,6 +38,25 @@ class TestMemoryDashboard(unittest.TestCase):
         stats = dashboard.aggregate()
         server.stop(0)
         self.assertIn("hit_rate", stats)
+
+    def test_http_endpoints(self):
+        mem = HierarchicalMemory(dim=2, compressed_dim=1, capacity=10)
+        server = type("Stub", (), {"memory": mem, "telemetry": None})()
+        dash = MemoryDashboard([server])
+        dash.start(port=0)
+        port = dash.port
+        conn = http.client.HTTPConnection("localhost", port)
+        vec = [0.1, 0.2]
+        conn.request("POST", "/add", body=json.dumps({"vector": vec, "metadata": "m1"}))
+        conn.getresponse().read()
+        conn.request("GET", "/entries")
+        resp = conn.getresponse()
+        entries = json.loads(resp.read())
+        self.assertEqual(entries[0]["meta"], "m1")
+        conn.request("DELETE", "/delete", body=json.dumps({"index": 0}))
+        conn.getresponse().read()
+        self.assertEqual(len(mem), 0)
+        dash.stop()
 
 
 if __name__ == "__main__":
