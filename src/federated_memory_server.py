@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import Iterable, Any
+from typing import Iterable, Any, Dict, Tuple
 
 import torch
 
 from .hierarchical_memory import (
     HierarchicalMemory,
     MemoryServer,
-    push_remote,
-    push_batch_remote,
     query_remote,
 )
 
@@ -22,8 +20,11 @@ except Exception:  # pragma: no cover - optional
 
 if _HAS_GRPC:
 
+    import time
+    import uuid
+
     class FederatedMemoryServer(MemoryServer):
-        """Memory server that replicates updates across peers."""
+        """Memory server that replicates updates across peers using CRDTs."""
 
         def __init__(
             self,
@@ -34,6 +35,7 @@ if _HAS_GRPC:
         ) -> None:
             super().__init__(memory, address=address, max_workers=max_workers)
             self.peers = list(peers or [])
+            self.state: Dict[str, Tuple[int, torch.Tensor]] = {}
 
         def add_peer(self, address: str) -> None:
             """Register a new peer."""
@@ -46,23 +48,58 @@ if _HAS_GRPC:
                 self.peers.remove(address)
 
         # --------------------------------------------------------------
-        def _replicate(self, vector: torch.Tensor, meta: Any | None) -> None:
-            for addr in self.peers:
-                push_remote(addr, vector, meta)
+        def _apply_update(self, key: str, vec: torch.Tensor, ts: int) -> None:
+            cur = self.state.get(key)
+            if cur is not None and cur[0] >= ts:
+                return
+            if cur is not None:
+                self.memory.delete(tag=key)
+            self.memory.add(vec.unsqueeze(0), metadata=[key])
+            self.state[key] = (ts, vec.detach().cpu())
 
-        def _replicate_batch(
-            self, vectors: torch.Tensor, metas: Iterable[Any] | None
-        ) -> None:
+        def _replicate_entries(self, entries: list[memory_pb2.VectorEntry]) -> None:
+            md = (("x-replicated", "1"),)
+            req = memory_pb2.SyncRequest(items=entries)
             for addr in self.peers:
-                push_batch_remote(addr, vectors, metas)
+                with grpc.insecure_channel(addr) as channel:
+                    stub = memory_pb2_grpc.MemoryServiceStub(channel)
+                    stub.Sync(req, metadata=md)
+
+        # --------------------------------------------------------------
+        def _replicate(self, key: str) -> None:
+            ts, vec = self.state[key]
+            entry = memory_pb2.VectorEntry(
+                id=key,
+                vector=vec.view(-1).tolist(),
+                metadata=key,
+                timestamp=ts,
+            )
+            self._replicate_entries([entry])
+
+        def _replicate_batch(self, keys: Iterable[str]) -> None:
+            entries = []
+            for k in keys:
+                ts, vec = self.state[k]
+                entries.append(
+                    memory_pb2.VectorEntry(
+                        id=k,
+                        vector=vec.view(-1).tolist(),
+                        metadata=k,
+                        timestamp=ts,
+                    )
+                )
+            if entries:
+                self._replicate_entries(entries)
 
         # gRPC handlers -------------------------------------------------
         def Push(self, request: memory_pb2.PushRequest, context) -> memory_pb2.PushReply:  # noqa: N802
             vec = torch.tensor(request.vector).reshape(1, -1)
             meta = request.metadata if request.metadata else None
-            self.memory.add(vec, metadata=[meta])
+            key = str(meta) if meta is not None else uuid.uuid4().hex
+            ts = int(time.time() * 1000)
+            self._apply_update(key, vec[0], ts)
             if not any(m.key == "x-replicated" for m in context.invocation_metadata()):
-                self._replicate(vec[0], meta)
+                self._replicate(key)
             return memory_pb2.PushReply(ok=True)
 
         def Query(self, request: memory_pb2.QueryRequest, context) -> memory_pb2.QueryReply:  # noqa: N802
@@ -82,17 +119,31 @@ if _HAS_GRPC:
             return memory_pb2.QueryReply(vectors=flat, metadata=meta_out)
 
         def PushBatch(self, request: memory_pb2.PushBatchRequest, context) -> memory_pb2.PushReply:  # noqa: N802
-            vectors = []
-            metas = []
+            keys = []
             for item in request.items:
-                vectors.append(torch.tensor(item.vector))
-                metas.append(item.metadata if item.metadata else None)
-            if vectors:
-                vec_batch = torch.stack(vectors)
-                self.memory.add(vec_batch, metadata=metas)
-                if not any(m.key == "x-replicated" for m in context.invocation_metadata()):
-                    self._replicate_batch(vec_batch, metas)
+                vec = torch.tensor(item.vector)
+                meta = item.metadata if item.metadata else None
+                key = str(meta) if meta is not None else uuid.uuid4().hex
+                ts = int(time.time() * 1000)
+                self._apply_update(key, vec, ts)
+                keys.append(key)
+            if keys and not any(m.key == "x-replicated" for m in context.invocation_metadata()):
+                self._replicate_batch(keys)
             return memory_pb2.PushReply(ok=True)
+
+        def Sync(self, request: memory_pb2.SyncRequest, context) -> memory_pb2.SyncReply:  # noqa: N802
+            keys = []
+            for item in request.items:
+                vec = torch.tensor(item.vector)
+                key = item.id or item.metadata
+                if not key:
+                    continue
+                ts = int(item.timestamp)
+                self._apply_update(key, vec, ts)
+                keys.append(key)
+            if keys and not any(m.key == "x-replicated" for m in context.invocation_metadata()):
+                self._replicate_batch(keys)
+            return memory_pb2.SyncReply(ok=True)
 
         def start(self) -> None:  # type: ignore[override]
             super().start()
@@ -102,3 +153,4 @@ if _HAS_GRPC:
 
 
 __all__ = ["FederatedMemoryServer"]
+

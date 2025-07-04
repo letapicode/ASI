@@ -54,6 +54,11 @@ class MemoryServiceStub(object):
                 request_serializer=memory__pb2.QueryBatchRequest.SerializeToString,
                 response_deserializer=memory__pb2.QueryBatchReply.FromString,
                 _registered_method=True)
+        self.Sync = channel.unary_unary(
+                '/asi.MemoryService/Sync',
+                request_serializer=memory__pb2.SyncRequest.SerializeToString,
+                response_deserializer=memory__pb2.SyncReply.FromString,
+                _registered_method=True)
 
 
 class MemoryServiceServicer(object):
@@ -83,6 +88,12 @@ class MemoryServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Sync(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MemoryServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -105,6 +116,11 @@ def add_MemoryServiceServicer_to_server(servicer, server):
                     servicer.QueryBatch,
                     request_deserializer=memory__pb2.QueryBatchRequest.FromString,
                     response_serializer=memory__pb2.QueryBatchReply.SerializeToString,
+            ),
+            'Sync': grpc.unary_unary_rpc_method_handler(
+                    servicer.Sync,
+                    request_deserializer=memory__pb2.SyncRequest.FromString,
+                    response_serializer=memory__pb2.SyncReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -215,6 +231,33 @@ class MemoryService(object):
             '/asi.MemoryService/QueryBatch',
             memory__pb2.QueryBatchRequest.SerializeToString,
             memory__pb2.QueryBatchReply.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Sync(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/asi.MemoryService/Sync',
+            memory__pb2.SyncRequest.SerializeToString,
+            memory__pb2.SyncReply.FromString,
             options,
             channel_credentials,
             insecure,

@@ -6,6 +6,7 @@ service MemoryService {
   rpc Query (QueryRequest) returns (QueryReply);
   rpc PushBatch (PushBatchRequest) returns (PushReply);
   rpc QueryBatch (QueryBatchRequest) returns (QueryBatchReply);
+  rpc Sync (SyncRequest) returns (SyncReply);
 }
 
 message PushBatchRequest {
@@ -37,4 +38,19 @@ message QueryRequest {
 message QueryReply {
   repeated float vectors = 1;
   repeated string metadata = 2;
+}
+
+message VectorEntry {
+  string id = 1;
+  repeated float vector = 2;
+  string metadata = 3;
+  int64 timestamp = 4;
+}
+
+message SyncRequest {
+  repeated VectorEntry items = 1;
+}
+
+message SyncReply {
+  bool ok = 1;
 }
