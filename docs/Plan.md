@@ -276,7 +276,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 30. **Federated memory backend**: Implement a `FederatedMemoryServer` that
     replicates vector stores across peers via gRPC streaming consensus for
-    decentralized retrieval.
+    decentralized retrieval. The service now exposes a `Sync` RPC and uses
+    CRDT update rules so that multiple servers converge on identical vector
+    stores after exchanging updates.
 31. **Active data selection**: Add an `ActiveDataSelector` to score incoming
     triples by predictive entropy and keep only high-information samples.
     *Implemented in `data_ingest.ActiveDataSelector`.*
