@@ -185,10 +185,30 @@ def encode_all(
     return all_t, all_i, all_a
 
 
+def retrieval_accuracy(
+    model: CrossModalFusion,
+    dataset: Dataset,
+    memory: "HierarchicalMemory",
+    batch_size: int = 8,
+    k: int = 1,
+) -> float:
+    """Return retrieval accuracy after encoding ``dataset`` into ``memory``."""
+
+    t_vecs, i_vecs, a_vecs = encode_all(model, dataset, batch_size=batch_size, memory=memory)
+    correct = 0
+    for idx in range(len(dataset)):
+        query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx]) / 3.0
+        out, meta = memory.search(query, k=k)
+        if meta and meta[0] == idx:
+            correct += 1
+    return correct / len(dataset)
+
+
 __all__ = [
     "CrossModalFusionConfig",
     "CrossModalFusion",
     "MultiModalDataset",
     "train_fusion_model",
     "encode_all",
+    "retrieval_accuracy",
 ]
