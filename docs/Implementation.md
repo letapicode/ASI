@@ -580,6 +580,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add a `CrossLingualTranslator` helper in `data_ingest.py` to translate text
   into multiple languages during ingestion and store the augmented triples.
   **Implemented in `data_ingest.CrossLingualTranslator`.**
+- Provide a `CrossLingualMemory` wrapper that stores translated vectors and
+  lets `HierarchicalMemory` search across languages when a translator is set.
+  **Implemented in `src/cross_lingual_memory.py` with tests.**
 - Create a `WorldModelDistiller` module and a `scripts/distill_world_model.py`
   utility to train smaller student models from the large world model.
   **Implemented in `src/world_model_distiller.py` with the script
