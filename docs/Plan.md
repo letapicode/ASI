@@ -313,45 +313,48 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     passed through `cross_modal_fusion.encode_all()` and their fused embeddings
     are stored in `HierarchicalMemory` with language tags for language-agnostic
     retrieval.
-41. **World-model distillation**: Implement a `WorldModelDistiller` that
+41. **Cross-lingual memory retrieval**: `HierarchicalMemory` now accepts a
+    translator and the `CrossLingualMemory` wrapper persists translated vectors
+    so queries in any supported language return the same results.
+42. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
     ≥4×.
 
-42. **Summarizing memory compression**: Condense rarely accessed vectors with a small language model before persisting them to disk. Success is a ≥50 % reduction in storage while retrieval accuracy drops <5 %.
-43. **Telemetry instrumentation**: Record GPU/CPU utilization and network throughput across distributed nodes using OpenTelemetry and expose the metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster. *`MemoryServer` now accepts a `TelemetryLogger` to start and stop metrics automatically.*
-44. **Memory usage dashboard**: Aggregate telemetry from multiple memory nodes and present hit/miss rates in real time.
-44. **License compliance checker**: Parse dataset sources for license text during ingestion and block incompatible samples. Every stored triple should include a valid license entry.
-45. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
-46. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt revisions via reinforcement learning and measure evaluation gains.
-47. **Training anomaly detection**: Extend `SelfHealingTrainer` with a `TrainingAnomalyDetector` to roll back or restart runs when metrics diverge.
-48. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
-49. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
-50. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines. *Implemented in `src/dataset_lineage_manager.py`.*
+43. **Summarizing memory compression**: Condense rarely accessed vectors with a small language model before persisting them to disk. Success is a ≥50 % reduction in storage while retrieval accuracy drops <5 %.
+44. **Telemetry instrumentation**: Record GPU/CPU utilization and network throughput across distributed nodes using OpenTelemetry and expose the metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster. *`MemoryServer` now accepts a `TelemetryLogger` to start and stop metrics automatically.*
+45. **Memory usage dashboard**: Aggregate telemetry from multiple memory nodes and present hit/miss rates in real time.
+46. **License compliance checker**: Parse dataset sources for license text during ingestion and block incompatible samples. Every stored triple should include a valid license entry.
+47. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
+48. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt revisions via reinforcement learning and measure evaluation gains.
+49. **Training anomaly detection**: Extend `SelfHealingTrainer` with a `TrainingAnomalyDetector` to roll back or restart runs when metrics diverge.
+50. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
+51. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
+52. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines. *Implemented in `src/dataset_lineage_manager.py`.*
     Use `DataProvenanceLedger` to append a signed hash of each lineage record. Run `scripts/check_provenance.py <root>` to verify the ledger.
-51. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
-52. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
-53. **Gradient compression for distributed training**: Implement a `GradientCompressor`
+53. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
+54. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
+55. **Gradient compression for distributed training**: Implement a `GradientCompressor`
     with top-k sparsification or quantized gradients and integrate it with
     `DistributedTrainer`.
-53. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
-54. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
-55. **Secure federated learner**: Train models across remote peers using encrypted gradient aggregation. Accuracy should stay within 2% of centralized training.
-56. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Combined with `ComputeBudgetTracker`, the new `AdaptiveScheduler` automatically pauses or resumes runs based on remaining GPU hours and historical improvement.
-57. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
-58. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
-59. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
-60. **Parameter-efficient model editing**: Implement `GradientPatchEditor` to fix wrong outputs with minimal updates; >90% targeted fix rate with <1% perplexity change.
-61. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
-62. **GraphQL memory gateway**: Expose `MemoryServer` queries through a GraphQL API and keep retrieval accuracy unchanged with <1.2× latency.
-63. **Fine-grained telemetry profiler**: Record per-module compute and memory via `FineGrainedProfiler` and ensure overhead stays below 3%.
-64. **Auto-labeling pipeline**: Use the world model to generate weak labels for unlabeled triples during ingestion and measure dataset quality improvements.
-65. **Context window profiler**: Measure memory and latency across sequence lengths. Implemented in `src/context_profiler.py` and integrated with `eval_harness.py`.
-66. **Differential privacy memory**: Use `DifferentialPrivacyMemory` to store noisy embeddings with <2% recall drop at ε=1. *Implemented in `src/dp_memory.py` with tests.*
-67. **Unified multi-modal evaluation**: Add `MultiModalEval` to `eval_harness` and target ≥90% recall on the toy dataset. *Implemented in `src/eval_harness.py` with tests.*
-68. **Multi-agent graph planning**: Integrate `MultiAgentCoordinator` with `GraphOfThoughtPlanner` to build reasoning graphs collaboratively, achieving ≥20% speed-up over single-agent planning. *Implemented in `src/multi_agent_graph_planner.py` with tests.*
-69. **Self-debugging world model**: Automatically patch the world model when rollout errors exceed 1%, keeping long-term error <1%. *Implemented in `src/world_model_debugger.py` with tests.*
-70. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
+56. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
+57. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
+58. **Secure federated learner**: Train models across remote peers using encrypted gradient aggregation. Accuracy should stay within 2% of centralized training.
+59. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Combined with `ComputeBudgetTracker`, the new `AdaptiveScheduler` automatically pauses or resumes runs based on remaining GPU hours and historical improvement.
+60. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
+61. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
+62. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
+63. **Parameter-efficient model editing**: Implement `GradientPatchEditor` to fix wrong outputs with minimal updates; >90% targeted fix rate with <1% perplexity change.
+64. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
+65. **GraphQL memory gateway**: Expose `MemoryServer` queries through a GraphQL API and keep retrieval accuracy unchanged with <1.2× latency.
+66. **Fine-grained telemetry profiler**: Record per-module compute and memory via `FineGrainedProfiler` and ensure overhead stays below 3%.
+67. **Auto-labeling pipeline**: Use the world model to generate weak labels for unlabeled triples during ingestion and measure dataset quality improvements.
+68. **Context window profiler**: Measure memory and latency across sequence lengths. Implemented in `src/context_profiler.py` and integrated with `eval_harness.py`.
+69. **Differential privacy memory**: Use `DifferentialPrivacyMemory` to store noisy embeddings with <2% recall drop at ε=1. *Implemented in `src/dp_memory.py` with tests.*
+70. **Unified multi-modal evaluation**: Add `MultiModalEval` to `eval_harness` and target ≥90% recall on the toy dataset. *Implemented in `src/eval_harness.py` with tests.*
+71. **Multi-agent graph planning**: Integrate `MultiAgentCoordinator` with `GraphOfThoughtPlanner` to build reasoning graphs collaboratively, achieving ≥20% speed-up over single-agent planning. *Implemented in `src/multi_agent_graph_planner.py` with tests.*
+72. **Self-debugging world model**: Automatically patch the world model when rollout errors exceed 1%, keeping long-term error <1%. *Implemented in `src/world_model_debugger.py` with tests.*
+73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
