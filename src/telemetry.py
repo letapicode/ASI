@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, Callable
 
 import psutil
+from .carbon_tracker import CarbonFootprintTracker
 try:  # pragma: no cover - optional torch dependency
     import torch  # type: ignore
 except Exception:  # pragma: no cover - allow running without torch
@@ -39,10 +40,16 @@ class TelemetryLogger:
     interval: float = 1.0
     port: int | None = None
     metrics: Dict[str, Any] = field(default_factory=dict)
+    carbon_tracker: CarbonFootprintTracker | None = None
 
     def __post_init__(self) -> None:
         self._stop = threading.Event()
         self.thread: threading.Thread | None = None
+        if isinstance(self.carbon_tracker, bool):
+            if self.carbon_tracker:
+                self.carbon_tracker = CarbonFootprintTracker(interval=self.interval)
+            else:
+                self.carbon_tracker = None
         if _HAS_PROM and self.port is not None:
             start_http_server(self.port)
         if _HAS_PROM:
@@ -67,12 +74,21 @@ class TelemetryLogger:
             net = psutil.net_io_counters()
             sent = net.bytes_sent - last_net.bytes_sent
             last_net = net
+            if self.carbon_tracker is not None:
+                cf_stats = self.carbon_tracker.get_stats()
+            else:
+                cf_stats = {}
 
             if _HAS_PROM:
                 self.metrics["cpu"].set(cpu)
                 self.metrics["gpu"].set(gpu)
                 self.metrics["mem"].set(mem)
                 self.metrics["net"].set(sent)
+                if self.carbon_tracker is not None:
+                    self.metrics.setdefault("energy_kwh", Gauge("energy_kwh", "Energy consumed"))
+                    self.metrics.setdefault("carbon_g", Gauge("carbon_g", "Carbon emitted"))
+                    self.metrics["energy_kwh"].set(cf_stats.get("energy_kwh", 0.0))
+                    self.metrics["carbon_g"].set(cf_stats.get("carbon_g", 0.0))
             else:
                 self.metrics = {
                     "cpu": cpu,
@@ -80,12 +96,15 @@ class TelemetryLogger:
                     "mem": mem,
                     "net": sent,
                 }
+                self.metrics.update(cf_stats)
             time.sleep(self.interval)
 
     # --------------------------------------------------------------
     def start(self) -> None:
         if self.thread is not None:
             return
+        if self.carbon_tracker is not None:
+            self.carbon_tracker.start()
         self.thread = threading.Thread(target=self._collect, daemon=True)
         self.thread.start()
 
@@ -96,9 +115,14 @@ class TelemetryLogger:
         self.thread.join(timeout=1.0)
         self.thread = None
         self._stop.clear()
+        if self.carbon_tracker is not None:
+            self.carbon_tracker.stop()
 
     def get_stats(self) -> Dict[str, Any]:
-        return dict(self.metrics)
+        stats = dict(self.metrics)
+        if self.carbon_tracker is not None:
+            stats.update(self.carbon_tracker.get_stats())
+        return stats
 
 
 class FineGrainedProfiler:
@@ -124,4 +148,4 @@ class FineGrainedProfiler:
         self.callback(cpu_time, gpu_mem)
 
 
-__all__ = ["TelemetryLogger", "FineGrainedProfiler"]
+__all__ = ["TelemetryLogger", "FineGrainedProfiler", "CarbonFootprintTracker"]
