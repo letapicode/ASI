@@ -20,7 +20,6 @@ def _load(name, path):
 
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 ComputeBudgetTracker = _load('asi.compute_budget_tracker', 'src/compute_budget_tracker.py').ComputeBudgetTracker
-_load('asi.gpu_aware_scheduler', 'src/gpu_aware_scheduler.py')
 AdaptiveScheduler = _load('asi.adaptive_scheduler', 'src/adaptive_scheduler.py').AdaptiveScheduler
 
 
@@ -56,6 +55,24 @@ class TestAdaptiveScheduler(unittest.TestCase):
         time.sleep(0.4)
         sched.stop()
         self.assertLessEqual(len(ran), 2)
+
+    def test_carbon_priority(self):
+        logger = TelemetryLogger(interval=0.05, carbon_data={"US": 0.5, "EU": 0.3})
+        tracker = ComputeBudgetTracker(1.0, telemetry=logger)
+        sched = AdaptiveScheduler(tracker, 'run', check_interval=0.05)
+        order: list[str] = []
+
+        def job_a():
+            order.append('a')
+
+        def job_b():
+            order.append('b')
+
+        sched.add(job_a, region='US')
+        sched.add(job_b, region='EU')
+        time.sleep(0.3)
+        sched.stop()
+        self.assertTrue(order and order[0] == 'b')
 
 
 if __name__ == '__main__':

@@ -3,16 +3,35 @@ from __future__ import annotations
 import threading
 import time
 from collections import deque
-from typing import Callable, Deque
+from typing import Callable, Deque, Any
 
-import torch
+try:  # pragma: no cover - optional torch dependency
+    import torch  # type: ignore
+except Exception:  # pragma: no cover - allow running without torch
+    class _DummyCuda:
+        @staticmethod
+        def is_available() -> bool:
+            return False
+
+        @staticmethod
+        def memory_allocated() -> int:
+            return 0
+
+        @staticmethod
+        def get_device_properties(_: int) -> Any:
+            class _P:
+                total_memory = 1
+
+            return _P()
+
+    torch = type("torch", (), {"cuda": _DummyCuda})()  # type: ignore
 
 from .compute_budget_tracker import ComputeBudgetTracker
-from .gpu_aware_scheduler import GPUAwareScheduler
+from .telemetry import TelemetryLogger
 
 
-class AdaptiveScheduler(GPUAwareScheduler):
-    """GPU-aware scheduler with compute budget checks and progress gating."""
+class AdaptiveScheduler:
+    """GPU-aware scheduler with compute budget checks and carbon-aware dispatch."""
 
     def __init__(
         self,
@@ -25,11 +44,21 @@ class AdaptiveScheduler(GPUAwareScheduler):
     ) -> None:
         self.budget = budget
         self.run_id = run_id
+        self.telemetry: TelemetryLogger = budget.telemetry
         self.history: Deque[float] = deque(maxlen=window)
         self.min_improvement = min_improvement
         self._stop = threading.Event()
         self.budget.start(run_id)
-        super().__init__(max_mem=max_mem, check_interval=check_interval)
+        self.max_mem = max_mem
+        self.check_interval = check_interval
+        self.queue: list[tuple[Callable[[], None], float]] = []
+        self.thread = threading.Thread(target=self._loop, daemon=True)
+        self.thread.start()
+
+    # --------------------------------------------------------------
+    def add(self, job: Callable[[], None], region: str | None = None) -> None:
+        cost = self.telemetry.get_carbon_intensity(region)
+        self.queue.append((job, cost))
 
     # --------------------------------------------------------------
     def record_improvement(self, val: float) -> None:
@@ -61,7 +90,8 @@ class AdaptiveScheduler(GPUAwareScheduler):
                 else 0.0
             )
             if mem < self.max_mem:
-                job = self.queue.popleft()
+                idx = min(range(len(self.queue)), key=lambda i: self.queue[i][1])
+                job, _ = self.queue.pop(idx)
                 res = job()
                 if isinstance(res, (int, float)):
                     self.record_improvement(float(res))
