@@ -3,7 +3,7 @@ import torch
 from typing import Iterable, Any, Tuple, List
 
 from .hierarchical_memory import HierarchicalMemory
-from .data_ingest import CrossLingualTranslator
+from .data_ingest import CrossLingualTranslator, CrossLingualSpeechTranslator
 
 
 def _embed_text(text: str, dim: int) -> torch.Tensor:
@@ -21,9 +21,11 @@ class CrossLingualMemory(HierarchicalMemory):
         self,
         *args: Any,
         translator: CrossLingualTranslator | None = None,
+        speech_translator: CrossLingualSpeechTranslator | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, translator=translator, **kwargs)
+        self.speech_translator = speech_translator
         self.text_dim = self.compressor.encoder.in_features
 
     def add_texts(
@@ -44,6 +46,38 @@ class CrossLingualMemory(HierarchicalMemory):
                     out_meta.append(trans)
         stacked = torch.stack(vecs)
         super().add(stacked, out_meta)
+
+    def add_modalities(
+        self,
+        text: torch.Tensor | None = None,
+        images: torch.Tensor | None = None,
+        audio: torch.Tensor | None = None,
+        metadata: Iterable[Any] | None = None,
+    ) -> None:  # type: ignore[override]
+        """Add modality embeddings and store audio transcripts."""
+        n = None
+        for t in (text, images, audio):
+            if t is not None:
+                n = t.shape[0]
+                break
+        if n is None:
+            return
+        if metadata is None:
+            metas = [self._next_id + i for i in range(n)]
+            self._next_id += n
+        else:
+            metas = list(metadata)
+        if len(metas) != n:
+            raise ValueError("metadata length mismatch")
+        if text is not None:
+            super().add(text, [{"id": m, "modality": "text"} for m in metas])
+        if images is not None:
+            super().add(images, [{"id": m, "modality": "image"} for m in metas])
+        if audio is not None:
+            super().add(audio, [{"id": m, "modality": "audio"} for m in metas])
+            if self.speech_translator is not None:
+                transcripts = [self.speech_translator.transcribe(a) for a in audio]
+                self.add_texts(transcripts, metas)
 
     # ------------------------------------------------------------------
     # Convenience wrappers
@@ -78,11 +112,22 @@ class CrossLingualMemory(HierarchicalMemory):
         out_meta = [r[2] for r in top]
         return out_vecs, out_meta
 
+    def search_audio(
+        self, audio: str | torch.Tensor, k: int = 5
+    ) -> Tuple[torch.Tensor, List[Any]]:
+        """Transcribe ``audio`` then search translations."""
+        if self.speech_translator is None:
+            return torch.empty(0, self.text_dim), []
+        text = self.speech_translator.transcribe(audio)
+        return self.search_text(text, k)
+
     def search(
         self, query: torch.Tensor | str, k: int = 5
     ) -> Tuple[torch.Tensor, List[Any]]:  # type: ignore[override]
-        """Search by embedding or text."""
+        """Search by embedding, text or audio path."""
         if isinstance(query, str):
+            if query.endswith(".wav") and self.speech_translator is not None:
+                return self.search_audio(query, k)
             return self.search_text(query, k)
         return super().search(query, k)
 
