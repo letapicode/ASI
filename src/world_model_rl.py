@@ -146,6 +146,7 @@ def train_with_self_play(
     frames: Iterable[torch.Tensor],
     actions: Iterable[int],
     dp_cfg: DifferentialPrivacyConfig | None = None,
+    sampler_fn: Callable[[torch.Tensor], torch.Tensor] | None = None,
 ) -> tuple[WorldModel, SkillTransferModel]:
     """Run self-play to gather transitions and fit a world model."""
 
@@ -162,10 +163,16 @@ def train_with_self_play(
         rewards: list[float] = []
         acts: list[int] = []
         for _ in range(steps):
-            a = pol(obs)
+            raw_a = pol(obs)
+            a = sampler_fn(raw_a) if sampler_fn is not None else raw_a
             step = env.step(a)
             transitions.append(
-                (obs.clone(), int(a if not isinstance(a, torch.Tensor) else a.item()), step.observation.clone(), step.reward)
+                (
+                    obs.clone(),
+                    int(a if not isinstance(a, torch.Tensor) else a.item()),
+                    step.observation.clone(),
+                    step.reward,
+                )
             )
             observations.append(step.observation)
             rewards.append(step.reward)

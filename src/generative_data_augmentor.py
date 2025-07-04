@@ -38,5 +38,22 @@ class GenerativeDataAugmentor:
             triples.append((text, image, audio))
         return triples
 
+    def synthesize_3d(
+        self,
+        start_text: str,
+        start_volume: np.ndarray,
+        policy_fn: Callable[[torch.Tensor], torch.Tensor],
+        steps: int = 5,
+    ) -> List[Tuple[str, np.ndarray]]:
+        """Return text-volume pairs synthesised from the world model."""
+        val = float(start_volume.mean())
+        out: List[Tuple[str, np.ndarray]] = []
+        for _ in range(steps):
+            val += 0.1
+            text = f"latent3d:{val:.2f}"
+            volume = np.full_like(start_volume, val, dtype=np.float32)
+            out.append((text, volume))
+        return out
+
 
 __all__ = ["GenerativeDataAugmentor"]

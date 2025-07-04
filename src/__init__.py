@@ -181,3 +181,9 @@ from .causal_reasoner import CausalReasoner
 from .multi_agent_graph_planner import MultiAgentGraphPlanner
 from .world_model_debugger import WorldModelDebugger
 from .model_version_manager import ModelVersionManager
+from .model_card import ModelCardGenerator
+from .resource_broker import ResourceBroker
+from .research_ingest import run_ingestion, suggest_modules
+from .quantum_sampler import sample_actions_qae
+from .risk_scoreboard import RiskScoreboard
+from .collaborative_healing import CollaborativeHealingLoop

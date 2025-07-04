@@ -658,3 +658,19 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Provide a `ModelVersionManager` to log model hashes alongside dataset
   versions for full reproducibility.
   **Implemented in `src/model_version_manager.py`.**
+- Introduce a `ModelCardGenerator` that collates dataset lineage, telemetry
+  stats and evaluation results into a Markdown or JSON model card.
+  **Implemented in `src/model_card.py` with CLI `scripts/generate_model_card.py`.**
+- Extend `GraphOfThought` with `summarize_trace()` and an `explain` flag so
+  reasoning steps can be rendered in plain language for debugging.
+- Provide a `ResourceBroker` module coordinating multiple clusters and a demo
+  script `scripts/resource_broker_demo.py`.
+- Add `research_ingest.py` which fetches new papers and outputs daily summaries
+  under `research_logs/`.
+- Expand `GenerativeDataAugmentor` with `synthesize_3d()` for basic 3D asset
+  synthesis.
+- Implement a mocked `quantum_sampler.sample_actions_qae()` and integrate it as
+  an optional sampler in `train_with_self_play`.
+- Compute an overall risk metric via the new `RiskScoreboard` module.
+- Combine `SelfHealingTrainer` and `MultiAgentCoordinator` in a simplified
+  `CollaborativeHealingLoop` for cooperative recovery.
