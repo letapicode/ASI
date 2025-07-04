@@ -315,7 +315,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     retrieval.
 41. **Cross-lingual memory retrieval**: `HierarchicalMemory` now accepts a
     translator and the `CrossLingualMemory` wrapper persists translated vectors
-    so queries in any supported language return the same results.
+    so queries in any supported language return the same results. The optional
+    `CrossLingualSpeechTranslator` transcribes audio queries offline and feeds
+    the text through `CrossLingualTranslator` for unified search.
 42. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
