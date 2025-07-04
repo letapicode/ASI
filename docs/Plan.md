@@ -355,6 +355,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 71. **Multi-agent graph planning**: Integrate `MultiAgentCoordinator` with `GraphOfThoughtPlanner` to build reasoning graphs collaboratively, achieving ≥20% speed-up over single-agent planning. *Implemented in `src/multi_agent_graph_planner.py` with tests.*
 72. **Self-debugging world model**: Automatically patch the world model when rollout errors exceed 1%, keeping long-term error <1%. *Implemented in `src/world_model_debugger.py` with tests.*
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
+74. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."

@@ -672,6 +672,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   **Implemented in `src/model_card.py` with CLI `scripts/generate_model_card.py`.**
 - Extend `GraphOfThought` with `summarize_trace()` and an `explain` flag so
   reasoning steps can be rendered in plain language for debugging.
+- Add `self_reflect()` to `GraphOfThought` which outputs a concise summary of
+  reasoning steps. `ReasoningHistoryLogger` stores these summaries with
+  timestamps for later inspection.
 - Provide a `ResourceBroker` module coordinating multiple clusters and a demo
   script `scripts/resource_broker_demo.py`.
 - Add `research_ingest.py` which fetches new papers and outputs daily summaries
