@@ -79,6 +79,7 @@ from .cross_modal_fusion import (
     MultiModalDataset,
     train_fusion_model,
     encode_all,
+    retrieval_accuracy,
 )
 from .world_model_rl import (
     RLBridgeConfig,
