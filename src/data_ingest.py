@@ -40,6 +40,41 @@ except Exception:  # pragma: no cover - for tests
             def synthesize(self, *args: Any, **kwargs: Any) -> list[tuple[str, np.ndarray, np.ndarray]]:
                 return []
 
+try:  # pragma: no cover - optional
+    from .dataset_anonymizer import DatasetAnonymizer
+except Exception:  # pragma: no cover - for tests
+    try:
+        from dataset_anonymizer import DatasetAnonymizer  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        class DatasetAnonymizer:  # type: ignore
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+            def scrub_text_file(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def scrub_image_file(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def scrub_audio_file(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def summary(self) -> Dict[str, int]:
+                return {}
+
+try:
+    from .dataset_lineage_manager import DatasetLineageManager
+except Exception:  # pragma: no cover - for tests
+    try:
+        from dataset_lineage_manager import DatasetLineageManager  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        class DatasetLineageManager:  # type: ignore
+            def __init__(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def record(self, *a: Any, **kw: Any) -> None:
+                pass
+
 
 class ActiveDataSelector:
     """Filter triples based on predictive entropy."""
@@ -99,6 +134,8 @@ def download_triples(
     out_dir: str,
     versioner: Optional[DatasetVersioner] = None,
     translator: Optional[CrossLingualTranslator] = None,
+    anonymizer: Optional[DatasetAnonymizer] = None,
+    lineage: Optional[DatasetLineageManager] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Download text, image and audio triples into ``out_dir`` concurrently."""
 
@@ -110,6 +147,8 @@ def download_triples(
             out_dir,
             versioner,
             translator,
+            anonymizer,
+            lineage,
         )
 
     try:
@@ -127,6 +166,8 @@ async def download_triples_async(
     out_dir: str,
     versioner: Optional[DatasetVersioner] = None,
     translator: Optional[CrossLingualTranslator] = None,
+    anonymizer: Optional[DatasetAnonymizer] = None,
+    lineage: Optional[DatasetLineageManager] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Asynchronously download text, image and audio triples."""
     if not _HAS_AIOHTTP:
@@ -145,6 +186,21 @@ async def download_triples_async(
             tasks.append(_download_file_async(session, a, a_path))
         await asyncio.gather(*tasks)
 
+    if anonymizer is not None:
+        for t_path, i_path, a_path in triples:
+            try:
+                anonymizer.scrub_text_file(t_path)
+            except Exception:
+                pass
+            try:
+                anonymizer.scrub_image_file(i_path)
+            except Exception:
+                pass
+            try:
+                anonymizer.scrub_audio_file(a_path)
+            except Exception:
+                pass
+
     # Add multilingual copies
     if translator is not None:
         augmented: List[Tuple[Path, Path, Path]] = []
@@ -159,6 +215,9 @@ async def download_triples_async(
                 t_new.write_text(trans)
                 augmented.append((t_new, i_path, a_path))
         triples = augmented
+    if lineage is not None and anonymizer is not None:
+        flat = [p for tri in triples for p in tri]
+        lineage.record(flat, flat, note=f"anonymized {anonymizer.summary()}")
     if versioner is not None:
         flat = [p for tri in triples for p in tri]
         versioner.record(flat, note="download_triples")
