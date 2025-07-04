@@ -135,6 +135,10 @@ try:
     from .federated_memory_server import FederatedMemoryServer
 except Exception:  # pragma: no cover - optional
     FederatedMemoryServer = None
+try:
+    from .federated_kg_memory import FederatedKGMemoryServer
+except Exception:  # pragma: no cover - optional
+    FederatedKGMemoryServer = None
 from .differential_privacy_optimizer import DifferentialPrivacyOptimizer, DifferentialPrivacyConfig
 
 from .embedding_visualizer import EmbeddingVisualizer

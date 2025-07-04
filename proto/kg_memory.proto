@@ -1,0 +1,31 @@
+syntax = "proto3";
+package asi;
+
+service KGMemoryService {
+  rpc Push (TripleEntry) returns (PushReply);
+  rpc PushBatch (TripleBatch) returns (PushReply);
+  rpc Query (TripleQuery) returns (TripleBatch);
+  rpc Sync (TripleBatch) returns (PushReply);
+}
+
+message TripleEntry {
+  string id = 1;
+  string subject = 2;
+  string predicate = 3;
+  string object = 4;
+  int64 timestamp = 5;
+}
+
+message TripleBatch {
+  repeated TripleEntry items = 1;
+}
+
+message PushReply {
+  bool ok = 1;
+}
+
+message TripleQuery {
+  string subject = 1;
+  string predicate = 2;
+  string object = 3;
+}
