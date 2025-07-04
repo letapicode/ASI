@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
 from typing import Iterable, Dict, Any
 import numpy as np
 import torch
@@ -19,6 +20,7 @@ class MemoryDashboard:
         self.servers = list(servers)
         self.httpd: HTTPServer | None = None
         self.thread: threading.Thread | None = None
+        self.port: int | None = None
 
     # ----------------------------------------------------------
     def aggregate(self) -> Dict[str, float]:
@@ -52,6 +54,16 @@ class MemoryDashboard:
         else:
             totals["gpu_score_corr"] = 0.0
         return totals
+
+    # ----------------------------------------------------------
+    def _entries(self, start: int = 0, end: int | None = None) -> list[dict]:
+        if not self.servers:
+            return []
+        metas = getattr(self.servers[0].memory.store, "_meta", [])
+        if end is None or end > len(metas):
+            end = len(metas)
+        start = max(0, start)
+        return [{"index": i, "meta": metas[i]} for i in range(start, end)]
 
     # ----------------------------------------------------------
     def to_html(self) -> str:
@@ -107,6 +119,16 @@ class MemoryDashboard:
                         self.end_headers()
                         self.wfile.write(data)
                         return
+                elif self.path.startswith("/entries"):
+                    q = parse_qs(urlparse(self.path).query)
+                    start = int(q.get("start", [0])[0])
+                    end = q.get("end", [None])[0]
+                    end_i = int(end) if end is not None else None
+                    data = json.dumps(dashboard._entries(start, end_i)).encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(data)
                 elif self.path in ("/stats", "/json"):
                     data = json.dumps(dashboard.aggregate()).encode()
                     self.send_response(200)
@@ -120,10 +142,62 @@ class MemoryDashboard:
                     self.end_headers()
                     self.wfile.write(html)
 
+            def do_POST(self) -> None:  # noqa: D401
+                if self.path == "/add" and dashboard.servers:
+                    length = int(self.headers.get("Content-Length", 0))
+                    body = self.rfile.read(length) if length else b"{}"
+                    data = json.loads(body.decode() or "{}")
+                    vec = torch.tensor(data.get("vector", []), dtype=torch.float32)
+                    if vec.ndim == 1:
+                        vec = vec.unsqueeze(0)
+                    meta = data.get("metadata")
+                    dashboard.servers[0].memory.add(vec, metadata=[meta] if meta is not None else None)
+                    out = json.dumps({"ok": True}).encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(out)
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+
+            def do_DELETE(self) -> None:  # noqa: D401
+                if self.path == "/delete" and dashboard.servers:
+                    length = int(self.headers.get("Content-Length", 0))
+                    body = self.rfile.read(length) if length else b"{}"
+                    data = json.loads(body.decode() or "{}")
+                    idx = data.get("index")
+                    tag = data.get("tag")
+                    confirm = data.get("confirm")
+                    if idx is None and tag is None:
+                        self.send_response(400)
+                        self.end_headers()
+                        return
+                    n_del = 1
+                    if isinstance(idx, list):
+                        n_del = len(idx)
+                    if idx is None and tag is not None:
+                        metas = getattr(dashboard.servers[0].memory.store, "_meta", [])
+                        n_del = sum(1 for m in metas if m == tag)
+                    if n_del > 10 and confirm != "yes":
+                        self.send_response(403)
+                        self.end_headers()
+                        return
+                    dashboard.servers[0].memory.delete(index=idx, tag=tag)
+                    out = json.dumps({"ok": True}).encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(out)
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+
             def log_message(self, format: str, *args: Any) -> None:  # noqa: D401
                 return
 
         self.httpd = HTTPServer((host, port), Handler)
+        self.port = self.httpd.server_address[1]
         self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
         self.thread.start()
 
@@ -136,6 +210,7 @@ class MemoryDashboard:
         self.httpd.server_close()
         self.httpd = None
         self.thread = None
+        self.port = None
 
 
 __all__ = ["MemoryDashboard"]
