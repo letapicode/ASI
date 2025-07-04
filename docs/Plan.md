@@ -294,9 +294,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     embeddings by recency. Evaluate retrieval accuracy drop <3% compared with
     the existing `StreamingCompressor` on 1&nbsp;M-token streams.
 40. **Cross-lingual data ingestion**: Integrate a `CrossLingualTranslator`
-    into `data_ingest` so text is stored in multiple languages. Measure BLEU
-    >30 on public benchmarks and track retrieval gains from the augmented
-    triples.
+    into `data_ingest` so text is stored in multiple languages. *Implemented*
+    via the optional ``translator`` argument of ``download_triples()`` which
+    saves translated files alongside the originals.
 41. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
