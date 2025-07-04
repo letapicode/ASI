@@ -185,7 +185,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    *Implemented in `src/hybrid_retention.py` with unit tests.*
 2. **Cross-modal retrieval memory**: Store embeddings from
    `cross_modal_fusion.encode_all()` inside `HierarchicalMemory` and evaluate
-   retrieval accuracy on 1&nbsp;M-token streams.
+   retrieval accuracy on 1&nbsp;M-token streams. *Implemented via
+   `add_multimodal()` in `cross_modal_fusion.py` and related unit tests.*
 3. **LoRA-quantized world model**: *Implemented* via a `use_lora` option in
    `multimodal_world_model.py` which wraps the transformer layers with
    quantized adapters.
