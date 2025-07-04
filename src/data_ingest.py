@@ -312,6 +312,26 @@ def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0) ->
     return filter_text_files(text_files, threshold=threshold)
 
 
+def auto_label_triples(
+    triples: Iterable[Tuple[str | Path, str | Path, str | Path]],
+    labeler: "AutoLabeler",
+) -> list[int]:
+    """Apply ``labeler`` to loaded triples and return integer labels."""
+    from .auto_labeler import AutoLabeler  # avoid circular import during tests
+
+    if not isinstance(labeler, AutoLabeler):
+        raise TypeError("labeler must be AutoLabeler")
+    samples = []
+    for t_path, i_path, _ in triples:
+        text = Path(t_path).read_text()
+        if i_path.endswith(".npy"):
+            img = np.load(i_path)
+        else:
+            img = np.array(Image.open(i_path))
+        samples.append((text, img, None))
+    return labeler.label(samples)
+
+
 __all__ = [
     "download_triples",
     "download_triples_async",
@@ -325,6 +345,7 @@ __all__ = [
     "synthesize_from_world_model",
     "offline_synthesizer",
     "filter_dataset",
+    "auto_label_triples",
     "ActiveDataSelector",
     "CrossLingualTranslator",
 ]
