@@ -684,6 +684,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add a `ComputeBudgetTracker` that records GPU hours and memory usage via
   `TelemetryLogger` and feeds the estimated energy cost into
   `RiskScoreboard`. **Implemented in `src/compute_budget_tracker.py` with tests.**
+- Add a `CarbonFootprintTracker` that reads CPU/GPU power via NVML or OS
+  counters and reports kWh and CO₂ emissions. `TelemetryLogger` can start this
+  tracker and `ComputeBudgetTracker` now exposes per-run carbon usage.
+  **Implemented in `src/carbon_tracker.py` with tests.**
 - Combine `SelfHealingTrainer` and `MultiAgentCoordinator` in a simplified
   `CollaborativeHealingLoop` for cooperative recovery.
 
