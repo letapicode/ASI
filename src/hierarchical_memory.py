@@ -668,11 +668,15 @@ if _HAS_GRPC:
 
         def start(self) -> None:
             """Start serving requests."""
+            if self.telemetry:
+                self.telemetry.start()
             self.server.start()
 
         def stop(self, grace: float = 0) -> None:
             """Stop the server."""
             self.server.stop(grace)
+            if self.telemetry:
+                self.telemetry.stop()
 
 
 def push_remote(address: str, vector: torch.Tensor, metadata: Any | None = None, timeout: float = 5.0) -> bool:
