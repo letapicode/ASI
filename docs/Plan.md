@@ -332,6 +332,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 63. **Fine-grained telemetry profiler**: Record per-module compute and memory via `FineGrainedProfiler` and ensure overhead stays below 3%.
 64. **Auto-labeling pipeline**: Use the world model to generate weak labels for unlabeled triples during ingestion and measure dataset quality improvements.
 65. **Context window profiler**: Measure memory and latency across sequence lengths. Implemented in `src/context_profiler.py` and integrated with `eval_harness.py`.
+66. **Differential privacy memory**: Use `DifferentialPrivacyMemory` to store noisy embeddings with <2% recall drop at ε=1. *Implemented in `src/dp_memory.py` with tests.*
+67. **Unified multi-modal evaluation**: Add `MultiModalEval` to `eval_harness` and target ≥90% recall on the toy dataset. *Implemented in `src/eval_harness.py` with tests.*
+68. **Multi-agent graph planning**: Integrate `MultiAgentCoordinator` with `GraphOfThoughtPlanner` to build reasoning graphs collaboratively, achieving ≥20% speed-up over single-agent planning. *Implemented in `src/multi_agent_graph_planner.py` with tests.*
+69. **Self-debugging world model**: Automatically patch the world model when rollout errors exceed 1%, keeping long-term error <1%. *Implemented in `src/world_model_debugger.py` with tests.*
+70. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
