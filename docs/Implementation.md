@@ -690,3 +690,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 ## Edge RL Trainer
 
 `src/edge_rl_trainer.py` trains world models under a compute budget. It checks `ComputeBudgetTracker.remaining()` each step and stops when resources run low. See `scripts/train_edge_rl.py` for a usage example.
+
+### Resource-aware scheduling
+
+`MultiAgentCoordinator` accepts a `ComputeBudgetTracker` instance which tracks GPU hours per agent. `RLNegotiator` considers `tracker.remaining()` when assigning tasks and each action logs usage via `tracker.consume()`. This ensures repositories are processed by agents with sufficient budget.

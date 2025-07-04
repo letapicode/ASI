@@ -5,7 +5,22 @@ import time
 from dataclasses import dataclass, field
 from typing import Dict
 
-from .telemetry import TelemetryLogger
+try:  # pragma: no cover - allow running as standalone module
+    from .telemetry import TelemetryLogger
+except Exception:  # pragma: no cover - fallback for direct import
+    import importlib.util as _ilu
+    from pathlib import Path as _Path
+
+    _tel_path = _Path(__file__).resolve().parent / "telemetry.py"
+    import sys as _sys
+
+    _spec = _ilu.spec_from_file_location("telemetry", _tel_path)
+    _mod = _ilu.module_from_spec(_spec)
+    _mod.__package__ = "asi"
+    _sys.modules["telemetry"] = _mod
+    assert _spec and _spec.loader
+    _spec.loader.exec_module(_mod)  # type: ignore[attr-defined]
+    TelemetryLogger = _mod.TelemetryLogger
 
 
 @dataclass
@@ -60,4 +75,17 @@ class ComputeBudgetTracker:
 
     def get_usage(self, run_id: str) -> Dict[str, float]:
         return dict(self.records.get(run_id, {}))
+
+    def consume(self, run_id: str, gpu_hours: float, mem: float) -> None:
+        """Manually log ``gpu_hours`` and peak ``mem`` for ``run_id``."""
+        rec = self.records.setdefault(
+            run_id, {"gpu_hours": 0.0, "mem_peak": 0.0, "energy": 0.0}
+        )
+        rec["gpu_hours"] += gpu_hours
+        rec["mem_peak"] = max(rec["mem_peak"], mem)
+        rec["energy"] = rec["gpu_hours"] * self.energy_per_gpu_hour
+        self.records[run_id] = rec
+
+
+__all__ = ["ComputeBudgetTracker"]
 
