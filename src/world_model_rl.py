@@ -44,6 +44,12 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
+from .compute_budget_tracker import ComputeBudgetTracker
+try:
+    from .budget_aware_scheduler import BudgetAwareScheduler
+except Exception:  # pragma: no cover - for tests
+    BudgetAwareScheduler = None
+
 
 @dataclass
 class RLBridgeConfig:
@@ -97,8 +103,14 @@ def train_world_model(
     dp_cfg: DifferentialPrivacyConfig | None = None,
     pbm: "PrivacyBudgetManager | None" = None,
     run_id: str = "default",
+    budget: ComputeBudgetTracker | None = None,
 ) -> WorldModel:
     model = WorldModel(cfg)
+    scheduler = (
+        BudgetAwareScheduler(budget, run_id)
+        if budget is not None and BudgetAwareScheduler is not None
+        else None
+    )
     loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
     if dp_cfg is None:
         opt: torch.optim.Optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
@@ -108,6 +120,9 @@ def train_world_model(
     device = next(model.parameters()).device
     model.train()
     for _ in range(cfg.epochs):
+        if scheduler is not None:
+            scheduler.schedule_step(cfg)
+            loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
         for state, action, next_state, reward in loader:
             state = state.to(device)
             action = action.to(device)
@@ -118,6 +133,10 @@ def train_world_model(
             opt.zero_grad()
             loss.backward()
             opt.step()
+            if budget is not None and budget.remaining(run_id) <= 0.0:
+                break
+        if budget is not None and budget.remaining(run_id) <= 0.0:
+            break
     if pbm is not None and dp_cfg is not None:
         eps = dp_cfg.noise_std * len(dataset) / cfg.batch_size
         pbm.consume(run_id, eps, 0.0)

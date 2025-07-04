@@ -199,3 +199,4 @@ from .retrieval_explainer import RetrievalExplainer
 from .interpretability_dashboard import InterpretabilityDashboard
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
+from .budget_aware_scheduler import BudgetAwareScheduler
