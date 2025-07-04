@@ -627,9 +627,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add `export_to_onnx()` in `src/onnx_utils.py` and `scripts/export_onnx.py` to save ONNX graphs for `MultiModalWorldModel` and `CrossModalFusion`. Run `python scripts/export_onnx.py --out-dir models` to generate them.
 - Implement a `SecureFederatedLearner` that aggregates encrypted gradients from remote peers so training can proceed without sharing raw data. Provide a `scripts/federated_train.py` CLI.
   **Implemented in `src/secure_federated_learner.py` with `scripts/federated_train.py`.**
-- Add a `GPUAwareScheduler` module to monitor GPU memory and compute load and dispatch jobs accordingly. Integrate it with `DistributedTrainer`.
-  Combine it with `ComputeBudgetTracker` in `adaptive_scheduler.py` so jobs pause when the GPU-hour budget runs out and resume once progress improves.
-  **Implemented in `src/gpu_aware_scheduler.py` and extended by `src/adaptive_scheduler.py` for use in `DistributedTrainer`.**
+- Add an `AcceleratorScheduler` that detects GPU, TPU or CPU utilisation and dispatches queued jobs when the requested device has available capacity. Integrate it with `DistributedTrainer`.
+  Combine it with `ComputeBudgetTracker` in `adaptive_scheduler.py` so jobs pause when the accelerator budget runs out and resume once progress improves.
+  **Implemented in `src/accelerator_scheduler.py` with a backwards-compatible alias `GPUAwareScheduler` and extended by `src/adaptive_scheduler.py`.**
 - Develop an `AdversarialRobustnessSuite` that generates adversarial prompts and reports failure cases through `eval_harness`.
   **Implemented in `src/adversarial_robustness.py`.**
 - Implement a `DatasetBiasDetector` module that computes representation metrics and integrates with `AutoDatasetFilter`. Provide a `dataset_bias_report.py` utility for bias analysis.
@@ -675,7 +675,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Extend `GraphOfThought` with `summarize_trace()` and an `explain` flag so
   reasoning steps can be rendered in plain language for debugging.
 - Provide a `ResourceBroker` module coordinating multiple clusters and a demo
-  script `scripts/resource_broker_demo.py`.
+  script `scripts/resource_broker_demo.py`. The broker now reports per-accelerator
+  utilisation via `get_load()` and allows allocating jobs to specific
+  accelerator types.
 - Add `research_ingest.py` which fetches new papers and outputs daily summaries
   under `research_logs/`.
 - Expand `GenerativeDataAugmentor` with `synthesize_3d()` for basic 3D asset

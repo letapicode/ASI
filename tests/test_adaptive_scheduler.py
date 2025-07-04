@@ -20,7 +20,7 @@ def _load(name, path):
 
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 ComputeBudgetTracker = _load('asi.compute_budget_tracker', 'src/compute_budget_tracker.py').ComputeBudgetTracker
-_load('asi.gpu_aware_scheduler', 'src/gpu_aware_scheduler.py')
+_load('asi.accelerator_scheduler', 'src/accelerator_scheduler.py')
 AdaptiveScheduler = _load('asi.adaptive_scheduler', 'src/adaptive_scheduler.py').AdaptiveScheduler
 
 
@@ -56,6 +56,15 @@ class TestAdaptiveScheduler(unittest.TestCase):
         time.sleep(0.4)
         sched.stop()
         self.assertLessEqual(len(ran), 2)
+
+    def test_report_load(self):
+        logger = TelemetryLogger(interval=0.05)
+        tracker = ComputeBudgetTracker(1.0, telemetry=logger)
+        sched = AdaptiveScheduler(tracker, 'run', check_interval=0.05)
+        load = sched.report_load()
+        self.assertIsInstance(load, dict)
+        self.assertIn('cpu', load)
+        sched.stop()
 
 
 if __name__ == '__main__':

@@ -26,10 +26,12 @@ ResourceBroker = rb.ResourceBroker
 class TestResourceBroker(unittest.TestCase):
     def test_allocate_and_decide(self):
         broker = ResourceBroker()
-        broker.register_cluster('a', 2)
-        broker.register_cluster('b', 1)
-        c = broker.allocate('job')
+        broker.register_cluster('a', 2, {'gpu': 1})
+        broker.register_cluster('b', 1, {'gpu': 1})
+        c = broker.allocate('job', 'gpu')
         self.assertIn(c, {'a', 'b'})
+        load = broker.get_load()
+        self.assertIn('gpu', load)
         decision = broker.scale_decision({'cpu': 90})
         self.assertEqual(decision, 'scale_up')
 
