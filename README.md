@@ -46,6 +46,10 @@ server = serve(mem, "localhost:50070", telemetry=logger)
 
 Visit `http://localhost:8000` to view Prometheus metrics.
 
+`RiskDashboard` combines these metrics with ethical risk scores from
+`RiskScoreboard` and serves them via the same HTTP interface. Launch it with
+`scripts/memory_dashboard.py`.
+
 ## Testing
 
 1. Install requirements: `pip install -r requirements.txt` (or run

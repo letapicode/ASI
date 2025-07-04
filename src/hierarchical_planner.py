@@ -6,6 +6,7 @@ import torch
 
 from .graph_of_thought import GraphOfThought, ThoughtNode
 from .world_model_rl import rollout_policy, WorldModel
+from .graph_neural_reasoner import GraphNeuralReasoner
 
 
 class HierarchicalPlanner:
@@ -16,10 +17,12 @@ class HierarchicalPlanner:
         graph: GraphOfThought,
         world_model: WorldModel,
         policy: Callable[[torch.Tensor], torch.Tensor],
+        reasoner: GraphNeuralReasoner | None = None,
     ) -> None:
         self.graph = graph
         self.world_model = world_model
         self.policy = policy
+        self.reasoner = reasoner
 
     def compose_plan(
         self,
@@ -39,6 +42,11 @@ class HierarchicalPlanner:
             states.append(state)
             rewards.append(r)
         return path, states, rewards
+
+    def query_relation(self, subj: str, obj: str) -> float:
+        if self.reasoner is None:
+            return 0.0
+        return self.reasoner.predict_link(subj, obj)
 
 
 __all__ = ["HierarchicalPlanner"]

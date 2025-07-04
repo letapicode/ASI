@@ -271,6 +271,19 @@ def _eval_adversarial_robustness() -> Tuple[bool, str]:
     return adv == "hi", f"adv={adv}"
 
 
+def _eval_fairness_evaluator() -> Tuple[bool, str]:
+    from asi.fairness_evaluator import FairnessEvaluator
+
+    stats = {
+        "a": {"tp": 5, "fp": 5, "fn": 5, "tn": 5},
+        "b": {"tp": 8, "fp": 2, "fn": 2, "tn": 8},
+    }
+    ev = FairnessEvaluator()
+    res = ev.evaluate(stats)
+    ok = res["demographic_parity"] >= 0.0 and res["equal_opportunity"] >= 0.0
+    return ok, f"dp={res['demographic_parity']:.2f}"
+
+
 def _eval_context_profiler() -> Tuple[bool, str]:
     """Profile a toy model at two context lengths."""
     from torch import nn
@@ -311,6 +324,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "neural_arch_search": _eval_neural_arch_search,
     "self_alignment": _eval_self_alignment,
     "adversarial_robustness": _eval_adversarial_robustness,
+    "fairness_evaluator": _eval_fairness_evaluator,
     "context_profiler": _eval_context_profiler,
 }
 

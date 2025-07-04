@@ -150,6 +150,7 @@ class HierarchicalMemory:
         self.miss_count = 0
         self.query_count = 0
         self.kg: KnowledgeGraphMemory | None = KnowledgeGraphMemory() if use_kg else None
+        self.last_trace: dict | None = None
 
     def __len__(self) -> int:
         """Return the number of stored vectors."""
@@ -358,8 +359,18 @@ class HierarchicalMemory:
         if tag in self._usage:
             self._usage.pop(tag, None)
 
-    def search(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
-        """Retrieve top-k decoded vectors and their metadata."""
+    def search(
+        self,
+        query: torch.Tensor,
+        k: int = 5,
+        return_scores: bool = False,
+        return_provenance: bool = False,
+    ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
+        """Retrieve top-k decoded vectors and their metadata.
+
+        When ``return_scores`` or ``return_provenance`` is ``True`` additional
+        lists of cosine similarity scores and provenance metadata are returned.
+        """
         if isinstance(self.store, AsyncFaissVectorStore):
             import asyncio
 
@@ -400,8 +411,12 @@ class HierarchicalMemory:
                 and self.query_count % self.evict_check_interval == 0
             ):
                 self._update_eviction()
+            self.last_trace = None
             return empty, []
         vec = torch.cat(out_vecs, dim=0)
+        scores = torch.nn.functional.cosine_similarity(
+            vec, query.expand_as(vec), dim=1
+        ).tolist()
         for m in out_meta:
             if m in self._usage:
                 self._usage[m] += 1
@@ -412,6 +427,17 @@ class HierarchicalMemory:
             and self.query_count % self.evict_check_interval == 0
         ):
             self._update_eviction()
+        self.last_trace = {
+            "scores": scores,
+            "provenance": list(out_meta),
+        }
+        if return_scores or return_provenance:
+            extras: list = []
+            if return_scores:
+                extras.append(scores)
+            if return_provenance:
+                extras.append(list(out_meta))
+            return (vec, out_meta, *extras)
         return vec, out_meta
 
     def search_with_kg(
@@ -425,7 +451,9 @@ class HierarchicalMemory:
                 triples.extend(self.kg.query_triples(subject=str(m)))
         return vecs, meta, triples
 
-    async def asearch(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
+    async def asearch(
+        self, query: torch.Tensor, k: int = 5, return_scores: bool = False, return_provenance: bool = False
+    ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
         """Asynchronously retrieve vectors and metadata."""
         if self.cache is not None:
             c_vecs, c_meta = self.cache.search(query.detach().cpu().numpy(), k)
@@ -461,8 +489,12 @@ class HierarchicalMemory:
                 and self.query_count % self.evict_check_interval == 0
             ):
                 self._update_eviction()
+            self.last_trace = None
             return empty, []
         vec = torch.cat(out_vecs, dim=0)
+        scores = torch.nn.functional.cosine_similarity(
+            vec, query.expand_as(vec), dim=1
+        ).tolist()
         for m in out_meta:
             if m in self._usage:
                 self._usage[m] += 1
@@ -473,6 +505,14 @@ class HierarchicalMemory:
             and self.query_count % self.evict_check_interval == 0
         ):
             self._update_eviction()
+        self.last_trace = {"scores": scores, "provenance": list(out_meta)}
+        if return_scores or return_provenance:
+            extras = []
+            if return_scores:
+                extras.append(scores)
+            if return_provenance:
+                extras.append(list(out_meta))
+            return (vec, out_meta, *extras)
         return vec, out_meta
 
     def save(self, path: str | Path) -> None:
