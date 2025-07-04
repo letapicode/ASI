@@ -562,7 +562,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Integrate a `DifferentialPrivacyOptimizer` into training loops so models can optionally clip gradients and inject noise during updates. **Implemented in `src/differential_privacy_optimizer.py` and integrated with `world_model_rl.train_world_model`.**
 - Add a `GradientCompressor` utility that performs top-k or quantized gradient
   compression. `DistributedTrainer` uses it when ``grad_compression`` is
-  provided.
+  provided. **Implemented in `src/gradient_compression.py` and wired through
+  `distributed_trainer.py`.**
 - Add a `LocalitySensitiveHashIndex` option in `vector_store.py` so `HierarchicalMemory` can perform approximate nearest neighbor search with sub-linear query time. **Implemented in `vector_store.LocalitySensitiveHashIndex` and wired through `HierarchicalMemory`.**
 - Create an `EmbeddingVisualizer` module that runs UMAP/t-SNE on cross-modal embeddings and serves interactive plots through a minimal web interface.
 **Implemented in `src/embedding_visualizer.py`.**

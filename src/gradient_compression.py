@@ -42,3 +42,7 @@ class GradientCompressor:
         if self.cfg.bits is not None:
             out = self._quantize(out)
         return out
+
+    def compress_dict(self, grads: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        """Apply compression to all tensors in a gradient dict."""
+        return {k: self.compress(v) for k, v in grads.items()}
