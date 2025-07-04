@@ -6,14 +6,39 @@ import json
 import importlib.machinery
 import importlib.util
 import sys
-import torch
+import types
+loader_ana = importlib.machinery.SourceFileLoader('src.dataset_anonymizer', 'src/dataset_anonymizer.py')
+spec_ana = importlib.util.spec_from_loader(loader_ana.name, loader_ana)
+ana_mod = importlib.util.module_from_spec(spec_ana)
+ana_mod.__package__ = 'src'
+sys.modules['src.dataset_anonymizer'] = ana_mod
+loader_ana.exec_module(ana_mod)
+torch = types.SimpleNamespace(
+    tensor=lambda *a, **kw: None,
+    zeros=lambda *a, **kw: None,
+    long=lambda: None,
+)
+sys.modules['torch'] = torch
 
-loader = importlib.machinery.SourceFileLoader('di', 'src/data_ingest.py')
+loader = importlib.machinery.SourceFileLoader('src.data_ingest', 'src/data_ingest.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 di = importlib.util.module_from_spec(spec)
-sys.modules['data_ingest'] = di
+di.__package__ = 'src'
+sys.modules['src.data_ingest'] = di
 sys.modules['asi.data_ingest'] = di
 loader.exec_module(di)
+
+loader_dlm = importlib.machinery.SourceFileLoader('src.dataset_lineage_manager', 'src/dataset_lineage_manager.py')
+spec_dlm = importlib.util.spec_from_loader(loader_dlm.name, loader_dlm)
+dlm = importlib.util.module_from_spec(spec_dlm)
+dlm.__package__ = 'src'
+src_pkg = types.ModuleType('src')
+sys.modules['src'] = src_pkg
+src_pkg.__path__ = ['src']
+src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
+sys.modules['src.dataset_lineage_manager'] = dlm
+sys.modules['asi.dataset_lineage_manager'] = dlm
+loader_dlm.exec_module(dlm)
 
 pair_modalities = di.pair_modalities
 random_crop_image = di.random_crop_image
@@ -26,15 +51,10 @@ import numpy as np
 import asyncio
 from unittest.mock import patch
 
-loader_mm = importlib.machinery.SourceFileLoader('mm', 'src/multimodal_world_model.py')
-spec_mm = importlib.util.spec_from_loader(loader_mm.name, loader_mm)
-mm = importlib.util.module_from_spec(spec_mm)
-sys.modules['multimodal_world_model'] = mm
-sys.modules['asi.multimodal_world_model'] = mm
-sys.modules['mm'] = mm
-loader_mm.exec_module(mm)
-MultiModalWorldModel = mm.MultiModalWorldModel
-MultiModalWorldModelConfig = mm.MultiModalWorldModelConfig
+mm = types.SimpleNamespace(
+    MultiModalWorldModel=object,
+    MultiModalWorldModelConfig=object,
+)
 
 
 class TestDataIngest(unittest.TestCase):
@@ -91,6 +111,29 @@ class TestDataIngest(unittest.TestCase):
             self.assertTrue(vf.exists())
             data = json.loads(vf.read_text())
             self.assertEqual(len(data['files']), 3)
+
+    def test_download_triples_anonymizer(self):
+        async def fake_download(session, url, dest):
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text('call 123-456-7890 or mail foo@bar.com')
+
+        with tempfile.TemporaryDirectory() as root:
+            urls = ['u']
+            ana = di.DatasetAnonymizer()
+            lin = dlm.DatasetLineageManager(root)
+            with patch.object(di, '_download_file_async', fake_download):
+                di._HAS_AIOHTTP = True
+                class DummySession:
+                    async def __aenter__(self):
+                        return self
+                    async def __aexit__(self, exc_type, exc, tb):
+                        pass
+                di.aiohttp = types.SimpleNamespace(ClientSession=DummySession)
+                di.download_triples(urls, urls, urls, root, anonymizer=ana, lineage=lin)
+            t = Path(root) / 'text/0.txt'
+            self.assertNotIn('@', t.read_text())
+            log = json.loads((Path(root) / 'dataset_lineage.json').read_text())
+            self.assertIn('anonymized', log[-1]['note'])
 
     def test_download_triples_event_loop(self):
         async def fake_download(session, url, dest):

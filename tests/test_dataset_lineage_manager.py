@@ -11,6 +11,8 @@ import types
 
 src_pkg = types.ModuleType('src')
 sys.modules['src'] = src_pkg
+src_pkg.__path__ = ['src']
+src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
 loader = importlib.machinery.SourceFileLoader('src.dataset_lineage_manager', 'src/dataset_lineage_manager.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 dlm = importlib.util.module_from_spec(spec)
