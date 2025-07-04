@@ -38,7 +38,17 @@ class GraphOfThought:
             raise KeyError("unknown node id")
         self.edges.setdefault(src, []).append(dst)
 
-    def search(self, start: int, goal_pred: Callable[[ThoughtNode], bool]) -> List[int]:
+    def summarize_trace(self, trace: Sequence[int]) -> str:
+        """Return a natural-language summary of ``trace``."""
+        texts = [self.nodes[n].text for n in trace if n in self.nodes]
+        return " -> ".join(texts)
+
+    def search(
+        self,
+        start: int,
+        goal_pred: Callable[[ThoughtNode], bool],
+        explain: bool = False,
+    ) -> List[int] | tuple[List[int], str]:
         """Return path of node ids from ``start`` until ``goal_pred`` is satisfied."""
         if start not in self.nodes:
             raise KeyError("unknown start node")
@@ -48,17 +58,19 @@ class GraphOfThought:
             node_id, path = queue.popleft()
             node = self.nodes[node_id]
             if goal_pred(node):
-                return path
+                return (path, self.summarize_trace(path)) if explain else path
             for nxt in self.edges.get(node_id, []):
                 if nxt not in visited:
                     visited.add(nxt)
                     queue.append((nxt, path + [nxt]))
-        return []
+        return ([], "") if explain else []
 
-    def plan_refactor(self, start: int, keyword: str = "refactor") -> List[int]:
+    def plan_refactor(
+        self, start: int, keyword: str = "refactor", explain: bool = False
+    ) -> List[int] | tuple[List[int], str]:
         """Search for a node containing ``keyword`` in its text."""
         key = keyword.lower()
-        return self.search(start, lambda node: key in node.text.lower())
+        return self.search(start, lambda node: key in node.text.lower(), explain)
 
     @classmethod
     def from_json(cls, path: str) -> "GraphOfThought":
