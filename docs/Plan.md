@@ -315,7 +315,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 52. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
 53. **Gradient compression for distributed training**: Implement a `GradientCompressor`
     with top-k sparsification or quantized gradients and integrate it with
-    `DistributedTrainer`.
+    `DistributedTrainer`. *Implemented via `src/gradient_compression.py` and
+    tested in `tests/test_distributed_trainer.py`.*
 53. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
 54. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
 55. **Secure federated learner**: Train models across remote peers using encrypted gradient aggregation. Accuracy should stay within 2% of centralized training.
