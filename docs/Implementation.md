@@ -584,6 +584,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `SummarizingMemory` helper that compresses infrequently used vectors with a small language-model summarizer. Provide `scripts/summarize_memory_benchmark.py` to measure storage savings and retrieval accuracy.
   **Implemented in `src/summarizing_memory.py` with the benchmarking script
   `scripts/summarize_memory_benchmark.py`.**
+- Implement a `ContextSummaryMemory` that replaces far-past vectors with text summaries and re-expands them when retrieved. Unit test `tests/test_context_summary_memory.py` verifies summarization and expansion.
+  **Implemented in `src/context_summary_memory.py` with tests.**
 - Add a `TelemetryLogger` in `telemetry.py` that exports GPU, CPU and network metrics via OpenTelemetry and Prometheus. Integrate the logger with `DistributedTrainer` and `MemoryServer`.
   `MemoryServer` now starts and stops a provided `TelemetryLogger` automatically.
   **Implemented in `src/telemetry.py`.**

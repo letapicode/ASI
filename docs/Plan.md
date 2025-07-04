@@ -310,7 +310,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 46. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt revisions via reinforcement learning and measure evaluation gains.
 47. **Training anomaly detection**: Extend `SelfHealingTrainer` with a `TrainingAnomalyDetector` to roll back or restart runs when metrics diverge.
 48. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
-49. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length.
+49. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
 50. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines.
 51. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
 52. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
