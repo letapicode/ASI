@@ -87,12 +87,18 @@ def download_triples(
     audio_urls: Iterable[str],
     out_dir: str,
     versioner: Optional[DatasetVersioner] = None,
+    translator: Optional[CrossLingualTranslator] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Download text, image and audio triples into ``out_dir`` concurrently."""
 
     async def run() -> List[Tuple[Path, Path, Path]]:
         return await download_triples_async(
-            text_urls, img_urls, audio_urls, out_dir, versioner
+            text_urls,
+            img_urls,
+            audio_urls,
+            out_dir,
+            versioner,
+            translator,
         )
 
     try:
@@ -109,6 +115,7 @@ async def download_triples_async(
     audio_urls: Iterable[str],
     out_dir: str,
     versioner: Optional[DatasetVersioner] = None,
+    translator: Optional[CrossLingualTranslator] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Asynchronously download text, image and audio triples."""
     if not _HAS_AIOHTTP:
@@ -126,6 +133,21 @@ async def download_triples_async(
             tasks.append(_download_file_async(session, iurl, i_path))
             tasks.append(_download_file_async(session, a, a_path))
         await asyncio.gather(*tasks)
+
+    # Add multilingual copies
+    if translator is not None:
+        augmented: List[Tuple[Path, Path, Path]] = []
+        for t_path, i_path, a_path in list(triples):
+            augmented.append((t_path, i_path, a_path))
+            try:
+                txt = t_path.read_text()
+            except Exception:
+                continue
+            for lang, trans in translator.translate_all(txt).items():
+                t_new = t_path.with_name(f"{t_path.stem}_{lang}{t_path.suffix}")
+                t_new.write_text(trans)
+                augmented.append((t_new, i_path, a_path))
+        triples = augmented
     if versioner is not None:
         flat = [p for tri in triples for p in tri]
         versioner.record(flat, note="download_triples")
