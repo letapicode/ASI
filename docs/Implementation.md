@@ -600,6 +600,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `ParameterEfficientAdapter` that applies low-rank adapters to target modules for cross-task fine-tuning. **Implemented in `src/parameter_efficient_adapter.py` with tests.**
 - Add a `DatasetVersioner` module that logs dataset hashes and transformation steps. Extend `data_ingest` so all downloads and synthetic samples record their provenance in a version file.
   **Implemented in `src/dataset_versioner.py` and wired through `data_ingest`.**
+- Add a `DatasetLineageManager` that records transformation steps and resulting file hashes for reproducible pipelines.
+  **Implemented in `src/dataset_lineage_manager.py` with tests.**
 - Implement a `ContextWindowProfiler` that measures memory footprint and wall-clock time at various sequence lengths. **Implemented as `src/context_profiler.py` and integrated with `eval_harness.py`.**
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.
   **Implemented** via `adaptive_evict` in `HierarchicalMemory` with `get_stats()` to report usage metrics.
