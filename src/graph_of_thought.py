@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Sequence
 import json
 
 
@@ -90,20 +90,23 @@ class GraphOfThought:
 
 
 class ReasoningDebugger:
-    """Detect contradictory steps and loops in a reasoning graph."""
+    """Detect contradictory steps and loops across one or more reasoning graphs."""
 
-    def __init__(self, graph: GraphOfThought) -> None:
-        self.graph = graph
+    def __init__(self, graphs: GraphOfThought | Mapping[str, GraphOfThought]) -> None:
+        if isinstance(graphs, GraphOfThought):
+            self.graphs: Dict[str, GraphOfThought] = {"agent0": graphs}
+        else:
+            self.graphs = dict(graphs)
 
-    def find_loops(self) -> list[list[int]]:
+    def _loops_in_graph(self, graph: GraphOfThought) -> list[list[int]]:
         loops = []
-        for start in self.graph.nodes:
+        for start in graph.nodes:
             path = []
             visited = set()
             node = start
             while node not in visited:
                 visited.add(node)
-                nexts = self.graph.edges.get(node, [])
+                nexts = graph.edges.get(node, [])
                 if not nexts:
                     break
                 node = nexts[0]
@@ -113,15 +116,47 @@ class ReasoningDebugger:
                     break
         return loops
 
-    def find_contradictions(self) -> list[tuple[int, int]]:
-        contrad = []
-        texts = {i: n.text.lower() for i, n in self.graph.nodes.items()}
-        for i, t1 in texts.items():
-            neg = f"not {t1}"
-            for j, t2 in texts.items():
-                if i != j and t2 == neg:
-                    contrad.append((i, j))
+    def find_loops(self) -> Dict[str, list[list[int]]]:
+        """Return loops detected for each agent graph."""
+        result: Dict[str, list[list[int]]] = {}
+        for name, graph in self.graphs.items():
+            loops = self._loops_in_graph(graph)
+            if loops:
+                result[name] = loops
+        return result
+
+    def find_contradictions(self) -> list[tuple[str, int, str, int]]:
+        """Return pairs of nodes whose texts contradict each other."""
+        text_map: Dict[str, List[tuple[str, int]]] = {}
+        for name, graph in self.graphs.items():
+            for node_id, node in graph.nodes.items():
+                text_map.setdefault(node.text.lower(), []).append((name, node_id))
+
+        contrad: list[tuple[str, int, str, int]] = []
+        for text, entries in text_map.items():
+            neg = f"not {text}"
+            if neg in text_map:
+                for a1, n1 in entries:
+                    for a2, n2 in text_map[neg]:
+                        if a1 == a2 and n1 == n2:
+                            continue
+                        pair = (a1, n1, a2, n2)
+                        if pair not in contrad:
+                            contrad.append(pair)
         return contrad
+
+    def report(self) -> str:
+        """Return a consolidated text report of detected issues."""
+        loops = self.find_loops()
+        contrad = self.find_contradictions()
+        lines: List[str] = []
+        for agent, lps in loops.items():
+            lines.append(f"Loops for {agent}: {lps}")
+        if contrad:
+            lines.append("Contradictions:")
+            for a1, n1, a2, n2 in contrad:
+                lines.append(f"{a1}:{n1} contradicts {a2}:{n2}")
+        return "\n".join(lines) if lines else "No issues detected"
 
 
 def main(argv: Sequence[str] | None = None) -> None:
