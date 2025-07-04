@@ -12,7 +12,7 @@ except Exception:  # pragma: no cover - optional dependency
     _HAS_GRPC = False
 
 from .streaming_compression import StreamingCompressor, TemporalVectorCompressor
-from .knowledge_graph_memory import KnowledgeGraphMemory
+from .knowledge_graph_memory import KnowledgeGraphMemory, TimedTriple
 from .vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
@@ -317,11 +317,13 @@ class HierarchicalMemory:
         subject: str | None = None,
         predicate: str | None = None,
         object: str | None = None,
-    ) -> list[tuple[str, str, str]]:
+        start_time: float | None = None,
+        end_time: float | None = None,
+    ) -> list[TimedTriple]:
         """Proxy to :class:`KnowledgeGraphMemory` if enabled."""
         if self.kg is None:
             return []
-        return self.kg.query_triples(subject, predicate, object)
+        return self.kg.query_triples(subject, predicate, object, start_time, end_time)
 
     def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
         """Remove vectors from the store by index or metadata tag."""
@@ -445,10 +447,10 @@ class HierarchicalMemory:
 
     def search_with_kg(
         self, query: torch.Tensor, k: int = 5
-    ) -> Tuple[torch.Tensor, List[Any], List[tuple[str, str, str]]]:
+    ) -> Tuple[torch.Tensor, List[Any], List[TimedTriple]]:
         """Retrieve vectors and matching knowledge graph triples."""
         vecs, meta = self.search(query, k)
-        triples: list[tuple[str, str, str]] = []
+        triples: list[TimedTriple] = []
         if self.kg is not None:
             for m in meta:
                 triples.extend(self.kg.query_triples(subject=str(m)))

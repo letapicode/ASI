@@ -32,6 +32,7 @@ class TestComputeBudgetTracker(unittest.TestCase):
         usage = tracker.get_usage('run1')
         self.assertIn('gpu_hours', usage)
         self.assertIn('mem_peak', usage)
+        self.assertIn('carbon', usage)
         self.assertLessEqual(tracker.remaining('run1'), 0.001)
 
 

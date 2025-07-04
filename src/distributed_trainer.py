@@ -12,6 +12,7 @@ import torch
 
 from .gradient_compression import GradientCompressionConfig, GradientCompressor
 from .telemetry import TelemetryLogger
+from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .gpu_aware_scheduler import GPUAwareScheduler
 
 from .distributed_memory import DistributedMemory
@@ -70,6 +71,7 @@ class DistributedTrainer:
         grad_compression: GradientCompressionConfig | None = None,
         telemetry: TelemetryLogger | None = None,
         scheduler: GPUAwareScheduler | None = None,
+        micro_batcher: AdaptiveMicroBatcher | None = None,
     ) -> None:
         self.train_fn = train_fn
         self.mem_cfg = mem_cfg.__dict__ if isinstance(mem_cfg, MemoryConfig) else mem_cfg
@@ -79,6 +81,7 @@ class DistributedTrainer:
         self.grad_compression = grad_compression.__dict__ if isinstance(grad_compression, GradientCompressionConfig) else grad_compression
         self.telemetry = telemetry
         self.scheduler = scheduler
+        self.micro_batcher = micro_batcher
 
     def run(self, steps: int) -> None:
         """Execute ``train_fn`` for ``steps`` iterations with restart logic."""
@@ -86,6 +89,8 @@ class DistributedTrainer:
         restarts = 0
         if self.telemetry:
             self.telemetry.start()
+        if self.micro_batcher:
+            self.micro_batcher.start()
         while self.step < steps:
             proc = mp.Process(
                 target=_worker_process,
@@ -119,8 +124,12 @@ class DistributedTrainer:
                 stats = self.telemetry.get_stats()
                 stats["step"] = self.step
                 print("telemetry", stats)
+            if self.micro_batcher:
+                self.micro_batcher.tick()
         if self.telemetry:
             self.telemetry.stop()
+        if self.micro_batcher:
+            self.micro_batcher.stop()
 
 
 __all__ = ["DistributedTrainer", "MemoryConfig", "GradientCompressionConfig"]

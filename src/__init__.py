@@ -202,6 +202,7 @@ from .risk_dashboard import RiskDashboard
 from .graph_neural_reasoner import GraphNeuralReasoner
 from .lora_merger import merge_adapters
 from .edge_rl_trainer import EdgeRLTrainer
+from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .retrieval_explainer import RetrievalExplainer
 from .interpretability_dashboard import InterpretabilityDashboard
 from .collaborative_healing import CollaborativeHealingLoop

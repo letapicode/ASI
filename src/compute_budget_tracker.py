@@ -30,12 +30,14 @@ class ComputeBudgetTracker:
     budget_hours: float
     telemetry: TelemetryLogger | None = None
     energy_per_gpu_hour: float = 0.3
-    co2_per_kwh: float = 400.0
+    carbon_intensity: float | None = None
     records: Dict[str, Dict[str, float]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.telemetry is None:
             self.telemetry = TelemetryLogger(interval=1.0)
+        if self.carbon_intensity is None:
+            self.carbon_intensity = self.telemetry.get_carbon_intensity()
         self._stop = threading.Event()
         self.thread: threading.Thread | None = None
 
@@ -55,17 +57,8 @@ class ComputeBudgetTracker:
             )
             rec["gpu_hours"] += stats.get("gpu", 0.0) / 100.0 * interval / 3600
             rec["mem_peak"] = max(rec["mem_peak"], stats.get("mem", 0.0))
-            if self.telemetry.carbon_tracker is not None:
-                cf = self.telemetry.carbon_tracker.get_stats()
-                energy_base = rec.get("_energy_base")
-                if energy_base is None:
-                    rec["_energy_base"] = cf.get("energy_kwh", 0.0)
-                    rec["_carbon_base"] = cf.get("carbon_g", 0.0)
-                rec["energy"] = cf.get("energy_kwh", 0.0) - rec.get("_energy_base", 0.0)
-                rec["carbon"] = cf.get("carbon_g", 0.0) - rec.get("_carbon_base", 0.0)
-            else:
-                rec["energy"] = rec["gpu_hours"] * self.energy_per_gpu_hour
-                rec["carbon"] = rec["energy"] * self.co2_per_kwh
+            rec["energy"] = rec["gpu_hours"] * self.energy_per_gpu_hour
+            rec["carbon"] = rec["energy"] * (self.carbon_intensity or 0.0)
             self.records[run_id] = rec
             if rec["gpu_hours"] >= self.budget_hours:
                 self._stop.set()
@@ -110,7 +103,7 @@ class ComputeBudgetTracker:
         rec["gpu_hours"] += gpu_hours
         rec["mem_peak"] = max(rec["mem_peak"], mem)
         rec["energy"] = rec["gpu_hours"] * self.energy_per_gpu_hour
-        rec["carbon"] = rec["energy"] * self.co2_per_kwh
+        rec["carbon"] = rec["energy"] * (self.carbon_intensity or 0.0)
         self.records[run_id] = rec
 
 

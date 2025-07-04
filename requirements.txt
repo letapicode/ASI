@@ -11,3 +11,4 @@ pillow
 scikit-learn
 umap-learn
 plotly
+pyyaml

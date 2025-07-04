@@ -251,10 +251,13 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 22. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
     to track benchmark progress automatically. *Implemented in
     `scripts/continuous_eval.py`.*
-23. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with
+23. **Continuous adversarial evaluation**: Schedule adversarial tests via
+    `AdversarialRobustnessScheduler` and log metrics in
+    `scripts/continuous_eval.py`.
+24. **Adaptive planning agent**: Merge `GraphOfThoughtPlanner` with
     `MetaRLRefactorAgent` to auto-rank refactor strategies. *Implemented in
     `src/adaptive_planner.py`.*
-24. **Neural architecture search**: Evaluate `src/neural_arch_search.py` across
+25. **Neural architecture search**: Evaluate `src/neural_arch_search.py` across
     candidate module configurations and report accuracy vs. compute costs.
     *Implemented in `src/neural_arch_search.py`.*
 25. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
@@ -272,6 +275,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     *Implemented in `src/causal_graph_learner.py`.*
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
     The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
+    `KnowledgeGraphMemory` now records optional timestamps per triple and supports temporal range queries for time-sensitive reasoning.
 29. **Self-alignment evaluator**: Integrate
     `deliberative_alignment.check_alignment()` into `eval_harness` and track
     alignment metrics alongside existing benchmarks. *Implemented in
@@ -313,11 +317,12 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     passed through `cross_modal_fusion.encode_all()` and their fused embeddings
     are stored in `HierarchicalMemory` with language tags for language-agnostic
     retrieval.
-41. **Cross-lingual memory retrieval**: `HierarchicalMemory` now accepts a
-    translator and the `CrossLingualMemory` wrapper persists translated vectors
     so queries in any supported language return the same results. The optional
     `CrossLingualSpeechTranslator` transcribes audio queries offline and feeds
     the text through `CrossLingualTranslator` for unified search.
+41a. **Cross-lingual summarization memory**: `ContextSummaryMemory` stores summaries
+     in the source language and translated forms. Results are translated back
+     to the query language. See `docs/Implementation.md` for details.
 42. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
@@ -342,7 +347,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 56. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
 57. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
 58. **Secure federated learner**: Train models across remote peers using encrypted gradient aggregation. Accuracy should stay within 2% of centralized training.
-59. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Combined with `ComputeBudgetTracker`, the new `AdaptiveScheduler` automatically pauses or resumes runs based on remaining GPU hours and historical improvement.
+59. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Combined with `ComputeBudgetTracker`, the new `AdaptiveScheduler` automatically pauses or resumes runs based on remaining GPU hours and historical improvement. *Carbon-intensity data now guide the scheduler to prefer lower-emission nodes, reducing the environmental footprint.*
 60. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
 61. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
 62. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
@@ -358,6 +363,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 72. **Self-debugging world model**: Automatically patch the world model when rollout errors exceed 1%, keeping long-term error <1%. *Implemented in `src/world_model_debugger.py` with tests.*
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
+75. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."

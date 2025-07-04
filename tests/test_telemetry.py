@@ -11,6 +11,7 @@ class TestTelemetry(unittest.TestCase):
         logger.stop()
         stats = logger.get_stats()
         self.assertIn("cpu", stats)
+        self.assertGreater(logger.get_carbon_intensity("EU"), 0.0)
 
     def test_profiler(self):
         vals = []
