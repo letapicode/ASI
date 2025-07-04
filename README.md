@@ -20,7 +20,8 @@ meta-rl-refactor sample_log.csv
 ## Setup
 
 1. Use Python 3.10 or newer with PyTorch installed.
-2. Install dependencies with `pip install -r requirements.txt`.
+2. Install dependencies with `pip install -r requirements.txt` or run
+   `scripts/setup_test_env.sh` to automate the process.
 3. Optional: `pip install flash-attn` to enable the FlashAttention-3 wrapper in `src/flash_attention3.py`.
 4. Optional: `pip install faiss-cpu` to enable disk-backed vector storage in `src/vector_store.py`.
 5. Run `pip install -e .` to enable imports from the `asi` package.
@@ -47,8 +48,10 @@ Visit `http://localhost:8000` to view Prometheus metrics.
 
 ## Testing
 
-1. Install requirements: `pip install -r requirements.txt`.
-2. Install the package in editable mode: `pip install -e .`.
+1. Install requirements: `pip install -r requirements.txt` (or run
+   `scripts/setup_test_env.sh`).
+2. Install the package in editable mode: `pip install -e .` (already done by
+   the setup script).
 3. Run tests with `pytest`.
 
 ## Style
@@ -65,3 +68,8 @@ Continuous evaluation runs `scripts/continuous_eval.py` after each pull request.
 The script invokes `eval_harness` and `autobench` to track benchmark progress.
 See [.github/workflows/continuous_eval.yml](.github/workflows/continuous_eval.yml)
 for the GitHub Actions setup or schedule it locally with `cron`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on running the setup script
+and tests before opening a pull request.
