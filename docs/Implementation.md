@@ -594,6 +594,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   **Implemented in `src/context_summary_memory.py` with tests.**
 - Implement a `KnowledgeGraphMemory` that stores `(subject, predicate, object)` triples and hooks into `HierarchicalMemory` via `use_kg=True`. Unit tests cover insertion and retrieval.
   **Implemented in `src/knowledge_graph_memory.py` with `tests/test_knowledge_graph_memory.py`.**
+- Implement a `FederatedKGMemoryServer` that replicates `KnowledgeGraphMemory` across peers using CRDT-based updates. Endpoints `Push`, `PushBatch`, `Query` and `Sync` ensure replicas converge after partitions.
+  **Implemented in `src/federated_kg_memory.py` with tests.**
 - Add a `TelemetryLogger` in `telemetry.py` that exports GPU, CPU and network metrics via OpenTelemetry and Prometheus. Integrate the logger with `DistributedTrainer` and `MemoryServer`.
   `MemoryServer` now starts and stops a provided `TelemetryLogger` automatically.
   **Implemented in `src/telemetry.py`.**
