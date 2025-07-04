@@ -12,6 +12,7 @@ except Exception:  # pragma: no cover - optional dependency
     _HAS_GRPC = False
 
 from .streaming_compression import StreamingCompressor, TemporalVectorCompressor
+from .knowledge_graph_memory import KnowledgeGraphMemory
 from .vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
@@ -115,6 +116,7 @@ class HierarchicalMemory:
         evict_limit: int | None = None,
         adaptive_evict: bool = False,
         evict_check_interval: int = 100,
+        use_kg: bool = False,
     ) -> None:
         if temporal_decay is None:
             self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
@@ -147,6 +149,7 @@ class HierarchicalMemory:
         self.hit_count = 0
         self.miss_count = 0
         self.query_count = 0
+        self.kg: KnowledgeGraphMemory | None = KnowledgeGraphMemory() if use_kg else None
 
     def __len__(self) -> int:
         """Return the number of stored vectors."""
@@ -251,6 +254,10 @@ class HierarchicalMemory:
             self.store.add(comp, metas)
             for m in metas:
                 self._usage[m] = 0
+            if self.kg is not None:
+                triples = [t for t in metas if isinstance(t, tuple) and len(t) == 3]
+                if triples:
+                    self.kg.add_triples(triples)
             self._evict_if_needed()
 
     def add_multimodal(
@@ -300,6 +307,17 @@ class HierarchicalMemory:
             "hit_rate": rate,
             "evict_limit": float(self.evict_limit or 0),
         }
+
+    def query_triples(
+        self,
+        subject: str | None = None,
+        predicate: str | None = None,
+        object: str | None = None,
+    ) -> list[tuple[str, str, str]]:
+        """Proxy to :class:`KnowledgeGraphMemory` if enabled."""
+        if self.kg is None:
+            return []
+        return self.kg.query_triples(subject, predicate, object)
 
     def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
         """Remove vectors from the store by index or metadata tag."""
@@ -395,6 +413,17 @@ class HierarchicalMemory:
         ):
             self._update_eviction()
         return vec, out_meta
+
+    def search_with_kg(
+        self, query: torch.Tensor, k: int = 5
+    ) -> Tuple[torch.Tensor, List[Any], List[tuple[str, str, str]]]:
+        """Retrieve vectors and matching knowledge graph triples."""
+        vecs, meta = self.search(query, k)
+        triples: list[tuple[str, str, str]] = []
+        if self.kg is not None:
+            for m in meta:
+                triples.extend(self.kg.query_triples(subject=str(m)))
+        return vecs, meta, triples
 
     async def asearch(self, query: torch.Tensor, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
         """Asynchronously retrieve vectors and metadata."""

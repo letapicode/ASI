@@ -172,3 +172,8 @@ from .federated_world_model_trainer import (
 from .adversarial_robustness import AdversarialRobustnessSuite
 from .graph_of_thought import ReasoningDebugger
 from .multi_stage_oversight import MultiStageOversight
+from .knowledge_graph_memory import KnowledgeGraphMemory
+from .memory_dashboard import MemoryDashboard
+from .multi_agent_coordinator import MultiAgentCoordinator, RLNegotiator, NegotiationProtocol
+from .privacy_budget_manager import PrivacyBudgetManager
+from .causal_reasoner import CausalReasoner
