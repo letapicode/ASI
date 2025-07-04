@@ -154,6 +154,7 @@ from .auto_labeler import AutoLabeler
 from .graphql_memory_gateway import GraphQLMemoryGateway
 from .world_model_distiller import DistillConfig, distill_world_model
 from .summarizing_memory import SummarizingMemory
+from .context_summary_memory import ContextSummaryMemory
 from .sensorimotor_pretrainer import (
     SensorimotorPretrainConfig,
     SensorimotorLogDataset,
