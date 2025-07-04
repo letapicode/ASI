@@ -187,3 +187,4 @@ from .research_ingest import run_ingestion, suggest_modules
 from .quantum_sampler import sample_actions_qae
 from .risk_scoreboard import RiskScoreboard
 from .collaborative_healing import CollaborativeHealingLoop
+from .compute_budget_tracker import ComputeBudgetTracker
