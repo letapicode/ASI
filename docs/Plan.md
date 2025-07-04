@@ -306,7 +306,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 40. **Cross-lingual data ingestion**: Integrate a `CrossLingualTranslator`
     into `data_ingest` so text is stored in multiple languages. *Implemented*
     via the optional ``translator`` argument of ``download_triples()`` which
-    saves translated files alongside the originals.
+    saves translated files alongside the originals. Translated triples are now
+    passed through `cross_modal_fusion.encode_all()` and their fused embeddings
+    are stored in `HierarchicalMemory` with language tags for language-agnostic
+    retrieval.
 41. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by

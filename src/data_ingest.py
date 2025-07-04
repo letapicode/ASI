@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 import wave
 from pathlib import Path
-from typing import Iterable, List, Tuple, Callable, Any, Optional
+from typing import Iterable, List, Tuple, Callable, Any, Optional, Dict
 
 import numpy as np
 import asyncio
@@ -15,7 +15,18 @@ try:
 except Exception:  # pragma: no cover - optional
     _HAS_AIOHTTP = False
 from PIL import Image
-from .dataset_versioner import DatasetVersioner
+try:  # pragma: no cover - allow running without package context
+    from .dataset_versioner import DatasetVersioner
+except Exception:  # pragma: no cover - for tests
+    try:
+        from dataset_versioner import DatasetVersioner  # type: ignore
+    except Exception:  # pragma: no cover - stub fallback
+        class DatasetVersioner:  # type: ignore
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+            def record(self, *args: Any, **kwargs: Any) -> None:
+                pass
 try:  # pragma: no cover - fallback for local import
     from .generative_data_augmentor import GenerativeDataAugmentor
 except Exception:  # pragma: no cover - for tests
@@ -332,6 +343,54 @@ def auto_label_triples(
     return labeler.label(samples)
 
 
+def ingest_translated_triples(
+    triples: Iterable[Tuple[str | Path, str | Path, str | Path]],
+    tokenizer,
+    model: "CrossModalFusion",
+    memory: "HierarchicalMemory",
+    translator: Optional[CrossLingualTranslator] = None,
+    batch_size: int = 4,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Translate ``triples`` and store fused embeddings in ``memory``.
+
+    Each text sample is translated using ``translator`` into all configured
+    languages. The resulting text, image, and audio triples are encoded with
+    :func:`cross_modal_fusion.encode_all` and the averaged embeddings are stored
+    in ``memory`` with a ``{"lang": <code>}`` metadata tag. The function returns
+    the raw embeddings for further analysis.
+    """
+
+    from .cross_modal_fusion import MultiModalDataset, encode_all
+
+    items: List[Tuple[str, Any, Any]] = []
+    metas: List[Dict[str, str]] = []
+
+    for t_path, i_path, a_path in triples:
+        text = Path(t_path).read_text()
+        if str(i_path).endswith(".npy"):
+            image = np.load(i_path)
+        else:
+            image = np.array(Image.open(i_path))
+        if str(a_path).endswith(".npy"):
+            audio = np.load(a_path)
+        else:
+            with wave.open(str(a_path), "rb") as f:
+                frames = f.readframes(f.getnframes())
+                audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32)
+
+        translations = (
+            translator.translate_all(text) if translator is not None else {"orig": text}
+        )
+        for lang, txt in translations.items():
+            items.append((txt, image, audio))
+            metas.append({"lang": lang})
+
+    dataset = MultiModalDataset(items, tokenizer)
+    t_vecs, i_vecs, a_vecs = encode_all(model, dataset, batch_size=batch_size)
+    memory.add_multimodal(t_vecs, i_vecs, a_vecs, metas)
+    return t_vecs, i_vecs, a_vecs
+
+
 __all__ = [
     "download_triples",
     "download_triples_async",
@@ -346,6 +405,7 @@ __all__ = [
     "offline_synthesizer",
     "filter_dataset",
     "auto_label_triples",
+    "ingest_translated_triples",
     "ActiveDataSelector",
     "CrossLingualTranslator",
 ]
