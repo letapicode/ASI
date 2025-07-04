@@ -555,11 +555,13 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   model to generate synthetic multimodal triples for training. **Implemented as `data_ingest.offline_synthesizer`.**
 - Implement a `FederatedMemoryExchange` service that synchronizes vectors across multiple `MemoryServer` nodes. Provide a `scripts/federated_memory_sync.py` utility to benchmark cross-node synchronization throughput. **Implemented in `src/federated_memory_exchange.py` with the benchmarking script `scripts/federated_memory_sync.py`.**
 - Create a `CausalGraphLearner` module that infers directed relations from `world_model_rl` transitions and logs the resulting edges for planning. **Implemented in `src/causal_graph_learner.py`.**
+- Develop a `CausalReasoner` that combines `CausalGraphLearner` with `NeuroSymbolicExecutor` to plan actions along learned cause–effect chains. **Implemented in `src/causal_reasoner.py` with tests.**
 - Add a `SelfAlignmentEvaluator` to `eval_harness.py` that runs `deliberative_alignment.check_alignment()` on generated outputs and reports the metrics alongside existing benchmarks. **Implemented as `_eval_self_alignment()` in `src/eval_harness.py`.**
 - Add an `ActiveDataSelector` to `data_ingest.py` that scores incoming triples by predictive entropy and filters out low-information samples before storage. **Implemented in `data_ingest.ActiveDataSelector`.**
 - Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval. **Implemented in `src/federated_memory_server.py`.**
 - Develop a `HierarchicalPlanner` combining `GraphOfThought` with `world_model_rl.rollout_policy` to compose multi-stage plans. **Implemented in `src/hierarchical_planner.py`.**
 - Integrate a `DifferentialPrivacyOptimizer` into training loops so models can optionally clip gradients and inject noise during updates. **Implemented in `src/differential_privacy_optimizer.py` and integrated with `world_model_rl.train_world_model`.**
+- Add a `PrivacyBudgetManager` to track cumulative privacy loss across runs. `train_world_model` accepts the manager and records the consumed epsilon/delta after each training session. **Implemented in `src/privacy_budget_manager.py` with `scripts/privacy_budget_status.py`.**
 - Add a `GradientCompressor` utility that performs top-k or quantized gradient
   compression. `DistributedTrainer` uses it when ``grad_compression`` is
   provided. **Implemented in `src/gradient_compression.py` and wired through
@@ -568,6 +570,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Create an `EmbeddingVisualizer` module that runs UMAP/t-SNE on cross-modal embeddings and serves interactive plots through a minimal web interface.
 **Implemented in `src/embedding_visualizer.py`.**
 - Implement a `MultiAgentCoordinator` that synchronizes multiple `MetaRLRefactorAgent` instances and schedules cooperative refactoring tasks across repositories. **Implemented in `src/multi_agent_coordinator.py` with unit tests.**
+- Extend `MultiAgentCoordinator` with a pluggable `NegotiationProtocol`. A reinforcement-learning based `RLNegotiator` assigns tasks to agents. **Implemented with tests in `src/multi_agent_coordinator.py`.**
 - Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`. **Implemented in `src/pq_vector_store.py` and integrated with `HierarchicalMemory`.**
 - Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`. **Implemented in `src/duplicate_detector.py` and integrated with `filter_text_files()`.**
 - Implement a `TemporalVectorCompressor` in `streaming_compression.py` with a
@@ -586,10 +589,14 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   `scripts/summarize_memory_benchmark.py`.**
 - Implement a `ContextSummaryMemory` that replaces far-past vectors with text summaries and re-expands them when retrieved. Unit test `tests/test_context_summary_memory.py` verifies summarization and expansion.
   **Implemented in `src/context_summary_memory.py` with tests.**
+- Implement a `KnowledgeGraphMemory` that stores `(subject, predicate, object)` triples and hooks into `HierarchicalMemory` via `use_kg=True`. Unit tests cover insertion and retrieval.
+  **Implemented in `src/knowledge_graph_memory.py` with `tests/test_knowledge_graph_memory.py`.**
 - Add a `TelemetryLogger` in `telemetry.py` that exports GPU, CPU and network metrics via OpenTelemetry and Prometheus. Integrate the logger with `DistributedTrainer` and `MemoryServer`.
   `MemoryServer` now starts and stops a provided `TelemetryLogger` automatically.
   **Implemented in `src/telemetry.py`.**
-- Extend `data_ingest.py` with a `LicenseInspector` that parses dataset metadata for license terms and rejects incompatible samples. Include a `scripts/license_check.py` CLI to audit stored triples.
+- Implement a `MemoryDashboard` that aggregates `TelemetryLogger` statistics from multiple `MemoryServer` nodes and serves them via a simple web endpoint. The script `scripts/memory_dashboard.py` launches the dashboard.
+  **Implemented in `src/memory_dashboard.py` with tests.**
+  - Extend `data_ingest.py` with a `LicenseInspector` that parses dataset metadata for license terms and rejects incompatible samples. Include a `scripts/license_check.py` CLI to audit stored triples.
   **Implemented in `src/license_inspector.py` with the CLI `scripts/license_check.py`.**
 - Add an `AdaptiveCompressor` that tunes the compression ratio in `StreamingCompressor` based on retrieval frequency so rarely accessed vectors use fewer bytes.
   **Implemented as `AdaptiveCompressor` in `src/streaming_compression.py`.**

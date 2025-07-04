@@ -12,6 +12,7 @@ try:
         DifferentialPrivacyOptimizer,
         DifferentialPrivacyConfig,
     )
+    from .privacy_budget_manager import PrivacyBudgetManager
 except Exception:  # pragma: no cover - fallback for tests
     import importlib.util
     import sys
@@ -36,6 +37,8 @@ except Exception:  # pragma: no cover - fallback for tests
     dpo = _load("differential_privacy_optimizer")
     DifferentialPrivacyOptimizer = dpo.DifferentialPrivacyOptimizer  # type: ignore
     DifferentialPrivacyConfig = dpo.DifferentialPrivacyConfig
+    pbm_mod = _load("privacy_budget_manager")
+    PrivacyBudgetManager = pbm_mod.PrivacyBudgetManager
 
 import torch
 from torch import nn
@@ -92,6 +95,8 @@ def train_world_model(
     cfg: RLBridgeConfig,
     dataset: Dataset,
     dp_cfg: DifferentialPrivacyConfig | None = None,
+    pbm: "PrivacyBudgetManager | None" = None,
+    run_id: str = "default",
 ) -> WorldModel:
     model = WorldModel(cfg)
     loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
@@ -113,6 +118,9 @@ def train_world_model(
             opt.zero_grad()
             loss.backward()
             opt.step()
+    if pbm is not None and dp_cfg is not None:
+        eps = dp_cfg.noise_std * len(dataset) / cfg.batch_size
+        pbm.consume(run_id, eps, 0.0)
     return model
 
 

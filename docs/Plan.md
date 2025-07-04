@@ -262,6 +262,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 28. **Causal graph learner**: Train `CausalGraphLearner` on `world_model_rl`
     transitions and report planning gains from the inferred edges.
     *Implemented in `src/causal_graph_learner.py`.*
+29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
 29. **Self-alignment evaluator**: Integrate
     `deliberative_alignment.check_alignment()` into `eval_harness` and track
     alignment metrics alongside existing benchmarks. *Implemented in
@@ -305,6 +306,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 42. **Summarizing memory compression**: Condense rarely accessed vectors with a small language model before persisting them to disk. Success is a ≥50 % reduction in storage while retrieval accuracy drops <5 %.
 43. **Telemetry instrumentation**: Record GPU/CPU utilization and network throughput across distributed nodes using OpenTelemetry and expose the metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster. *`MemoryServer` now accepts a `TelemetryLogger` to start and stop metrics automatically.*
+44. **Memory usage dashboard**: Aggregate telemetry from multiple memory nodes and present hit/miss rates in real time.
 44. **License compliance checker**: Parse dataset sources for license text during ingestion and block incompatible samples. Every stored triple should include a valid license entry.
 45. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
 46. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt revisions via reinforcement learning and measure evaluation gains.
