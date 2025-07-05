@@ -351,6 +351,10 @@ To reproduce the toy run step by step:
   ``store()`` and ``retrieve()`` helpers for binary patterns.
 - `HierarchicalMemory` accepts ``use_hopfield=True`` to keep a tiny in-memory
   associative cache backed by this network.
+- `src/differentiable_memory.py` wraps ``HierarchicalMemory`` so retrieved
+  vectors keep gradient information. Enable ``use_differentiable_memory`` in
+  ``train_world_model`` when training models that update memory contents via
+  backpropagation.
 
 ### Distributed Memory Benchmark
 
