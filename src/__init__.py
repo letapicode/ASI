@@ -200,6 +200,7 @@ from .data_provenance_ledger import DataProvenanceLedger
 from .fairness_evaluator import FairnessEvaluator
 from .risk_dashboard import RiskDashboard
 from .graph_neural_reasoner import GraphNeuralReasoner
+from .temporal_reasoner import TemporalReasoner
 from .lora_merger import merge_adapters
 from .edge_rl_trainer import EdgeRLTrainer
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
