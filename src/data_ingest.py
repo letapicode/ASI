@@ -76,8 +76,32 @@ except Exception:  # pragma: no cover - for tests
                 pass
 
 
+try:
+    from .data_bias_mitigator import DataBiasMitigator
+except Exception:  # pragma: no cover - for tests
+    try:
+        from data_bias_mitigator import DataBiasMitigator  # type: ignore
+    except Exception:
+        class DataBiasMitigator:  # type: ignore
+            def __init__(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def apply_to_triples(self, triples: Iterable[Tuple[Path, Path, Path]]) -> list[tuple[Path, Path, Path]]:
+                return list(triples)
+
+try:  # pragma: no cover - optional bias scoring
+    from .dataset_bias_detector import file_bias_score
+except Exception:  # pragma: no cover - for tests
+    try:
+        from dataset_bias_detector import file_bias_score  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        def file_bias_score(path: str | Path) -> float:  # type: ignore
+            return 1.0
+
+
+
 class ActiveDataSelector:
-    """Filter triples based on predictive entropy."""
+    """Score triples by entropy and output weights in ``[0, 1]``."""
 
     def __init__(self, threshold: float = 1.0) -> None:
         self.threshold = threshold
@@ -87,13 +111,23 @@ class ActiveDataSelector:
         p = probs / (probs.sum() + 1e-8)
         return float(-(p * np.log(p + 1e-8)).sum())
 
-    def select(self, triples: Iterable[Tuple[Any, Any, Any]], probs: Iterable[np.ndarray]) -> list[Tuple[Any, Any, Any]]:
-        """Return samples whose entropy exceeds ``threshold``."""
-        kept = []
+    def select(
+        self,
+        triples: Iterable[Tuple[Any, Any, Any]],
+        probs: Iterable[np.ndarray],
+    ) -> list[Tuple[Tuple[Any, Any, Any], float]]:
+        """Return ``(triple, weight)`` pairs with bias-adjusted weights."""
+        results: list[tuple[tuple[Any, Any, Any], float]] = []
         for t, p in zip(triples, probs):
-            if self.score(np.asarray(p, dtype=float)) >= self.threshold:
-                kept.append(t)
-        return kept
+            ent = self.score(np.asarray(p, dtype=float))
+            w = min(ent / (self.threshold + 1e-8), 1.0)
+            try:
+                bias = max(0.0, float(file_bias_score(t[0])))
+                w *= bias
+            except Exception:
+                pass
+            results.append((t, float(w)))
+        return results
 
 
 class CrossLingualTranslator:
@@ -194,8 +228,13 @@ def download_triples(
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
+    bias_mitigator: Optional["DataBiasMitigator"] = None,
 ) -> List[Tuple[Path, Path, Path]]:
-    """Download text, image and audio triples into ``out_dir`` concurrently."""
+    """Download text, image and audio triples into ``out_dir`` concurrently.
+
+    If ``bias_mitigator`` is provided, downloaded text files are filtered based
+    on bias scores before returning the list of triples.
+    """
 
     async def run() -> List[Tuple[Path, Path, Path]]:
         return await download_triples_async(
@@ -207,6 +246,7 @@ def download_triples(
             translator,
             anonymizer,
             lineage,
+            bias_mitigator,
         )
 
     try:
@@ -226,8 +266,13 @@ async def download_triples_async(
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
+    bias_mitigator: Optional["DataBiasMitigator"] = None,
 ) -> List[Tuple[Path, Path, Path]]:
-    """Asynchronously download text, image and audio triples."""
+    """Asynchronously download text, image and audio triples.
+
+    The optional ``bias_mitigator`` allows biased samples to be removed before
+    they are recorded in the dataset.
+    """
     if not _HAS_AIOHTTP:
         raise ImportError("aiohttp is required for async downloads")
     out = Path(out_dir)
@@ -273,6 +318,8 @@ async def download_triples_async(
                 t_new.write_text(trans)
                 augmented.append((t_new, i_path, a_path))
         triples = augmented
+    if bias_mitigator is not None:
+        triples = bias_mitigator.apply_to_triples(triples)
     if lineage is not None and anonymizer is not None:
         flat = [p for tri in triples for p in tri]
         lineage.record(flat, flat, note=f"anonymized {anonymizer.summary()}")
@@ -460,6 +507,49 @@ def auto_label_triples(
     return labeler.label(samples)
 
 
+def paraphrase_multilingual(
+    text_files: Iterable[str | Path],
+    translator: CrossLingualTranslator,
+    dataset_filter: Optional[AutoDatasetFilter] = None,
+    inspector: Optional["LicenseInspector"] = None,
+    lineage: Optional[DatasetLineageManager] = None,
+) -> List[Path]:
+    """Generate and save paraphrases of ``text_files`` across languages."""
+
+    paths = [Path(p) for p in text_files]
+    texts: List[str] = []
+    kept_inputs: List[Path] = []
+    for p in paths:
+        if inspector is not None:
+            meta = p.with_suffix(".json")
+            if meta.exists() and not inspector.inspect(meta):
+                continue
+        try:
+            txt = p.read_text()
+        except Exception:
+            continue
+        texts.append(txt)
+        kept_inputs.append(p)
+
+    if dataset_filter is not None:
+        dataset_filter.fit(texts)
+
+    out_paths: List[Path] = []
+    total = 0
+    for p, txt in zip(kept_inputs, texts):
+        for lang, trans in translator.translate_all(f"{txt} paraphrased").items():
+            total += 1
+            out_p = p.with_name(f"{p.stem}_{lang}_para{p.suffix}")
+            if dataset_filter is not None and dataset_filter.score(trans) < dataset_filter.threshold:
+                continue
+            out_p.write_text(trans)
+            out_paths.append(out_p)
+
+    if lineage is not None and out_paths:
+        lineage.record(kept_inputs, out_paths, note=f"paraphrase_multilingual generated={total} kept={len(out_paths)}")
+    return out_paths
+
+
 def ingest_translated_triples(
     triples: Iterable[
         Tuple[str | Path, str | Path, str | Path]
@@ -533,6 +623,7 @@ __all__ = [
     "offline_synthesizer",
     "filter_dataset",
     "auto_label_triples",
+    "paraphrase_multilingual",
     "ingest_translated_triples",
     "ActiveDataSelector",
     "CrossLingualTranslator",

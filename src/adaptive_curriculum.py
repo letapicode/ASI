@@ -54,4 +54,24 @@ class AdaptiveCurriculum:
             self.prefs[i] += self.cfg.lr * grad
 
 
-__all__ = ["CurriculumConfig", "AdaptiveCurriculum"]
+class SampleWeightRL:
+    """REINFORCE loop to adapt sample weights during training."""
+
+    def __init__(self, num_samples: int, lr: float = 0.1) -> None:
+        self.prefs = torch.zeros(num_samples, dtype=torch.float32)
+        self.lr = lr
+        self.baseline = 0.0
+
+    def weights(self) -> torch.Tensor:
+        return torch.softmax(self.prefs, dim=0)
+
+    def update(self, idx: int, reward: float) -> None:
+        probs = self.weights()
+        self.baseline += self.lr * (reward - self.baseline)
+        adv = reward - self.baseline
+        for i in range(len(self.prefs)):
+            grad = adv * ((1 if i == idx else 0) - probs[i])
+            self.prefs[i] += self.lr * grad
+
+
+__all__ = ["CurriculumConfig", "AdaptiveCurriculum", "SampleWeightRL"]

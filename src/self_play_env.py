@@ -31,6 +31,22 @@ class SimpleEnv:
         return EnvStep(self.state.clone(), reward, done)
 
 
+class VoxelEnv(SimpleEnv):
+    """Wrapper that exposes the underlying state as a 3D volume."""
+
+    def __init__(self, dims: tuple[int, int, int], device: torch.device | None = None) -> None:
+        self.dims = dims
+        super().__init__(int(torch.prod(torch.tensor(dims)).item()), device=device)
+
+    def reset(self) -> torch.Tensor:  # noqa: D401 - override
+        obs = super().reset()
+        return obs.view(self.dims)
+
+    def step(self, action: torch.Tensor) -> EnvStep:  # noqa: D401 - override
+        step = super().step(action.view(-1))
+        return EnvStep(step.observation.view(self.dims), step.reward, step.done)
+
+
 class PrioritizedReplayBuffer:
     """Replay buffer that samples transitions according to reward."""
 
@@ -101,4 +117,4 @@ def rollout_env(
     return observations, rewards
 
 
-__all__ = ["EnvStep", "SimpleEnv", "PrioritizedReplayBuffer", "rollout_env"]
+__all__ = ["EnvStep", "SimpleEnv", "VoxelEnv", "PrioritizedReplayBuffer", "rollout_env"]

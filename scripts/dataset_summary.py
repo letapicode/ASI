@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Summarize dataset lineage and license information."""
+"""Summarize dataset lineage, license information and optionally content."""
 
 from __future__ import annotations
 
@@ -13,10 +13,13 @@ try:  # pragma: no cover - prefer package if available
 except Exception:  # pragma: no cover - fallback for tests
     from src.dataset_lineage_manager import DatasetLineageManager  # type: ignore
     from src.license_inspector import LicenseInspector  # type: ignore
+    from src.dataset_summarizer import summarize_dataset  # type: ignore
+else:  # pragma: no cover - package import
+    from asi.dataset_summarizer import summarize_dataset
 
 
-def summarize(root: str | Path, fmt: str = "md") -> str:
-    """Return a summary of lineage steps and licenses."""
+def summarize(root: str | Path, fmt: str = "md", content: bool = False) -> str:
+    """Return a summary of lineage, licenses and optional content."""
     mgr = DatasetLineageManager(root)
     mgr.load()
     inspector = LicenseInspector()
@@ -26,6 +29,11 @@ def summarize(root: str | Path, fmt: str = "md") -> str:
             licenses[str(p)] = inspector.inspect(p)
         except Exception:
             continue
+
+    summaries: list[str] | None = None
+
+    if content:
+        summaries = summarize_dataset(root)
 
     if fmt == "json":
         data = {
@@ -39,6 +47,8 @@ def summarize(root: str | Path, fmt: str = "md") -> str:
             ],
             "licenses": licenses,
         }
+        if summaries is not None:
+            data["content_summaries"] = summaries
         return json.dumps(data, indent=2)
 
     lines = ["# Dataset Summary", "", "## Lineage"]
@@ -51,6 +61,11 @@ def summarize(root: str | Path, fmt: str = "md") -> str:
     for path, ok in licenses.items():
         status = "OK" if ok else "NOT ALLOWED"
         lines.append(f"- {Path(path).name}: {status}")
+    if summaries is not None:
+        lines.append("")
+        lines.append("## Content Summaries")
+        for s in summaries:
+            lines.append(f"- {s}")
     return "\n".join(lines)
 
 
@@ -58,8 +73,16 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Dataset summary")
     parser.add_argument("root", help="Dataset root directory")
     parser.add_argument("--format", choices=["md", "json"], default="md")
+    parser.add_argument("--content", action="store_true", help="Summarize dataset content")
     args = parser.parse_args(argv)
-    print(summarize(args.root, args.format))
+    out = summarize(args.root, args.format, args.content)
+    if args.content and args.format == "md":
+        out_dir = Path("docs/datasets")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / f"{Path(args.root).stem}.md"
+        out_file.write_text(out)
+        print(f"Wrote {out_file}")
+    print(out)
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI

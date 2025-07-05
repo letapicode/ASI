@@ -59,9 +59,10 @@ class FederatedWorldModelTrainer:
                 flat = torch.cat([g.view(-1) for g in grads])
                 enc, proof = self.learner.encrypt(flat, with_proof=True)
                 enc_grads.append((enc, proof))
-            agg = self.learner.aggregate([
-                self.learner.decrypt(g, p) for g, p in enc_grads
-            ])
+            agg = self.learner.aggregate(
+                [self.learner.decrypt(g, p) for g, p in enc_grads],
+                proofs=[pr.digest for _, pr in enc_grads] if self.learner.require_proof else None,
+            )
             start = 0
             for p in params:
                 num = p.numel()

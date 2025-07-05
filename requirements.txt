@@ -15,4 +15,5 @@ pyyaml
 fastapi
 uvicorn
 cryptography
+tenseal
 

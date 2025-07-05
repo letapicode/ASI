@@ -30,19 +30,29 @@ class TestGraphUI(unittest.TestCase):
         b = g.add_step('finish')
         g.connect(a, b)
         logger = ReasoningHistoryLogger()
-        logger.log('summary')
         ui = GraphUI(g, logger)
         ui.start(port=0)
         port = ui.port
         conn = http.client.HTTPConnection('localhost', port)
-        conn.request('GET', '/history')
+        # add node
+        body = json.dumps({'text': 'mid'})
+        conn.request('POST', '/graph/node', body, {'Content-Type': 'application/json'})
         resp = conn.getresponse()
-        hist = json.loads(resp.read())
-        self.assertEqual(hist[0][1], 'summary')
+        node_id = json.loads(resp.read())['id']
+        conn.request('POST', '/graph/edge', json.dumps({'src': a, 'dst': node_id}),
+                     {'Content-Type': 'application/json'})
+        conn.getresponse().read()
+        conn.request('POST', '/graph/recompute')
+        summary = json.loads(conn.getresponse().read())['summary']
+        self.assertIn('start', summary)
         conn.request('GET', '/graph/data')
         resp = conn.getresponse()
         data = json.loads(resp.read())
-        self.assertEqual(len(data['nodes']), 2)
+        self.assertEqual(len(data['nodes']), 3)
+        conn.request('GET', '/history')
+        resp = conn.getresponse()
+        hist = json.loads(resp.read())
+        self.assertGreaterEqual(len(hist), 2)
         ui.stop()
 
 
