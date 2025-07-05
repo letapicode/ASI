@@ -4,7 +4,7 @@ import threading
 import socket
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
 
@@ -74,12 +74,18 @@ class GraphUI:
         self.thread: threading.Thread | None = None
         self.server: uvicorn.Server | None = None
         self.port: int | None = None
+        # store initial summary
+        self.logger.log(self.graph.self_reflect())
 
     # --------------------------------------------------------------
     def _setup_routes(self) -> None:
         @self.app.get('/graph', response_class=HTMLResponse)
         async def graph_page() -> Any:
             return HTMLResponse(_HTML)
+
+        async def _record() -> None:
+            summary = self.graph.self_reflect()
+            self.logger.log(summary)
 
         @self.app.get('/graph/data')
         async def graph_data() -> Any:
@@ -88,6 +94,47 @@ class GraphUI:
         @self.app.get('/history')
         async def history() -> Any:
             return JSONResponse(self.logger.get_history())
+
+        @self.app.post('/graph/node')
+        async def add_node(req: Request) -> Any:
+            data = await req.json()
+            node_id = self.graph.add_step(data.get('text', ''), data.get('metadata'))
+            await _record()
+            return JSONResponse({'id': node_id})
+
+        @self.app.post('/graph/edge')
+        async def add_edge(req: Request) -> Any:
+            data = await req.json()
+            self.graph.connect(int(data['src']), int(data['dst']))
+            await _record()
+            return JSONResponse({'status': 'ok'})
+
+        @self.app.post('/graph/remove_node')
+        async def remove_node(req: Request) -> Any:
+            data = await req.json()
+            node_id = int(data['id'])
+            self.graph.nodes.pop(node_id, None)
+            self.graph.edges.pop(node_id, None)
+            for src, dsts in list(self.graph.edges.items()):
+                self.graph.edges[src] = [d for d in dsts if d != node_id]
+            await _record()
+            return JSONResponse({'status': 'ok'})
+
+        @self.app.post('/graph/remove_edge')
+        async def remove_edge(req: Request) -> Any:
+            data = await req.json()
+            src = int(data['src'])
+            dst = int(data['dst'])
+            if src in self.graph.edges:
+                self.graph.edges[src] = [d for d in self.graph.edges[src] if d != dst]
+            await _record()
+            return JSONResponse({'status': 'ok'})
+
+        @self.app.post('/graph/recompute')
+        async def recompute() -> Any:
+            summary = self.graph.self_reflect()
+            self.logger.log(summary)
+            return JSONResponse({'summary': summary})
 
     # --------------------------------------------------------------
     def start(self, host: str = 'localhost', port: int = 8070) -> None:
