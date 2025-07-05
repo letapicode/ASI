@@ -593,6 +593,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `ContextSummaryMemory` that replaces far-past vectors with text summaries and re-expands them when retrieved. Unit test `tests/test_context_summary_memory.py` verifies summarization and expansion.
   **Implemented in `src/context_summary_memory.py` with tests.**
 - Extend `ContextSummaryMemory` with a `translator` argument so summaries are stored in multiple languages and returned in the query language. Tested in `tests/test_cross_lingual_summary_memory.py`.
+- Extend `analogical_retrieval.analogy_search` with a `language` argument and update `HierarchicalMemory.search(mode="analogy")` so `ContextSummaryMemory` can return translated vectors. Tested in `tests/test_cross_lingual_analogy.py`.
 - Implement a `KnowledgeGraphMemory` that stores `(subject, predicate, object)` triples and hooks into `HierarchicalMemory` via `use_kg=True`. Unit tests cover insertion and retrieval.
   **Implemented in `src/knowledge_graph_memory.py` with `tests/test_knowledge_graph_memory.py`.**
 - Implement a `FederatedKGMemoryServer` that replicates `KnowledgeGraphMemory` across peers using CRDT-based updates. Endpoints `Push`, `PushBatch`, `Query` and `Sync` ensure replicas converge after partitions.
