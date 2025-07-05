@@ -6,5 +6,6 @@ Thank you for improving the ASI prototype. To get started:
 2. Install dependencies with `pip install -r requirements.txt`.
 3. Install the package in editable mode with `pip install -e .`.
 4. Run tests with `pytest` before submitting a pull request.
+5. Generate module docs with `python -m asi.doc_summarizer <module>` whenever you add new modules.
 
 You can run `scripts/setup_test_env.sh` to automate steps 2 and 3.

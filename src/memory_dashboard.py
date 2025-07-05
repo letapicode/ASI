@@ -66,6 +66,14 @@ class MemoryDashboard:
         return [{"index": i, "meta": metas[i]} for i in range(start, end)]
 
     # ----------------------------------------------------------
+    def events(self) -> list[dict]:
+        all_events: list[dict] = []
+        for srv in self.servers:
+            if srv.telemetry is not None:
+                all_events.extend(srv.telemetry.get_events())
+        return all_events
+
+    # ----------------------------------------------------------
     def to_html(self) -> str:
         rows = []
         for idx, srv in enumerate(self.servers):
@@ -83,12 +91,16 @@ class MemoryDashboard:
             )
         corr = self.aggregate().get("gpu_score_corr", 0.0)
         table = "\n".join(rows)
+        events = "".join(
+            f"<li>{e['metric']} spike at {e['index']}</li>" for e in self.events()[-10:]
+        )
         return (
             "<html><body><h1>Memory Dashboard</h1>"
             "<p><a href='http://localhost:8070/graph'>Graph UI</a></p>"
             "<table border='1'>"
             "<tr><th>Server</th><th>GPU Util (%)</th><th>Hits</th><th>Misses</th><th>Avg Score</th></tr>"
-            f"{table}</table><p>GPU/Score correlation: {corr:.3f}</p></body></html>"
+            f"{table}</table><p>GPU/Score correlation: {corr:.3f}</p>"
+            f"<h2>Events</h2><ul>{events}</ul></body></html>"
         )
 
     # ----------------------------------------------------------
@@ -126,6 +138,12 @@ class MemoryDashboard:
                     end = q.get("end", [None])[0]
                     end_i = int(end) if end is not None else None
                     data = json.dumps(dashboard._entries(start, end_i)).encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(data)
+                elif self.path == "/events":
+                    data = json.dumps(dashboard.events()).encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
