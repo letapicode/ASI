@@ -148,6 +148,12 @@ from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner
 from .dataset_lineage_manager import DatasetLineageManager
 from .dataset_anonymizer import DatasetAnonymizer
+from .dataset_discovery import (
+    DiscoveredDataset,
+    discover_huggingface,
+    discover_kaggle,
+    store_datasets,
+)
 from .streaming_compression import AdaptiveCompressor, TemporalVectorCompressor
 from .context_profiler import profile_model, ContextWindowProfiler
 from .accelerator_scheduler import AcceleratorScheduler

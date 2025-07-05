@@ -392,3 +392,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 [25]: https://github.com/features/actions?utm_source=chatgpt.com "GitHub Actions for automated repository processing"
 [26]: https://arxiv.org/abs/2211.00564?utm_source=chatgpt.com "Transformer Circuits: Mechanistic Interpretability"
 74. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
+75. **Dataset discovery pipeline**: `dataset_discovery.py` scans RSS feeds from
+    HuggingFace and Kaggle, storing dataset names, URLs and license text in a
+    lightweight SQLite database. `license_inspector.py` loads the database to
+    flag incompatible licenses. The plan is to crowd‑source additional data hub
+    scrapers so community members can contribute new sources via pull requests.
