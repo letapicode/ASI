@@ -84,6 +84,14 @@ To build the kernel yourself:
 
 After installation, the wrapper will automatically call the optimized kernel.
 
+## Neuromorphic Execution
+
+`src/loihi_backend.py` wraps optional calls into Intel's Loihi SDK. When
+`_HAS_LOIHI` is `True`, `LIFNeuron` and `SpikingLinear` offload their
+computations via `loihi_backend`. Enable this by installing the NxSDK and
+setting `use_loihi=True` on those modules or via
+`MultiModalWorldModelConfig.use_spiking`.
+
 ## S-3 Scaling-law Breakpoint Model
 
 `src/scaling_law.py` defines ``BreakpointScalingLaw`` which fits a piecewise
