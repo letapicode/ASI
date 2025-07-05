@@ -32,7 +32,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service (see `MemoryServer`, `RemoteMemory`) | Throughput scales to 4+ nodes with <1.2× single-node latency |
 | **C-9** | **Hopfield Associative Memory** | Store binary patterns as attractors and recall them from noisy cues | Recall accuracy >95 % on 32-bit vectors with up to 20 % noise |
 
-**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.
+**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.  Privacy-preserving retrieval is now possible via `EncryptedVectorStore`, which stores AES-encrypted embeddings and manages keys through `HierarchicalMemory`.
 
 ---
 
@@ -151,6 +151,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   `aiohttp` for faster monitoring of open pull requests.
 - `src/lora_quant.py` provides 4-bit LoRA adapters and `apply_quant_lora()` to
   inject them into existing models.
+- `src/spiking_layers.py` defines `LIFNeuron` and `SpikingLinear`. Set
+  `use_spiking=True` in `MultiModalWorldModelConfig` to replace MLP blocks with
+  these energy-efficient neurons.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
@@ -246,8 +249,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     ingest to prune low-quality samples using generative noise detection and
     track the effect on training stability.
 21. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
-    new training triples from world-model rollouts and expand the dataset. The
-    module integrates with `data_ingest` for easy ingestion.
+    new training triples from world-model rollouts and expand the dataset. When
+    paired with `DiffusionWorldModel`, the augmentor samples diverse environment
+    states to improve world-model coverage. The module integrates with
+    `data_ingest` for easy ingestion.
 22. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
     to track benchmark progress automatically. *Implemented in
     `scripts/continuous_eval.py`.*
@@ -276,6 +281,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
     The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
     `KnowledgeGraphMemory` now records optional timestamps per triple and supports temporal range queries for time-sensitive reasoning.
+29. **Temporal reasoner**: `TemporalReasoner` queries these timestamped triples
+    to infer before/after relationships. `HierarchicalPlanner.compose_plan()`
+    can optionally reorder intermediate steps using the reasoner for time-aware
+    planning.
 29. **Self-alignment evaluator**: Integrate
     `deliberative_alignment.check_alignment()` into `eval_harness` and track
     alignment metrics alongside existing benchmarks. *Implemented in
@@ -365,6 +374,18 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
 75. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
 76. **Trusted execution inference**: `EnclaveRunner` launches model inference inside a trusted enclave. `DistributedTrainer` can route its steps through the enclave to keep weights in a protected address space. This guards intermediate activations but does not eliminate side-channel risk.
+77. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
+    telemetry metrics alongside reasoning logs through a small web server.
+78. **Cluster carbon dashboard**: `TelemetryLogger` now publishes per-node carbon metrics to a central `ClusterCarbonDashboard`. `RiskDashboard` links to the dashboard so operators can track environmental impact across nodes.
+79. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
+80. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
+
+
+
+
+
+
+
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
@@ -392,4 +413,3 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 [24]: https://arxiv.org/abs/2307.15424?utm_source=chatgpt.com "RT-2: Vision-Language-Action Models"
 [25]: https://github.com/features/actions?utm_source=chatgpt.com "GitHub Actions for automated repository processing"
 [26]: https://arxiv.org/abs/2211.00564?utm_source=chatgpt.com "Transformer Circuits: Mechanistic Interpretability"
-74. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.

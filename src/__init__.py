@@ -28,6 +28,7 @@ from .distributed_trainer import DistributedTrainer, MemoryConfig
 from .remote_memory import RemoteMemory
 from .edge_memory_client import EdgeMemoryClient
 from .vector_store import VectorStore, FaissVectorStore
+from .encrypted_vector_store import EncryptedVectorStore
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .iter_align import IterativeAligner
@@ -118,6 +119,7 @@ from .data_ingest import (
     CrossLingualTranslator,
 )
 from .generative_data_augmentor import GenerativeDataAugmentor
+from .diffusion_world_model import DiffusionWorldModel
 from .causal_graph_learner import CausalGraphLearner
 from .transformer_circuits import (
     ActivationRecorder,
@@ -201,11 +203,21 @@ from .data_provenance_ledger import DataProvenanceLedger
 from .fairness_evaluator import FairnessEvaluator
 from .risk_dashboard import RiskDashboard
 from .graph_neural_reasoner import GraphNeuralReasoner
+from .temporal_reasoner import TemporalReasoner
 from .lora_merger import merge_adapters
 from .edge_rl_trainer import EdgeRLTrainer
+from .federated_rl_trainer import (
+    FederatedRLTrainer,
+    FederatedRLTrainerConfig,
+    PolicyNet,
+)
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .retrieval_explainer import RetrievalExplainer
 from .interpretability_dashboard import InterpretabilityDashboard
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
+from .collaboration_portal import CollaborationPortal
+from .cluster_carbon_dashboard import ClusterCarbonDashboard
+from .spiking_layers import LIFNeuron, SpikingLinear
+
