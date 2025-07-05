@@ -24,6 +24,7 @@ class MultiAgentDashboard:
         """Return combined metrics across all agents."""
         telemetry: Dict[str, float] = {}
         reasoning: Dict[str, list] = {}
+        graphs: Dict[str, Any] = {}
         for name, agent in self.coordinator.agents.items():
             tel = getattr(agent, "telemetry", None)
             hist = (
@@ -31,16 +32,37 @@ class MultiAgentDashboard:
                 or getattr(agent, "reasoning", None)
                 or getattr(agent, "reasoning_log", None)
             )
+            graph = (
+                getattr(agent, "graph", None)
+                or getattr(agent, "reasoning_graph", None)
+                or getattr(agent, "got", None)
+            )
             if tel is not None and hasattr(tel, "get_stats"):
                 for k, v in tel.get_stats().items():
                     if isinstance(v, (int, float)):
                         telemetry[k] = telemetry.get(k, 0.0) + float(v)
             if hist is not None and hasattr(hist, "get_history"):
                 reasoning[name] = list(hist.get_history())
+            if graph is not None:
+                graphs[name] = graph
+
+        merged: Any | None = None
+        inconsistencies: list | None = None
+        if graphs:
+            try:
+                from .reasoning_merger import merge_graphs
+
+                merged_graph, inconsistencies = merge_graphs(graphs)
+                merged = merged_graph.to_json()
+            except Exception:
+                merged = None
+                inconsistencies = None
         return {
             "assignments": list(self.coordinator.log),
             "telemetry": telemetry,
             "reasoning": reasoning,
+            "merged_reasoning": merged,
+            "inconsistencies": inconsistencies,
         }
 
     # --------------------------------------------------------------

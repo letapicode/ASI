@@ -1,0 +1,71 @@
+import importlib.util
+import types
+import sys
+from unittest.mock import patch
+import unittest
+
+psutil_stub = types.SimpleNamespace(
+    cpu_percent=lambda interval=None: 50.0,
+    virtual_memory=lambda: types.SimpleNamespace(percent=10.0),
+    net_io_counters=lambda: types.SimpleNamespace(bytes_sent=0, bytes_recv=0),
+)
+pynvml_stub = types.SimpleNamespace(
+    nvmlInit=lambda: None,
+    nvmlDeviceGetCount=lambda: 1,
+    nvmlDeviceGetHandleByIndex=lambda i: i,
+    nvmlDeviceGetPowerUsage=lambda h: 50000,
+)
+sys.modules['psutil'] = psutil_stub
+sys.modules['pynvml'] = pynvml_stub
+
+pkg = types.ModuleType('asi')
+sys.modules['asi'] = pkg
+
+loader = importlib.machinery.SourceFileLoader('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+spec = importlib.util.spec_from_loader(loader.name, loader)
+mod_sched = importlib.util.module_from_spec(spec)
+sys.modules[loader.name] = mod_sched
+loader.exec_module(mod_sched)
+
+loader = importlib.machinery.SourceFileLoader('asi.carbon_tracker', 'src/carbon_tracker.py')
+spec = importlib.util.spec_from_loader(loader.name, loader)
+mod_ct = importlib.util.module_from_spec(spec)
+sys.modules[loader.name] = mod_ct
+loader.exec_module(mod_ct)
+
+loader = importlib.machinery.SourceFileLoader('asi.carbon_hpc_scheduler', 'src/carbon_hpc_scheduler.py')
+spec = importlib.util.spec_from_loader(loader.name, loader)
+mod = importlib.util.module_from_spec(spec)
+sys.modules[loader.name] = mod
+loader.exec_module(mod)
+CarbonAwareScheduler = mod.CarbonAwareScheduler
+get_hourly_forecast = mod.get_hourly_forecast
+
+class TestCarbonAwareScheduler(unittest.TestCase):
+    def test_submit_when_green(self):
+        sch = CarbonAwareScheduler(threshold=100.0, backend='slurm')
+        resp = types.SimpleNamespace(
+            json=lambda: {'data': [{'intensity': {'forecast': 50}}]},
+            raise_for_status=lambda: None,
+        )
+        with patch('requests.get', return_value=resp) as get, \
+             patch('asi.carbon_hpc_scheduler.submit_job', return_value='42') as sj:
+            job_id = sch.submit_when_green(['run.sh'])
+            get.assert_called()
+            sj.assert_called_with(['run.sh'], backend='slurm')
+            self.assertEqual(job_id, '42')
+
+    def test_get_hourly_forecast(self):
+        resp = types.SimpleNamespace(
+            json=lambda: {'data': [
+                {'intensity': {'forecast': 10}},
+                {'intensity': {'forecast': 20}},
+            ]},
+            raise_for_status=lambda: None,
+        )
+        with patch('requests.get', return_value=resp):
+            hours = get_hourly_forecast()
+        self.assertEqual(hours, [10, 20])
+
+if __name__ == '__main__':
+    unittest.main()

@@ -50,6 +50,9 @@ class TelemetryLogger:
     carbon_data: Dict[str, float] | None = None
     metrics: Dict[str, Any] = field(default_factory=dict)
     carbon_tracker: CarbonFootprintTracker | None = None
+    energy_price: float = 0.1
+    energy_price_data: Dict[str, float] | None = None
+    carbon_api: str | None = None
 
     event_detector: MemoryEventDetector = field(default_factory=MemoryEventDetector)
     history: List[Dict[str, float]] = field(default_factory=list)
@@ -82,6 +85,8 @@ class TelemetryLogger:
             self.metrics = {}
         if self.carbon_data is None:
             self.carbon_data = {"default": 0.4}
+        if self.energy_price_data is None:
+            self.energy_price_data = {"default": self.energy_price}
 
     # --------------------------------------------------------------
     def _collect(self) -> None:
@@ -97,6 +102,12 @@ class TelemetryLogger:
             last_net = net
             if self.carbon_tracker is not None:
                 cf_stats = self.carbon_tracker.get_stats()
+                e = cf_stats.get("energy_kwh", 0.0)
+                c = cf_stats.get("carbon_g", 0.0)
+                intensity = c / e if e else self.get_carbon_intensity()
+                cost = e * self.get_energy_price()
+                cf_stats["carbon_intensity"] = intensity
+                cf_stats["energy_cost"] = cost
             else:
                 cf_stats = {}
 
@@ -108,8 +119,12 @@ class TelemetryLogger:
                 if self.carbon_tracker is not None:
                     self.metrics.setdefault("energy_kwh", Gauge("energy_kwh", "Energy consumed"))
                     self.metrics.setdefault("carbon_g", Gauge("carbon_g", "Carbon emitted"))
+                    self.metrics.setdefault("carbon_intensity", Gauge("carbon_intensity", "Carbon intensity"))
+                    self.metrics.setdefault("energy_cost", Gauge("energy_cost", "Energy cost"))
                     self.metrics["energy_kwh"].set(cf_stats.get("energy_kwh", 0.0))
                     self.metrics["carbon_g"].set(cf_stats.get("carbon_g", 0.0))
+                    self.metrics["carbon_intensity"].set(cf_stats.get("carbon_intensity", 0.0))
+                    self.metrics["energy_cost"].set(cf_stats.get("energy_cost", 0.0))
             else:
                 self.metrics = {
                     "cpu": cpu,
@@ -175,6 +190,34 @@ class TelemetryLogger:
         assert self.carbon_data is not None
         return float(self.carbon_data.get(region, self.carbon_data.get("default", 0.4)))
 
+    def get_energy_price(self, region: Optional[str] = None) -> float:
+        """Return energy price ($/kWh) for the given region."""
+        region = region or self.region or "default"
+        assert self.energy_price_data is not None
+        return float(self.energy_price_data.get(region, self.energy_price_data.get("default", self.energy_price)))
+
+    def get_live_carbon_intensity(self, region: Optional[str] = None) -> float:
+        """Return current carbon intensity from tracker or external API."""
+        if self.carbon_tracker is not None:
+            stats = self.carbon_tracker.get_stats()
+            e = stats.get("energy_kwh", 0.0)
+            c = stats.get("carbon_g", 0.0)
+            if e:
+                return c / e
+        if self.carbon_api:
+            try:
+                url = f"{self.carbon_api}?region={region or self.region or 'default'}"
+                data = json.loads(urllib.request.urlopen(url, timeout=1).read().decode() or "{}")
+                if "carbon_intensity" in data:
+                    return float(data["carbon_intensity"])
+            except Exception:
+                pass
+        return self.get_carbon_intensity(region)
+
+    def get_cost_index(self, region: Optional[str] = None) -> float:
+        """Return cost index combining price and carbon intensity."""
+        return self.get_energy_price(region) * self.get_live_carbon_intensity(region)
+
     # --------------------------------------------------------------
     def _post(self, data: Dict[str, Any]) -> None:
         if not self.publish_url:
@@ -199,11 +242,17 @@ class TelemetryLogger:
         delta_e = energy - self._published_energy
         delta_c = carbon - self._published_carbon
         if delta_e or delta_c:
-            self._post({
-                "node_id": self.node_id,
-                "energy_kwh": delta_e,
-                "carbon_g": delta_c,
-            })
+            intensity = carbon / energy if energy else 0.0
+            cost = energy * self.get_energy_price()
+            self._post(
+                {
+                    "node_id": self.node_id,
+                    "energy_kwh": delta_e,
+                    "carbon_g": delta_c,
+                    "carbon_intensity": intensity,
+                    "energy_cost": cost,
+                }
+            )
             self._published_energy = energy
             self._published_carbon = carbon
 
