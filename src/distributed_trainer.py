@@ -17,6 +17,8 @@ from .telemetry import TelemetryLogger
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .gpu_aware_scheduler import GPUAwareScheduler
 from .hpc_scheduler import submit_job
+from .enclave_runner import EnclaveRunner, EnclaveConfig
+
 
 from .distributed_memory import DistributedMemory
 
@@ -37,6 +39,7 @@ def _worker_process(
     ckpt_dir: str,
     step: int,
     comp_cfg: Dict[str, Any] | None,
+    enclave_cfg: Dict[str, Any] | None,
 ) -> None:
     """Entry point for each worker process."""
     try:
@@ -51,7 +54,11 @@ def _worker_process(
             cfg = GradientCompressionConfig(**comp_cfg)
             compressor = GradientCompressor(cfg)
         fn = compressor.compress if compressor is not None else None
-        train_fn(mem, step, fn)
+        runner = EnclaveRunner(EnclaveConfig(**enclave_cfg)) if enclave_cfg else None
+        if runner is not None:
+            runner.run(train_fn, mem, step, fn)
+        else:
+            train_fn(mem, step, fn)
         out = Path(ckpt_dir) / f"step{step + 1}"
         mem.save(out / "memory")
     except Exception:
@@ -76,6 +83,8 @@ class DistributedTrainer:
         scheduler: GPUAwareScheduler | None = None,
         micro_batcher: AdaptiveMicroBatcher | None = None,
         hpc_backend: str | None = None,
+        enclave: EnclaveConfig | None = None,
+
     ) -> None:
         self.train_fn = train_fn
         self.train_fn_path = f"{train_fn.__module__}:{train_fn.__name__}"
@@ -88,6 +97,8 @@ class DistributedTrainer:
         self.scheduler = scheduler
         self.micro_batcher = micro_batcher
         self.hpc_backend = hpc_backend
+        self.enclave_cfg = enclave.__dict__ if isinstance(enclave, EnclaveConfig) else enclave
+
 
     def run(self, steps: int) -> None:
         """Execute ``train_fn`` for ``steps`` iterations with restart logic."""
@@ -125,6 +136,7 @@ class DistributedTrainer:
                     str(self.checkpoint_dir),
                     self.step,
                     self.grad_compression,
+                    self.enclave_cfg,
                 ),
             )
             if self.scheduler is not None:
@@ -178,3 +190,11 @@ if __name__ == "__main__":  # pragma: no cover - CLI helper
     mem_cfg = json.loads(args.mem_cfg)
     comp = json.loads(args.comp_cfg) if args.comp_cfg else None
     _worker_process(fn, mem_cfg, args.ckpt_dir, args.step, comp)
+
+__all__ = [
+    "DistributedTrainer",
+    "MemoryConfig",
+    "GradientCompressionConfig",
+    "EnclaveConfig",
+]
+
