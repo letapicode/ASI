@@ -416,7 +416,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 The `hpc_scheduler` module wraps `sbatch`, `srun` and `kubectl` so jobs can be launched on an HPC cluster or a Kubernetes grid.  Pass
 `hpc_backend="slurm"` or `"kubernetes"` to `DistributedTrainer` to dispatch workers through the scheduler.  Use `submit_job()` to start a
-task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.
+task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.  A
+`CarbonAwareScheduler` can now queue jobs until the current carbon intensity
+drops below a configured threshold, using `CarbonFootprintTracker` or an
+external API for the measurements.
 
 
 
