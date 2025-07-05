@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import threading
 import time
+import json
+import urllib.request
 from dataclasses import dataclass, field
 from typing import Dict
 
@@ -32,6 +34,9 @@ class ComputeBudgetTracker:
     energy_per_gpu_hour: float = 0.3
     carbon_intensity: float | None = None
     records: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    publish_url: str | None = None
+    node_id: str | None = None
+    _published: Dict[str, Dict[str, float]] = field(default_factory=dict, init=False)
 
     def __post_init__(self) -> None:
         if self.telemetry is None:
@@ -40,6 +45,38 @@ class ComputeBudgetTracker:
             self.carbon_intensity = self.telemetry.get_carbon_intensity()
         self._stop = threading.Event()
         self.thread: threading.Thread | None = None
+
+    # --------------------------------------------------
+    def _post(self, data: Dict[str, float | str]) -> None:
+        if not self.publish_url:
+            return
+        try:
+            req = urllib.request.Request(
+                self.publish_url,
+                data=json.dumps(data).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=1).read()
+        except Exception:
+            pass
+
+    def _publish(self, run_id: str, energy: float, carbon: float) -> None:
+        if self.node_id is None:
+            return
+        prev = self._published.get(run_id, {"energy": 0.0, "carbon": 0.0})
+        delta_e = energy - prev["energy"]
+        delta_c = carbon - prev["carbon"]
+        if delta_e or delta_c:
+            self._post(
+                {
+                    "node_id": self.node_id,
+                    "run_id": run_id,
+                    "energy_kwh": delta_e,
+                    "carbon_g": delta_c,
+                }
+            )
+            self._published[run_id] = {"energy": energy, "carbon": carbon}
 
     # --------------------------------------------------
     def _collect(self, run_id: str) -> None:
@@ -60,6 +97,7 @@ class ComputeBudgetTracker:
             rec["energy"] = rec["gpu_hours"] * self.energy_per_gpu_hour
             rec["carbon"] = rec["energy"] * (self.carbon_intensity or 0.0)
             self.records[run_id] = rec
+            self._publish(run_id, rec["energy"], rec["carbon"])
             if rec["gpu_hours"] >= self.budget_hours:
                 self._stop.set()
             time.sleep(interval)
@@ -105,6 +143,7 @@ class ComputeBudgetTracker:
         rec["energy"] = rec["gpu_hours"] * self.energy_per_gpu_hour
         rec["carbon"] = rec["energy"] * (self.carbon_intensity or 0.0)
         self.records[run_id] = rec
+        self._publish(run_id, rec["energy"], rec["carbon"])
 
 
 __all__ = ["ComputeBudgetTracker"]
