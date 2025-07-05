@@ -429,6 +429,13 @@ python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
   transitions, converts them into ``TrajectoryDataset`` entries and calls
   ``train_world_model``.
 
+To incorporate voxel observations, call ``GenerativeDataAugmentor.synthesize_3d``
+to produce text--volume pairs and pass the result through ``train_world_model``
+via the ``synth_3d`` argument. The ``VoxelEnv`` wrapper exposes a 3D state space
+so rollout utilities can generate small volumes. ``eval_harness`` provides a
+``voxel_rollout`` evaluator that performs a short 3D rollout for quick
+verification.
+
 
 ## M-3 Self-Calibration for Embodied Agents
 

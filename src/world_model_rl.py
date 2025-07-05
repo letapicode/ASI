@@ -109,6 +109,7 @@ def train_world_model(
     synth_3d: Iterable[tuple[str, np.ndarray]] | None = None,
     use_differentiable_memory: bool = False,
     learner: CausalGraphLearner | None = None
+
 ) -> WorldModel:
     model = WorldModel(cfg)
     if synth_3d is not None:
