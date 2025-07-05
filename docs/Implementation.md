@@ -416,6 +416,13 @@ python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
   transitions, converts them into ``TrajectoryDataset`` entries and calls
   ``train_world_model``.
 
+To incorporate voxel observations, call ``GenerativeDataAugmentor.synthesize_3d``
+to produce text--volume pairs and pass the result through ``train_world_model``
+via the ``synth_3d`` argument. The ``VoxelEnv`` wrapper exposes a 3D state space
+so rollout utilities can generate small volumes. ``eval_harness`` provides a
+``voxel_rollout`` evaluator that performs a short 3D rollout for quick
+verification.
+
 
 ## M-3 Self-Calibration for Embodied Agents
 
@@ -696,6 +703,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   under `research_logs/`.
 - Expand `GenerativeDataAugmentor` with `synthesize_3d()` for basic 3D asset
   synthesis.
+- Extend `world_model_rl.train_world_model()` to accept 3D data from this
+  augmentor, introduce a `VoxelEnv` wrapper emitting voxel observations and add
+  a `voxel_rollout` evaluator in `eval_harness.py` for 3D rollouts.
 - Implement a mocked `quantum_sampler.sample_actions_qae()` and integrate it as
   an optional sampler in `train_with_self_play`.
 - Compute an overall risk metric via the new `RiskScoreboard` module.

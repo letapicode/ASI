@@ -41,8 +41,9 @@ except Exception:  # pragma: no cover - fallback for tests
     PrivacyBudgetManager = pbm_mod.PrivacyBudgetManager
 
 import torch
+import numpy as np
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, ConcatDataset
 
 from .compute_budget_tracker import ComputeBudgetTracker
 try:
@@ -104,8 +105,20 @@ def train_world_model(
     pbm: "PrivacyBudgetManager | None" = None,
     run_id: str = "default",
     budget: ComputeBudgetTracker | None = None,
+    synth_3d: Iterable[tuple[str, np.ndarray]] | None = None,
 ) -> WorldModel:
     model = WorldModel(cfg)
+    if synth_3d is not None:
+        extra: list[tuple[torch.Tensor, int, torch.Tensor, float]] = []
+        for _txt, vol in synth_3d:
+            t = torch.tensor(vol, dtype=torch.float32).view(-1)
+            if t.numel() < cfg.state_dim:
+                pad = torch.zeros(cfg.state_dim - t.numel())
+                t = torch.cat([t, pad])
+            elif t.numel() > cfg.state_dim:
+                t = t[: cfg.state_dim]
+            extra.append((t, 0, t.clone(), 0.0))
+        dataset = ConcatDataset([dataset, TransitionDataset(extra)])
     scheduler = (
         BudgetAwareScheduler(budget, run_id)
         if budget is not None and BudgetAwareScheduler is not None
