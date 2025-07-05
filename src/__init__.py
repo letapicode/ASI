@@ -240,6 +240,7 @@ from .energy_aware_scheduler import EnergyAwareScheduler
 from .doc_summarizer import summarize_module
 
 from .hpc_scheduler import submit_job, monitor_job, cancel_job
+from .carbon_hpc_scheduler import CarbonAwareScheduler
 from .collaboration_portal import CollaborationPortal
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
 from .distributed_anomaly_monitor import DistributedAnomalyMonitor

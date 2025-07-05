@@ -436,6 +436,13 @@ The `hpc_scheduler` module wraps `sbatch`, `srun` and `kubectl` so jobs can be l
 `hpc_backend="slurm"` or `"kubernetes"` to `DistributedTrainer` to dispatch workers through the scheduler.  Use `submit_job()` to start a
 task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.
 
+`carbon_hpc_scheduler.CarbonAwareScheduler` builds on this by querying an external
+carbon-intensity API and tracking energy via `CarbonFootprintTracker`.  Its
+`submit_when_green()` method delays a job until the forecast for the chosen region
+drops below a threshold, while `submit_at_optimal_time()` waits for the lowest
+forecast in the next 24 h.  Both helpers call `submit_job()` once conditions are
+favourable, reducing cluster emissions without manual tuning.
+
 
 
 
