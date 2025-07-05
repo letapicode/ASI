@@ -17,3 +17,16 @@ changes remain stable. Users should manually review Codex's pull requests before
 
 \nThe project vision begins with the note: "Below is a shopping list of concrete algorithmic
 gaps..." as described in docs/Plan.md.
+
+## Self-reflection tools
+
+Reasoning summaries can be stored via `ReasoningHistoryLogger`. The logger now
+includes an `analyze()` method that clusters repeated steps and flags
+contradictions such as `X` versus `not X`. Histories saved with `save()` can be
+inspected on the command line:
+
+```bash
+python -m asi.self_reflection history.json
+```
+
+The report lists the most common steps and highlights any inconsistencies.

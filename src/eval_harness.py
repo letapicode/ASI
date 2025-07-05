@@ -284,6 +284,21 @@ def _eval_fairness_evaluator() -> Tuple[bool, str]:
     return ok, f"dp={res['demographic_parity']:.2f}"
 
 
+def _eval_cross_lingual_fairness() -> Tuple[bool, str]:
+    from asi.cross_lingual_fairness import CrossLingualFairnessEvaluator
+    from asi.data_ingest import CrossLingualTranslator
+
+    stats = {
+        "hola": {"tp": 1, "fn": 1},
+        "[en] hola": {"tp": 2, "fn": 0},
+    }
+    tr = CrossLingualTranslator(["en"])
+    ev = CrossLingualFairnessEvaluator(translator=tr)
+    res = ev.evaluate(stats, positive_label="tp")
+    ok = res["demographic_parity"] > 0.0 and res["equal_opportunity"] > 0.0
+    return ok, f"dp={res['demographic_parity']:.2f}"
+
+
 def _eval_context_profiler() -> Tuple[bool, str]:
     """Profile a toy model at two context lengths."""
     from torch import nn
@@ -325,6 +340,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "self_alignment": _eval_self_alignment,
     "adversarial_robustness": _eval_adversarial_robustness,
     "fairness_evaluator": _eval_fairness_evaluator,
+    "cross_lingual_fairness": _eval_cross_lingual_fairness,
     "context_profiler": _eval_context_profiler,
 }
 
