@@ -27,5 +27,14 @@ class TestRetrievalExplainer(unittest.TestCase):
         self.assertEqual(len(items), 2)
         self.assertEqual(items[0]['provenance'], 'a')
 
+    def test_summarize(self):
+        q = torch.zeros(1, 2)
+        r = torch.ones(2, 2)
+        scores = [0.9, 0.8]
+        prov = ['a', 'b']
+        summary = RetrievalExplainer.summarize(q, r, scores, prov)
+        self.assertIn('a', summary)
+        self.assertIn('0.9', summary)
+
 if __name__ == '__main__':
     unittest.main()
