@@ -718,6 +718,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   under `research_logs/`.
 - Expand `GenerativeDataAugmentor` with `synthesize_3d()` for basic 3D asset
   synthesis.
+- Extend `world_model_rl.train_world_model()` to accept 3D data from this
+  augmentor, introduce a `VoxelEnv` wrapper emitting voxel observations and add
+  a `voxel_rollout` evaluator in `eval_harness.py` for 3D rollouts.
 - Implement a mocked `quantum_sampler.sample_actions_qae()` and integrate it as
   an optional sampler in `train_with_self_play`.
 - Compute an overall risk metric via the new `RiskScoreboard` module.
