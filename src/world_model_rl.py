@@ -104,6 +104,7 @@ def train_world_model(
     pbm: "PrivacyBudgetManager | None" = None,
     run_id: str = "default",
     budget: ComputeBudgetTracker | None = None,
+    use_differentiable_memory: bool = False,
 ) -> WorldModel:
     model = WorldModel(cfg)
     scheduler = (
@@ -111,6 +112,9 @@ def train_world_model(
         if budget is not None and BudgetAwareScheduler is not None
         else None
     )
+    if use_differentiable_memory:
+        from .differentiable_memory import DifferentiableMemory  # lazy import
+        _ = DifferentiableMemory(cfg.state_dim, cfg.state_dim, capacity=len(dataset))
     loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
     if dp_cfg is None:
         opt: torch.optim.Optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
@@ -212,7 +216,7 @@ def train_with_self_play(
         self_play_skill_loop.rollout_env = orig  # type: ignore
 
     dataset = TrajectoryDataset(transitions)
-    wm = train_world_model(rl_cfg, dataset, dp_cfg)
+    wm = train_world_model(rl_cfg, dataset, dp_cfg, use_differentiable_memory=False)
     return wm, skill_model
 
 
