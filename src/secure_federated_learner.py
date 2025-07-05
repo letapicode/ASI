@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+
+from typing import Iterable, Tuple
+
+from .zk_gradient_proof import ZKGradientProof
+
 from typing import Iterable
 
 from .zk_verifier import ZKVerifier
@@ -20,14 +25,28 @@ class SecureFederatedLearner:
         self.require_proof = require_proof
         self.zk = zk or ZKVerifier()
 
-    def encrypt(self, grad: torch.Tensor) -> torch.Tensor:
+    def encrypt(
+        self, grad: torch.Tensor, with_proof: bool = False
+    ) -> torch.Tensor | Tuple[torch.Tensor, ZKGradientProof]:
+        """Encrypt a gradient and optionally return a zero-knowledge proof."""
         torch.manual_seed(self.key)
         noise = torch.randn_like(grad)
         self._last_noise = noise
-        return grad + noise
 
-    def decrypt(self, grad: torch.Tensor) -> torch.Tensor:
-        return grad - getattr(self, "_last_noise", torch.zeros_like(grad))
+        enc = grad + noise
+        if with_proof:
+            return enc, ZKGradientProof.generate(grad)
+        return enc
+
+    def decrypt(
+        self, grad: torch.Tensor, proof: ZKGradientProof | None = None
+    ) -> torch.Tensor:
+        """Decrypt a gradient and verify it if a proof is supplied."""
+        dec = grad - getattr(self, "_last_noise", torch.zeros_like(grad))
+        if proof and not proof.verify(dec):
+            raise ValueError("invalid gradient proof")
+        return dec
+
 
     def aggregate(
         self, grads: Iterable[torch.Tensor], proofs: Iterable[str] | None = None
