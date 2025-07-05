@@ -2,6 +2,11 @@ import numpy as np
 from typing import Iterable, List, Tuple, Any, Dict
 from pathlib import Path
 
+try:  # optional quantum retrieval
+    from .quantum_retrieval import amplify_search as _amplify_search
+except Exception:  # pragma: no cover - optional dependency
+    _amplify_search = None
+
 class VectorStore:
     """In-memory vector store with simple top-k retrieval."""
 
@@ -53,14 +58,24 @@ class VectorStore:
         self._vectors = [vecs[mask]] if mask.any() else []
         self._meta = [m for j, m in enumerate(self._meta) if mask[j]]
 
-    def search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, List[Any]]:
-        """Return top-k vectors and metadata by dot-product similarity."""
+    def search(
+        self, query: np.ndarray, k: int = 5, *, quantum: bool = False
+    ) -> Tuple[np.ndarray, List[Any]]:
+        """Return top-k vectors by dot-product similarity.
+
+        When ``quantum`` is ``True`` and ``quantum_retrieval`` is available,
+        indices are selected using ``amplify_search`` to simulate amplitude
+        amplification.
+        """
         if not self._vectors:
             return np.empty((0, self.dim), dtype=np.float32), []
         mat = np.concatenate(self._vectors, axis=0)
         q = np.asarray(query, dtype=np.float32).reshape(1, self.dim)
         scores = mat @ q.T  # (n,1)
-        idx = np.argsort(scores.ravel())[::-1][:k]
+        if quantum and _amplify_search is not None:
+            idx = _amplify_search(scores.ravel(), k)
+        else:
+            idx = np.argsort(scores.ravel())[::-1][:k]
         return mat[idx], [self._meta[i] for i in idx]
 
     def save(self, path: str | Path) -> None:
@@ -161,13 +176,19 @@ class FaissVectorStore:
             np.save(self.path / "vectors.npy", self._vectors)
             np.save(self.path / "meta.npy", np.array(self._meta, dtype=object))
 
-    def search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, List[Any]]:
+    def search(
+        self, query: np.ndarray, k: int = 5, *, quantum: bool = False
+    ) -> Tuple[np.ndarray, List[Any]]:
         if self.index.ntotal == 0:
             return np.empty((0, self.dim), dtype=np.float32), []
         q = np.asarray(query, dtype=np.float32).reshape(1, self.dim)
-        _, idx = self.index.search(q, k)
-        idx = idx[0]
-        idx = idx[idx >= 0]
+        if quantum and _amplify_search is not None:
+            scores = self._vectors @ q.T
+            idx = _amplify_search(scores.ravel(), k)
+        else:
+            _, idx = self.index.search(q, k)
+            idx = idx[0]
+            idx = idx[idx >= 0]
         return self._vectors[idx], [self._meta[i] for i in idx]
 
     def save(self, path: str | Path) -> None:

@@ -401,6 +401,7 @@ class HierarchicalMemory:
         *,
         mode: str = "standard",
         offset: torch.Tensor | None = None,
+        language: str | None = None,
     ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
         """Retrieve top-k decoded vectors and their metadata.
 
@@ -499,7 +500,13 @@ class HierarchicalMemory:
         return vecs, meta, triples
 
     async def asearch(
-        self, query: torch.Tensor, k: int = 5, return_scores: bool = False, return_provenance: bool = False
+        self,
+        query: torch.Tensor,
+        k: int = 5,
+        return_scores: bool = False,
+        return_provenance: bool = False,
+        *,
+        language: str | None = None,
     ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
         """Asynchronously retrieve vectors and metadata."""
         if self.cache is not None:
