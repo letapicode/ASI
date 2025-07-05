@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterable, Any
+from typing import Callable, Iterable, Any, Dict
 
 try:
     from .self_play_env import SimpleEnv
@@ -45,6 +45,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 from .compute_budget_tracker import ComputeBudgetTracker
+from .causal_graph_learner import CausalGraphLearner
 try:
     from .budget_aware_scheduler import BudgetAwareScheduler
 except Exception:  # pragma: no cover - for tests
@@ -104,6 +105,7 @@ def train_world_model(
     pbm: "PrivacyBudgetManager | None" = None,
     run_id: str = "default",
     budget: ComputeBudgetTracker | None = None,
+    learner: CausalGraphLearner | None = None,
 ) -> WorldModel:
     model = WorldModel(cfg)
     scheduler = (
@@ -140,6 +142,12 @@ def train_world_model(
     if pbm is not None and dp_cfg is not None:
         eps = dp_cfg.noise_std * len(dataset) / cfg.batch_size
         pbm.consume(run_id, eps, 0.0)
+    if learner is not None:
+        transitions = [
+            (s.numpy(), int(a), ns.numpy())
+            for s, a, ns, _r in dataset
+        ]
+        learner.fit(transitions)
     return model
 
 
@@ -156,6 +164,43 @@ def rollout_policy(model: WorldModel, policy: Callable[[torch.Tensor], torch.Ten
             rewards.append(float(reward.item()))
             state = next_state
     return states, rewards
+
+
+def simulate_counterfactual(
+    model: WorldModel,
+    learner: CausalGraphLearner,
+    state: torch.Tensor,
+    action: torch.Tensor,
+    interventions: Dict[int, float],
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Predict ``next_state`` and ``reward`` after intervening on ``state``.
+
+    ``interventions`` maps state dimension indices to new values. The effect on
+    other dimensions is approximated using the causal edges learned by
+    ``learner``.
+    """
+
+    device = next(model.parameters()).device
+    state = state.to(device)
+    action = action.to(device)
+    with torch.no_grad():
+        base_next, reward = model(state, action)
+        if learner.adj is None:
+            return base_next, reward
+        delta = torch.zeros_like(base_next)
+        for src, val in interventions.items():
+            if src >= learner.adj.shape[0]:
+                continue
+            diff = val - state[src]
+            for dst in range(learner.adj.shape[1]):
+                w = float(learner.adj[src, dst])
+                if w != 0.0:
+                    delta[dst] += diff * w
+        counter_next = base_next + delta
+        for idx, val in interventions.items():
+            if idx < counter_next.shape[0]:
+                counter_next[idx] = val
+        return counter_next, reward
 
 
 def train_with_self_play(
@@ -224,4 +269,5 @@ __all__ = [
     "train_world_model",
     "train_with_self_play",
     "rollout_policy",
+    "simulate_counterfactual",
 ]

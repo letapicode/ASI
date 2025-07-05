@@ -90,6 +90,7 @@ from .world_model_rl import (
     train_world_model as train_rl_world_model,
     train_with_self_play,
     rollout_policy,
+    simulate_counterfactual,
 )
 from .embodied_calibration import (
     CalibrationConfig,

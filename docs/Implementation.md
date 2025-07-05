@@ -556,6 +556,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `FederatedMemoryExchange` service that synchronizes vectors across multiple `MemoryServer` nodes. Provide a `scripts/federated_memory_sync.py` utility to benchmark cross-node synchronization throughput. **Implemented in `src/federated_memory_exchange.py` with the benchmarking script `scripts/federated_memory_sync.py`.**
 - Create a `CausalGraphLearner` module that infers directed relations from `world_model_rl` transitions and logs the resulting edges for planning. **Implemented in `src/causal_graph_learner.py`.**
 - Develop a `CausalReasoner` that combines `CausalGraphLearner` with `NeuroSymbolicExecutor` to plan actions along learned cause–effect chains. **Implemented in `src/causal_reasoner.py` with tests.**
+- Extend `world_model_rl` with `simulate_counterfactual()` which consults the
+  learned graph to adjust predicted transitions for hypothetical interventions.
+  This improves planning accuracy by allowing the reasoner to explore "what-if"
+  scenarios. See `scripts/causal_sim.py` for an example.
 - Add a `SelfAlignmentEvaluator` to `eval_harness.py` that runs `deliberative_alignment.check_alignment()` on generated outputs and reports the metrics alongside existing benchmarks. **Implemented as `_eval_self_alignment()` in `src/eval_harness.py`.**
 - Add an `ActiveDataSelector` to `data_ingest.py` that scores incoming triples by predictive entropy and filters out low-information samples before storage. **Implemented in `data_ingest.ActiveDataSelector`.**
 - Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval. The server now includes a `Sync` RPC implementing CRDT merge semantics so replicas converge after partitions. **Implemented in `src/federated_memory_server.py`.**
