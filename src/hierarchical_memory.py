@@ -14,10 +14,12 @@ except Exception:  # pragma: no cover - optional dependency
 from .streaming_compression import StreamingCompressor, TemporalVectorCompressor
 from .knowledge_graph_memory import KnowledgeGraphMemory, TimedTriple
 from .vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
+from .encrypted_vector_store import EncryptedVectorStore
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .hopfield_memory import HopfieldMemory
 from .data_ingest import CrossLingualTranslator
+from .retrieval_rl import RetrievalPolicy
 
 
 class SSDCache:
@@ -119,6 +121,10 @@ class HierarchicalMemory:
         evict_check_interval: int = 100,
         use_kg: bool = False,
         translator: "CrossLingualTranslator | None" = None,
+        retrieval_policy: "RetrievalPolicy | None" = None,
+
+        encryption_key: bytes | None = None,
+
     ) -> None:
         if temporal_decay is None:
             self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
@@ -138,7 +144,13 @@ class HierarchicalMemory:
             self.store = PQVectorStore(dim=compressed_dim, path=db_path)
         else:
             if db_path is None:
-                self.store = VectorStore(dim=compressed_dim)
+                if encryption_key is None:
+                    self.store = VectorStore(dim=compressed_dim)
+                else:
+                    from .encrypted_vector_store import EncryptedVectorStore
+                    self.store = EncryptedVectorStore(
+                        dim=compressed_dim, key=encryption_key
+                    )
             else:
                 self.store = FaissVectorStore(dim=compressed_dim, path=db_path)
         self.cache: SSDCache | None = None
@@ -154,6 +166,14 @@ class HierarchicalMemory:
         self.kg: KnowledgeGraphMemory | None = KnowledgeGraphMemory() if use_kg else None
         self.last_trace: dict | None = None
         self.translator = translator
+
+        self.retrieval_policy = retrieval_policy
+
+        if isinstance(self.store, EncryptedVectorStore):
+            self.encryption_key = self.store.key
+        else:
+            self.encryption_key = None
+
 
     def __len__(self) -> int:
         """Return the number of stored vectors."""
@@ -312,6 +332,14 @@ class HierarchicalMemory:
             "evict_limit": float(self.evict_limit or 0),
         }
 
+    def rotate_encryption_key(
+        self, new_key: bytes, path: str | Path | None = None
+    ) -> None:
+        """Rotate the encryption key if using :class:`EncryptedVectorStore`."""
+        if isinstance(self.store, EncryptedVectorStore):
+            self.store.rotate_key(new_key, path)
+            self.encryption_key = new_key
+
     def query_triples(
         self,
         subject: str | None = None,
@@ -370,12 +398,20 @@ class HierarchicalMemory:
         k: int = 5,
         return_scores: bool = False,
         return_provenance: bool = False,
+        *,
+        mode: str = "standard",
+        offset: torch.Tensor | None = None,
     ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
         """Retrieve top-k decoded vectors and their metadata.
 
         When ``return_scores`` or ``return_provenance`` is ``True`` additional
         lists of cosine similarity scores and provenance metadata are returned.
         """
+        if mode == "analogy":
+            if offset is None:
+                raise ValueError("offset must be provided for analogy mode")
+            query = query + offset
+
         if isinstance(self.store, AsyncFaissVectorStore):
             import asyncio
 
@@ -422,6 +458,12 @@ class HierarchicalMemory:
         scores = torch.nn.functional.cosine_similarity(
             vec, query.expand_as(vec), dim=1
         ).tolist()
+        if self.retrieval_policy is not None:
+            order = self.retrieval_policy.rank(out_meta, scores)
+            if order:
+                vec = vec[order]
+                out_meta = [out_meta[i] for i in order]
+                scores = [scores[i] for i in order]
         for m in out_meta:
             if m in self._usage:
                 self._usage[m] += 1
@@ -500,6 +542,12 @@ class HierarchicalMemory:
         scores = torch.nn.functional.cosine_similarity(
             vec, query.expand_as(vec), dim=1
         ).tolist()
+        if self.retrieval_policy is not None:
+            order = self.retrieval_policy.rank(out_meta, scores)
+            if order:
+                vec = vec[order]
+                out_meta = [out_meta[i] for i in order]
+                scores = [scores[i] for i in order]
         for m in out_meta:
             if m in self._usage:
                 self._usage[m] += 1
