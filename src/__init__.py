@@ -28,6 +28,7 @@ from .distributed_trainer import DistributedTrainer, MemoryConfig
 from .remote_memory import RemoteMemory
 from .edge_memory_client import EdgeMemoryClient
 from .vector_store import VectorStore, FaissVectorStore
+from .encrypted_vector_store import EncryptedVectorStore
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .iter_align import IterativeAligner
