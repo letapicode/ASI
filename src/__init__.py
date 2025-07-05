@@ -217,6 +217,7 @@ from .interpretability_dashboard import InterpretabilityDashboard
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
+from .hpc_scheduler import submit_job, monitor_job, cancel_job
 from .collaboration_portal import CollaborationPortal
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
 from .spiking_layers import LIFNeuron, SpikingLinear
