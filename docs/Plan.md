@@ -54,6 +54,7 @@ Citations point to the most recent public work so you can drill straight into th
 
 `SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
 - **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
+- **Reasoning graph merger**: `reasoning_merger.merge_graphs()` deduplicates nodes across agents and aligns timestamps. The `MultiAgentDashboard` now displays the merged trace.
 
 ---
 
