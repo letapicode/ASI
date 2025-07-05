@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Iterable, Dict
+import sqlite3
 
 
 class LicenseInspector:
@@ -25,6 +26,27 @@ class LicenseInspector:
         for p in Path(directory).rglob("*.json"):
             out[str(p)] = self.inspect(p)
         return out
+
+    # --------------------------------------------------------------
+    def inspect_db(self, db_path: str | Path) -> Dict[str, bool]:
+        """Check all datasets stored in ``db_path`` SQLite database."""
+        conn = sqlite3.connect(db_path)
+        cur = conn.execute(
+            "SELECT name, source, license, license_text FROM datasets"
+        )
+        out: Dict[str, bool] = {}
+        for name, src, lic, lic_text in cur:
+            text = (lic or "") + " " + (lic_text or "")
+            text = text.lower()
+            out[f"{src}:{name}"] = any(a in text for a in self.allowed)
+        conn.close()
+        return out
+
+    # --------------------------------------------------------------
+    def report_db(self, db_path: str | Path, out_file: str | Path) -> None:
+        """Write a JSON report for datasets in ``db_path``."""
+        res = self.inspect_db(db_path)
+        Path(out_file).write_text(json.dumps(res, indent=2))
 
 
 __all__ = ["LicenseInspector"]

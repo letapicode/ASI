@@ -389,6 +389,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 
 84. **Temporal telemetry monitoring**: `MemoryEventDetector` parses logged hardware metrics and flags change points. `TelemetryLogger` stores these events so the memory dashboard exposes them via `/events`.
+82. **Dataset discovery pipeline**: `dataset_discovery.py` scans RSS feeds from
+    HuggingFace and Kaggle, storing dataset names, URLs and license text in a
+    lightweight SQLite database. `license_inspector.py` loads the database to
+    flag incompatible licenses. The plan is to crowd‑source additional data hub
+    scrapers so community members can contribute new sources via pull requests.
 
 
 
@@ -425,3 +430,4 @@ task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.
 [24]: https://arxiv.org/abs/2307.15424?utm_source=chatgpt.com "RT-2: Vision-Language-Action Models"
 [25]: https://github.com/features/actions?utm_source=chatgpt.com "GitHub Actions for automated repository processing"
 [26]: https://arxiv.org/abs/2211.00564?utm_source=chatgpt.com "Transformer Circuits: Mechanistic Interpretability"
+
