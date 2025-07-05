@@ -14,6 +14,7 @@ from .gradient_compression import GradientCompressionConfig, GradientCompressor
 from .telemetry import TelemetryLogger
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .gpu_aware_scheduler import GPUAwareScheduler
+from .enclave_runner import EnclaveRunner, EnclaveConfig
 
 from .distributed_memory import DistributedMemory
 
@@ -34,6 +35,7 @@ def _worker_process(
     ckpt_dir: str,
     step: int,
     comp_cfg: Dict[str, Any] | None,
+    enclave_cfg: Dict[str, Any] | None,
 ) -> None:
     """Entry point for each worker process."""
     try:
@@ -48,7 +50,11 @@ def _worker_process(
             cfg = GradientCompressionConfig(**comp_cfg)
             compressor = GradientCompressor(cfg)
         fn = compressor.compress if compressor is not None else None
-        train_fn(mem, step, fn)
+        runner = EnclaveRunner(EnclaveConfig(**enclave_cfg)) if enclave_cfg else None
+        if runner is not None:
+            runner.run(train_fn, mem, step, fn)
+        else:
+            train_fn(mem, step, fn)
         out = Path(ckpt_dir) / f"step{step + 1}"
         mem.save(out / "memory")
     except Exception:
@@ -72,6 +78,7 @@ class DistributedTrainer:
         telemetry: TelemetryLogger | None = None,
         scheduler: GPUAwareScheduler | None = None,
         micro_batcher: AdaptiveMicroBatcher | None = None,
+        enclave: EnclaveConfig | None = None,
     ) -> None:
         self.train_fn = train_fn
         self.mem_cfg = mem_cfg.__dict__ if isinstance(mem_cfg, MemoryConfig) else mem_cfg
@@ -82,6 +89,7 @@ class DistributedTrainer:
         self.telemetry = telemetry
         self.scheduler = scheduler
         self.micro_batcher = micro_batcher
+        self.enclave_cfg = enclave.__dict__ if isinstance(enclave, EnclaveConfig) else enclave
 
     def run(self, steps: int) -> None:
         """Execute ``train_fn`` for ``steps`` iterations with restart logic."""
@@ -100,6 +108,7 @@ class DistributedTrainer:
                     str(self.checkpoint_dir),
                     self.step,
                     self.grad_compression,
+                    self.enclave_cfg,
                 ),
             )
             if self.scheduler is not None:
@@ -132,4 +141,9 @@ class DistributedTrainer:
             self.micro_batcher.stop()
 
 
-__all__ = ["DistributedTrainer", "MemoryConfig", "GradientCompressionConfig"]
+__all__ = [
+    "DistributedTrainer",
+    "MemoryConfig",
+    "GradientCompressionConfig",
+    "EnclaveConfig",
+]
