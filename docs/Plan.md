@@ -151,6 +151,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   `aiohttp` for faster monitoring of open pull requests.
 - `src/lora_quant.py` provides 4-bit LoRA adapters and `apply_quant_lora()` to
   inject them into existing models.
+- `src/spiking_layers.py` defines `LIFNeuron` and `SpikingLinear`. Set
+  `use_spiking=True` in `MultiModalWorldModelConfig` to replace MLP blocks with
+  these energy-efficient neurons.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
