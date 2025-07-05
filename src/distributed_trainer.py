@@ -7,6 +7,8 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import Callable, Any, Dict
 import time
+import sys
+import json
 
 import torch
 
@@ -14,6 +16,7 @@ from .gradient_compression import GradientCompressionConfig, GradientCompressor
 from .telemetry import TelemetryLogger
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .gpu_aware_scheduler import GPUAwareScheduler
+from .hpc_scheduler import submit_job
 
 from .distributed_memory import DistributedMemory
 
@@ -72,8 +75,10 @@ class DistributedTrainer:
         telemetry: TelemetryLogger | None = None,
         scheduler: GPUAwareScheduler | None = None,
         micro_batcher: AdaptiveMicroBatcher | None = None,
+        hpc_backend: str | None = None,
     ) -> None:
         self.train_fn = train_fn
+        self.train_fn_path = f"{train_fn.__module__}:{train_fn.__name__}"
         self.mem_cfg = mem_cfg.__dict__ if isinstance(mem_cfg, MemoryConfig) else mem_cfg
         self.checkpoint_dir = Path(checkpoint_dir)
         self.max_restarts = max_restarts
@@ -82,6 +87,7 @@ class DistributedTrainer:
         self.telemetry = telemetry
         self.scheduler = scheduler
         self.micro_batcher = micro_batcher
+        self.hpc_backend = hpc_backend
 
     def run(self, steps: int) -> None:
         """Execute ``train_fn`` for ``steps`` iterations with restart logic."""
@@ -92,6 +98,25 @@ class DistributedTrainer:
         if self.micro_batcher:
             self.micro_batcher.start()
         while self.step < steps:
+            if self.hpc_backend:
+                cmd = [
+                    sys.executable,
+                    __file__,
+                    "--train-fn",
+                    self.train_fn_path,
+                    "--mem-cfg",
+                    json.dumps(self.mem_cfg),
+                    "--ckpt-dir",
+                    str(self.checkpoint_dir),
+                    "--step",
+                    str(self.step),
+                ]
+                if self.grad_compression is not None:
+                    cmd += ["--comp-cfg", json.dumps(self.grad_compression)]
+                submit_job(cmd, backend=self.hpc_backend)
+                self.step += 1
+                continue
+
             proc = mp.Process(
                 target=_worker_process,
                 args=(
@@ -104,9 +129,11 @@ class DistributedTrainer:
             )
             if self.scheduler is not None:
                 started = mp.Event()
+
                 def _start() -> None:
                     proc.start()
                     started.set()
+
                 self.scheduler.add(_start)
                 while not started.is_set():
                     time.sleep(self.scheduler.check_interval)
@@ -133,3 +160,21 @@ class DistributedTrainer:
 
 
 __all__ = ["DistributedTrainer", "MemoryConfig", "GradientCompressionConfig"]
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI helper
+    import argparse
+    parser = argparse.ArgumentParser(description="Run worker process")
+    parser.add_argument("--train-fn", required=True)
+    parser.add_argument("--mem-cfg", required=True)
+    parser.add_argument("--ckpt-dir", required=True)
+    parser.add_argument("--step", type=int, required=True)
+    parser.add_argument("--comp-cfg", default=None)
+    args = parser.parse_args()
+
+    mod_name, fn_name = args.train_fn.rsplit(":", 1)
+    module = __import__(mod_name, fromlist=[fn_name])
+    fn = getattr(module, fn_name)
+    mem_cfg = json.loads(args.mem_cfg)
+    comp = json.loads(args.comp_cfg) if args.comp_cfg else None
+    _worker_process(fn, mem_cfg, args.ckpt_dir, args.step, comp)

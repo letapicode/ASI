@@ -12,6 +12,7 @@ from asi.distributed_trainer import (
     GradientCompressionConfig,
 )
 from asi.distributed_memory import DistributedMemory
+from unittest.mock import patch
 
 
 def flaky_train(memory: DistributedMemory, step: int, compress=None) -> None:
@@ -55,6 +56,14 @@ class TestDistributedTrainer(unittest.TestCase):
             mem = DistributedMemory.load(Path(tmpdir) / "step1" / "memory")
             vec = mem.compressor.buffer.data[0]
             self.assertEqual(int((vec != 0).sum()), 1)
+
+    def test_hpc_dispatch(self):
+        cfg = MemoryConfig(dim=4, compressed_dim=2, capacity=10)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch('asi.distributed_trainer.submit_job') as submit:
+                trainer = DistributedTrainer(flaky_train, cfg, tmpdir, hpc_backend='slurm')
+                trainer.run(steps=1)
+                submit.assert_called()
 
 
 if __name__ == "__main__":
