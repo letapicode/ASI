@@ -5,12 +5,17 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass, field
+
+from typing import Dict, Any, Callable, Optional, List
+
 from typing import Dict, Any, Callable, Optional
 import json
 import urllib.request
 
+
 import psutil
 from .carbon_tracker import CarbonFootprintTracker
+from .memory_event_detector import MemoryEventDetector
 try:  # pragma: no cover - optional torch dependency
     import torch  # type: ignore
 except Exception:  # pragma: no cover - allow running without torch
@@ -45,10 +50,16 @@ class TelemetryLogger:
     carbon_data: Dict[str, float] | None = None
     metrics: Dict[str, Any] = field(default_factory=dict)
     carbon_tracker: CarbonFootprintTracker | None = None
+
+    event_detector: MemoryEventDetector = field(default_factory=MemoryEventDetector)
+    history: List[Dict[str, float]] = field(default_factory=list)
+    events: List[Dict[str, Any]] = field(default_factory=list)
+
     publish_url: str | None = None
     node_id: str | None = None
     _published_energy: float = field(default=0.0, init=False)
     _published_carbon: float = field(default=0.0, init=False)
+
 
     def __post_init__(self) -> None:
         self._stop = threading.Event()
@@ -107,7 +118,22 @@ class TelemetryLogger:
                     "net": sent,
                 }
                 self.metrics.update(cf_stats)
+
+
+            snapshot = {
+                "cpu": cpu,
+                "gpu": gpu,
+                "mem": mem,
+                "net": sent,
+            }
+            snapshot.update(cf_stats)
+            self.history.append(snapshot)
+            events = self.event_detector.update(snapshot)
+            if events:
+                self.events.extend(events)
+
             self.publish_carbon()
+
             time.sleep(self.interval)
 
     # --------------------------------------------------------------
@@ -134,6 +160,14 @@ class TelemetryLogger:
         if self.carbon_tracker is not None:
             stats.update(self.carbon_tracker.get_stats())
         return stats
+
+    def get_events(self) -> List[Dict[str, Any]]:
+        """Return list of detected telemetry events."""
+        return list(self.events)
+
+    def reset_events(self) -> None:
+        self.events.clear()
+        self.event_detector.events.clear()
 
     def get_carbon_intensity(self, region: Optional[str] = None) -> float:
         """Return carbon intensity (kgCO2/kWh) for the given region."""
@@ -197,4 +231,9 @@ class FineGrainedProfiler:
         self.callback(cpu_time, gpu_mem)
 
 
-__all__ = ["TelemetryLogger", "FineGrainedProfiler", "CarbonFootprintTracker"]
+__all__ = [
+    "TelemetryLogger",
+    "FineGrainedProfiler",
+    "CarbonFootprintTracker",
+    "MemoryEventDetector",
+]
