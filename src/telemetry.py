@@ -5,7 +5,13 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass, field
+
 from typing import Dict, Any, Callable, Optional, List
+
+from typing import Dict, Any, Callable, Optional
+import json
+import urllib.request
+
 
 import psutil
 from .carbon_tracker import CarbonFootprintTracker
@@ -44,9 +50,16 @@ class TelemetryLogger:
     carbon_data: Dict[str, float] | None = None
     metrics: Dict[str, Any] = field(default_factory=dict)
     carbon_tracker: CarbonFootprintTracker | None = None
+
     event_detector: MemoryEventDetector = field(default_factory=MemoryEventDetector)
     history: List[Dict[str, float]] = field(default_factory=list)
     events: List[Dict[str, Any]] = field(default_factory=list)
+
+    publish_url: str | None = None
+    node_id: str | None = None
+    _published_energy: float = field(default=0.0, init=False)
+    _published_carbon: float = field(default=0.0, init=False)
+
 
     def __post_init__(self) -> None:
         self._stop = threading.Event()
@@ -106,6 +119,7 @@ class TelemetryLogger:
                 }
                 self.metrics.update(cf_stats)
 
+
             snapshot = {
                 "cpu": cpu,
                 "gpu": gpu,
@@ -117,6 +131,9 @@ class TelemetryLogger:
             events = self.event_detector.update(snapshot)
             if events:
                 self.events.extend(events)
+
+            self.publish_carbon()
+
             time.sleep(self.interval)
 
     # --------------------------------------------------------------
@@ -157,6 +174,38 @@ class TelemetryLogger:
         region = region or self.region or "default"
         assert self.carbon_data is not None
         return float(self.carbon_data.get(region, self.carbon_data.get("default", 0.4)))
+
+    # --------------------------------------------------------------
+    def _post(self, data: Dict[str, Any]) -> None:
+        if not self.publish_url:
+            return
+        try:
+            req = urllib.request.Request(
+                self.publish_url,
+                data=json.dumps(data).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=1).read()
+        except Exception:
+            pass
+
+    def publish_carbon(self) -> None:
+        if self.carbon_tracker is None or self.node_id is None:
+            return
+        stats = self.carbon_tracker.get_stats()
+        energy = float(stats.get("energy_kwh", 0.0))
+        carbon = float(stats.get("carbon_g", 0.0))
+        delta_e = energy - self._published_energy
+        delta_c = carbon - self._published_carbon
+        if delta_e or delta_c:
+            self._post({
+                "node_id": self.node_id,
+                "energy_kwh": delta_e,
+                "carbon_g": delta_c,
+            })
+            self._published_energy = energy
+            self._published_carbon = carbon
 
 
 class FineGrainedProfiler:
