@@ -1,9 +1,34 @@
 import subprocess
-from typing import List, Union
+import json
+import urllib.request
+from typing import List, Union, Optional
+
+from .telemetry import TelemetryLogger
 
 
-def submit_job(command: Union[str, List[str]], backend: str = "slurm") -> str:
-    """Submit a job via Slurm or Kubernetes."""
+def submit_job(
+    command: Union[str, List[str]],
+    backend: str = "slurm",
+    *,
+    telemetry: Optional[TelemetryLogger] = None,
+    region: Optional[str] = None,
+    max_intensity: Optional[float] = None,
+    carbon_api: Optional[str] = None,
+) -> str:
+    """Submit a job via Slurm or Kubernetes if carbon intensity permits."""
+    if telemetry is not None and max_intensity is not None:
+        intensity = telemetry.get_carbon_intensity(region)
+        if intensity > max_intensity:
+            return "DEFERRED"
+    if carbon_api and max_intensity is not None:
+        try:
+            with urllib.request.urlopen(carbon_api, timeout=1) as r:
+                data = json.loads(r.read().decode() or "{}")
+                intensity = float(data.get("carbon_intensity", 0.0))
+                if intensity > max_intensity:
+                    return "DEFERRED"
+        except Exception:
+            pass
     if isinstance(command, str):
         command = [command]
     if backend == "slurm":

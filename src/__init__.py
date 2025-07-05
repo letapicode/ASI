@@ -241,7 +241,11 @@ from .doc_summarizer import summarize_module
 from .dataset_summarizer import summarize_dataset
 
 from .hpc_scheduler import submit_job, monitor_job, cancel_job
+
+from .carbon_aware_scheduler import CarbonAwareScheduler
+
 from .carbon_hpc_scheduler import CarbonAwareScheduler
+
 from .collaboration_portal import CollaborationPortal
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
 from .distributed_anomaly_monitor import DistributedAnomalyMonitor
