@@ -373,9 +373,18 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
 75. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
-76. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
+76. **Trusted execution inference**: `EnclaveRunner` launches model inference inside a trusted enclave. `DistributedTrainer` can route its steps through the enclave to keep weights in a protected address space. This guards intermediate activations but does not eliminate side-channel risk.
+77. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
     telemetry metrics alongside reasoning logs through a small web server.
-77. **Cluster carbon dashboard**: `TelemetryLogger` now publishes per-node carbon metrics to a central `ClusterCarbonDashboard`. `RiskDashboard` links to the dashboard so operators can track environmental impact across nodes.
+78. **Cluster carbon dashboard**: `TelemetryLogger` now publishes per-node carbon metrics to a central `ClusterCarbonDashboard`. `RiskDashboard` links to the dashboard so operators can track environmental impact across nodes.
+79. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
+80. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
+
+
+
+
+
+
 
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
@@ -404,5 +413,3 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 [24]: https://arxiv.org/abs/2307.15424?utm_source=chatgpt.com "RT-2: Vision-Language-Action Models"
 [25]: https://github.com/features/actions?utm_source=chatgpt.com "GitHub Actions for automated repository processing"
 [26]: https://arxiv.org/abs/2211.00564?utm_source=chatgpt.com "Transformer Circuits: Mechanistic Interpretability"
-74. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
-76. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
