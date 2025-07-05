@@ -297,9 +297,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     decentralized retrieval. The service now exposes a `Sync` RPC and uses
     CRDT update rules so that multiple servers converge on identical vector
     stores after exchanging updates.
-31. **Active data selection**: Add an `ActiveDataSelector` to score incoming
-    triples by predictive entropy and keep only high-information samples.
-    *Implemented in `data_ingest.ActiveDataSelector`.*
+31. **Active data selection**: `ActiveDataSelector` now outputs continuous
+    sample weights based on predictive entropy and down-weights biased
+    examples using `dataset_bias_detector`. A new `SampleWeightRL` loop
+    updates the weights online during training. *Implemented in
+    `data_ingest.ActiveDataSelector` and `adaptive_curriculum.SampleWeightRL`.*
 32. **Hierarchical graph planner**: Combine `GraphOfThought` with
     `world_model_rl.rollout_policy` to generate multi-stage plans for
     refactoring and exploration.
