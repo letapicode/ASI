@@ -118,6 +118,7 @@ from .data_ingest import (
     CrossLingualTranslator,
 )
 from .generative_data_augmentor import GenerativeDataAugmentor
+from .diffusion_world_model import DiffusionWorldModel
 from .causal_graph_learner import CausalGraphLearner
 from .transformer_circuits import (
     ActivationRecorder,

@@ -246,8 +246,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     ingest to prune low-quality samples using generative noise detection and
     track the effect on training stability.
 21. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
-    new training triples from world-model rollouts and expand the dataset. The
-    module integrates with `data_ingest` for easy ingestion.
+    new training triples from world-model rollouts and expand the dataset. When
+    paired with `DiffusionWorldModel`, the augmentor samples diverse environment
+    states to improve world-model coverage. The module integrates with
+    `data_ingest` for easy ingestion.
 22. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
     to track benchmark progress automatically. *Implemented in
     `scripts/continuous_eval.py`.*
