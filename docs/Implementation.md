@@ -697,6 +697,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add `self_reflect()` to `GraphOfThought` which outputs a concise summary of
   reasoning steps. `ReasoningHistoryLogger` stores these summaries with
   timestamps for later inspection.
+- `GraphUI` exposes `/graph/node`, `/graph/edge`, `/graph/remove_*` and
+  `/graph/recompute` so reasoning graphs can be edited interactively. Each edit
+  records a new summary via `ReasoningHistoryLogger`. The script
+  `scripts/graph_playground.py` launches this playground.
 - Provide a `ResourceBroker` module coordinating multiple clusters and a demo
   script `scripts/resource_broker_demo.py`. The broker now reports per-accelerator
   utilisation via `get_load()` and allows allocating jobs to specific
