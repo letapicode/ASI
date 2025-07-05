@@ -179,6 +179,31 @@ class ReasoningDebugger:
                             contrad.append(pair)
         return contrad
 
+    def export_graph_data(self) -> Dict[str, list[dict]]:
+        """Return nodes and edges formatted for ``GOTVisualizer``."""
+        nodes: List[dict] = []
+        edges: List[dict] = []
+        for agent, graph in self.graphs.items():
+            for nid, node in graph.nodes.items():
+                nodes.append(
+                    {
+                        "id": f"{agent}:{nid}",
+                        "agent": agent,
+                        "orig_id": nid,
+                        "text": node.text,
+                        "metadata": node.metadata or {},
+                    }
+                )
+            for src, dsts in graph.edges.items():
+                for dst in dsts:
+                    edges.append(
+                        {
+                            "source": f"{agent}:{src}",
+                            "target": f"{agent}:{dst}",
+                        }
+                    )
+        return {"nodes": nodes, "edges": edges}
+
     def report(self) -> str:
         """Return a consolidated text report of detected issues."""
         loops = self.find_loops()

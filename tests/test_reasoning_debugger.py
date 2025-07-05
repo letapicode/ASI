@@ -34,6 +34,10 @@ class TestReasoningDebugger(unittest.TestCase):
         self.assertTrue(any(a != c for a, _, c, _ in contrad))
         self.assertIsInstance(dbg.report(), str)
 
+        data = dbg.export_graph_data()
+        self.assertIn("nodes", data)
+        self.assertIn("edges", data)
+
 
 if __name__ == '__main__':
     unittest.main()
