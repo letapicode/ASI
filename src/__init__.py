@@ -232,6 +232,7 @@ from .graph_ui import GraphUI
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
+from .energy_aware_scheduler import EnergyAwareScheduler
 from .doc_summarizer import summarize_module
 
 from .hpc_scheduler import submit_job, monitor_job, cancel_job

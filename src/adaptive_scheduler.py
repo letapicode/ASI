@@ -41,7 +41,24 @@ class AdaptiveScheduler:
         check_interval: float = 1.0,
         window: int = 3,
         min_improvement: float = 0.01,
+        *,
+        energy_scheduler: bool = False,
+        intensity_threshold: float = 0.5,
     ) -> None:
+        if energy_scheduler and type(self) is AdaptiveScheduler:
+            from .energy_aware_scheduler import EnergyAwareScheduler
+            self.__class__ = EnergyAwareScheduler
+            EnergyAwareScheduler.__init__(
+                self,
+                budget,
+                run_id,
+                max_mem=max_mem,
+                check_interval=check_interval,
+                window=window,
+                min_improvement=min_improvement,
+                intensity_threshold=intensity_threshold,
+            )
+            return
         self.budget = budget
         self.run_id = run_id
         self.telemetry: TelemetryLogger = budget.telemetry

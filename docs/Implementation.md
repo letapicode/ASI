@@ -706,6 +706,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   counters and reports kWh and CO₂ emissions. `TelemetryLogger` can start this
   tracker and `ComputeBudgetTracker` now exposes per-run carbon usage.
   **Implemented in `src/carbon_tracker.py` with tests.**
+- Introduce an `EnergyAwareScheduler` that queries `TelemetryLogger.get_carbon_intensity()`
+  and delays or migrates jobs when the value exceeds a threshold. Enable it by
+  passing `energy_scheduler=True` to `AdaptiveScheduler`. It complements the
+  existing `BudgetAwareScheduler` for compute-aware training.
 - Add an `AdaptiveMicroBatcher` that monitors GPU memory via `TelemetryLogger`
   and adjusts micro-batch sizes automatically. `DistributedTrainer` and
   `EdgeRLTrainer` accept it through the optional `micro_batcher` argument.
