@@ -54,6 +54,7 @@ Citations point to the most recent public work so you can drill straight into th
 
 `SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
 - **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
+- **Zero-knowledge gradients**: set `require_proof=True` in `SecureFederatedLearner` to verify updates with `ZKVerifier` before aggregation.
 
 ---
 
@@ -280,6 +281,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 28. **Causal graph learner**: Train `CausalGraphLearner` on `world_model_rl`
     transitions and report planning gains from the inferred edges.
     *Implemented in `src/causal_graph_learner.py`.*
+29. **Counterfactual simulation**: Use `world_model_rl.simulate_counterfactual()`
+    with edges from `CausalGraphLearner` to evaluate hypothetical actions and
+    refine plans. *Implemented in `src/world_model_rl.py` with
+    `scripts/causal_sim.py`.*
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
     The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
     `KnowledgeGraphMemory` now records optional timestamps per triple and supports temporal range queries for time-sensitive reasoning.
@@ -297,9 +302,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     decentralized retrieval. The service now exposes a `Sync` RPC and uses
     CRDT update rules so that multiple servers converge on identical vector
     stores after exchanging updates.
-31. **Active data selection**: Add an `ActiveDataSelector` to score incoming
-    triples by predictive entropy and keep only high-information samples.
-    *Implemented in `data_ingest.ActiveDataSelector`.*
+31. **Active data selection**: `ActiveDataSelector` now outputs continuous
+    sample weights based on predictive entropy and down-weights biased
+    examples using `dataset_bias_detector`. A new `SampleWeightRL` loop
+    updates the weights online during training. *Implemented in
+    `data_ingest.ActiveDataSelector` and `adaptive_curriculum.SampleWeightRL`.*
 32. **Hierarchical graph planner**: Combine `GraphOfThought` with
     `world_model_rl.rollout_policy` to generate multi-stage plans for
     refactoring and exploration.

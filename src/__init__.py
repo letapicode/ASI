@@ -90,6 +90,7 @@ from .world_model_rl import (
     train_world_model as train_rl_world_model,
     train_with_self_play,
     rollout_policy,
+    simulate_counterfactual,
 )
 from .embodied_calibration import (
     CalibrationConfig,
@@ -184,6 +185,7 @@ from .user_preferences import UserPreferences
 from .training_anomaly_detector import TrainingAnomalyDetector
 from .gradient_patch_editor import GradientPatchEditor, PatchConfig
 from .secure_federated_learner import SecureFederatedLearner
+from .zk_verifier import ZKVerifier
 from .enclave_runner import EnclaveRunner, EnclaveConfig
 from .federated_world_model_trainer import (
     FederatedWorldModelTrainer,
@@ -232,6 +234,7 @@ from .graph_ui import GraphUI
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
+from .energy_aware_scheduler import EnergyAwareScheduler
 from .doc_summarizer import summarize_module
 
 from .hpc_scheduler import submit_job, monitor_job, cancel_job

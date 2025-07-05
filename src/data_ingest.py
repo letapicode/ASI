@@ -75,9 +75,18 @@ except Exception:  # pragma: no cover - for tests
             def record(self, *a: Any, **kw: Any) -> None:
                 pass
 
+try:  # pragma: no cover - optional bias scoring
+    from .dataset_bias_detector import file_bias_score
+except Exception:  # pragma: no cover - for tests
+    try:
+        from dataset_bias_detector import file_bias_score  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        def file_bias_score(path: str | Path) -> float:  # type: ignore
+            return 1.0
+
 
 class ActiveDataSelector:
-    """Filter triples based on predictive entropy."""
+    """Score triples by entropy and output weights in ``[0, 1]``."""
 
     def __init__(self, threshold: float = 1.0) -> None:
         self.threshold = threshold
@@ -87,13 +96,23 @@ class ActiveDataSelector:
         p = probs / (probs.sum() + 1e-8)
         return float(-(p * np.log(p + 1e-8)).sum())
 
-    def select(self, triples: Iterable[Tuple[Any, Any, Any]], probs: Iterable[np.ndarray]) -> list[Tuple[Any, Any, Any]]:
-        """Return samples whose entropy exceeds ``threshold``."""
-        kept = []
+    def select(
+        self,
+        triples: Iterable[Tuple[Any, Any, Any]],
+        probs: Iterable[np.ndarray],
+    ) -> list[Tuple[Tuple[Any, Any, Any], float]]:
+        """Return ``(triple, weight)`` pairs with bias-adjusted weights."""
+        results: list[tuple[tuple[Any, Any, Any], float]] = []
         for t, p in zip(triples, probs):
-            if self.score(np.asarray(p, dtype=float)) >= self.threshold:
-                kept.append(t)
-        return kept
+            ent = self.score(np.asarray(p, dtype=float))
+            w = min(ent / (self.threshold + 1e-8), 1.0)
+            try:
+                bias = max(0.0, float(file_bias_score(t[0])))
+                w *= bias
+            except Exception:
+                pass
+            results.append((t, float(w)))
+        return results
 
 
 class CrossLingualTranslator:
