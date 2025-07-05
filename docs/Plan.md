@@ -375,6 +375,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
 75. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
+
 76. **Trusted execution inference**: `EnclaveRunner` launches model inference inside a trusted enclave. `DistributedTrainer` can route its steps through the enclave to keep weights in a protected address space. This guards intermediate activations but does not eliminate side-channel risk.
 77. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
     telemetry metrics alongside reasoning logs through a small web server.
@@ -400,6 +401,12 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     offset `B - A` and query `HierarchicalMemory.search(mode="analogy")`. Report
     the percentage of cases where the top result matches the expected word; aim
     for ≥70% accuracy on the toy set.
+    
+
+84. **Privacy-preserving federated RL**: Wrap `EdgeRLTrainer` with encrypted gradient
+    aggregation. Gradients are clipped and noised before averaging so reward
+    drops less than 2% compared with centralized training.
+
 
 
 
@@ -409,6 +416,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 The `hpc_scheduler` module wraps `sbatch`, `srun` and `kubectl` so jobs can be launched on an HPC cluster or a Kubernetes grid.  Pass
 `hpc_backend="slurm"` or `"kubernetes"` to `DistributedTrainer` to dispatch workers through the scheduler.  Use `submit_job()` to start a
 task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.
+
 
 
 
