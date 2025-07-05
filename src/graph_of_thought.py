@@ -110,6 +110,18 @@ class GraphOfThought:
             graph.connect(int(src), int(dst))
         return graph
 
+    # --------------------------------------------------------------
+    def to_json(self) -> dict:
+        """Return a JSON-serializable representation of the graph."""
+        nodes = [
+            {"id": n.id, "text": n.text, "metadata": n.metadata}
+            for n in self.nodes.values()
+        ]
+        edges = [
+            [src, dst] for src, dsts in self.edges.items() for dst in dsts
+        ]
+        return {"nodes": nodes, "edges": edges}
+
 
 class ReasoningDebugger:
     """Detect contradictory steps and loops across one or more reasoning graphs."""

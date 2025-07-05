@@ -85,6 +85,7 @@ class MemoryDashboard:
         table = "\n".join(rows)
         return (
             "<html><body><h1>Memory Dashboard</h1>"
+            "<p><a href='http://localhost:8070/graph'>Graph UI</a></p>"
             "<table border='1'>"
             "<tr><th>Server</th><th>GPU Util (%)</th><th>Hits</th><th>Misses</th><th>Avg Score</th></tr>"
             f"{table}</table><p>GPU/Score correlation: {corr:.3f}</p></body></html>"

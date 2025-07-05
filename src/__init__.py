@@ -205,6 +205,7 @@ from .edge_rl_trainer import EdgeRLTrainer
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .retrieval_explainer import RetrievalExplainer
 from .interpretability_dashboard import InterpretabilityDashboard
+from .graph_ui import GraphUI
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
