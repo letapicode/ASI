@@ -370,12 +370,20 @@ class HierarchicalMemory:
         k: int = 5,
         return_scores: bool = False,
         return_provenance: bool = False,
+        *,
+        mode: str = "standard",
+        offset: torch.Tensor | None = None,
     ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
         """Retrieve top-k decoded vectors and their metadata.
 
         When ``return_scores`` or ``return_provenance`` is ``True`` additional
         lists of cosine similarity scores and provenance metadata are returned.
         """
+        if mode == "analogy":
+            if offset is None:
+                raise ValueError("offset must be provided for analogy mode")
+            query = query + offset
+
         if isinstance(self.store, AsyncFaissVectorStore):
             import asyncio
 
