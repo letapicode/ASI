@@ -142,6 +142,7 @@ except Exception:  # pragma: no cover - optional
 from .differential_privacy_optimizer import DifferentialPrivacyOptimizer, DifferentialPrivacyConfig
 
 from .embedding_visualizer import EmbeddingVisualizer
+from .got_visualizer import GOTVisualizer
 from .duplicate_detector import DuplicateDetector
 from .telemetry import TelemetryLogger, FineGrainedProfiler
 from .license_inspector import LicenseInspector
