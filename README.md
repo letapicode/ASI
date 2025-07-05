@@ -65,6 +65,25 @@ Visit `http://localhost:8000` to view Prometheus metrics.
 `InterpretabilityDashboard` on the next port to display attention heatmaps and
 memory statistics in a simple web UI.
 
+### Collaboration Portal
+
+`CollaborationPortal` exposes active tasks, telemetry metrics and reasoning logs
+through a lightweight web server.
+
+```python
+from asi.collaboration_portal import CollaborationPortal
+from asi.telemetry import TelemetryLogger
+from asi.reasoning_history import ReasoningHistoryLogger
+
+tel = TelemetryLogger()
+tel.start()
+hist = ReasoningHistoryLogger()
+portal = CollaborationPortal(["refactor repo"], tel, hist)
+portal.start(port=8090)
+```
+
+Visit `http://localhost:8090` to inspect progress.
+
 ## Testing
 
 1. Install requirements: `pip install -r requirements.txt` (or run
