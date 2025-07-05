@@ -31,8 +31,9 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-7** | **Hierarchical Retrieval Memory**         | Cache long-tail tokens in a disk-backed vector DB                     | Retrieval hit rate ≥85 % at 1 M tokens |
 | **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service (see `MemoryServer`, `RemoteMemory`) | Throughput scales to 4+ nodes with <1.2× single-node latency |
 | **C-9** | **Hopfield Associative Memory** | Store binary patterns as attractors and recall them from noisy cues | Recall accuracy >95 % on 32-bit vectors with up to 20 % noise |
+| **C-10** | **RL-guided retrieval** | Learn a policy to rank memory vectors by hit rate and latency | Recall improves after online training from query logs |
 
-**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.
+**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.  Privacy-preserving retrieval is now possible via `EncryptedVectorStore`, which stores AES-encrypted embeddings and manages keys through `HierarchicalMemory`.
 
 ---
 
@@ -52,6 +53,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **A-10** | **Goal-Oriented Evaluation Harness** | Benchmark each algorithm against its success criteria | Single command prints pass/fail scoreboard |
 
 `SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
+- **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
 
 ---
 
@@ -151,6 +153,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   `aiohttp` for faster monitoring of open pull requests.
 - `src/lora_quant.py` provides 4-bit LoRA adapters and `apply_quant_lora()` to
   inject them into existing models.
+- `src/spiking_layers.py` defines `LIFNeuron` and `SpikingLinear`. Set
+  `use_spiking=True` in `MultiModalWorldModelConfig` to replace MLP blocks with
+  these energy-efficient neurons.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
@@ -246,8 +251,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     ingest to prune low-quality samples using generative noise detection and
     track the effect on training stability.
 21. **Generative data augmentor**: Use `GenerativeDataAugmentor` to synthesize
-    new training triples from world-model rollouts and expand the dataset. The
-    module integrates with `data_ingest` for easy ingestion.
+    new training triples from world-model rollouts and expand the dataset. When
+    paired with `DiffusionWorldModel`, the augmentor samples diverse environment
+    states to improve world-model coverage. The module integrates with
+    `data_ingest` for easy ingestion.
 22. **Continuous evaluation**: Run `continuous_eval.py` after each pull request
     to track benchmark progress automatically. *Implemented in
     `scripts/continuous_eval.py`.*
@@ -276,6 +283,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
     The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
     `KnowledgeGraphMemory` now records optional timestamps per triple and supports temporal range queries for time-sensitive reasoning.
+29. **Temporal reasoner**: `TemporalReasoner` queries these timestamped triples
+    to infer before/after relationships. `HierarchicalPlanner.compose_plan()`
+    can optionally reorder intermediate steps using the reasoner for time-aware
+    planning.
 29. **Self-alignment evaluator**: Integrate
     `deliberative_alignment.check_alignment()` into `eval_harness` and track
     alignment metrics alongside existing benchmarks. *Implemented in
@@ -364,6 +375,34 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
 75. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
+76. **Trusted execution inference**: `EnclaveRunner` launches model inference inside a trusted enclave. `DistributedTrainer` can route its steps through the enclave to keep weights in a protected address space. This guards intermediate activations but does not eliminate side-channel risk.
+77. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
+    telemetry metrics alongside reasoning logs through a small web server.
+78. **Cluster carbon dashboard**: `TelemetryLogger` now publishes per-node carbon metrics to a central `ClusterCarbonDashboard`. `RiskDashboard` links to the dashboard so operators can track environmental impact across nodes.
+79. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
+80. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
+81. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps. The logger now provides `analyze()` to cluster repeated steps and flag inconsistencies. Use `python -m asi.self_reflection` to print a report from saved histories.
+82. **Graph-of-thought visualizer**: Use `src/got_visualizer.py` and the CLI
+    `scripts/got_visualizer.py trace.json --out graph.html` to render reasoning
+    traces for collaborative editing sessions.
+83. **Graph UI**: `GraphUI` serves interactive D3 graphs via FastAPI. Visit `http://localhost:8070/graph` while the server is running to explore reasoning steps. `http://localhost:8070/history` shows stored summaries.
+
+
+84. **Temporal telemetry monitoring**: `MemoryEventDetector` parses logged hardware metrics and flags change points. `TelemetryLogger` stores these events so the memory dashboard exposes them via `/events`.
+82. **Dataset discovery pipeline**: `dataset_discovery.py` scans RSS feeds from
+    HuggingFace and Kaggle, storing dataset names, URLs and license text in a
+    lightweight SQLite database. `license_inspector.py` loads the database to
+    flag incompatible licenses. The plan is to crowd‑source additional data hub
+    scrapers so community members can contribute new sources via pull requests.
+
+
+
+### Scalability
+
+The `hpc_scheduler` module wraps `sbatch`, `srun` and `kubectl` so jobs can be launched on an HPC cluster or a Kubernetes grid.  Pass
+`hpc_backend="slurm"` or `"kubernetes"` to `DistributedTrainer` to dispatch workers through the scheduler.  Use `submit_job()` to start a
+task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.
+
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
@@ -391,9 +430,4 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 [24]: https://arxiv.org/abs/2307.15424?utm_source=chatgpt.com "RT-2: Vision-Language-Action Models"
 [25]: https://github.com/features/actions?utm_source=chatgpt.com "GitHub Actions for automated repository processing"
 [26]: https://arxiv.org/abs/2211.00564?utm_source=chatgpt.com "Transformer Circuits: Mechanistic Interpretability"
-74. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
-75. **Dataset discovery pipeline**: `dataset_discovery.py` scans RSS feeds from
-    HuggingFace and Kaggle, storing dataset names, URLs and license text in a
-    lightweight SQLite database. `license_inspector.py` loads the database to
-    flag incompatible licenses. The plan is to crowd‑source additional data hub
-    scrapers so community members can contribute new sources via pull requests.
+
