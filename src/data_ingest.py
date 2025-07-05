@@ -75,6 +75,19 @@ except Exception:  # pragma: no cover - for tests
             def record(self, *a: Any, **kw: Any) -> None:
                 pass
 
+try:
+    from .data_bias_mitigator import DataBiasMitigator
+except Exception:  # pragma: no cover - for tests
+    try:
+        from data_bias_mitigator import DataBiasMitigator  # type: ignore
+    except Exception:
+        class DataBiasMitigator:  # type: ignore
+            def __init__(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def apply_to_triples(self, triples: Iterable[Tuple[Path, Path, Path]]) -> list[tuple[Path, Path, Path]]:
+                return list(triples)
+
 
 class ActiveDataSelector:
     """Filter triples based on predictive entropy."""
@@ -194,8 +207,13 @@ def download_triples(
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
+    bias_mitigator: Optional["DataBiasMitigator"] = None,
 ) -> List[Tuple[Path, Path, Path]]:
-    """Download text, image and audio triples into ``out_dir`` concurrently."""
+    """Download text, image and audio triples into ``out_dir`` concurrently.
+
+    If ``bias_mitigator`` is provided, downloaded text files are filtered based
+    on bias scores before returning the list of triples.
+    """
 
     async def run() -> List[Tuple[Path, Path, Path]]:
         return await download_triples_async(
@@ -207,6 +225,7 @@ def download_triples(
             translator,
             anonymizer,
             lineage,
+            bias_mitigator,
         )
 
     try:
@@ -226,8 +245,13 @@ async def download_triples_async(
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
+    bias_mitigator: Optional["DataBiasMitigator"] = None,
 ) -> List[Tuple[Path, Path, Path]]:
-    """Asynchronously download text, image and audio triples."""
+    """Asynchronously download text, image and audio triples.
+
+    The optional ``bias_mitigator`` allows biased samples to be removed before
+    they are recorded in the dataset.
+    """
     if not _HAS_AIOHTTP:
         raise ImportError("aiohttp is required for async downloads")
     out = Path(out_dir)
@@ -273,6 +297,8 @@ async def download_triples_async(
                 t_new.write_text(trans)
                 augmented.append((t_new, i_path, a_path))
         triples = augmented
+    if bias_mitigator is not None:
+        triples = bias_mitigator.apply_to_triples(triples)
     if lineage is not None and anonymizer is not None:
         flat = [p for tri in triples for p in tri]
         lineage.record(flat, flat, note=f"anonymized {anonymizer.summary()}")

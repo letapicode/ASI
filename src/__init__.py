@@ -168,6 +168,7 @@ from .dataset_bias_detector import (
     text_bias_score,
     file_bias_score,
 )
+from .data_bias_mitigator import DataBiasMitigator
 from .auto_labeler import AutoLabeler
 from .graphql_memory_gateway import GraphQLMemoryGateway
 from .world_model_distiller import DistillConfig, distill_world_model
