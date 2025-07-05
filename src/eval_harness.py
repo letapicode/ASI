@@ -320,6 +320,19 @@ def _eval_context_profiler() -> Tuple[bool, str]:
     return ok, f"runs={len(stats)}"
 
 
+def _eval_voxel_rollout() -> Tuple[bool, str]:
+    """Run a tiny rollout in the 3D voxel environment."""
+    from asi.self_play_env import VoxelEnv, rollout_env
+    env = VoxelEnv((2, 2, 2))
+
+    def policy(obs: torch.Tensor) -> torch.Tensor:  # returns same shape
+        return torch.ones_like(obs)
+
+    obs, _ = rollout_env(env, policy, steps=2)
+    ok = all(o.shape == torch.Size([2, 2, 2]) for o in obs)
+    return ok, f"steps={len(obs)}"
+
+
 EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "moe_router": _eval_moe_router,
     "flash_attention3": _eval_flash_attention3,
@@ -342,6 +355,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "fairness_evaluator": _eval_fairness_evaluator,
     "cross_lingual_fairness": _eval_cross_lingual_fairness,
     "context_profiler": _eval_context_profiler,
+    "voxel_rollout": _eval_voxel_rollout,
 }
 
 

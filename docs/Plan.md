@@ -55,6 +55,11 @@ Citations point to the most recent public work so you can drill straight into th
 `SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
 - **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
 
+- **Reasoning graph merger**: `reasoning_merger.merge_graphs()` deduplicates nodes across agents and aligns timestamps. The `MultiAgentDashboard` now displays the merged trace.
+
+- **Zero-knowledge gradients**: set `require_proof=True` in `SecureFederatedLearner` to verify updates with `ZKVerifier` before aggregation.
+
+
 ---
 
 ## 4  Alignment & Control Algorithms
@@ -155,7 +160,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   inject them into existing models.
 - `src/spiking_layers.py` defines `LIFNeuron` and `SpikingLinear`. Set
   `use_spiking=True` in `MultiModalWorldModelConfig` to replace MLP blocks with
-  these energy-efficient neurons.
+  these energy-efficient neurons. When the optional Loihi SDK is installed,
+  enable `use_loihi=True` to run them on neuromorphic hardware via
+  `src/loihi_backend.py`.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
@@ -280,6 +287,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 28. **Causal graph learner**: Train `CausalGraphLearner` on `world_model_rl`
     transitions and report planning gains from the inferred edges.
     *Implemented in `src/causal_graph_learner.py`.*
+29. **Counterfactual simulation**: Use `world_model_rl.simulate_counterfactual()`
+    with edges from `CausalGraphLearner` to evaluate hypothetical actions and
+    refine plans. *Implemented in `src/world_model_rl.py` with
+    `scripts/causal_sim.py`.*
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
     The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
     `KnowledgeGraphMemory` now records optional timestamps per triple and supports temporal range queries for time-sensitive reasoning.
@@ -297,9 +308,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     decentralized retrieval. The service now exposes a `Sync` RPC and uses
     CRDT update rules so that multiple servers converge on identical vector
     stores after exchanging updates.
-31. **Active data selection**: Add an `ActiveDataSelector` to score incoming
-    triples by predictive entropy and keep only high-information samples.
-    *Implemented in `data_ingest.ActiveDataSelector`.*
+31. **Active data selection**: `ActiveDataSelector` now outputs continuous
+    sample weights based on predictive entropy and down-weights biased
+    examples using `dataset_bias_detector`. A new `SampleWeightRL` loop
+    updates the weights online during training. *Implemented in
+    `data_ingest.ActiveDataSelector` and `adaptive_curriculum.SampleWeightRL`.*
 32. **Hierarchical graph planner**: Combine `GraphOfThought` with
     `world_model_rl.rollout_policy` to generate multi-stage plans for
     refactoring and exploration.
@@ -315,6 +328,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 37. **Compressed vector store**: Implement a `PQVectorStore` using FAISS `IndexIVFPQ`
     and integrate with `HierarchicalMemory`. Benchmark retrieval accuracy vs.
     `FaissVectorStore`.
+37a. **Quantum retrieval benchmark**: `quantum_retrieval.amplify_search()`
+     applies amplitude amplification to select vectors. On a toy index its
+     accuracy matches FAISS within ~20% latency overhead.
 38. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
@@ -331,6 +347,13 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     so queries in any supported language return the same results. The optional
     `CrossLingualSpeechTranslator` transcribes audio queries offline and feeds
     the text through `CrossLingualTranslator` for unified search.
+40b. **Multilingual paraphrasing augmentation**: `paraphrase_multilingual()`
+    expands each text file with paraphrases in the translator's languages. The
+    helper uses `AutoDatasetFilter` and `LicenseInspector` to keep only clean and
+    compliant outputs while logging stats via `DatasetLineageManager`. Measure
+    fairness gains by running `CrossLingualFairnessEvaluator` on the dataset
+    before and after augmentation—expect the demographic parity gap to shrink
+    by at least 5%.
 41a. **Cross-lingual summarization memory**: `ContextSummaryMemory` stores summaries
      in the source language and translated forms. Results are translated back
      to the query language. See `docs/Implementation.md` for details.
@@ -346,6 +369,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 47. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
 48. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt revisions via reinforcement learning and measure evaluation gains.
 49. **Training anomaly detection**: Extend `SelfHealingTrainer` with a `TrainingAnomalyDetector` to roll back or restart runs when metrics diverge.
+49a. **Distributed anomaly monitoring**: `DistributedAnomalyMonitor` collects per-node anomaly metrics and flags cross-run spikes through `RiskDashboard`.
 50. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
 51. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
 52. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines. *Implemented in `src/dataset_lineage_manager.py`.*
@@ -361,6 +385,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 59. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Combined with `ComputeBudgetTracker`, the new `AdaptiveScheduler` automatically pauses or resumes runs based on remaining GPU hours and historical improvement. *Carbon-intensity data now guide the scheduler to prefer lower-emission nodes, reducing the environmental footprint.*
 60. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
 61. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
+61a. **Dataset bias mitigation**: `DataBiasMitigator` reweights or filters entries based on these scores. `download_triples()` now applies the mitigator before storing new files.
 62. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
 63. **Parameter-efficient model editing**: Implement `GradientPatchEditor` to fix wrong outputs with minimal updates; >90% targeted fix rate with <1% perplexity change.
 64. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
@@ -374,8 +399,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 72. **Self-debugging world model**: Automatically patch the world model when rollout errors exceed 1%, keeping long-term error <1%. *Implemented in `src/world_model_debugger.py` with tests.*
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
-75. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
-76. **User preference modeling**: `UserPreferences` maintains per-user vectors and feedback counts so `PromptOptimizer` can personalise prompts. Aggregate stats expose fairness gaps across demographics.
+75. **Dataset summarization**: `scripts/dataset_summary.py --content` clusters text samples with `dataset_summarizer.summarize_dataset()` and writes the result to `docs/datasets/`.
+76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
+77. **User preference modeling**: `UserPreferences` maintains per-user vectors and feedback counts so `PromptOptimizer` can personalise prompts. Aggregate stats expose fairness gaps across demographics.
 
 76. **Trusted execution inference**: `EnclaveRunner` launches model inference inside a trusted enclave. `DistributedTrainer` can route its steps through the enclave to keep weights in a protected address space. This guards intermediate activations but does not eliminate side-channel risk.
 77. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
@@ -408,6 +434,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     aggregation. Gradients are clipped and noised before averaging so reward
     drops less than 2% compared with centralized training.
 
+85. **Zero-knowledge gradient proofs**: `SecureFederatedLearner` can emit a
+    `ZKGradientProof` for each encrypted gradient. `FederatedWorldModelTrainer`
+    verifies these proofs before applying updates so compromised peers cannot
+    inject arbitrary gradients.
+
 
 
 
@@ -416,7 +447,17 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 The `hpc_scheduler` module wraps `sbatch`, `srun` and `kubectl` so jobs can be launched on an HPC cluster or a Kubernetes grid.  Pass
 `hpc_backend="slurm"` or `"kubernetes"` to `DistributedTrainer` to dispatch workers through the scheduler.  Use `submit_job()` to start a
-task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.
+task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.  A
+`CarbonAwareScheduler` can now queue jobs until the current carbon intensity
+drops below a configured threshold, using `CarbonFootprintTracker` or an
+external API for the measurements.
+
+`carbon_hpc_scheduler.CarbonAwareScheduler` builds on this by querying an external
+carbon-intensity API and tracking energy via `CarbonFootprintTracker`.  Its
+`submit_when_green()` method delays a job until the forecast for the chosen region
+drops below a threshold, while `submit_at_optimal_time()` waits for the lowest
+forecast in the next 24 h.  Both helpers call `submit_job()` once conditions are
+favourable, reducing cluster emissions without manual tuning.
 
 
 

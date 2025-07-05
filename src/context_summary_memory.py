@@ -48,7 +48,7 @@ class ContextSummaryMemory(HierarchicalMemory):
     def search(
         self, query: torch.Tensor, k: int = 5, language: str | None = None
     ) -> Tuple[torch.Tensor, List[Any]]:  # type: ignore[override]
-        vecs, meta = super().search(query, k)
+        vecs, meta = super().search(query, k, language=language)
         new_vecs = []
         out_meta: List[Any] = []
         for v, m in zip(vecs, meta):
