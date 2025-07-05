@@ -203,6 +203,11 @@ from .graph_neural_reasoner import GraphNeuralReasoner
 from .temporal_reasoner import TemporalReasoner
 from .lora_merger import merge_adapters
 from .edge_rl_trainer import EdgeRLTrainer
+from .federated_rl_trainer import (
+    FederatedRLTrainer,
+    FederatedRLTrainerConfig,
+    PolicyNet,
+)
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .retrieval_explainer import RetrievalExplainer
 from .interpretability_dashboard import InterpretabilityDashboard
