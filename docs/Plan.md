@@ -346,6 +346,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 47. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
 48. **Prompt optimization**: Build a `PromptOptimizer` that learns prompt revisions via reinforcement learning and measure evaluation gains.
 49. **Training anomaly detection**: Extend `SelfHealingTrainer` with a `TrainingAnomalyDetector` to roll back or restart runs when metrics diverge.
+49a. **Distributed anomaly monitoring**: `DistributedAnomalyMonitor` collects per-node anomaly metrics and flags cross-run spikes through `RiskDashboard`.
 50. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
 51. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
 52. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines. *Implemented in `src/dataset_lineage_manager.py`.*

@@ -237,6 +237,7 @@ from .doc_summarizer import summarize_module
 from .hpc_scheduler import submit_job, monitor_job, cancel_job
 from .collaboration_portal import CollaborationPortal
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
+from .distributed_anomaly_monitor import DistributedAnomalyMonitor
 from .spiking_layers import LIFNeuron, SpikingLinear
 
 
