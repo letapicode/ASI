@@ -238,6 +238,7 @@ from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
 from .energy_aware_scheduler import EnergyAwareScheduler
 from .doc_summarizer import summarize_module
+from .dataset_summarizer import summarize_dataset
 
 from .hpc_scheduler import submit_job, monitor_job, cancel_job
 from .carbon_hpc_scheduler import CarbonAwareScheduler

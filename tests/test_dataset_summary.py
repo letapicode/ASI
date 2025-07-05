@@ -48,6 +48,19 @@ class TestDatasetSummary(unittest.TestCase):
             self.assertEqual(data['lineage'][0]['note'], 'step1')
             self.assertTrue(data['licenses'][str(meta)])
 
+    def test_summarize_with_content(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inp = root / 's.txt'
+            inp.write_text('hello world world')
+            mgr = DatasetLineageManager(root)
+            mgr.record([inp], [inp], note='c')
+            meta = root / 'm.json'
+            meta.write_text(json.dumps({'license': 'MIT'}))
+            result = summarize(str(root), fmt='json', content=True)
+            data = json.loads(result)
+            self.assertIn('content_summaries', data)
+
 
 if __name__ == '__main__':
     unittest.main()
