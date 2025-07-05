@@ -52,6 +52,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **A-10** | **Goal-Oriented Evaluation Harness** | Benchmark each algorithm against its success criteria | Single command prints pass/fail scoreboard |
 
 `SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
+- **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
 
 ---
 
