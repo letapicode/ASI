@@ -755,6 +755,13 @@ sched.stop()
 
 `src/fairness_evaluator.py` computes demographic parity and equal opportunity gaps from per-group label statistics. The evaluation harness exposes these metrics via the `fairness_evaluator` entry.
 
+`data_ingest.paraphrase_multilingual()` generates translations and paraphrases
+in multiple languages. Outputs are filtered with `AutoDatasetFilter` and checked
+by `LicenseInspector` before being saved. The number of generated and retained
+files is logged through `DatasetLineageManager`. To quantify fairness gains,
+run `CrossLingualFairnessEvaluator` on the dataset before and after augmentation
+and compare the demographic parity gap.
+
 ## LoRA Merger
 
 `src/lora_merger.py` merges multiple LoRA checkpoints by weighted averaging. Use `scripts/merge_lora.py` to create a single adapter file before loading it in the model.

@@ -338,6 +338,13 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     so queries in any supported language return the same results. The optional
     `CrossLingualSpeechTranslator` transcribes audio queries offline and feeds
     the text through `CrossLingualTranslator` for unified search.
+40b. **Multilingual paraphrasing augmentation**: `paraphrase_multilingual()`
+    expands each text file with paraphrases in the translator's languages. The
+    helper uses `AutoDatasetFilter` and `LicenseInspector` to keep only clean and
+    compliant outputs while logging stats via `DatasetLineageManager`. Measure
+    fairness gains by running `CrossLingualFairnessEvaluator` on the dataset
+    before and after augmentation—expect the demographic parity gap to shrink
+    by at least 5%.
 41a. **Cross-lingual summarization memory**: `ContextSummaryMemory` stores summaries
      in the source language and translated forms. Results are translated back
      to the query language. See `docs/Implementation.md` for details.

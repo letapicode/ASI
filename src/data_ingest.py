@@ -479,6 +479,49 @@ def auto_label_triples(
     return labeler.label(samples)
 
 
+def paraphrase_multilingual(
+    text_files: Iterable[str | Path],
+    translator: CrossLingualTranslator,
+    dataset_filter: Optional[AutoDatasetFilter] = None,
+    inspector: Optional["LicenseInspector"] = None,
+    lineage: Optional[DatasetLineageManager] = None,
+) -> List[Path]:
+    """Generate and save paraphrases of ``text_files`` across languages."""
+
+    paths = [Path(p) for p in text_files]
+    texts: List[str] = []
+    kept_inputs: List[Path] = []
+    for p in paths:
+        if inspector is not None:
+            meta = p.with_suffix(".json")
+            if meta.exists() and not inspector.inspect(meta):
+                continue
+        try:
+            txt = p.read_text()
+        except Exception:
+            continue
+        texts.append(txt)
+        kept_inputs.append(p)
+
+    if dataset_filter is not None:
+        dataset_filter.fit(texts)
+
+    out_paths: List[Path] = []
+    total = 0
+    for p, txt in zip(kept_inputs, texts):
+        for lang, trans in translator.translate_all(f"{txt} paraphrased").items():
+            total += 1
+            out_p = p.with_name(f"{p.stem}_{lang}_para{p.suffix}")
+            if dataset_filter is not None and dataset_filter.score(trans) < dataset_filter.threshold:
+                continue
+            out_p.write_text(trans)
+            out_paths.append(out_p)
+
+    if lineage is not None and out_paths:
+        lineage.record(kept_inputs, out_paths, note=f"paraphrase_multilingual generated={total} kept={len(out_paths)}")
+    return out_paths
+
+
 def ingest_translated_triples(
     triples: Iterable[
         Tuple[str | Path, str | Path, str | Path]
@@ -552,6 +595,7 @@ __all__ = [
     "offline_synthesizer",
     "filter_dataset",
     "auto_label_triples",
+    "paraphrase_multilingual",
     "ingest_translated_triples",
     "ActiveDataSelector",
     "CrossLingualTranslator",

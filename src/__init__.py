@@ -115,6 +115,7 @@ from .data_ingest import (
     synthesize_from_world_model,
     offline_synthesizer,
     filter_dataset,
+    paraphrase_multilingual,
     ingest_translated_triples,
     ActiveDataSelector,
     CrossLingualTranslator,
