@@ -408,6 +408,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     aggregation. Gradients are clipped and noised before averaging so reward
     drops less than 2% compared with centralized training.
 
+85. **Zero-knowledge gradient proofs**: `SecureFederatedLearner` can emit a
+    `ZKGradientProof` for each encrypted gradient. `FederatedWorldModelTrainer`
+    verifies these proofs before applying updates so compromised peers cannot
+    inject arbitrary gradients.
+
 
 
 

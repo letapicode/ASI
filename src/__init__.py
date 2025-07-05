@@ -184,6 +184,7 @@ from .user_preferences import UserPreferences
 from .training_anomaly_detector import TrainingAnomalyDetector
 from .gradient_patch_editor import GradientPatchEditor, PatchConfig
 from .secure_federated_learner import SecureFederatedLearner
+from .zk_gradient_proof import ZKGradientProof
 from .enclave_runner import EnclaveRunner, EnclaveConfig
 from .federated_world_model_trainer import (
     FederatedWorldModelTrainer,

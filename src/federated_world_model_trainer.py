@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from .world_model_rl import RLBridgeConfig, WorldModel, TransitionDataset
 from .secure_federated_learner import SecureFederatedLearner
+from .zk_gradient_proof import ZKGradientProof
 
 @dataclass
 class FederatedTrainerConfig:
@@ -52,13 +53,15 @@ class FederatedWorldModelTrainer:
     def train(self) -> WorldModel:
         params = [p for p in self.model.parameters() if p.requires_grad]
         for _ in range(self.tcfg.rounds):
-            enc_grads = []
+            enc_grads: List[Tuple[torch.Tensor, ZKGradientProof]] = []
             for ds in self.datasets:
                 grads = self._local_gradients(ds)
                 flat = torch.cat([g.view(-1) for g in grads])
-                enc = self.learner.encrypt(flat)
-                enc_grads.append(enc)
-            agg = self.learner.aggregate([self.learner.decrypt(g) for g in enc_grads])
+                enc, proof = self.learner.encrypt(flat, with_proof=True)
+                enc_grads.append((enc, proof))
+            agg = self.learner.aggregate([
+                self.learner.decrypt(g, p) for g, p in enc_grads
+            ])
             start = 0
             for p in params:
                 num = p.numel()
