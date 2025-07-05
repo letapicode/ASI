@@ -143,7 +143,7 @@ from .differential_privacy_optimizer import DifferentialPrivacyOptimizer, Differ
 
 from .embedding_visualizer import EmbeddingVisualizer
 from .duplicate_detector import DuplicateDetector
-from .telemetry import TelemetryLogger, FineGrainedProfiler
+from .telemetry import TelemetryLogger, FineGrainedProfiler, MemoryEventDetector
 from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner
 from .dataset_lineage_manager import DatasetLineageManager
