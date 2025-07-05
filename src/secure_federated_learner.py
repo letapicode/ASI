@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+
 from typing import Iterable, Tuple
 
 from .zk_gradient_proof import ZKGradientProof
+
+from typing import Iterable
+
 from .zk_verifier import ZKVerifier
 
 import torch
@@ -28,6 +32,7 @@ class SecureFederatedLearner:
         torch.manual_seed(self.key)
         noise = torch.randn_like(grad)
         self._last_noise = noise
+
         enc = grad + noise
         if with_proof:
             return enc, ZKGradientProof.generate(grad)
@@ -41,6 +46,7 @@ class SecureFederatedLearner:
         if proof and not proof.verify(dec):
             raise ValueError("invalid gradient proof")
         return dec
+
 
     def aggregate(
         self, grads: Iterable[torch.Tensor], proofs: Iterable[str] | None = None

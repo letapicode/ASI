@@ -31,6 +31,7 @@ class TestSecureFederatedLearner(unittest.TestCase):
         dec = learner.decrypt(enc, proof)
         self.assertTrue(torch.allclose(dec, torch.ones(3)))
 
+
     def test_proof_required(self):
         learner = SecureFederatedLearner(key=1, require_proof=True)
         g = torch.ones(2)
