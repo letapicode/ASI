@@ -770,6 +770,12 @@ and compare the demographic parity gap.
 
 `src/edge_rl_trainer.py` trains world models under a compute budget. It checks `ComputeBudgetTracker.remaining()` each step and stops when resources run low. See `scripts/train_edge_rl.py` for a usage example.
 
+`src/fhe_runner.py` provides `run_fhe()` to execute small models with fully
+homomorphic encryption. It relies on the open‑source TenSEAL library and
+supports only 1‑D tensors. Expect substantial overhead (often 100× slower) from
+ciphertext operations and memory usage, so this mode is suitable for toy
+examples rather than large‑scale training.
+
 ### Resource-aware scheduling
 
 `MultiAgentCoordinator` accepts a `ComputeBudgetTracker` instance which tracks GPU hours per agent. `RLNegotiator` considers `tracker.remaining()` when assigning tasks and each action logs usage via `tracker.consume()`. This ensures repositories are processed by agents with sufficient budget.
