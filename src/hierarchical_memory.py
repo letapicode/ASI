@@ -401,6 +401,7 @@ class HierarchicalMemory:
         *,
         mode: str = "standard",
         offset: torch.Tensor | None = None,
+        language: str | None = None,
     ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
         """Retrieve top-k decoded vectors and their metadata.
 
@@ -475,6 +476,8 @@ class HierarchicalMemory:
         ):
             self._update_eviction()
         self.last_trace = {
+            "query": query.detach().cpu().tolist(),
+            "results": vec.detach().cpu().tolist(),
             "scores": scores,
             "provenance": list(out_meta),
         }
@@ -499,7 +502,13 @@ class HierarchicalMemory:
         return vecs, meta, triples
 
     async def asearch(
-        self, query: torch.Tensor, k: int = 5, return_scores: bool = False, return_provenance: bool = False
+        self,
+        query: torch.Tensor,
+        k: int = 5,
+        return_scores: bool = False,
+        return_provenance: bool = False,
+        *,
+        language: str | None = None,
     ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
         """Asynchronously retrieve vectors and metadata."""
         if self.cache is not None:
@@ -558,7 +567,12 @@ class HierarchicalMemory:
             and self.query_count % self.evict_check_interval == 0
         ):
             self._update_eviction()
-        self.last_trace = {"scores": scores, "provenance": list(out_meta)}
+        self.last_trace = {
+            "query": query.detach().cpu().tolist(),
+            "results": vec.detach().cpu().tolist(),
+            "scores": scores,
+            "provenance": list(out_meta),
+        }
         if return_scores or return_provenance:
             extras = []
             if return_scores:

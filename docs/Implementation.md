@@ -84,6 +84,14 @@ To build the kernel yourself:
 
 After installation, the wrapper will automatically call the optimized kernel.
 
+## Neuromorphic Execution
+
+`src/loihi_backend.py` wraps optional calls into Intel's Loihi SDK. When
+`_HAS_LOIHI` is `True`, `LIFNeuron` and `SpikingLinear` offload their
+computations via `loihi_backend`. Enable this by installing the NxSDK and
+setting `use_loihi=True` on those modules or via
+`MultiModalWorldModelConfig.use_spiking`.
+
 ## S-3 Scaling-law Breakpoint Model
 
 `src/scaling_law.py` defines ``BreakpointScalingLaw`` which fits a piecewise
@@ -333,6 +341,7 @@ To reproduce the toy run step by step:
 
 - `src/hierarchical_memory.py` and `src/link_slot_attention.py` provide a two-tier memory backed by FAISS.
 - The store compresses vectors before writing them to disk and loads the nearest neighbours on demand.
+- `RetrievalExplainer.summarize()` distills query results into a brief text used by `MemoryDashboard` to show context for each retrieval.
 
 ## C-8 Distributed Hierarchical Memory Backend
 
@@ -351,6 +360,10 @@ To reproduce the toy run step by step:
   ``store()`` and ``retrieve()`` helpers for binary patterns.
 - `HierarchicalMemory` accepts ``use_hopfield=True`` to keep a tiny in-memory
   associative cache backed by this network.
+- `src/differentiable_memory.py` wraps ``HierarchicalMemory`` so retrieved
+  vectors keep gradient information. Enable ``use_differentiable_memory`` in
+  ``train_world_model`` when training models that update memory contents via
+  backpropagation.
 
 ### Distributed Memory Benchmark
 
@@ -556,6 +569,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `FederatedMemoryExchange` service that synchronizes vectors across multiple `MemoryServer` nodes. Provide a `scripts/federated_memory_sync.py` utility to benchmark cross-node synchronization throughput. **Implemented in `src/federated_memory_exchange.py` with the benchmarking script `scripts/federated_memory_sync.py`.**
 - Create a `CausalGraphLearner` module that infers directed relations from `world_model_rl` transitions and logs the resulting edges for planning. **Implemented in `src/causal_graph_learner.py`.**
 - Develop a `CausalReasoner` that combines `CausalGraphLearner` with `NeuroSymbolicExecutor` to plan actions along learned cause–effect chains. **Implemented in `src/causal_reasoner.py` with tests.**
+- Extend `world_model_rl` with `simulate_counterfactual()` which consults the
+  learned graph to adjust predicted transitions for hypothetical interventions.
+  This improves planning accuracy by allowing the reasoner to explore "what-if"
+  scenarios. See `scripts/causal_sim.py` for an example.
 - Add a `SelfAlignmentEvaluator` to `eval_harness.py` that runs `deliberative_alignment.check_alignment()` on generated outputs and reports the metrics alongside existing benchmarks. **Implemented as `_eval_self_alignment()` in `src/eval_harness.py`.**
 - Add an `ActiveDataSelector` to `data_ingest.py` that scores incoming triples by predictive entropy and filters out low-information samples before storage. **Implemented in `data_ingest.ActiveDataSelector`.**
 - Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval. The server now includes a `Sync` RPC implementing CRDT merge semantics so replicas converge after partitions. **Implemented in `src/federated_memory_server.py`.**
@@ -593,6 +610,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `ContextSummaryMemory` that replaces far-past vectors with text summaries and re-expands them when retrieved. Unit test `tests/test_context_summary_memory.py` verifies summarization and expansion.
   **Implemented in `src/context_summary_memory.py` with tests.**
 - Extend `ContextSummaryMemory` with a `translator` argument so summaries are stored in multiple languages and returned in the query language. Tested in `tests/test_cross_lingual_summary_memory.py`.
+- Extend `analogical_retrieval.analogy_search` with a `language` argument and update `HierarchicalMemory.search(mode="analogy")` so `ContextSummaryMemory` can return translated vectors. Tested in `tests/test_cross_lingual_analogy.py`.
 - Implement a `KnowledgeGraphMemory` that stores `(subject, predicate, object)` triples and hooks into `HierarchicalMemory` via `use_kg=True`. Unit tests cover insertion and retrieval.
   **Implemented in `src/knowledge_graph_memory.py` with `tests/test_knowledge_graph_memory.py`.**
 - Implement a `FederatedKGMemoryServer` that replicates `KnowledgeGraphMemory` across peers using CRDT-based updates. Endpoints `Push`, `PushBatch`, `Query` and `Sync` ensure replicas converge after partitions.
@@ -688,6 +706,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add `self_reflect()` to `GraphOfThought` which outputs a concise summary of
   reasoning steps. `ReasoningHistoryLogger` stores these summaries with
   timestamps for later inspection.
+- `GraphUI` exposes `/graph/node`, `/graph/edge`, `/graph/remove_*` and
+  `/graph/recompute` so reasoning graphs can be edited interactively. Each edit
+  records a new summary via `ReasoningHistoryLogger`. The script
+  `scripts/graph_playground.py` launches this playground.
 - Provide a `ResourceBroker` module coordinating multiple clusters and a demo
   script `scripts/resource_broker_demo.py`. The broker now reports per-accelerator
   utilisation via `get_load()` and allows allocating jobs to specific
@@ -706,6 +728,32 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   counters and reports kWh and CO₂ emissions. `TelemetryLogger` can start this
   tracker and `ComputeBudgetTracker` now exposes per-run carbon usage.
   **Implemented in `src/carbon_tracker.py` with tests.**
+
+Short example using the carbon-aware scheduler:
+
+```python
+from asi.telemetry import TelemetryLogger
+from asi.compute_budget_tracker import ComputeBudgetTracker
+from asi.adaptive_scheduler import AdaptiveScheduler
+
+tel = TelemetryLogger(interval=1.0, carbon_tracker=True)
+budget = ComputeBudgetTracker(2.0, telemetry=tel)
+sched = AdaptiveScheduler(budget, "demo")
+
+sched.add(train_step, region="US-east")
+sched.add(eval_step, region="EU-west")
+time.sleep(10)
+sched.stop()
+```
+
+`TelemetryLogger` publishes energy stats to a running
+`ClusterCarbonDashboard` so operators can monitor cluster-wide impact.
+
+- Introduce an `EnergyAwareScheduler` that queries `TelemetryLogger.get_carbon_intensity()`
+  and delays or migrates jobs when the value exceeds a threshold. Enable it by
+  passing `energy_scheduler=True` to `AdaptiveScheduler`. It complements the
+  existing `BudgetAwareScheduler` for compute-aware training.
+
 - Add an `AdaptiveMicroBatcher` that monitors GPU memory via `TelemetryLogger`
   and adjusts micro-batch sizes automatically. `DistributedTrainer` and
   `EdgeRLTrainer` accept it through the optional `micro_batcher` argument.
@@ -716,6 +764,13 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 
 `src/fairness_evaluator.py` computes demographic parity and equal opportunity gaps from per-group label statistics. The evaluation harness exposes these metrics via the `fairness_evaluator` entry.
 
+`data_ingest.paraphrase_multilingual()` generates translations and paraphrases
+in multiple languages. Outputs are filtered with `AutoDatasetFilter` and checked
+by `LicenseInspector` before being saved. The number of generated and retained
+files is logged through `DatasetLineageManager`. To quantify fairness gains,
+run `CrossLingualFairnessEvaluator` on the dataset before and after augmentation
+and compare the demographic parity gap.
+
 ## LoRA Merger
 
 `src/lora_merger.py` merges multiple LoRA checkpoints by weighted averaging. Use `scripts/merge_lora.py` to create a single adapter file before loading it in the model.
@@ -723,6 +778,12 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 ## Edge RL Trainer
 
 `src/edge_rl_trainer.py` trains world models under a compute budget. It checks `ComputeBudgetTracker.remaining()` each step and stops when resources run low. See `scripts/train_edge_rl.py` for a usage example.
+
+`src/fhe_runner.py` provides `run_fhe()` to execute small models with fully
+homomorphic encryption. It relies on the open‑source TenSEAL library and
+supports only 1‑D tensors. Expect substantial overhead (often 100× slower) from
+ciphertext operations and memory usage, so this mode is suitable for toy
+examples rather than large‑scale training.
 
 ### Resource-aware scheduling
 
