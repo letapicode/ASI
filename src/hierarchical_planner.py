@@ -7,6 +7,7 @@ import torch
 from .graph_of_thought import GraphOfThought, ThoughtNode
 from .world_model_rl import rollout_policy, WorldModel
 from .graph_neural_reasoner import GraphNeuralReasoner
+from .temporal_reasoner import TemporalReasoner
 
 
 class HierarchicalPlanner:
@@ -18,11 +19,13 @@ class HierarchicalPlanner:
         world_model: WorldModel,
         policy: Callable[[torch.Tensor], torch.Tensor],
         reasoner: GraphNeuralReasoner | None = None,
+        temporal_reasoner: TemporalReasoner | None = None,
     ) -> None:
         self.graph = graph
         self.world_model = world_model
         self.policy = policy
         self.reasoner = reasoner
+        self.temporal_reasoner = temporal_reasoner
 
     def compose_plan(
         self,
@@ -30,9 +33,12 @@ class HierarchicalPlanner:
         goal_pred: Callable[[ThoughtNode], bool],
         init_state: torch.Tensor,
         rollout_steps: int = 5,
+        use_temporal: bool = False,
     ) -> Tuple[List[int], List[torch.Tensor], List[List[float]]]:
         """Return graph path, visited states and rewards."""
         path = self.graph.search(start, goal_pred)
+        if use_temporal and self.temporal_reasoner is not None:
+            path = self.temporal_reasoner.order_nodes_by_time(self.graph, path)
         state = init_state
         states = [state]
         rewards: List[List[float]] = []

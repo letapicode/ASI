@@ -14,6 +14,7 @@ except Exception:  # pragma: no cover - optional dependency
 from .streaming_compression import StreamingCompressor, TemporalVectorCompressor
 from .knowledge_graph_memory import KnowledgeGraphMemory, TimedTriple
 from .vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
+from .encrypted_vector_store import EncryptedVectorStore
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .hopfield_memory import HopfieldMemory
@@ -121,6 +122,9 @@ class HierarchicalMemory:
         use_kg: bool = False,
         translator: "CrossLingualTranslator | None" = None,
         retrieval_policy: "RetrievalPolicy | None" = None,
+
+        encryption_key: bytes | None = None,
+
     ) -> None:
         if temporal_decay is None:
             self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
@@ -140,7 +144,13 @@ class HierarchicalMemory:
             self.store = PQVectorStore(dim=compressed_dim, path=db_path)
         else:
             if db_path is None:
-                self.store = VectorStore(dim=compressed_dim)
+                if encryption_key is None:
+                    self.store = VectorStore(dim=compressed_dim)
+                else:
+                    from .encrypted_vector_store import EncryptedVectorStore
+                    self.store = EncryptedVectorStore(
+                        dim=compressed_dim, key=encryption_key
+                    )
             else:
                 self.store = FaissVectorStore(dim=compressed_dim, path=db_path)
         self.cache: SSDCache | None = None
@@ -156,7 +166,14 @@ class HierarchicalMemory:
         self.kg: KnowledgeGraphMemory | None = KnowledgeGraphMemory() if use_kg else None
         self.last_trace: dict | None = None
         self.translator = translator
+
         self.retrieval_policy = retrieval_policy
+
+        if isinstance(self.store, EncryptedVectorStore):
+            self.encryption_key = self.store.key
+        else:
+            self.encryption_key = None
+
 
     def __len__(self) -> int:
         """Return the number of stored vectors."""
@@ -314,6 +331,14 @@ class HierarchicalMemory:
             "hit_rate": rate,
             "evict_limit": float(self.evict_limit or 0),
         }
+
+    def rotate_encryption_key(
+        self, new_key: bytes, path: str | Path | None = None
+    ) -> None:
+        """Rotate the encryption key if using :class:`EncryptedVectorStore`."""
+        if isinstance(self.store, EncryptedVectorStore):
+            self.store.rotate_key(new_key, path)
+            self.encryption_key = new_key
 
     def query_triples(
         self,

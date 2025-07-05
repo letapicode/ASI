@@ -7,6 +7,7 @@ import torch
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.checkpoint import checkpoint
+from .spiking_layers import SpikingLinear
 try:
     from .lora_quant import apply_quant_lora
 except Exception:  # pragma: no cover - fallback for tests
@@ -25,6 +26,24 @@ except Exception:  # pragma: no cover - fallback for tests
         assert spec.loader is not None
         spec.loader.exec_module(module)  # type: ignore
         from lora_quant import apply_quant_lora  # type: ignore
+
+
+def _replace_linears(mod: nn.Module) -> None:
+    for name, child in list(mod.named_children()):
+        if isinstance(child, nn.Linear):
+            new = SpikingLinear(
+                child.in_features,
+                child.out_features,
+                bias=child.bias is not None,
+            )
+            with torch.no_grad():
+                new.linear.weight.copy_(child.weight)
+                if child.bias is not None:
+                    assert new.linear.bias is not None
+                    new.linear.bias.copy_(child.bias)
+            setattr(mod, name, new)
+        else:
+            _replace_linears(child)
 
 
 class ActionEncoder(nn.Module):
@@ -88,6 +107,7 @@ class MultiModalWorldModelConfig:
     lr: float = 1e-4
     checkpoint_blocks: bool = False
     use_lora: bool = False
+    use_spiking: bool = False
 
 
 class MultiModalWorldModel(nn.Module):
@@ -116,6 +136,9 @@ class MultiModalWorldModel(nn.Module):
                     "reward_head",
                 ],
             )
+        if cfg.use_spiking:
+            _replace_linears(self.obs_enc)
+            _replace_linears(self.dyn)
 
     def encode_obs(self, text: torch.Tensor, image: torch.Tensor) -> torch.Tensor:
         if self.cfg.checkpoint_blocks:
