@@ -198,6 +198,7 @@ from .risk_scoreboard import RiskScoreboard
 from .semantic_drift_detector import SemanticDriftDetector
 from .data_provenance_ledger import DataProvenanceLedger
 from .fairness_evaluator import FairnessEvaluator
+from .cross_lingual_fairness import CrossLingualFairnessEvaluator
 from .risk_dashboard import RiskDashboard
 from .graph_neural_reasoner import GraphNeuralReasoner
 from .lora_merger import merge_adapters
