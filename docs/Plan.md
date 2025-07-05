@@ -32,7 +32,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service (see `MemoryServer`, `RemoteMemory`) | Throughput scales to 4+ nodes with <1.2× single-node latency |
 | **C-9** | **Hopfield Associative Memory** | Store binary patterns as attractors and recall them from noisy cues | Recall accuracy >95 % on 32-bit vectors with up to 20 % noise |
 
-**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.
+**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.  Privacy-preserving retrieval is now possible via `EncryptedVectorStore`, which stores AES-encrypted embeddings and manages keys through `HierarchicalMemory`.
 
 ---
 
