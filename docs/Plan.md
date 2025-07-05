@@ -151,6 +151,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   `aiohttp` for faster monitoring of open pull requests.
 - `src/lora_quant.py` provides 4-bit LoRA adapters and `apply_quant_lora()` to
   inject them into existing models.
+- `src/spiking_layers.py` defines `LIFNeuron` and `SpikingLinear`. Set
+  `use_spiking=True` in `MultiModalWorldModelConfig` to replace MLP blocks with
+  these energy-efficient neurons.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
@@ -276,6 +279,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
     The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
     `KnowledgeGraphMemory` now records optional timestamps per triple and supports temporal range queries for time-sensitive reasoning.
+29. **Temporal reasoner**: `TemporalReasoner` queries these timestamped triples
+    to infer before/after relationships. `HierarchicalPlanner.compose_plan()`
+    can optionally reorder intermediate steps using the reasoner for time-aware
+    planning.
 29. **Self-alignment evaluator**: Integrate
     `deliberative_alignment.check_alignment()` into `eval_harness` and track
     alignment metrics alongside existing benchmarks. *Implemented in
@@ -366,6 +373,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 75. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
 76. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
     telemetry metrics alongside reasoning logs through a small web server.
+77. **Cluster carbon dashboard**: `TelemetryLogger` now publishes per-node carbon metrics to a central `ClusterCarbonDashboard`. `RiskDashboard` links to the dashboard so operators can track environmental impact across nodes.
+
 
 [1]: https://medium.com/%40shekharsomani98/implementation-of-mixture-of-experts-using-switch-transformers-8f25b60c33d3?utm_source=chatgpt.com "Implementation of Mixture of Experts using Switch Transformers"
 [2]: https://tridao.me/blog/2024/flash3/?utm_source=chatgpt.com "FlashAttention-3: Fast and Accurate Attention with Asynchrony and ..."
@@ -394,3 +403,4 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 [25]: https://github.com/features/actions?utm_source=chatgpt.com "GitHub Actions for automated repository processing"
 [26]: https://arxiv.org/abs/2211.00564?utm_source=chatgpt.com "Transformer Circuits: Mechanistic Interpretability"
 74. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
+76. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
