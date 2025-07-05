@@ -155,7 +155,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   inject them into existing models.
 - `src/spiking_layers.py` defines `LIFNeuron` and `SpikingLinear`. Set
   `use_spiking=True` in `MultiModalWorldModelConfig` to replace MLP blocks with
-  these energy-efficient neurons.
+  these energy-efficient neurons. When the optional Loihi SDK is installed,
+  enable `use_loihi=True` to run them on neuromorphic hardware via
+  `src/loihi_backend.py`.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
