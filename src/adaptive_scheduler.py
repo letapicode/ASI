@@ -66,7 +66,7 @@ class AdaptiveScheduler:
         self.min_improvement = min_improvement
         self.max_mem = max_mem
         self.check_interval = check_interval
-        self.queue: list[tuple[Callable[[], None], float]] = []
+        self.queue: list[tuple[Callable[[], None], str | None]] = []
         self._stop = threading.Event()
         self.thread = threading.Thread(target=self._loop, daemon=True)
         self.budget.start(run_id)
@@ -74,8 +74,8 @@ class AdaptiveScheduler:
 
     # --------------------------------------------------------------
     def add(self, job: Callable[[], None], region: str | None = None) -> None:
-        cost = self.telemetry.get_carbon_intensity(region)
-        self.queue.append((job, cost))
+        """Queue a job with an optional region hint."""
+        self.queue.append((job, region))
 
     # --------------------------------------------------------------
     def record_improvement(self, val: float) -> None:
@@ -107,7 +107,10 @@ class AdaptiveScheduler:
                 else 0.0
             )
             if mem < self.max_mem:
-                idx = min(range(len(self.queue)), key=lambda i: self.queue[i][1])
+                idx = min(
+                    range(len(self.queue)),
+                    key=lambda i: self.telemetry.get_cost_index(self.queue[i][1]),
+                )
                 job, _ = self.queue.pop(idx)
                 res = job()
                 if isinstance(res, (int, float)):
