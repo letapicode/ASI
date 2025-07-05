@@ -1,18 +1,28 @@
 import numpy as np
 import torch
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Optional
 
 try:  # pragma: no cover - load from sys.path
-    from multimodal_world_model import MultiModalWorldModel, rollout
+    from multimodal_world_model import (
+        MultiModalWorldModel,
+        rollout,
+    )
+    from diffusion_world_model import DiffusionWorldModel
 except Exception:  # pragma: no cover - package relative import
     from .multimodal_world_model import MultiModalWorldModel, rollout  # type: ignore
+    from .diffusion_world_model import DiffusionWorldModel  # type: ignore
 
 
 class GenerativeDataAugmentor:
     """Synthesize multimodal triples from world-model rollouts."""
 
-    def __init__(self, world_model: MultiModalWorldModel) -> None:
+    def __init__(
+        self,
+        world_model: MultiModalWorldModel,
+        diffusion_model: Optional["DiffusionWorldModel"] = None,
+    ) -> None:
         self.world_model = world_model
+        self.diffusion_model = diffusion_model
 
     def _tokenize(self, text: str) -> torch.Tensor:
         tokens = [ord(c) % self.world_model.cfg.vocab_size for c in text]
@@ -29,6 +39,13 @@ class GenerativeDataAugmentor:
         t = self._tokenize(start_text)
         img = torch.tensor(start_image, dtype=torch.float32).unsqueeze(0)
         states, rewards = rollout(self.world_model, t, img, policy_fn, steps=steps)
+        if self.diffusion_model is not None:
+            extra: List[torch.Tensor] = []
+            for s in states:
+                extra.extend(self.diffusion_model.sample(s, steps=1))
+            states.extend(extra)
+            rewards.extend([0.0] * len(extra))
+
         triples: List[Tuple[str, np.ndarray, np.ndarray]] = []
         for s, r in zip(states, rewards):
             val = float(s.mean().item())

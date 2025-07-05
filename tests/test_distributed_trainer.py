@@ -1,5 +1,4 @@
 import os
-import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,6 +9,7 @@ from asi.distributed_trainer import (
     DistributedTrainer,
     MemoryConfig,
     GradientCompressionConfig,
+    EnclaveConfig,
 )
 from asi.distributed_memory import DistributedMemory
 
@@ -55,6 +55,21 @@ class TestDistributedTrainer(unittest.TestCase):
             mem = DistributedMemory.load(Path(tmpdir) / "step1" / "memory")
             vec = mem.compressor.buffer.data[0]
             self.assertEqual(int((vec != 0).sum()), 1)
+
+    def test_enclave_runner(self):
+        cfg = MemoryConfig(dim=4, compressed_dim=2, capacity=10)
+        encl = EnclaveConfig()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            trainer = DistributedTrainer(
+                flaky_train,
+                cfg,
+                tmpdir,
+                max_restarts=1,
+                enclave=encl,
+            )
+            trainer.run(steps=1)
+            mem = DistributedMemory.load(Path(tmpdir) / "step1" / "memory")
+            self.assertGreaterEqual(len(mem), 1)
 
 
 if __name__ == "__main__":
