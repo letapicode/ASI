@@ -281,6 +281,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 28. **Causal graph learner**: Train `CausalGraphLearner` on `world_model_rl`
     transitions and report planning gains from the inferred edges.
     *Implemented in `src/causal_graph_learner.py`.*
+29. **Counterfactual simulation**: Use `world_model_rl.simulate_counterfactual()`
+    with edges from `CausalGraphLearner` to evaluate hypothetical actions and
+    refine plans. *Implemented in `src/world_model_rl.py` with
+    `scripts/causal_sim.py`.*
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
     The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
     `KnowledgeGraphMemory` now records optional timestamps per triple and supports temporal range queries for time-sensitive reasoning.
