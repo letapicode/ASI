@@ -235,6 +235,7 @@ from .budget_aware_scheduler import BudgetAwareScheduler
 from .doc_summarizer import summarize_module
 
 from .hpc_scheduler import submit_job, monitor_job, cancel_job
+from .carbon_hpc_scheduler import CarbonAwareScheduler
 from .collaboration_portal import CollaborationPortal
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
 from .spiking_layers import LIFNeuron, SpikingLinear

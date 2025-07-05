@@ -13,7 +13,10 @@ def submit_job(command: Union[str, List[str]], backend: str = "slurm") -> str:
     else:
         raise ValueError(f"Unknown backend {backend}")
     proc = subprocess.run(cmd, capture_output=True, text=True)
-    proc.check_returncode()
+    if hasattr(proc, "check_returncode"):
+        proc.check_returncode()
+    elif proc.returncode:
+        raise subprocess.CalledProcessError(proc.returncode, cmd, proc.stdout, proc.stderr)
     return proc.stdout.strip()
 
 
@@ -26,7 +29,10 @@ def monitor_job(job_id: str, backend: str = "slurm") -> str:
     else:
         raise ValueError(f"Unknown backend {backend}")
     proc = subprocess.run(cmd, capture_output=True, text=True)
-    proc.check_returncode()
+    if hasattr(proc, "check_returncode"):
+        proc.check_returncode()
+    elif proc.returncode:
+        raise subprocess.CalledProcessError(proc.returncode, cmd, proc.stdout, proc.stderr)
     return proc.stdout.strip()
 
 
@@ -39,7 +45,10 @@ def cancel_job(job_id: str, backend: str = "slurm") -> str:
     else:
         raise ValueError(f"Unknown backend {backend}")
     proc = subprocess.run(cmd, capture_output=True, text=True)
-    proc.check_returncode()
+    if hasattr(proc, "check_returncode"):
+        proc.check_returncode()
+    elif proc.returncode:
+        raise subprocess.CalledProcessError(proc.returncode, cmd, proc.stdout, proc.stderr)
     return proc.stdout.strip()
 
 
