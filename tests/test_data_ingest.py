@@ -205,6 +205,18 @@ class TestDataIngest(unittest.TestCase):
             self.assertIn(paths[0], kept)
             self.assertNotIn(noise, kept)
 
+    def test_paraphrase_multilingual(self):
+        with tempfile.TemporaryDirectory() as root:
+            src = Path(root) / "base.txt"
+            src.write_text("hello world")
+            trans = di.CrossLingualTranslator(["es", "fr"])
+            insp = types.SimpleNamespace(inspect=lambda p: True)
+            lin = dlm.DatasetLineageManager(root)
+            out = di.paraphrase_multilingual([src], trans, None, insp, lin)
+            self.assertTrue(out)
+            log = json.loads((Path(root) / "dataset_lineage.json").read_text())
+            self.assertIn("paraphrase_multilingual", log[-1]["note"])
+
 
 if __name__ == '__main__':
     unittest.main()
