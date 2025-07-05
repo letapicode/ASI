@@ -19,6 +19,7 @@ from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .hopfield_memory import HopfieldMemory
 from .data_ingest import CrossLingualTranslator
+from .retrieval_rl import RetrievalPolicy
 
 
 class SSDCache:
@@ -120,7 +121,10 @@ class HierarchicalMemory:
         evict_check_interval: int = 100,
         use_kg: bool = False,
         translator: "CrossLingualTranslator | None" = None,
+        retrieval_policy: "RetrievalPolicy | None" = None,
+
         encryption_key: bytes | None = None,
+
     ) -> None:
         if temporal_decay is None:
             self.compressor = StreamingCompressor(dim, compressed_dim, capacity)
@@ -162,10 +166,14 @@ class HierarchicalMemory:
         self.kg: KnowledgeGraphMemory | None = KnowledgeGraphMemory() if use_kg else None
         self.last_trace: dict | None = None
         self.translator = translator
+
+        self.retrieval_policy = retrieval_policy
+
         if isinstance(self.store, EncryptedVectorStore):
             self.encryption_key = self.store.key
         else:
             self.encryption_key = None
+
 
     def __len__(self) -> int:
         """Return the number of stored vectors."""
@@ -442,6 +450,12 @@ class HierarchicalMemory:
         scores = torch.nn.functional.cosine_similarity(
             vec, query.expand_as(vec), dim=1
         ).tolist()
+        if self.retrieval_policy is not None:
+            order = self.retrieval_policy.rank(out_meta, scores)
+            if order:
+                vec = vec[order]
+                out_meta = [out_meta[i] for i in order]
+                scores = [scores[i] for i in order]
         for m in out_meta:
             if m in self._usage:
                 self._usage[m] += 1
@@ -520,6 +534,12 @@ class HierarchicalMemory:
         scores = torch.nn.functional.cosine_similarity(
             vec, query.expand_as(vec), dim=1
         ).tolist()
+        if self.retrieval_policy is not None:
+            order = self.retrieval_policy.rank(out_meta, scores)
+            if order:
+                vec = vec[order]
+                out_meta = [out_meta[i] for i in order]
+                scores = [scores[i] for i in order]
         for m in out_meta:
             if m in self._usage:
                 self._usage[m] += 1
