@@ -68,6 +68,15 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertIn('carbon', usage)
         self.assertGreaterEqual(usage['carbon'], 0)
 
+    def test_live_carbon_intensity(self):
+        cft = CarbonFootprintTracker(interval=0.1, co2_per_kwh=50.0)
+        logger = TelemetryLogger(interval=0.1, carbon_tracker=cft)
+        logger.start()
+        time.sleep(0.2)
+        intensity = logger.get_live_carbon_intensity()
+        logger.stop()
+        self.assertAlmostEqual(intensity, 50.0, delta=1e-3)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -23,12 +23,14 @@ MultiAgentDashboard = _load('asi.multi_agent_dashboard', 'src/multi_agent_dashbo
 MultiAgentCoordinator = _load('asi.multi_agent_coordinator', 'src/multi_agent_coordinator.py').MultiAgentCoordinator
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 ReasoningHistoryLogger = _load('asi.reasoning_history', 'src/reasoning_history.py').ReasoningHistoryLogger
+GraphOfThought = _load('asi.graph_of_thought', 'src/graph_of_thought.py').GraphOfThought
 
 
 class StubAgent:
-    def __init__(self, tel, hist):
+    def __init__(self, tel, hist, graph=None):
         self.telemetry = tel
         self.history = hist
+        self.graph = graph
 
     def select_action(self, state):
         return 'act'
@@ -46,7 +48,9 @@ class TestMultiAgentDashboard(unittest.TestCase):
         tel.start()
         hist = ReasoningHistoryLogger()
         hist.log('test')
-        agent = StubAgent(tel, hist)
+        g = GraphOfThought()
+        g.add_step('start', metadata={'timestamp': 0.0})
+        agent = StubAgent(tel, hist, g)
         coord = MultiAgentCoordinator({'a1': agent})
         coord.log.append(('a1', 'repo', 'act', 1.0))
         time.sleep(0.2)
@@ -56,11 +60,14 @@ class TestMultiAgentDashboard(unittest.TestCase):
         self.assertIn('telemetry', data)
         self.assertIn('assignments', data)
         self.assertIn('reasoning', data)
+        self.assertIn('merged_reasoning', data)
 
     def test_http_server(self):
         tel = TelemetryLogger(interval=0.1)
         hist = ReasoningHistoryLogger()
-        agent = StubAgent(tel, hist)
+        g = GraphOfThought()
+        g.add_step('s', metadata={'timestamp': 0.0})
+        agent = StubAgent(tel, hist, g)
         coord = MultiAgentCoordinator({'a1': agent})
         dash = MultiAgentDashboard(coord)
         dash.start(port=0)
@@ -70,6 +77,7 @@ class TestMultiAgentDashboard(unittest.TestCase):
         resp = conn.getresponse()
         data = json.loads(resp.read())
         self.assertIn('assignments', data)
+        self.assertIn('merged_reasoning', data)
         dash.stop()
 
 
