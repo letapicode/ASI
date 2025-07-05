@@ -16,17 +16,39 @@ class ClusterCarbonDashboard:
         self.port: int | None = None
 
     # --------------------------------------------------------------
-    def record(self, node_id: str, energy: float, carbon: float) -> None:
-        rec = self.metrics.setdefault(node_id, {"energy_kwh": 0.0, "carbon_g": 0.0})
+    def record(
+        self,
+        node_id: str,
+        energy: float,
+        carbon: float,
+        intensity: float | None = None,
+        cost: float | None = None,
+    ) -> None:
+        rec = self.metrics.setdefault(
+            node_id,
+            {
+                "energy_kwh": 0.0,
+                "carbon_g": 0.0,
+                "carbon_intensity": 0.0,
+                "energy_cost": 0.0,
+            },
+        )
         rec["energy_kwh"] += float(energy)
         rec["carbon_g"] += float(carbon)
+        if intensity is not None:
+            rec["carbon_intensity"] = float(intensity)
+        if cost is not None:
+            rec["energy_cost"] += float(cost)
         self.metrics[node_id] = rec
 
     def aggregate(self) -> Dict[str, Any]:
-        total = {"energy_kwh": 0.0, "carbon_g": 0.0}
+        total = {"energy_kwh": 0.0, "carbon_g": 0.0, "energy_cost": 0.0}
         for m in self.metrics.values():
             total["energy_kwh"] += m["energy_kwh"]
             total["carbon_g"] += m["carbon_g"]
+            total["energy_cost"] += m.get("energy_cost", 0.0)
+        if total["energy_kwh"]:
+            total["carbon_intensity"] = total["carbon_g"] / total["energy_kwh"]
         return {"total": total, "nodes": self.metrics}
 
     # --------------------------------------------------------------
@@ -44,7 +66,9 @@ class ClusterCarbonDashboard:
                     node = str(data.get("node_id"))
                     energy = float(data.get("energy_kwh", 0.0))
                     carbon = float(data.get("carbon_g", 0.0))
-                    dashboard.record(node, energy, carbon)
+                    intensity = float(data.get("carbon_intensity", 0.0))
+                    cost = float(data.get("energy_cost", 0.0))
+                    dashboard.record(node, energy, carbon, intensity, cost)
                     self.send_response(200)
                     self.end_headers()
                 else:
@@ -63,15 +87,15 @@ class ClusterCarbonDashboard:
                     rows = []
                     for node, m in dashboard.metrics.items():
                         rows.append(
-                            f"<tr><td>{node}</td><td>{m['energy_kwh']:.3f}</td><td>{m['carbon_g']:.3f}</td></tr>"
+                            f"<tr><td>{node}</td><td>{m['energy_kwh']:.3f}</td><td>{m['carbon_g']:.3f}</td><td>{m.get('carbon_intensity',0.0):.3f}</td><td>{m.get('energy_cost',0.0):.3f}</td></tr>"
                         )
                     rows_str = "\n".join(rows)
                     total = agg["total"]
                     html = (
                         "<html><body><h1>Cluster Carbon Dashboard</h1>"
-                        "<table border='1'><tr><th>Node</th><th>Energy (kWh)</th><th>Carbon (g)</th></tr>"
+                        "<table border='1'><tr><th>Node</th><th>Energy (kWh)</th><th>Carbon (g)</th><th>Intensity</th><th>Cost</th></tr>"
                         f"{rows_str}</table>"
-                        f"<p>Total energy: {total['energy_kwh']:.3f} kWh, Carbon: {total['carbon_g']:.3f} g</p>"
+                        f"<p>Total energy: {total['energy_kwh']:.3f} kWh, Carbon: {total['carbon_g']:.3f} g, Cost: ${total['energy_cost']:.2f}</p>"
                         "</body></html>"
                     )
                     self.send_response(200)

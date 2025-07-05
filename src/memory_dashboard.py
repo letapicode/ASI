@@ -117,21 +117,18 @@ class MemoryDashboard:
                     if trace is None:
                         data = b"{}"
                     else:
-                        vecs, meta, scores = (
-                            None,
-                            trace.get("provenance", []),
-                            trace.get("scores", []),
-                        )
-                        data = json.dumps(
-                            RetrievalExplainer.format(
-                                torch.tensor([]), torch.tensor([]), scores, meta
-                            )
-                        ).encode()
-                        self.send_response(200)
-                        self.send_header("Content-Type", "application/json")
-                        self.end_headers()
-                        self.wfile.write(data)
-                        return
+                        q = torch.tensor(trace.get("query", []))
+                        r = torch.tensor(trace.get("results", []))
+                        meta = trace.get("provenance", [])
+                        scores = trace.get("scores", [])
+                        items = RetrievalExplainer.format(q, r, scores, meta)
+                        summary = RetrievalExplainer.summarize(q, r, scores, meta)
+                        data = json.dumps({"items": items, "summary": summary}).encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
                 elif self.path.startswith("/entries"):
                     q = parse_qs(urlparse(self.path).query)
                     start = int(q.get("start", [0])[0])
