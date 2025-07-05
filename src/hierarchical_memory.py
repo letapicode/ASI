@@ -476,6 +476,8 @@ class HierarchicalMemory:
         ):
             self._update_eviction()
         self.last_trace = {
+            "query": query.detach().cpu().tolist(),
+            "results": vec.detach().cpu().tolist(),
             "scores": scores,
             "provenance": list(out_meta),
         }
@@ -565,7 +567,12 @@ class HierarchicalMemory:
             and self.query_count % self.evict_check_interval == 0
         ):
             self._update_eviction()
-        self.last_trace = {"scores": scores, "provenance": list(out_meta)}
+        self.last_trace = {
+            "query": query.detach().cpu().tolist(),
+            "results": vec.detach().cpu().tolist(),
+            "scores": scores,
+            "provenance": list(out_meta),
+        }
         if return_scores or return_provenance:
             extras = []
             if return_scores:
