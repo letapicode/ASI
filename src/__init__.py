@@ -159,6 +159,7 @@ from .dataset_discovery import (
     discover_kaggle,
     store_datasets,
 )
+from .rl_dataset_discovery import DatasetQualityAgent
 from .streaming_compression import AdaptiveCompressor, TemporalVectorCompressor
 from .context_profiler import profile_model, ContextWindowProfiler
 from .accelerator_scheduler import AcceleratorScheduler
