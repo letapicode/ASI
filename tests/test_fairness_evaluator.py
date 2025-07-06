@@ -29,5 +29,22 @@ class TestFairnessEvaluator(unittest.TestCase):
         self.assertGreaterEqual(res['demographic_parity'], 0)
         self.assertGreaterEqual(res['equal_opportunity'], 0)
 
+    def test_multimodal(self):
+        stats = {
+            'image': {
+                'g1': {'tp': 1, 'fn': 1},
+                'g2': {'tp': 2, 'fn': 0},
+            },
+            'audio': {
+                'g1': {'tp': 1, 'fn': 0},
+                'g2': {'tp': 1, 'fn': 1},
+            },
+        }
+        ev = FairnessEvaluator()
+        res = ev.evaluate_multimodal(stats, positive_label='tp')
+        self.assertEqual(set(res.keys()), {'image', 'audio'})
+        self.assertIn('demographic_parity', res['image'])
+        self.assertIn('equal_opportunity', res['audio'])
+
 if __name__ == '__main__':
     unittest.main()
