@@ -125,6 +125,12 @@ from .data_ingest import (
 from .adaptive_translator import AdaptiveTranslator
 from .generative_data_augmentor import GenerativeDataAugmentor
 from .diffusion_world_model import DiffusionWorldModel
+from .ode_world_model import (
+    ODEWorldModel,
+    ODEWorldModelConfig,
+    train_ode_world_model,
+    rollout_policy as rollout_ode_policy,
+)
 from .causal_graph_learner import CausalGraphLearner
 from .transformer_circuits import (
     ActivationRecorder,
