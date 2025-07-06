@@ -232,6 +232,7 @@ from .quantum_multimodal_retrieval import quantum_crossmodal_search
 from .risk_scoreboard import RiskScoreboard
 from .semantic_drift_detector import SemanticDriftDetector
 from .data_provenance_ledger import DataProvenanceLedger
+from .blockchain_provenance_ledger import BlockchainProvenanceLedger
 from .fairness_evaluator import FairnessEvaluator
 from .cross_lingual_fairness import CrossLingualFairnessEvaluator
 from .risk_dashboard import RiskDashboard
