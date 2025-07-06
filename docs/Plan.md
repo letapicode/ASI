@@ -484,6 +484,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      dynamics in `ode_world_model`. `scripts/train_ode_world_model.py` shows the
      model converging on a toy dataset with smooth rollouts.
 
+87. **RL decision narrator**: `RLDecisionNarrator` intercepts action choices
+    in `world_model_rl` and `MetaRLRefactorAgent`. Each decision logs a brief
+    explanation via `ReasoningHistoryLogger` for self-improvement analysis.
+
 
 
 

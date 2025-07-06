@@ -47,6 +47,7 @@ from torch.utils.data import DataLoader, Dataset, ConcatDataset
 
 from .compute_budget_tracker import ComputeBudgetTracker
 from .causal_graph_learner import CausalGraphLearner
+from .rl_decision_narrator import RLDecisionNarrator
 try:
     from .budget_aware_scheduler import BudgetAwareScheduler
 except Exception:  # pragma: no cover - for tests
@@ -169,7 +170,13 @@ def train_world_model(
     return model
 
 
-def rollout_policy(model: WorldModel, policy: Callable[[torch.Tensor], torch.Tensor], init_state: torch.Tensor, steps: int = 50) -> tuple[list[torch.Tensor], list[float]]:
+def rollout_policy(
+    model: WorldModel,
+    policy: Callable[[torch.Tensor], torch.Tensor],
+    init_state: torch.Tensor,
+    steps: int = 50,
+    narrator: RLDecisionNarrator | None = None,
+) -> tuple[list[torch.Tensor], list[float]]:
     device = next(model.parameters()).device
     state = init_state.to(device)
     states = []
@@ -177,6 +184,9 @@ def rollout_policy(model: WorldModel, policy: Callable[[torch.Tensor], torch.Ten
     with torch.no_grad():
         for _ in range(steps):
             action = policy(state)
+            if narrator is not None:
+                act_val = int(action.item()) if isinstance(action, torch.Tensor) else action
+                narrator.record_decision(state.cpu().tolist(), act_val)
             next_state, reward = model(state, action)
             states.append(next_state.cpu())
             rewards.append(float(reward.item()))
@@ -229,6 +239,7 @@ def train_with_self_play(
     actions: Iterable[int],
     dp_cfg: DifferentialPrivacyConfig | None = None,
     sampler_fn: Callable[[torch.Tensor], torch.Tensor] | None = None,
+    narrator: RLDecisionNarrator | None = None,
 ) -> tuple[WorldModel, SkillTransferModel]:
     """Run self-play to gather transitions and fit a world model."""
 
@@ -247,6 +258,9 @@ def train_with_self_play(
         for _ in range(steps):
             raw_a = pol(obs)
             a = sampler_fn(raw_a) if sampler_fn is not None else raw_a
+            if narrator is not None:
+                act_val = int(a if not isinstance(a, torch.Tensor) else a.item())
+                narrator.record_decision(obs.cpu().tolist(), act_val)
             step = env.step(a)
             transitions.append(
                 (
