@@ -11,6 +11,7 @@ import uvicorn
 from .graph_of_thought import GraphOfThought
 from .reasoning_history import ReasoningHistoryLogger
 from .nl_graph_editor import NLGraphEditor
+from .voice_graph_controller import VoiceGraphController
 
 
 _HTML = """
@@ -88,6 +89,7 @@ class GraphUI:
         self.graph = graph
         self.logger = logger
         self.editor = NLGraphEditor(graph)
+        self.voice = VoiceGraphController(self.editor)
         self.app = FastAPI()
         self._setup_routes()
         self.thread: threading.Thread | None = None
@@ -163,6 +165,17 @@ class GraphUI:
             cmd = data.get('command', '')
             try:
                 result = self.editor.apply(cmd)
+            except Exception as e:
+                return JSONResponse({'status': 'error', 'error': str(e)}, status_code=400)
+            await _record()
+            return JSONResponse(result)
+
+        @self.app.post('/graph/voice')
+        async def voice(req: Request) -> Any:
+            data = await req.json()
+            audio = data.get('path') or data.get('audio')
+            try:
+                result = self.voice.apply(audio)
             except Exception as e:
                 return JSONResponse({'status': 'error', 'error': str(e)}, status_code=400)
             await _record()
