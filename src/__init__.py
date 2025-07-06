@@ -68,6 +68,7 @@ from .self_play_skill_loop import (
     run_loop,
     self_play_skill_loop,
 )
+from .opponent_generator import OpponentGenerator
 from .adaptive_curriculum import AdaptiveCurriculum
 from .formal_verifier import (
     VerificationResult,
@@ -160,6 +161,7 @@ from .dataset_discovery import (
     discover_kaggle,
     store_datasets,
 )
+from .rl_dataset_discovery import DatasetQualityAgent
 from .streaming_compression import AdaptiveCompressor, TemporalVectorCompressor
 from .context_profiler import profile_model, ContextWindowProfiler
 from .accelerator_scheduler import AcceleratorScheduler
@@ -172,11 +174,13 @@ from .dataset_bias_detector import (
     file_bias_score,
 )
 from .data_bias_mitigator import DataBiasMitigator
+from .data_poison_detector import DataPoisonDetector
 from .auto_labeler import AutoLabeler
 from .graphql_memory_gateway import GraphQLMemoryGateway
 from .world_model_distiller import DistillConfig, distill_world_model
 from .summarizing_memory import SummarizingMemory
 from .cross_lingual_memory import CrossLingualMemory
+from .cross_lingual_graph import CrossLingualReasoningGraph
 from .context_summary_memory import ContextSummaryMemory
 from .sensorimotor_pretrainer import (
     SensorimotorPretrainConfig,
@@ -239,6 +243,7 @@ from .retrieval_explainer import RetrievalExplainer
 from .retrieval_rl import RetrievalPolicy, train_policy
 from .interpretability_dashboard import InterpretabilityDashboard
 from .graph_ui import GraphUI
+from .nl_graph_editor import NLGraphEditor
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
@@ -251,6 +256,7 @@ from .hpc_scheduler import submit_job, monitor_job, cancel_job
 from .carbon_aware_scheduler import CarbonAwareScheduler
 
 from .carbon_hpc_scheduler import CarbonAwareScheduler
+from .rl_carbon_scheduler import RLCarbonScheduler
 
 from .collaboration_portal import CollaborationPortal
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
@@ -259,3 +265,7 @@ from .spiking_layers import LIFNeuron, SpikingLinear
 
 
 from .fhe_runner import run_fhe
+
+from .emotion_detector import detect_emotion
+from .bio_memory_replay import run_nightly_replay
+

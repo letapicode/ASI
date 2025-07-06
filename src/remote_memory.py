@@ -68,5 +68,9 @@ class RemoteMemory:
             out_meta.append(list(r.metadata))
         return torch.stack(out_vecs), out_meta
 
+    def delete(self, *, tag: Any) -> None:
+        """Delete by tag -- not implemented without server support."""
+        raise NotImplementedError("Delete RPC not implemented")
+
 
 __all__ = ["RemoteMemory"]
