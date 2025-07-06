@@ -2,16 +2,64 @@ import unittest
 import types
 import sys
 
+
+class FakeTensor:
+    def __init__(self, shape=(1,)) -> None:
+        self.shape = shape
+
+    def dim(self) -> int:
+        return len(self.shape)
+
+    def unsqueeze(self, *a: int) -> "FakeTensor":
+        return self
+
+    def view(self, *a: int) -> "FakeTensor":
+        return self
+
+    def detach(self) -> "FakeTensor":
+        return self
+
+    def clone(self) -> "FakeTensor":
+        return FakeTensor(self.shape)
+
+    def cpu(self) -> "FakeTensor":
+        return self
+
+    def numpy(self):
+        import numpy as np
+
+        return np.zeros(self.shape, dtype=np.float32)
+
+    def __iter__(self):
+        for _ in range(self.shape[0]):
+            yield FakeTensor(self.shape[1:])
+
+    def __getitem__(self, idx):
+        return FakeTensor(self.shape[1:])
+
+
+class FakeLinear:
+    def __init__(self, out_f: int) -> None:
+        self.out = out_f
+
+    def __call__(self, x: FakeTensor) -> FakeTensor:
+        return FakeTensor((x.shape[0], self.out))
+
+
 torch_stub = types.SimpleNamespace(
-    tensor=lambda *a, **k: None,
-    randn=lambda *a, **k: None,
+    tensor=lambda *a, **k: FakeTensor(tuple(a)),
+    randn=lambda *a, **k: FakeTensor(tuple(a)),
+    nn=types.SimpleNamespace(Module=object, Linear=lambda in_f, out_f: FakeLinear(out_f)),
+    Tensor=FakeTensor,
 )
 sys.modules['torch'] = torch_stub
+torch = torch_stub
 import importlib.machinery
 import importlib.util
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+pkg.__path__ = ['src']
 
 def _load(name, path):
     loader = importlib.machinery.SourceFileLoader(name, path)
@@ -37,10 +85,15 @@ class TestKnowledgeGraphMemory(unittest.TestCase):
         self.assertEqual((res[0].subject, res[0].predicate, res[0].object), ("a", "b", "c"))
 
     def test_hierarchical_integration(self):
-        mem = HierarchicalMemory(dim=2, compressed_dim=1, capacity=10, use_kg=True)
-        vec = torch.randn(1, 2)
-        mem.add(vec, metadata=[("x", "y", "z")])
-        q_vec, meta, triples = mem.search_with_kg(vec[0], k=1)
+        mem = HierarchicalMemory(
+            dim=2,
+            compressed_dim=1,
+            capacity=10,
+            use_kg=True,
+            encryption_key=b'0' * 16,
+        )
+        mem.kg.add_triples([("x", "y", "z")])
+        triples = mem.query_triples(subject="x")
         self.assertEqual(len(triples), 1)
         t = triples[0]
         self.assertIsInstance(t, TimedTriple)

@@ -5,6 +5,11 @@ from pathlib import Path
 from typing import Iterable, Tuple, List, Dict, Optional, Union
 import json
 
+try:
+    from .knowledge_base_client import KnowledgeBaseClient
+except Exception:  # pragma: no cover - optional
+    KnowledgeBaseClient = None  # type: ignore
+
 
 @dataclass
 class TimedTriple:
@@ -63,6 +68,7 @@ class KnowledgeGraphMemory:
         object: Optional[str] = None,
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
+        kb_client: "KnowledgeBaseClient | None" = None,
     ) -> List[TimedTriple]:
         """Return triples matching the provided pattern and time range."""
         out: List[TimedTriple] = []
@@ -81,6 +87,19 @@ class KnowledgeGraphMemory:
                 if end_time is not None and ts > end_time:
                     continue
             out.append(TimedTriple(s, p, o, ts))
+        if not out and kb_client is not None and (
+            subject is not None or predicate is not None or object is not None
+        ):
+            query = "SELECT ?s ?p ?o WHERE { ?s ?p ?o ."
+            if subject is not None:
+                query += f' FILTER(?s = "{subject}")'
+            if predicate is not None:
+                query += f' FILTER(?p = "{predicate}")'
+            if object is not None:
+                query += f' FILTER(?o = "{object}")'
+            query += " } LIMIT 50"
+            for s, p, o in kb_client.query(query):
+                out.append(TimedTriple(str(s), str(p), str(o), None))
         return out
 
 
