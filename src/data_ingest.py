@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 import wave
 from pathlib import Path
+import json
 from typing import Iterable, List, Tuple, Callable, Any, Optional, Dict
 
 import numpy as np
@@ -34,11 +35,13 @@ except Exception:  # pragma: no cover - for tests
         from dataset_versioner import DatasetVersioner  # type: ignore
     except Exception:  # pragma: no cover - stub fallback
         class DatasetVersioner:  # type: ignore
-            def __init__(self, *args: Any, **kwargs: Any) -> None:
-                pass
+            def __init__(self, root: str | Path, *args: Any, **kwargs: Any) -> None:
+                self.root = Path(root)
 
-            def record(self, *args: Any, **kwargs: Any) -> None:
-                pass
+            def record(self, files: Iterable[str | Path], note: str = "") -> None:
+                data = {"note": note, "files": {str(p): "" for p in files}}
+                out = self.root / "dataset_version.json"
+                out.write_text(json.dumps(data, indent=2))
 try:  # pragma: no cover - fallback for local import
     from .generative_data_augmentor import GenerativeDataAugmentor
 except Exception:  # pragma: no cover - for tests
@@ -86,6 +89,20 @@ except Exception:  # pragma: no cover - for tests
 
             def record(self, *a: Any, **kw: Any) -> None:
                 pass
+
+try:
+    from .blockchain_provenance_ledger import BlockchainProvenanceLedger
+except Exception:  # pragma: no cover - for tests
+    try:
+        from blockchain_provenance_ledger import BlockchainProvenanceLedger  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        class BlockchainProvenanceLedger:  # type: ignore
+            def __init__(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def append(self, *a: Any, **kw: Any) -> None:
+                pass
+
 
 
 try:
@@ -314,6 +331,7 @@ def _download_triples_impl(
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
+    provenance: Optional[BlockchainProvenanceLedger] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
 ) -> List[Tuple[Path, Path, Path]]:
@@ -329,6 +347,7 @@ def _download_triples_impl(
             translator,
             anonymizer,
             lineage,
+            provenance,
             bias_mitigator,
             poison_detector,
         )
@@ -350,6 +369,7 @@ def download_triples(
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
+    provenance: Optional[BlockchainProvenanceLedger] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
     runner: EnclaveRunner | None = None,
@@ -367,6 +387,7 @@ def download_triples(
         translator,
         anonymizer,
         lineage,
+        provenance,
         bias_mitigator,
         poison_detector,
     )
@@ -381,6 +402,7 @@ async def download_triples_async(
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
+    provenance: Optional[BlockchainProvenanceLedger] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
 ) -> List[Tuple[Path, Path, Path]]:
@@ -452,6 +474,10 @@ async def download_triples_async(
     if versioner is not None:
         flat = [p for tri in triples for p in tri]
         versioner.record(flat, note="download_triples")
+    if provenance is not None:
+        flat = [str(p) for tri in triples for p in tri]
+        rec = json.dumps({"note": "download_triples", "outputs": flat}, sort_keys=True)
+        provenance.append(rec)
     return triples
 
 
@@ -554,6 +580,7 @@ def _offline_synthesizer_impl(
     steps: int = 3,
     save_dir: Optional[str | Path] = None,
     versioner: Optional[DatasetVersioner] = None,
+    provenance: Optional[BlockchainProvenanceLedger] = None,
 ) -> List[Tuple[str, np.ndarray, np.ndarray]]:
     """Implementation for :func:`offline_synthesizer`."""
 
@@ -611,6 +638,10 @@ def _offline_synthesizer_impl(
     if save_dir is not None and versioner is not None and saved:
         flat = [p for tri in saved for p in tri]
         versioner.record(flat, note="offline_synthesizer")
+    if save_dir is not None and provenance is not None and saved:
+        flat = [str(p) for tri in saved for p in tri]
+        rec = json.dumps({"note": "offline_synthesizer", "outputs": flat}, sort_keys=True)
+        provenance.append(rec)
 
     return triples
 
@@ -624,6 +655,7 @@ def offline_synthesizer(
     steps: int = 3,
     save_dir: Optional[str | Path] = None,
     versioner: Optional[DatasetVersioner] = None,
+    provenance: Optional[BlockchainProvenanceLedger] = None,
     runner: EnclaveRunner | None = None,
 ) -> List[Tuple[str, np.ndarray, np.ndarray]]:
     """Generate synthetic text, image and audio triples via world-model rollout."""
@@ -639,6 +671,7 @@ def offline_synthesizer(
         steps,
         save_dir,
         versioner,
+        provenance,
     )
 
 
@@ -722,6 +755,7 @@ def _paraphrase_multilingual_impl(
     dataset_filter: Optional[AutoDatasetFilter] = None,
     inspector: Optional["LicenseInspector"] = None,
     lineage: Optional[DatasetLineageManager] = None,
+    provenance: Optional[BlockchainProvenanceLedger] = None,
 ) -> List[Path]:
     """Implementation for :func:`paraphrase_multilingual`."""
 
@@ -760,6 +794,15 @@ def _paraphrase_multilingual_impl(
             out_paths,
             note=f"paraphrase_multilingual generated={total} kept={len(out_paths)}",
         )
+    if provenance is not None and out_paths:
+        rec = json.dumps(
+            {
+                "note": "paraphrase_multilingual",
+                "outputs": [str(p) for p in out_paths],
+            },
+            sort_keys=True,
+        )
+        provenance.append(rec)
     return out_paths
 
 
@@ -769,6 +812,7 @@ def paraphrase_multilingual(
     dataset_filter: Optional[AutoDatasetFilter] = None,
     inspector: Optional["LicenseInspector"] = None,
     lineage: Optional[DatasetLineageManager] = None,
+    provenance: Optional[BlockchainProvenanceLedger] = None,
     runner: EnclaveRunner | None = None,
 ) -> List[Path]:
     """Generate and save paraphrases of ``text_files`` across languages."""
@@ -781,6 +825,7 @@ def paraphrase_multilingual(
         dataset_filter,
         inspector,
         lineage,
+        provenance,
     )
 
 
