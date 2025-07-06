@@ -183,16 +183,29 @@ class ActiveDataSelector:
 class CrossLingualTranslator:
     """Translate text to multiple languages using simple placeholders."""
 
-    def __init__(self, languages: Iterable[str]) -> None:
+    def __init__(
+        self,
+        languages: Iterable[str],
+        adaptive: "AdaptiveTranslator | None" = None,
+    ) -> None:
         self.languages = list(languages)
+        self.adaptive = adaptive
 
-    def translate(self, text: str, lang: str) -> str:
+    # ------------------------------------------------------
+    def _basic_translate(self, text: str, lang: str) -> str:
         if lang not in self.languages:
             raise ValueError(f"unsupported language: {lang}")
         return f"[{lang}] {text}"
 
+    def translate(self, text: str, lang: str | None = None) -> str:
+        if lang is None and self.adaptive is not None:
+            return self.adaptive.translate(text)
+        if lang is None:
+            raise ValueError("language must be specified")
+        return self._basic_translate(text, lang)
+
     def translate_all(self, text: str) -> Dict[str, str]:
-        return {l: self.translate(text, l) for l in self.languages}
+        return {l: self._basic_translate(text, l) for l in self.languages}
 
 
 class CrossLingualSpeechTranslator:
