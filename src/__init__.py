@@ -182,6 +182,7 @@ from .graphql_memory_gateway import GraphQLMemoryGateway
 from .world_model_distiller import DistillConfig, distill_world_model
 from .summarizing_memory import SummarizingMemory
 from .cross_lingual_memory import CrossLingualMemory
+from .cross_lingual_kg_memory import CrossLingualKGMemory
 from .cross_lingual_graph import CrossLingualReasoningGraph
 from .context_summary_memory import ContextSummaryMemory
 from .sensorimotor_pretrainer import (
