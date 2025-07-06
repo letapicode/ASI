@@ -479,6 +479,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     where embeddings from `HierarchicalMemory` and `ContextSummaryMemory` are
     reconstructed and passed through the model for consolidation. Integrated
     with `DistributedTrainer` via the new replay hook.
+86a. **ODE-based world model**: `torchdiffeq` now drives continuous-time
+     dynamics in `ode_world_model`. `scripts/train_ode_world_model.py` shows the
+     model converging on a toy dataset with smooth rollouts.
 
 
 
