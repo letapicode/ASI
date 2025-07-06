@@ -450,6 +450,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `ZKGradientProof` for each encrypted gradient. `FederatedWorldModelTrainer`
     verifies these proofs before applying updates so compromised peers cannot
     inject arbitrary gradients.
+86. **Offline memory replay**: `run_nightly_replay()` schedules daily sessions
+    where embeddings from `HierarchicalMemory` and `ContextSummaryMemory` are
+    reconstructed and passed through the model for consolidation. Integrated
+    with `DistributedTrainer` via the new replay hook.
 
 
 
