@@ -395,6 +395,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     with top-k sparsification or quantized gradients and integrate it with
     `DistributedTrainer`.
 56. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
+56a. **WASM export**: Add `export_to_wasm()` to turn the ONNX graphs into WebAssembly bundles for `onnxruntime-web`.
 57. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
 58. **Secure federated learner**: Train models across remote peers using encrypted gradient aggregation. Accuracy should stay within 2% of centralized training.
 59. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Combined with `ComputeBudgetTracker`, the new `AdaptiveScheduler` automatically pauses or resumes runs based on remaining GPU hours and historical improvement. *Carbon-intensity data now guide the scheduler to prefer lower-emission nodes, reducing the environmental footprint.*
