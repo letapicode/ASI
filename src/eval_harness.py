@@ -333,6 +333,19 @@ def _eval_voxel_rollout() -> Tuple[bool, str]:
     return ok, f"steps={len(obs)}"
 
 
+def _eval_emotion_detector() -> Tuple[bool, str]:
+    """Run a tiny emotion-detection benchmark."""
+    from asi.emotion_detector import detect_emotion
+
+    samples = {
+        "I love this": "positive",
+        "I hate this": "negative",
+        "This is a book": "neutral",
+    }
+    correct = sum(1 for t, e in samples.items() if detect_emotion(t) == e)
+    return correct == len(samples), f"acc={correct}/{len(samples)}"
+
+
 EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "moe_router": _eval_moe_router,
     "flash_attention3": _eval_flash_attention3,
@@ -356,6 +369,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "cross_lingual_fairness": _eval_cross_lingual_fairness,
     "context_profiler": _eval_context_profiler,
     "voxel_rollout": _eval_voxel_rollout,
+    "emotion_detector": _eval_emotion_detector,
 }
 
 

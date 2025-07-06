@@ -23,10 +23,14 @@ _HTML = """
 </head>
 <body>
 <h1>Reasoning Graph</h1>
+
 <div>
   <input id='cmd' type='text' placeholder='Edit command'>
   <button onclick='sendCmd()'>Apply</button>
 </div>
+
+<p>Languages: {languages}</p>
+
 <svg width="600" height="400"></svg>
 <script>
 async function load() {
@@ -96,7 +100,10 @@ class GraphUI:
     def _setup_routes(self) -> None:
         @self.app.get('/graph', response_class=HTMLResponse)
         async def graph_page() -> Any:
-            return HTMLResponse(_HTML)
+            langs = ''
+            if self.logger.translator is not None:
+                langs = ', '.join(self.logger.translator.languages)
+            return HTMLResponse(_HTML.replace('{languages}', langs))
 
         async def _record() -> None:
             summary = self.graph.self_reflect()
@@ -109,6 +116,11 @@ class GraphUI:
         @self.app.get('/history')
         async def history() -> Any:
             return JSONResponse(self.logger.get_history())
+
+        @self.app.get('/languages')
+        async def languages() -> Any:
+            langs = self.logger.translator.languages if self.logger.translator else []
+            return JSONResponse(langs)
 
         @self.app.post('/graph/node')
         async def add_node(req: Request) -> Any:

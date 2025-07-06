@@ -2,6 +2,19 @@
 
 from typing import Callable, Iterable, List, Tuple, Any
 
+try:
+    from .cross_lingual_graph import CrossLingualReasoningGraph
+except Exception:  # pragma: no cover - fallback for direct module load
+    import importlib.util as _cg_util
+    from pathlib import Path as _Path
+
+    _cg_path = _Path(__file__).resolve().parent / "cross_lingual_graph.py"
+    _cg_spec = _cg_util.spec_from_file_location("cross_lingual_graph", _cg_path)
+    _cg_mod = _cg_util.module_from_spec(_cg_spec)
+    assert _cg_spec and _cg_spec.loader
+    _cg_spec.loader.exec_module(_cg_mod)  # type: ignore[attr-defined]
+    CrossLingualReasoningGraph = _cg_mod.CrossLingualReasoningGraph
+
 try:  # Allow execution as script without package context
     from .meta_rl_refactor import MetaRLRefactorAgent
 except Exception:  # pragma: no cover - fallback for direct module load
@@ -17,14 +30,24 @@ except Exception:  # pragma: no cover - fallback for direct module load
 
 
 class GraphOfThoughtPlanner:
-    """Rank strategies using a scoring function."""
+    """Rank strategies and log them to an optional reasoning graph."""
 
-    def __init__(self, scorer: Callable[[str], float]) -> None:
+    def __init__(
+        self,
+        scorer: Callable[[str], float],
+        graph: "CrossLingualReasoningGraph | None" = None,
+        language: str = "en",
+    ) -> None:
         self.scorer = scorer
+        self.graph = graph
+        self.language = language
 
     def rank(self, strategies: Iterable[str]) -> List[Tuple[str, float]]:
         ranked = [(s, float(self.scorer(s))) for s in strategies]
         ranked.sort(key=lambda x: x[1], reverse=True)
+        if self.graph is not None:
+            for s, score in ranked:
+                self.graph.add_step(s, lang=self.language, metadata={"score": score})
         return ranked
 
 

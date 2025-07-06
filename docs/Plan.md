@@ -223,6 +223,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 11. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
    trajectories from `self_play_skill_loop.run_loop` and feeds them into
    `train_world_model` for mixed-modality experiments.
+12. **Opponent strategy evolution**: `opponent_generator.OpponentGenerator`
+    maintains a pool of past policies and samples them by reward.
+    Success criterion: ≥10 % performance gain on held-out tasks after
+    five self-play cycles.
 12. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
     `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard.
@@ -330,7 +334,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `FaissVectorStore`.
 37a. **Quantum retrieval benchmark**: `quantum_retrieval.amplify_search()`
      applies amplitude amplification to select vectors. On a toy index its
-     accuracy matches FAISS within ~20% latency overhead.
+     accuracy matches FAISS within ~20% latency overhead. The routine now
+     accepts language tags from `CrossLingualMemory`; running
+     `scripts/quantum_crosslingual_benchmark.py` shows parity across languages
+     with ~1.5× latency.
 38. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
@@ -357,6 +364,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 41a. **Cross-lingual summarization memory**: `ContextSummaryMemory` stores summaries
      in the source language and translated forms. Results are translated back
      to the query language. See `docs/Implementation.md` for details.
+41b. **Cross-lingual reasoning graph**: `CrossLingualReasoningGraph` stores reasoning
+     steps with language tags. `GraphOfThoughtPlanner` can record ranked plans so
+     they are retrievable in multiple languages. Evaluate by confirming the same
+     plan is found in at least two languages.
 42. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
@@ -399,9 +410,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 72. **Self-debugging world model**: Automatically patch the world model when rollout errors exceed 1%, keeping long-term error <1%. *Implemented in `src/world_model_debugger.py` with tests.*
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
+74a. **Data poisoning detector**: `DataPoisonDetector` scans ingested text for anomalous vocabulary. Success criterion: >90% detection on a poison benchmark.
 75. **Dataset summarization**: `scripts/dataset_summary.py --content` clusters text samples with `dataset_summarizer.summarize_dataset()` and writes the result to `docs/datasets/`.
-76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
+76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging. When initialised with a `CrossLingualTranslator` the logger records translated summaries for multilingual inspection.
 77. **User preference modeling**: `UserPreferences` maintains per-user vectors and feedback counts so `PromptOptimizer` can personalise prompts. Aggregate stats expose fairness gaps across demographics.
+78. **Emotion-aware prompts**: `emotion_detector.detect_emotion()` labels text as positive, neutral or negative. `PromptOptimizer` now adjusts scores based on the detected emotion and stored user feedback.
 
 76. **Trusted execution inference**: `EnclaveRunner` launches model inference inside a trusted enclave. `DistributedTrainer` can route its steps through the enclave to keep weights in a protected address space. This guards intermediate activations but does not eliminate side-channel risk.
 77. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
@@ -409,7 +422,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 78. **Cluster carbon dashboard**: `TelemetryLogger` now publishes per-node carbon metrics to a central `ClusterCarbonDashboard`. `RiskDashboard` links to the dashboard so operators can track environmental impact across nodes.
 79. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
 80. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
-81. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps. The logger now provides `analyze()` to cluster repeated steps and flag inconsistencies. Use `python -m asi.self_reflection` to print a report from saved histories.
+81. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps. The logger now provides `analyze()` to cluster repeated steps and flag inconsistencies, and can translate summaries when a `CrossLingualTranslator` is supplied. Use `python -m asi.self_reflection` to print a report from saved histories.
 82. **Graph-of-thought visualizer**: Use `src/got_visualizer.py` and the CLI
     `scripts/got_visualizer.py trace.json --out graph.html` to render reasoning
     traces for collaborative editing sessions.
@@ -424,6 +437,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     lightweight SQLite database. `license_inspector.py` loads the database to
     flag incompatible licenses. The plan is to crowd‑source additional data hub
     scrapers so community members can contribute new sources via pull requests.
+    Discovered entries are now scored by `rl_dataset_discovery.DatasetQualityAgent`
+    which weights datasets based on license compatibility, diversity metrics and
+    novelty. `store_datasets()` saves this weight for downstream ranking.
  
 83. **Analogy-based retrieval evaluation**: Use `analogical_retrieval.analogy_search()`
     on a small word-analogy dataset. For each tuple `(A, B, Q)` compute the
@@ -440,6 +456,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `ZKGradientProof` for each encrypted gradient. `FederatedWorldModelTrainer`
     verifies these proofs before applying updates so compromised peers cannot
     inject arbitrary gradients.
+86. **Offline memory replay**: `run_nightly_replay()` schedules daily sessions
+    where embeddings from `HierarchicalMemory` and `ContextSummaryMemory` are
+    reconstructed and passed through the model for consolidation. Integrated
+    with `DistributedTrainer` via the new replay hook.
 
 
 
@@ -461,6 +481,7 @@ drops below a threshold, while `submit_at_optimal_time()` waits for the lowest
 forecast in the next 24 h.  Both helpers call `submit_job()` once conditions are
 favourable, reducing cluster emissions without manual tuning.
 
+The new `CarbonCostAwareScheduler` extends this by also polling cloud price APIs and weighting the forecasts. Configurable `carbon_weight` and `cost_weight` pick the cheapest-greenest slot before calling `submit_job()`.
 
 
 

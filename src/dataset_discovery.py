@@ -18,6 +18,7 @@ class DiscoveredDataset:
     source: str
     license: str = ""
     license_text: str = ""
+    weight: float = 0.0
 
 
 def _parse_rss(text: str, source: str) -> List[DiscoveredDataset]:
@@ -45,19 +46,28 @@ def discover_kaggle(rss_url: str = 'https://www.kaggle.com/datasets.rss') -> Lis
     return _parse_rss(resp.text, 'kaggle')
 
 
-def store_datasets(dsets: Iterable[DiscoveredDataset], db_path: str | Path) -> None:
+def store_datasets(
+    dsets: Iterable[DiscoveredDataset],
+    db_path: str | Path,
+    agent: "DatasetQualityAgent | None" = None,
+) -> None:
     """Store discovered datasets in ``db_path`` SQLite database."""
     conn = sqlite3.connect(db_path)
     with conn:
         conn.execute(
             'CREATE TABLE IF NOT EXISTS datasets ('
             'name TEXT, source TEXT, url TEXT, license TEXT, license_text TEXT,'
-            'UNIQUE(name, source))'
+            ' weight REAL, UNIQUE(name, source))'
         )
+        rows = []
+        for d in dsets:
+            if agent is not None:
+                d.weight = agent.evaluate(d)
+            rows.append((d.name, d.source, d.url, d.license, d.license_text, d.weight))
         conn.executemany(
-            'INSERT OR REPLACE INTO datasets(name, source, url, license, license_text) '
-            'VALUES (?, ?, ?, ?, ?)',
-            [(d.name, d.source, d.url, d.license, d.license_text) for d in dsets],
+            'INSERT OR REPLACE INTO datasets(name, source, url, license, license_text, weight) '
+            'VALUES (?, ?, ?, ?, ?, ?)',
+            rows,
         )
     conn.close()
 
