@@ -502,6 +502,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     in `world_model_rl` and `MetaRLRefactorAgent`. Each decision logs a brief
     explanation via `ReasoningHistoryLogger` for self-improvement analysis.
 
+87. **Dependency security scan**: `scripts/security_scan.py` runs `pip-audit`
+    and `bandit` to catch vulnerable packages and risky code. The CI workflow
+    executes this scan after the unit tests.
+
 
 
 
