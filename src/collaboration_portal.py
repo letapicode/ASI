@@ -4,9 +4,11 @@ import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Iterable, Any
+from urllib.parse import urlparse, parse_qs
 
 from .telemetry import TelemetryLogger
 from .reasoning_history import ReasoningHistoryLogger
+from .data_ingest import CrossLingualTranslator
 
 
 class CollaborationPortal:
@@ -17,10 +19,12 @@ class CollaborationPortal:
         tasks: Iterable[str] | None = None,
         telemetry: TelemetryLogger | None = None,
         reasoning: ReasoningHistoryLogger | None = None,
+        translator: CrossLingualTranslator | None = None,
     ) -> None:
         self.tasks = list(tasks or [])
         self.telemetry = telemetry
         self.reasoning = reasoning
+        self.translator = translator
         self.httpd: HTTPServer | None = None
         self.thread: threading.Thread | None = None
         self.port: int | None = None
@@ -74,20 +78,69 @@ class CollaborationPortal:
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:  # noqa: D401
-                if self.path == "/tasks":
-                    data = json.dumps(portal.get_tasks()).encode()
+                parsed = urlparse(self.path)
+                lang = None
+                params = parse_qs(parsed.query)
+                if "lang" in params:
+                    lang = params["lang"][0]
+                if lang is None:
+                    header = self.headers.get("Accept-Language")
+                    if header:
+                        lang = header.split(",")[0].strip()
+
+                if parsed.path == "/tasks":
+                    tasks = portal.get_tasks()
+                    if portal.translator is not None:
+                        if lang:
+                            tasks = [portal.translator.translate(t, lang) for t in tasks]
+                        else:
+                            tasks = [
+                                {"task": t, "translations": portal.translator.translate_all(t)}
+                                for t in tasks
+                            ]
+                    data = json.dumps(tasks).encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
                     self.wfile.write(data)
-                elif self.path == "/metrics":
-                    data = json.dumps(portal.get_metrics()).encode()
+                elif parsed.path == "/metrics":
+                    metrics = portal.get_metrics()
+                    if portal.translator is not None:
+                        if lang:
+                            metrics = {
+                                portal.translator.translate(k, lang): v
+                                for k, v in metrics.items()
+                            }
+                        else:
+                            metrics = {
+                                k: {
+                                    "value": v,
+                                    "translations": portal.translator.translate_all(k),
+                                }
+                                for k, v in metrics.items()
+                            }
+                    data = json.dumps(metrics).encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
                     self.wfile.write(data)
-                elif self.path == "/logs":
-                    data = json.dumps(portal.get_logs()).encode()
+                elif parsed.path == "/logs":
+                    logs = []
+                    for ts, msg in portal.get_logs():
+                        if portal.translator is not None:
+                            text = msg.get("summary", msg) if isinstance(msg, dict) else msg
+                            translations = msg.get("translations") if isinstance(msg, dict) else None
+                            if lang:
+                                if translations and lang in translations:
+                                    msg_out = translations[lang]
+                                else:
+                                    msg_out = portal.translator.translate(text, lang)
+                            else:
+                                msg_out = translations if translations else portal.translator.translate_all(text)
+                            logs.append((ts, msg_out))
+                        else:
+                            logs.append((ts, msg))
+                    data = json.dumps(logs).encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
