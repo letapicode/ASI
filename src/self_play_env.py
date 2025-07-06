@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Callable, Tuple, List
 
+from .loihi_backend import LoihiConfig, configure_loihi
+
 import torch
 
 
@@ -90,11 +92,15 @@ def rollout_env(
     policy: Callable[[torch.Tensor], torch.Tensor],
     steps: int = 20,
     return_actions: bool = False,
+    *,
+    loihi_cfg: LoihiConfig | None = None,
 ) -> (
     Tuple[list[torch.Tensor], list[float]]
     | Tuple[list[torch.Tensor], list[float], list[int]]
 ):
     """Run environment with policy returning actions."""
+    if loihi_cfg is not None:
+        configure_loihi(loihi_cfg)
     obs = env.reset()
     observations: list[torch.Tensor] = []
     rewards: list[float] = []
