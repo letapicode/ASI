@@ -430,6 +430,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 76. **Trusted execution inference**: `EnclaveRunner` launches model inference inside a trusted enclave. `DistributedTrainer` can route its steps through the enclave to keep weights in a protected address space. This guards intermediate activations but does not eliminate side-channel risk.
 77. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
     telemetry metrics alongside reasoning logs through a small web server.
+77a. **Multilingual portal**: passing a `CrossLingualTranslator` enables automatic translations for `/tasks`, `/metrics` and `/logs`. Select the language via `?lang=` or the `Accept-Language` header.
 78. **Cluster carbon dashboard**: `TelemetryLogger` now publishes per-node carbon metrics to a central `ClusterCarbonDashboard`. `RiskDashboard` links to the dashboard so operators can track environmental impact across nodes.
 79. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
 80. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
