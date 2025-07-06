@@ -21,6 +21,11 @@ torch = types.SimpleNamespace(
 )
 sys.modules['torch'] = torch
 
+src_pkg = types.ModuleType('src')
+src_pkg.__path__ = ['src']
+src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
+sys.modules['src'] = src_pkg
+
 loader = importlib.machinery.SourceFileLoader('src.data_ingest', 'src/data_ingest.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 di = importlib.util.module_from_spec(spec)

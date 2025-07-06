@@ -10,6 +10,7 @@ import numpy as np
 import asyncio
 import torch
 import requests
+from .carbon_tracker import CarbonFootprintTracker
 try:
     import aiohttp  # type: ignore
     _HAS_AIOHTTP = True
@@ -334,6 +335,7 @@ def _download_triples_impl(
     provenance: Optional[BlockchainProvenanceLedger] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
+    carbon_tracker: "CarbonFootprintTracker | None" = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Implementation for :func:`download_triples`."""
 
@@ -350,6 +352,7 @@ def _download_triples_impl(
             provenance,
             bias_mitigator,
             poison_detector,
+            carbon_tracker,
         )
 
     try:
@@ -372,6 +375,7 @@ def download_triples(
     provenance: Optional[BlockchainProvenanceLedger] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
+    carbon_tracker: "CarbonFootprintTracker | None" = None,
     runner: EnclaveRunner | None = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Download text, image and audio triples into ``out_dir`` concurrently."""
@@ -390,6 +394,7 @@ def download_triples(
         provenance,
         bias_mitigator,
         poison_detector,
+        carbon_tracker,
     )
 
 
@@ -405,6 +410,7 @@ async def download_triples_async(
     provenance: Optional[BlockchainProvenanceLedger] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
+    carbon_tracker: "CarbonFootprintTracker | None" = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Asynchronously download text, image and audio triples.
 
@@ -415,6 +421,8 @@ async def download_triples_async(
         raise ImportError("aiohttp is required for async downloads")
     out = Path(out_dir)
     triples: List[Tuple[Path, Path, Path]] = []
+    if carbon_tracker is not None:
+        carbon_tracker.start()
     async with aiohttp.ClientSession() as session:
         tasks = []
         for i, (t, iurl, a) in enumerate(zip(text_urls, img_urls, audio_urls)):
@@ -474,10 +482,15 @@ async def download_triples_async(
     if versioner is not None:
         flat = [p for tri in triples for p in tri]
         versioner.record(flat, note="download_triples")
+
+    if carbon_tracker is not None:
+        carbon_tracker.stop()
+
     if provenance is not None:
         flat = [str(p) for tri in triples for p in tri]
         rec = json.dumps({"note": "download_triples", "outputs": flat}, sort_keys=True)
         provenance.append(rec)
+
     return triples
 
 

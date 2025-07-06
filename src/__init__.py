@@ -273,6 +273,7 @@ from .carbon_aware_scheduler import CarbonAwareScheduler
 
 from .carbon_hpc_scheduler import CarbonAwareScheduler
 from .rl_carbon_scheduler import RLCarbonScheduler
+from .carbon_aware_dataset_ingest import CarbonAwareDatasetIngest
 
 from .collaboration_portal import CollaborationPortal
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
