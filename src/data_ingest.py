@@ -112,7 +112,13 @@ except Exception:  # pragma: no cover - for tests
             return 1.0
 
 try:  # pragma: no cover - optional secure exchange
-    from .secure_dataset_exchange import SecureDatasetExchange
+from .secure_dataset_exchange import SecureDatasetExchange
+try:
+    from .dataset_weight_agent import DatasetWeightAgent
+except Exception:  # pragma: no cover - for tests
+    class DatasetWeightAgent:  # type: ignore
+        def weight(self, name: str) -> float:
+            return 1.0
 except Exception:  # pragma: no cover - for tests
     try:
         from secure_dataset_exchange import SecureDatasetExchange  # type: ignore
@@ -144,6 +150,7 @@ class ActiveDataSelector:
         self,
         triples: Iterable[Tuple[Any, Any, Any]],
         probs: Iterable[np.ndarray],
+        weight_agent: DatasetWeightAgent | None = None,
     ) -> list[Tuple[Tuple[Any, Any, Any], float]]:
         """Return ``(triple, weight)`` pairs with bias-adjusted weights."""
         results: list[tuple[tuple[Any, Any, Any], float]] = []
@@ -155,6 +162,12 @@ class ActiveDataSelector:
                 w *= bias
             except Exception:
                 pass
+            if weight_agent is not None:
+                try:
+                    name = Path(t[0]).parent.name
+                    w *= weight_agent.weight(name)
+                except Exception:
+                    pass
             results.append((t, float(w)))
         return results
 
@@ -529,6 +542,22 @@ def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0) ->
     return filter_text_files(text_files, threshold=threshold)
 
 
+def choose_weighted_dataset(
+    dataset_dirs: Iterable[str | Path], agent: DatasetWeightAgent
+) -> Path:
+    """Return a dataset directory sampled according to ``agent`` weights."""
+    dirs = list(dataset_dirs)
+    if not dirs:
+        raise ValueError("no dataset directories provided")
+    names = [Path(d).name for d in dirs]
+    weights = np.array([agent.weight(n) for n in names], dtype=float)
+    if weights.sum() <= 0:
+        weights = np.ones_like(weights)
+    probs = weights / weights.sum()
+    idx = int(np.random.choice(len(dirs), p=probs))
+    return Path(dirs[idx])
+
+
 def auto_label_triples(
     triples: Iterable[Tuple[str | Path, str | Path, str | Path]],
     labeler: "AutoLabeler",
@@ -691,6 +720,7 @@ __all__ = [
     "ingest_translated_triples",
     "push_dataset",
     "pull_dataset",
+    "choose_weighted_dataset",
     "ActiveDataSelector",
     "CrossLingualTranslator",
     "CrossLingualSpeechTranslator",
