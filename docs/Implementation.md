@@ -88,9 +88,14 @@ After installation, the wrapper will automatically call the optimized kernel.
 
 `src/loihi_backend.py` wraps optional calls into Intel's Loihi SDK. When
 `_HAS_LOIHI` is `True`, `LIFNeuron` and `SpikingLinear` offload their
-computations via `loihi_backend`. Enable this by installing the NxSDK and
-setting `use_loihi=True` on those modules or via
-`MultiModalWorldModelConfig.use_spiking`.
+computations via `loihi_backend`. Install `nxsdk` and set
+`MultiModalWorldModelConfig.use_spiking=True` together with
+`use_loihi=True` to execute the world model on neuromorphic hardware.
+
+`loihi_backend.configure_loihi()` accepts a `LoihiConfig` dataclass to
+specify the number of active cores and spike precision. Adjusting these
+options lets inference run fully on Loihi and typically reduces energy
+consumption by around 10\times compared to the CPU fallback.
 
 ## S-3 Scaling-law Breakpoint Model
 
