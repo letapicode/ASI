@@ -330,7 +330,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `FaissVectorStore`.
 37a. **Quantum retrieval benchmark**: `quantum_retrieval.amplify_search()`
      applies amplitude amplification to select vectors. On a toy index its
-     accuracy matches FAISS within ~20% latency overhead.
+     accuracy matches FAISS within ~20% latency overhead. The routine now
+     accepts language tags from `CrossLingualMemory`; running
+     `scripts/quantum_crosslingual_benchmark.py` shows parity across languages
+     with ~1.5× latency.
 38. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
