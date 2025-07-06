@@ -249,6 +249,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 15. **Adaptive curriculum scheduler**: Mix curated datasets with self-play logs
     via reinforcement learning to accelerate skill acquisition. Implemented in
     `adaptive_curriculum.py` and used by `self_play_skill_loop`.
+15a. **Cognitive load monitor**: `cognitive_load_monitor.CognitiveLoadMonitor`
+    tracks pause durations and correction rates. `AdaptiveCurriculum` adjusts
+    retrieval depth or task difficulty based on the resulting load metric and
+    exposes the values through `TelemetryLogger`.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
     novel transformer components and report promising variants.
     *Implemented in `src/quantum_hpo.py` with unit tests.*

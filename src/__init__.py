@@ -159,6 +159,7 @@ from .embedding_visualizer import EmbeddingVisualizer
 from .got_visualizer import GOTVisualizer
 from .duplicate_detector import DuplicateDetector
 from .telemetry import TelemetryLogger, FineGrainedProfiler, MemoryEventDetector
+from .cognitive_load_monitor import CognitiveLoadMonitor
 from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner
 from .dataset_lineage_manager import DatasetLineageManager
