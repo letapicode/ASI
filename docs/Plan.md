@@ -178,6 +178,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard. The CLI now supports a `--concurrent` flag to run evaluations asynchronously via `evaluate_modules_async()`.
 - `scripts/distributed_eval.py` runs the harness across multiple processes or hosts and aggregates the results for large-scale testing.
 - `src/transformer_circuits.py` records attention weights and lets researchers ablate individual heads for interpretability experiments.
+- `src/ab_evaluator.py` compares two `eval_harness` runs given JSON configs so new features can be iteratively benchmarked.
 
 ### Recommended next steps
 
