@@ -163,6 +163,7 @@ from .dataset_discovery import (
     store_datasets,
 )
 from .rl_dataset_discovery import DatasetQualityAgent
+from .streaming_dataset_watcher import StreamingDatasetWatcher
 from .streaming_compression import AdaptiveCompressor, TemporalVectorCompressor
 from .context_profiler import profile_model, ContextWindowProfiler
 from .accelerator_scheduler import AcceleratorScheduler
