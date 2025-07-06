@@ -607,6 +607,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Provide a `CrossLingualMemory` wrapper that stores translated vectors and
   lets `HierarchicalMemory` search across languages when a translator is set.
   **Implemented in `src/cross_lingual_memory.py` with tests.**
+- Add a `CrossLingualReasoningGraph` to store reasoning nodes with language tags
+  and translate them via `CrossLingualTranslator`. `GraphOfThoughtPlanner` logs
+  ranked strategies to this graph when provided.
 - Create a `WorldModelDistiller` module and a `scripts/distill_world_model.py`
   utility to train smaller student models from the large world model.
   **Implemented in `src/world_model_distiller.py` with the script

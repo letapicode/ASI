@@ -357,6 +357,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 41a. **Cross-lingual summarization memory**: `ContextSummaryMemory` stores summaries
      in the source language and translated forms. Results are translated back
      to the query language. See `docs/Implementation.md` for details.
+41b. **Cross-lingual reasoning graph**: `CrossLingualReasoningGraph` stores reasoning
+     steps with language tags. `GraphOfThoughtPlanner` can record ranked plans so
+     they are retrievable in multiple languages. Evaluate by confirming the same
+     plan is found in at least two languages.
 42. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
