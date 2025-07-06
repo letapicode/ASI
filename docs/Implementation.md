@@ -719,8 +719,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   **Implemented in `src/graphql_memory_gateway.py` with `scripts/graphql_memory_server.py`.**
 - Add a `FineGrainedProfiler` in `telemetry.py` to record per-module compute and memory usage and stream the metrics through `TelemetryLogger`.
   **Implemented in `src/telemetry.py`.**
-- Create an `AutoLabeler` that invokes the world model during ingestion to generate weak labels for unlabeled triples.
-  **Implemented in `src/auto_labeler.py`.**
+ - Create an `AutoLabeler` that invokes the world model during ingestion to generate weak labels for unlabeled triples. A reinforcement-learning agent now refines those labels using bias metrics and user feedback.
+   **Implemented in `src/auto_labeler.py`.**
 - Implement a `SensorimotorPretrainer` that performs self-supervised pretraining
   of `MultiModalWorldModel` on raw sensor logs. Provided
   `pretrain_sensorimotor()` in `src/sensorimotor_pretrainer.py` with a unit

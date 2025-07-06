@@ -407,7 +407,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 64. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
 65. **GraphQL memory gateway**: Expose `MemoryServer` queries through a GraphQL API and keep retrieval accuracy unchanged with <1.2× latency.
 66. **Fine-grained telemetry profiler**: Record per-module compute and memory via `FineGrainedProfiler` and ensure overhead stays below 3%.
-67. **Auto-labeling pipeline**: Use the world model to generate weak labels for unlabeled triples during ingestion and measure dataset quality improvements.
+67. **Auto-labeling pipeline**: Use the world model to generate weak labels for unlabeled triples during ingestion and refine them with an RL agent that learns from bias metrics and user feedback.
 68. **Context window profiler**: Measure memory and latency across sequence lengths. Implemented in `src/context_profiler.py` and integrated with `eval_harness.py`.
 69. **Differential privacy memory**: Use `DifferentialPrivacyMemory` to store noisy embeddings with <2% recall drop at ε=1. *Implemented in `src/dp_memory.py` with tests.*
 70. **Unified multi-modal evaluation**: Add `MultiModalEval` to `eval_harness` and target ≥90% recall on the toy dataset. *Implemented in `src/eval_harness.py` with tests.*
