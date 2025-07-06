@@ -89,6 +89,19 @@ except Exception:  # pragma: no cover - for tests
             def apply_to_triples(self, triples: Iterable[Tuple[Path, Path, Path]]) -> list[tuple[Path, Path, Path]]:
                 return list(triples)
 
+try:
+    from .data_poison_detector import DataPoisonDetector
+except Exception:  # pragma: no cover - for tests
+    try:
+        from data_poison_detector import DataPoisonDetector  # type: ignore
+    except Exception:
+        class DataPoisonDetector:  # type: ignore
+            def __init__(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def record_file(self, *a: Any, **kw: Any) -> bool:
+                return False
+
 try:  # pragma: no cover - optional bias scoring
     from .dataset_bias_detector import file_bias_score
 except Exception:  # pragma: no cover - for tests
@@ -229,6 +242,7 @@ def download_triples(
     anonymizer: Optional[DatasetAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
+    poison_detector: Optional["DataPoisonDetector"] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Download text, image and audio triples into ``out_dir`` concurrently.
 
@@ -247,6 +261,7 @@ def download_triples(
             anonymizer,
             lineage,
             bias_mitigator,
+            poison_detector,
         )
 
     try:
@@ -267,6 +282,7 @@ async def download_triples_async(
     anonymizer: Optional[DatasetAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
+    poison_detector: Optional["DataPoisonDetector"] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Asynchronously download text, image and audio triples.
 
@@ -288,6 +304,16 @@ async def download_triples_async(
             tasks.append(_download_file_async(session, iurl, i_path))
             tasks.append(_download_file_async(session, a, a_path))
         await asyncio.gather(*tasks)
+
+    if poison_detector is not None:
+        filtered: List[Tuple[Path, Path, Path]] = []
+        for tri in triples:
+            try:
+                if not poison_detector.record_file(tri[0]):
+                    filtered.append(tri)
+            except Exception:
+                filtered.append(tri)
+        triples = filtered
 
     if anonymizer is not None:
         for t_path, i_path, a_path in triples:
@@ -628,4 +654,5 @@ __all__ = [
     "ActiveDataSelector",
     "CrossLingualTranslator",
     "CrossLingualSpeechTranslator",
+    "DataPoisonDetector",
 ]

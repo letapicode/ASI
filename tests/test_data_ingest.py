@@ -37,8 +37,16 @@ sys.modules['src'] = src_pkg
 src_pkg.__path__ = ['src']
 src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
 sys.modules['src.dataset_lineage_manager'] = dlm
+loader_poison = importlib.machinery.SourceFileLoader('src.data_poison_detector', 'src/data_poison_detector.py')
+spec_p = importlib.util.spec_from_loader(loader_poison.name, loader_poison)
+poison_mod = importlib.util.module_from_spec(spec_p)
+poison_mod.__package__ = 'src'
+sys.modules['src.data_poison_detector'] = poison_mod
+loader_poison.exec_module(poison_mod)
+sys.modules['asi.data_poison_detector'] = poison_mod
 sys.modules['asi.dataset_lineage_manager'] = dlm
 loader_dlm.exec_module(dlm)
+DataPoisonDetector = poison_mod.DataPoisonDetector
 
 pair_modalities = di.pair_modalities
 random_crop_image = di.random_crop_image
@@ -55,6 +63,8 @@ mm = types.SimpleNamespace(
     MultiModalWorldModel=object,
     MultiModalWorldModelConfig=object,
 )
+MultiModalWorldModel = mm.MultiModalWorldModel
+MultiModalWorldModelConfig = mm.MultiModalWorldModelConfig
 
 
 class TestDataIngest(unittest.TestCase):
@@ -150,6 +160,18 @@ class TestDataIngest(unittest.TestCase):
                     self.assertEqual(len(triples), 1)
 
         asyncio.run(run())
+
+    def test_download_triples_poison(self):
+        async def fake_download(session, url, dest):
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(url)
+
+        with tempfile.TemporaryDirectory() as root:
+            urls = [' '.join(f'w{i}' for i in range(20))]
+            det = DataPoisonDetector(window=1, threshold=2.0)
+            with patch.object(di, '_download_file_async', fake_download):
+                triples = di.download_triples(urls, urls, urls, root, poison_detector=det)
+            self.assertEqual(len(triples), 0)
 
     def test_offline_synthesizer(self):
         cfg = MultiModalWorldModelConfig(vocab_size=10, img_channels=1, action_dim=2, embed_dim=8)
