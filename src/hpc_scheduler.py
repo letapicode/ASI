@@ -13,13 +13,20 @@ def submit_job(
     telemetry: Optional[TelemetryLogger] = None,
     region: Optional[str] = None,
     max_intensity: Optional[float] = None,
+    max_temp: Optional[float] = None,
     carbon_api: Optional[str] = None,
 ) -> str:
-    """Submit a job via Slurm or Kubernetes if carbon intensity permits."""
+    """Submit a job if carbon intensity and GPU temperature permit."""
     if telemetry is not None and max_intensity is not None:
         intensity = telemetry.get_carbon_intensity(region)
         if intensity > max_intensity:
             return "DEFERRED"
+    if telemetry is not None and max_temp is not None:
+        try:
+            if telemetry.gpu_temperature() >= max_temp:
+                return "DEFERRED"
+        except Exception:
+            pass
     if carbon_api and max_intensity is not None:
         try:
             with urllib.request.urlopen(carbon_api, timeout=1) as r:
