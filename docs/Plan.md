@@ -471,6 +471,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `ZKGradientProof` for each encrypted gradient. `FederatedWorldModelTrainer`
     verifies these proofs before applying updates so compromised peers cannot
     inject arbitrary gradients.
+85a. **FHE gradient aggregation**: `FHEFederatedTrainer` wraps the secure learner
+     and uses `run_fhe` to decrypt TenSEAL-encrypted gradients. Reward on the RL
+     benchmark should drop less than 5% versus plaintext training.
 86. **Offline memory replay**: `run_nightly_replay()` schedules daily sessions
     where embeddings from `HierarchicalMemory` and `ContextSummaryMemory` are
     reconstructed and passed through the model for consolidation. Integrated

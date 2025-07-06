@@ -202,6 +202,7 @@ from .federated_world_model_trainer import (
     FederatedWorldModelTrainer,
     FederatedTrainerConfig,
 )
+from .fhe_federated_trainer import FHEFederatedTrainer, FHEFederatedTrainerConfig
 from .adversarial_robustness import AdversarialRobustnessSuite
 from .graph_of_thought import ReasoningDebugger
 from .multi_stage_oversight import MultiStageOversight
