@@ -24,6 +24,7 @@ for _m in [
     "vector_store",
     "pq_vector_store",
     "async_vector_store",
+    "ephemeral_vector_store",
     "quantum_retrieval",
     "quantum_sampler",
     "quantum_hpo",
