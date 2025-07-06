@@ -18,5 +18,8 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -e .
+          pip install pip-audit bandit
       - name: Run tests
         run: pytest -q
+      - name: Security scan
+        run: python scripts/security_scan.py

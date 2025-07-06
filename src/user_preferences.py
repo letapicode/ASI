@@ -11,6 +11,8 @@ class UserPreferences:
         self.dim = dim
         self.vectors: Dict[str, np.ndarray] = {}
         self.stats: Dict[str, Dict[str, int]] = {}
+        self.languages: Dict[str, str] = {}
+        self.emotions: Dict[str, str] = {}
 
     # --------------------------------------------------------------
     def embed_text(self, text: str) -> np.ndarray:
@@ -31,6 +33,22 @@ class UserPreferences:
     def get_stats(self, user_id: str) -> Tuple[int, int]:
         st = self.stats.get(user_id, {"pos": 0, "neg": 0})
         return st["pos"], st["neg"]
+
+    # --------------------------------------------------------------
+    def set_language(self, user_id: str, language: str) -> None:
+        """Store the preferred ``language`` for ``user_id``."""
+        self.languages[user_id] = language
+
+    def get_language(self, user_id: str) -> str | None:
+        return self.languages.get(user_id)
+
+    # --------------------------------------------------------------
+    def set_emotion(self, user_id: str, emotion: str) -> None:
+        """Store the detected ``emotion`` for ``user_id``."""
+        self.emotions[user_id] = emotion
+
+    def get_emotion(self, user_id: str) -> str | None:
+        return self.emotions.get(user_id)
 
     # --------------------------------------------------------------
     def update(self, user_id: str, vector: np.ndarray, feedback: float = 1.0) -> None:

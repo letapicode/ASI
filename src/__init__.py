@@ -2,6 +2,7 @@
 
 from .autobench import run_autobench, BenchResult
 from .meta_rl_refactor import MetaRLRefactorAgent
+from .rl_decision_narrator import RLDecisionNarrator
 from .quantum_hpo import (
     QAEHyperparamSearch,
     amplitude_estimate,
@@ -125,6 +126,12 @@ from .data_ingest import (
 from .adaptive_translator import AdaptiveTranslator
 from .generative_data_augmentor import GenerativeDataAugmentor
 from .diffusion_world_model import DiffusionWorldModel
+from .ode_world_model import (
+    ODEWorldModel,
+    ODEWorldModelConfig,
+    train_ode_world_model,
+    rollout_policy as rollout_ode_policy,
+)
 from .causal_graph_learner import CausalGraphLearner
 from .transformer_circuits import (
     ActivationRecorder,
@@ -152,6 +159,7 @@ from .embedding_visualizer import EmbeddingVisualizer
 from .got_visualizer import GOTVisualizer
 from .duplicate_detector import DuplicateDetector
 from .telemetry import TelemetryLogger, FineGrainedProfiler, MemoryEventDetector
+from .cognitive_load_monitor import CognitiveLoadMonitor
 from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner
 from .dataset_lineage_manager import DatasetLineageManager
@@ -182,6 +190,7 @@ from .graphql_memory_gateway import GraphQLMemoryGateway
 from .world_model_distiller import DistillConfig, distill_world_model
 from .summarizing_memory import SummarizingMemory
 from .cross_lingual_memory import CrossLingualMemory
+from .cross_lingual_kg_memory import CrossLingualKGMemory
 from .cross_lingual_graph import CrossLingualReasoningGraph
 from .context_summary_memory import ContextSummaryMemory
 from .sensorimotor_pretrainer import (
@@ -226,6 +235,7 @@ from .quantum_multimodal_retrieval import quantum_crossmodal_search
 from .risk_scoreboard import RiskScoreboard
 from .semantic_drift_detector import SemanticDriftDetector
 from .data_provenance_ledger import DataProvenanceLedger
+from .blockchain_provenance_ledger import BlockchainProvenanceLedger
 from .fairness_evaluator import FairnessEvaluator
 from .cross_lingual_fairness import CrossLingualFairnessEvaluator
 from .risk_dashboard import RiskDashboard
@@ -246,8 +256,10 @@ from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .retrieval_explainer import RetrievalExplainer
 from .retrieval_rl import RetrievalPolicy, train_policy
 from .interpretability_dashboard import InterpretabilityDashboard
+from .introspection_dashboard import IntrospectionDashboard
 from .graph_ui import GraphUI
 from .nl_graph_editor import NLGraphEditor
+from .voice_graph_controller import VoiceGraphController
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler

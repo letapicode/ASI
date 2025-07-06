@@ -180,6 +180,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard. The CLI now supports a `--concurrent` flag to run evaluations asynchronously via `evaluate_modules_async()`.
 - `scripts/distributed_eval.py` runs the harness across multiple processes or hosts and aggregates the results for large-scale testing.
 - `src/transformer_circuits.py` records attention weights and lets researchers ablate individual heads for interpretability experiments.
+- `src/ab_evaluator.py` compares two `eval_harness` runs given JSON configs so new features can be iteratively benchmarked.
 
 ### Recommended next steps
 
@@ -250,6 +251,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 15. **Adaptive curriculum scheduler**: Mix curated datasets with self-play logs
     via reinforcement learning to accelerate skill acquisition. Implemented in
     `adaptive_curriculum.py` and used by `self_play_skill_loop`.
+15a. **Cognitive load monitor**: `cognitive_load_monitor.CognitiveLoadMonitor`
+    tracks pause durations and correction rates. `AdaptiveCurriculum` adjusts
+    retrieval depth or task difficulty based on the resulting load metric and
+    exposes the values through `TelemetryLogger`.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
     novel transformer components and report promising variants.
     *Implemented in `src/quantum_hpo.py` with unit tests.*
@@ -302,6 +307,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
     The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
     `KnowledgeGraphMemory` now records optional timestamps per triple and supports temporal range queries for time-sensitive reasoning.
+29a. **Cross-lingual knowledge graph memory**: `CrossLingualKGMemory` wraps
+    `KnowledgeGraphMemory` with a `CrossLingualTranslator`. `add_triples_multilingual()`
+    stores translated triples and `query_translated()` returns results in the
+    requested language.
 29. **Temporal reasoner**: `TemporalReasoner` queries these timestamped triples
     to infer before/after relationships. `HierarchicalPlanner.compose_plan()`
     can optionally reorder intermediate steps using the reasoner for time-aware
@@ -369,6 +378,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     fairness gains by running `CrossLingualFairnessEvaluator` on the dataset
     before and after augmentation—expect the demographic parity gap to shrink
     by at least 5%.
+40c. **Image and audio fairness metrics**: `FairnessEvaluator.evaluate_multimodal()`
+    computes demographic parity and equal opportunity for image and audio
+    datasets. `ingest_translated_triples()` now records per-modality statistics
+    so these metrics reflect dataset composition.
 41a. **Cross-lingual summarization memory**: `ContextSummaryMemory` stores summaries
      in the source language and translated forms. Results are translated back
      to the query language. See `docs/Implementation.md` for details.
@@ -427,11 +440,16 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging. When initialised with a `CrossLingualTranslator` the logger records translated summaries for multilingual inspection.
 
 77. **User preference modeling**: `UserPreferences` maintains per-user vectors and feedback counts so `PromptOptimizer` can personalise prompts. Aggregate stats expose fairness gaps across demographics.
-78. **Emotion-aware prompts**: `emotion_detector.detect_emotion()` labels text as positive, neutral or negative. `PromptOptimizer` now adjusts scores based on the detected emotion and stored user feedback.
+78. **Emotion-adaptive prompting**: `PromptOptimizer.optimize()` consults `CrossLingualTranslator`
+    to render prompts in each user's preferred language and calls
+    `emotion_detector.detect_emotion()` on the translation. The score is then
+    biased toward the user's stored emotion so that the optimizer steers outputs
+    to match both language preference and mood.
 
 76. **Trusted execution inference**: `EnclaveRunner` launches model inference inside a trusted enclave. `DistributedTrainer` can route its steps through the enclave to keep weights in a protected address space. This guards intermediate activations but does not eliminate side-channel risk.
 77. **Collaboration portal**: `CollaborationPortal` lists active tasks and exposes
     telemetry metrics alongside reasoning logs through a small web server.
+77a. **Multilingual portal**: passing a `CrossLingualTranslator` enables automatic translations for `/tasks`, `/metrics` and `/logs`. Select the language via `?lang=` or the `Accept-Language` header.
 78. **Cluster carbon dashboard**: `TelemetryLogger` now publishes per-node carbon metrics to a central `ClusterCarbonDashboard`. `RiskDashboard` links to the dashboard so operators can track environmental impact across nodes.
 79. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
 80. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
@@ -444,7 +462,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 84. **Natural-language graph editor**: `nl_graph_editor.py` interprets commands like "merge nodes A and B" or "add edge from X to Y". `GraphUI` exposes `/graph/nl_edit` so the web UI accepts these instructions.
 
+84a. **Voice graph controller**: `voice_graph_controller.py` converts spoken commands to text using the `speech_recognition` package and forwards them to `NLGraphEditor`. `GraphUI` now exposes `/graph/voice` for audio inputs. Install `speech_recognition` to enable this feature.
+
 85. **Temporal telemetry monitoring**: `MemoryEventDetector` parses logged hardware metrics and flags change points. `TelemetryLogger` stores these events so the memory dashboard exposes them via `/events`.
+86. **Introspection dashboard**: `IntrospectionDashboard` merges reasoning history with telemetry metrics. Run `scripts/introspection_dashboard.py` and open `http://localhost:8060` to inspect graph evolution alongside hardware usage.
 82. **Dataset discovery pipeline**: `dataset_discovery.py` scans RSS feeds from
     HuggingFace and Kaggle, storing dataset names, URLs and license text in a
     lightweight SQLite database. `license_inspector.py` loads the database to
@@ -481,6 +502,17 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     where embeddings from `HierarchicalMemory` and `ContextSummaryMemory` are
     reconstructed and passed through the model for consolidation. Integrated
     with `DistributedTrainer` via the new replay hook.
+86a. **ODE-based world model**: `torchdiffeq` now drives continuous-time
+     dynamics in `ode_world_model`. `scripts/train_ode_world_model.py` shows the
+     model converging on a toy dataset with smooth rollouts.
+
+87. **RL decision narrator**: `RLDecisionNarrator` intercepts action choices
+    in `world_model_rl` and `MetaRLRefactorAgent`. Each decision logs a brief
+    explanation via `ReasoningHistoryLogger` for self-improvement analysis.
+
+87. **Dependency security scan**: `scripts/security_scan.py` runs `pip-audit`
+    and `bandit` to catch vulnerable packages and risky code. The CI workflow
+    executes this scan after the unit tests.
 
 
 

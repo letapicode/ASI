@@ -11,6 +11,7 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 - `python -m src.autobench` runs each test file in isolation and reports a summary.
 - `meta-rl-refactor` parses action/reward logs and suggests the next refactoring step.
 - `scripts/dataset_summary.py` prints lineage and license info. Use `--content` to cluster dataset samples and store summaries under `docs/datasets/`.
+- `scripts/lineage_viewer.py <root>` serves an interactive graph of the dataset lineage.
 - `scripts/ar_robot_demo.py` streams predicted and actual robot trajectories to a WebSocket server for lightweight AR visualization. Pass `--show-graph` to also broadcast `GraphOfThought` nodes.
 
 Example:

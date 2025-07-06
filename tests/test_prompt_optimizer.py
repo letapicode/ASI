@@ -19,6 +19,24 @@ def load(name, path):
     return mod
 
 
+ed = load('asi.emotion_detector', 'src/emotion_detector.py')
+detect_emotion = ed.detect_emotion
+
+class CrossLingualTranslator:
+    def __init__(self, languages):
+        self.languages = list(languages)
+
+    def translate(self, text, lang):
+        if lang not in self.languages:
+            raise ValueError('unsupported language')
+        return f'[{lang}] {text}'
+
+    def translate_all(self, text):
+        return {l: self.translate(text, l) for l in self.languages}
+
+dummy = types.ModuleType('asi.data_ingest')
+dummy.CrossLingualTranslator = CrossLingualTranslator
+sys.modules['asi.data_ingest'] = dummy
 up = load('asi.user_preferences', 'src/user_preferences.py')
 po = load('asi.prompt_optimizer', 'src/prompt_optimizer.py')
 PromptOptimizer = po.PromptOptimizer
@@ -46,6 +64,25 @@ class TestPromptOptimizer(unittest.TestCase):
         pos = opt._score("I love this")
         neg = opt._score("I hate this")
         self.assertGreater(pos, neg)
+
+    def test_multilingual_emotion_handling(self):
+        prefs = UserPreferences(dim=8)
+        prefs.set_language("u", "es")
+        prefs.set_emotion("u", "positive")
+
+        def scorer(_: str) -> float:
+            return 0.0
+
+        tr = CrossLingualTranslator(["es"])
+        opt = PromptOptimizer(
+            scorer,
+            "hola",
+            user_preferences=prefs,
+            user_id="u",
+        )
+        res = opt.optimize(steps=2, translator=tr)
+        self.assertTrue(res.startswith("[es]"))
+        self.assertEqual(prefs.get_emotion("u"), detect_emotion(res))
 
 if __name__ == '__main__':
     unittest.main()

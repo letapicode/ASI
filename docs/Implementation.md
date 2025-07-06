@@ -11,6 +11,8 @@ This repository includes starter modules for the first two algorithms listed in 
   - `ElasticMoERouter` dynamically reduces the number of active experts when GPU
     memory utilization gets high. It inherits from `SwitchRouter` and exposes
     `active_experts` to track the current count.
+  - `RLMoERouter` learns routing probabilities with a REINFORCE update and
+    mirrors the `ElasticMoERouter` API for plug-and-play experiments.
 - `src/moe_layer.py` implements a small MoE feed-forward block using these routers. It accepts an optional
   `balance_weight` which multiplies the `balance_loss()` penalty derived from the router's assignments and
   returns it alongside the layer output.
@@ -505,6 +507,7 @@ lineage = DatasetLineageManager("./data")
 
 triples = download_triples(text_urls, img_urls, aud_urls, "./data", lineage=lineage, runner=runner)
 paraphrase_multilingual([Path("./data/text/0.txt")], translator, None, inspector, lineage, runner=runner)
+Run `scripts/lineage_viewer.py ./data` to browse the recorded steps.
 ```
 
 ## L-6 Mechanistic Interpretability Tools
@@ -583,6 +586,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   architecture search. **Implemented in `src/quantum_hpo.py` with unit tests.**
 - **Implemented** an `ElasticMoERouter` that scales the number of active experts
   according to real-time GPU utilization.
+- **Implemented** an `RLMoERouter` that trains routing weights via a simple
+  reinforcement learning loop for improved load balance.
 - Extend `HierarchicalMemory` with an `SSDCache` that prefetches high-frequency
   vectors for faster retrieval. *Implemented with a disk-backed cache and
   persistence helpers in `src/hierarchical_memory.py`.*
@@ -698,6 +703,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   **Implemented in `src/dataset_versioner.py` and wired through `data_ingest`.**
 - Add a `DatasetLineageManager` that records transformation steps and resulting file hashes for reproducible pipelines.
   **Implemented in `src/dataset_lineage_manager.py` with tests.**
+- Introduce a `BlockchainProvenanceLedger` that links each record to the previous hash. Ingestion helpers append their lineage to this ledger and `scripts/check_blockchain_provenance.py` verifies the chain.
 - Implement a `ContextWindowProfiler` that measures memory footprint and wall-clock time at various sequence lengths. **Implemented as `src/context_profiler.py` and integrated with `eval_harness.py`.**
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.
   **Implemented** via `adaptive_evict` in `HierarchicalMemory` with `get_stats()` to report usage metrics.
