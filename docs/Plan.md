@@ -475,8 +475,14 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     scrapers so community members can contribute new sources via pull requests.
     Discovered entries are scored by `rl_dataset_discovery.DatasetQualityAgent`
     and the new `dataset_weight_agent.DatasetWeightAgent`, which tracks bias
-    scores and license validity to refine weights via Q-learning. `store_datasets()`
-    saves these weights for downstream ranking.
+      scores and license validity to refine weights via Q-learning. `store_datasets()`
+      saves these weights for downstream ranking.
+
+82a. **Streaming dataset watcher**: `streaming_dataset_watcher.StreamingDatasetWatcher`
+     polls RSS feeds and stores new entries. Links that use the `file://` scheme
+     trigger `dataset_summarizer.summarize_dataset` on the referenced folder.
+     Run `python -m asi.streaming_dataset_watcher db.sqlite <rss-url>` to start
+     watching feeds.
  
 83. **Analogy-based retrieval evaluation**: Use `analogical_retrieval.analogy_search()`
     on a small word-analogy dataset. For each tuple `(A, B, Q)` compute the
