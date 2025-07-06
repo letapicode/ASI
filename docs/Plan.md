@@ -286,6 +286,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `src/adaptive_planner.py`.*
 25. **Neural architecture search**: Evaluate `src/neural_arch_search.py` across
     candidate module configurations and report accuracy vs. compute costs.
+    The search now logs energy usage via `TelemetryLogger` and supports an
+    `energy_weight` option to trade off accuracy against consumption.
     *Implemented in `src/neural_arch_search.py`.*
 25. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
     restart failed jobs automatically and track overall utilization.
