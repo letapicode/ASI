@@ -289,6 +289,56 @@ class HierarchicalMemory:
                     self.kg.add_triples(triples)
             self._evict_if_needed()
 
+    def add_compressed(
+        self, comp: torch.Tensor, metadata: Iterable[Any] | None = None
+    ) -> None:
+        """Store already-compressed vectors directly in the vector store."""
+        if isinstance(self.store, AsyncFaissVectorStore):
+            import asyncio
+
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                asyncio.run(self.aadd_compressed(comp, metadata))
+            else:
+                return loop.create_task(self.aadd_compressed(comp, metadata))
+        arr = comp.detach().cpu().numpy()
+        metas = list(metadata) if metadata is not None else []
+        if not metas:
+            metas = [self._next_id + i for i in range(arr.shape[0])]
+            self._next_id += arr.shape[0]
+        self.store.add(arr, metas)
+        for m in metas:
+            self._usage[m] = 0
+        if self.kg is not None:
+            triples = [t for t in metas if isinstance(t, tuple) and len(t) == 3]
+            if triples:
+                self.kg.add_triples(triples)
+        self._evict_if_needed()
+
+    async def aadd_compressed(
+        self, comp: torch.Tensor, metadata: Iterable[Any] | None = None
+    ) -> None:
+        """Asynchronously store already-compressed vectors."""
+        import asyncio
+        arr = comp.detach().cpu().numpy()
+        metas = list(metadata) if metadata is not None else []
+        if not metas:
+            metas = [self._next_id + i for i in range(arr.shape[0])]
+            self._next_id += arr.shape[0]
+        if isinstance(self.store, AsyncFaissVectorStore):
+            await self.store.aadd(arr, metas)
+        else:
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, self.store.add, arr, metas)
+        for m in metas:
+            self._usage[m] = 0
+        if self.kg is not None:
+            triples = [t for t in metas if isinstance(t, tuple) and len(t) == 3]
+            if triples:
+                self.kg.add_triples(triples)
+        self._evict_if_needed()
+
     def add_multimodal(
         self,
         text: torch.Tensor,

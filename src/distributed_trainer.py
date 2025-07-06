@@ -86,6 +86,8 @@ class DistributedTrainer:
         enclave: EnclaveConfig | None = None,
         replay_hook: Callable[[], None] | None = None,
         replay_interval: float | None = None,
+        consolidation_hook: Callable[[], None] | None = None,
+        consolidation_interval: float | None = None,
 
     ) -> None:
         self.train_fn = train_fn
@@ -103,6 +105,9 @@ class DistributedTrainer:
         self.replay_hook = replay_hook
         self.replay_interval = replay_interval
         self._last_replay = time.time()
+        self.consolidation_hook = consolidation_hook
+        self.consolidation_interval = consolidation_interval
+        self._last_consolidation = time.time()
 
 
     def run(self, steps: int) -> None:
@@ -177,6 +182,13 @@ class DistributedTrainer:
                 if time.time() - self._last_replay >= self.replay_interval:
                     self.replay_hook()
                     self._last_replay = time.time()
+            if (
+                self.consolidation_hook is not None
+                and self.consolidation_interval is not None
+            ):
+                if time.time() - self._last_consolidation >= self.consolidation_interval:
+                    self.consolidation_hook()
+                    self._last_consolidation = time.time()
         if self.telemetry:
             self.telemetry.stop()
         if self.micro_batcher:
