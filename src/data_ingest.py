@@ -156,6 +156,15 @@ def _run_in_enclave(
     """Execute ``fn`` directly or via ``runner``."""
     return runner.run(fn, *args, **kwargs) if runner is not None else fn(*args, **kwargs)
 
+def _run_in_enclave(
+    runner: EnclaveRunner | None,
+    fn: Callable[..., Any],
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    """Execute ``fn`` directly or via ``runner``."""
+    return runner.run(fn, *args, **kwargs) if runner is not None else fn(*args, **kwargs)
+
 
 class ActiveDataSelector:
     """Score triples by entropy and output weights in ``[0, 1]``."""
@@ -659,6 +668,7 @@ def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0, ru
     return _run_in_enclave(runner, _filter_dataset_impl, text_files, threshold)
 
 
+
 def choose_weighted_dataset(
     dataset_dirs: Iterable[str | Path], agent: DatasetWeightAgent
 ) -> Path:
@@ -673,6 +683,7 @@ def choose_weighted_dataset(
     probs = weights / weights.sum()
     idx = int(np.random.choice(len(dirs), p=probs))
     return Path(dirs[idx])
+
 
 
 def _auto_label_triples_impl(
