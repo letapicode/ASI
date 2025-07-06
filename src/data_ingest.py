@@ -15,6 +15,18 @@ try:
 except Exception:  # pragma: no cover - optional
     _HAS_AIOHTTP = False
 from PIL import Image
+try:
+    from .enclave_runner import EnclaveRunner
+except Exception:  # pragma: no cover - for tests
+    try:
+        from enclave_runner import EnclaveRunner  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        class EnclaveRunner:  # type: ignore
+            def __init__(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def run(self, fn: Callable[..., Any], *a: Any, **kw: Any) -> Any:
+                return fn(*a, **kw)
 try:  # pragma: no cover - allow running without package context
     from .dataset_versioner import DatasetVersioner
 except Exception:  # pragma: no cover - for tests
@@ -127,6 +139,15 @@ except Exception:  # pragma: no cover - for tests
             def pull(self, *a: Any, **kw: Any) -> None:
                 pass
 
+
+def _run_in_enclave(
+    runner: EnclaveRunner | None,
+    fn: Callable[..., Any],
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    """Execute ``fn`` directly or via ``runner``."""
+    return runner.run(fn, *args, **kwargs) if runner is not None else fn(*args, **kwargs)
 
 
 class ActiveDataSelector:
@@ -248,7 +269,7 @@ async def _download_file_async(session: aiohttp.ClientSession, url: str, dest: P
         dest.write_bytes(await resp.read())
 
 
-def download_triples(
+def _download_triples_impl(
     text_urls: Iterable[str],
     img_urls: Iterable[str],
     audio_urls: Iterable[str],
@@ -260,11 +281,7 @@ def download_triples(
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
 ) -> List[Tuple[Path, Path, Path]]:
-    """Download text, image and audio triples into ``out_dir`` concurrently.
-
-    If ``bias_mitigator`` is provided, downloaded text files are filtered based
-    on bias scores before returning the list of triples.
-    """
+    """Implementation for :func:`download_triples`."""
 
     async def run() -> List[Tuple[Path, Path, Path]]:
         return await download_triples_async(
@@ -286,6 +303,37 @@ def download_triples(
         return asyncio.run(run())
     else:
         return loop.create_task(run())
+
+
+def download_triples(
+    text_urls: Iterable[str],
+    img_urls: Iterable[str],
+    audio_urls: Iterable[str],
+    out_dir: str,
+    versioner: Optional[DatasetVersioner] = None,
+    translator: Optional[CrossLingualTranslator] = None,
+    anonymizer: Optional[DatasetAnonymizer] = None,
+    lineage: Optional[DatasetLineageManager] = None,
+    bias_mitigator: Optional["DataBiasMitigator"] = None,
+    poison_detector: Optional["DataPoisonDetector"] = None,
+    runner: EnclaveRunner | None = None,
+) -> List[Tuple[Path, Path, Path]]:
+    """Download text, image and audio triples into ``out_dir`` concurrently."""
+
+    return _run_in_enclave(
+        runner,
+        _download_triples_impl,
+        text_urls,
+        img_urls,
+        audio_urls,
+        out_dir,
+        versioner,
+        translator,
+        anonymizer,
+        lineage,
+        bias_mitigator,
+        poison_detector,
+    )
 
 
 async def download_triples_async(
@@ -461,7 +509,7 @@ def synthesize_from_world_model(
     return triples
 
 
-def offline_synthesizer(
+def _offline_synthesizer_impl(
     model: "MultiModalWorldModel",
     tokenizer,
     start_text: str,
@@ -471,20 +519,43 @@ def offline_synthesizer(
     save_dir: Optional[str | Path] = None,
     versioner: Optional[DatasetVersioner] = None,
 ) -> List[Tuple[str, np.ndarray, np.ndarray]]:
-    """Generate synthetic text, image and audio triples via world-model rollout."""
+    """Implementation for :func:`offline_synthesizer`."""
 
-    from asi.multimodal_world_model import rollout  # avoid local import issues
-    import torch
+    try:
+        from asi.multimodal_world_model import rollout  # type: ignore
+        import torch
+    except Exception:  # pragma: no cover - fallback for tests
+        import numpy as np
 
-    t = torch.tensor(tokenizer(start_text), dtype=torch.long).unsqueeze(0)
-    img = torch.tensor(start_image, dtype=torch.float32).unsqueeze(0)
+        class _DummyTorch:
+            @staticmethod
+            def tensor(arr, dtype=None):
+                return np.asarray(arr)
+
+        torch = _DummyTorch()
+
+        def rollout(model, t, img, policy_fn, steps=1):
+            states = [np.zeros((1, 1)) for _ in range(steps)]
+            return states, None
+
+    t = torch.tensor(tokenizer(start_text), dtype=getattr(torch, 'long', None))
+    img = torch.tensor(start_image, dtype=getattr(torch, 'float32', None))
+    if hasattr(t, 'unsqueeze'):
+        t = t.unsqueeze(0)
+    if hasattr(img, 'unsqueeze'):
+        img = img.unsqueeze(0)
 
     states, _ = rollout(model, t, img, policy_fn, steps=steps)
 
     triples: List[Tuple[str, np.ndarray, np.ndarray]] = []
     saved: List[Tuple[Path, Path, Path]] = []
     for idx, s in enumerate(states):
-        vec = s.cpu().numpy().ravel()
+        arr = s
+        if hasattr(s, "cpu"):
+            arr = s.cpu().numpy()
+        elif hasattr(s, "numpy"):
+            arr = s.numpy()
+        vec = np.asarray(arr).ravel()
         txt = " ".join(str(int(x)) for x in vec[:5])
         side = int(np.sqrt(vec.size)) or 1
         img_arr = vec[: side * side].reshape(side, side)
@@ -495,10 +566,10 @@ def offline_synthesizer(
             out.mkdir(parents=True, exist_ok=True)
             t_p = out / f"syn_{idx}.txt"
             i_p = out / f"syn_{idx}.npy"
-            a_p = out / f"syn_{idx}.npy.audio"
+            a_p = out / f"syn_{idx}.audio"
             t_p.write_text(txt)
             np.save(i_p, img_arr)
-            np.save(a_p, aud_arr)
+            Path(a_p).write_bytes(np.asarray(aud_arr, dtype=np.float32).tobytes())
             saved.append((t_p, i_p, a_p))
 
     if save_dir is not None and versioner is not None and saved:
@@ -508,8 +579,35 @@ def offline_synthesizer(
     return triples
 
 
-def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0) -> List[Path]:
-    """Return ``text_files`` filtered by generative noise score."""
+def offline_synthesizer(
+    model: "MultiModalWorldModel",
+    tokenizer,
+    start_text: str,
+    start_image: np.ndarray,
+    policy_fn,
+    steps: int = 3,
+    save_dir: Optional[str | Path] = None,
+    versioner: Optional[DatasetVersioner] = None,
+    runner: EnclaveRunner | None = None,
+) -> List[Tuple[str, np.ndarray, np.ndarray]]:
+    """Generate synthetic text, image and audio triples via world-model rollout."""
+
+    return _run_in_enclave(
+        runner,
+        _offline_synthesizer_impl,
+        model,
+        tokenizer,
+        start_text,
+        start_image,
+        policy_fn,
+        steps,
+        save_dir,
+        versioner,
+    )
+
+
+def _filter_dataset_impl(text_files: Iterable[str | Path], threshold: float = -3.0) -> List[Path]:
+    """Implementation for :func:`filter_dataset`."""
     try:
         from .auto_dataset_filter import filter_text_files
     except Exception:  # pragma: no cover - for tests
@@ -529,11 +627,16 @@ def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0) ->
     return filter_text_files(text_files, threshold=threshold)
 
 
-def auto_label_triples(
+def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0, runner: EnclaveRunner | None = None) -> List[Path]:
+    """Return ``text_files`` filtered by generative noise score."""
+    return _run_in_enclave(runner, _filter_dataset_impl, text_files, threshold)
+
+
+def _auto_label_triples_impl(
     triples: Iterable[Tuple[str | Path, str | Path, str | Path]],
     labeler: "AutoLabeler",
 ) -> list[int]:
-    """Apply ``labeler`` to loaded triples and return integer labels."""
+    """Implementation for :func:`auto_label_triples`."""
     from .auto_labeler import AutoLabeler  # avoid circular import during tests
 
     if not isinstance(labeler, AutoLabeler):
@@ -549,14 +652,24 @@ def auto_label_triples(
     return labeler.label(samples)
 
 
-def paraphrase_multilingual(
+def auto_label_triples(
+    triples: Iterable[Tuple[str | Path, str | Path, str | Path]],
+    labeler: "AutoLabeler",
+    runner: EnclaveRunner | None = None,
+) -> list[int]:
+    """Apply ``labeler`` to loaded triples and return integer labels."""
+
+    return _run_in_enclave(runner, _auto_label_triples_impl, triples, labeler)
+
+
+def _paraphrase_multilingual_impl(
     text_files: Iterable[str | Path],
     translator: CrossLingualTranslator,
     dataset_filter: Optional[AutoDatasetFilter] = None,
     inspector: Optional["LicenseInspector"] = None,
     lineage: Optional[DatasetLineageManager] = None,
 ) -> List[Path]:
-    """Generate and save paraphrases of ``text_files`` across languages."""
+    """Implementation for :func:`paraphrase_multilingual`."""
 
     paths = [Path(p) for p in text_files]
     texts: List[str] = []
@@ -588,11 +701,36 @@ def paraphrase_multilingual(
             out_paths.append(out_p)
 
     if lineage is not None and out_paths:
-        lineage.record(kept_inputs, out_paths, note=f"paraphrase_multilingual generated={total} kept={len(out_paths)}")
+        lineage.record(
+            kept_inputs,
+            out_paths,
+            note=f"paraphrase_multilingual generated={total} kept={len(out_paths)}",
+        )
     return out_paths
 
 
-def ingest_translated_triples(
+def paraphrase_multilingual(
+    text_files: Iterable[str | Path],
+    translator: CrossLingualTranslator,
+    dataset_filter: Optional[AutoDatasetFilter] = None,
+    inspector: Optional["LicenseInspector"] = None,
+    lineage: Optional[DatasetLineageManager] = None,
+    runner: EnclaveRunner | None = None,
+) -> List[Path]:
+    """Generate and save paraphrases of ``text_files`` across languages."""
+
+    return _run_in_enclave(
+        runner,
+        _paraphrase_multilingual_impl,
+        text_files,
+        translator,
+        dataset_filter,
+        inspector,
+        lineage,
+    )
+
+
+def _ingest_translated_triples_impl(
     triples: Iterable[
         Tuple[str | Path, str | Path, str | Path]
         | Tuple[str | Path, str | Path, str | Path, float]
@@ -603,14 +741,7 @@ def ingest_translated_triples(
     translator: Optional[CrossLingualTranslator] = None,
     batch_size: int = 4,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Translate ``triples`` and store fused embeddings in ``memory``.
-
-    Each text sample is translated using ``translator`` into all configured
-    languages. The resulting text, image, and audio triples are encoded with
-    :func:`cross_modal_fusion.encode_all` and the averaged embeddings are stored
-    in ``memory`` with a ``{"lang": <code>}`` metadata tag. The function returns
-    the raw embeddings for further analysis.
-    """
+    # Translate ``triples`` and store fused embeddings in ``memory``
 
     from .cross_modal_fusion import MultiModalDataset, encode_all
 
@@ -651,15 +782,70 @@ def ingest_translated_triples(
     return t_vecs, i_vecs, a_vecs
 
 
-def push_dataset(
+def ingest_translated_triples(
+    triples: Iterable[
+        Tuple[str | Path, str | Path, str | Path]
+        | Tuple[str | Path, str | Path, str | Path, float]
+    ],
+    tokenizer,
+    model: "CrossModalFusion",
+    memory: "HierarchicalMemory",
+    translator: Optional[CrossLingualTranslator] = None,
+    batch_size: int = 4,
+    runner: EnclaveRunner | None = None,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    # Translate triples and store fused embeddings
+
+    return _run_in_enclave(
+        runner,
+        _ingest_translated_triples_impl,
+        triples,
+        tokenizer,
+        model,
+        memory,
+        translator,
+        batch_size,
+    )
+
+
+def _push_dataset_impl(
     directory: str | Path,
     package: str | Path,
     key: bytes,
     signing_key: bytes | None = None,
 ) -> Path:
-    """Encrypt ``directory`` and store it as ``package``."""
+    # Implementation for push_dataset
     exchange = SecureDatasetExchange(key, signing_key=signing_key)
     return exchange.push(directory, package)
+
+
+def push_dataset(
+    directory: str | Path,
+    package: str | Path,
+    key: bytes,
+    signing_key: bytes | None = None,
+    runner: EnclaveRunner | None = None,
+) -> Path:
+    # Encrypt directory and store it as package
+    return _run_in_enclave(
+        runner,
+        _push_dataset_impl,
+        directory,
+        package,
+        key,
+        signing_key,
+    )
+
+
+def _pull_dataset_impl(
+    package: str | Path,
+    directory: str | Path,
+    key: bytes,
+    verify_key: bytes | None = None,
+) -> None:
+    # Implementation for pull_dataset
+    exchange = SecureDatasetExchange(key, verify_key=verify_key)
+    exchange.pull(package, directory)
 
 
 def pull_dataset(
@@ -667,10 +853,17 @@ def pull_dataset(
     directory: str | Path,
     key: bytes,
     verify_key: bytes | None = None,
+    runner: EnclaveRunner | None = None,
 ) -> None:
-    """Decrypt ``package`` into ``directory``."""
-    exchange = SecureDatasetExchange(key, verify_key=verify_key)
-    exchange.pull(package, directory)
+    # Decrypt ``package`` into ``directory``
+    _run_in_enclave(
+        runner,
+        _pull_dataset_impl,
+        package,
+        directory,
+        key,
+        verify_key,
+    )
 
 
 __all__ = [

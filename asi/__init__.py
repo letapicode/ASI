@@ -31,6 +31,7 @@ for _m in [
     "memory_pb2_grpc",
     "quantum_memory_server",
     "quantum_memory_client",
+    "enclave_runner",
 ]:
     _import(_m)
 
