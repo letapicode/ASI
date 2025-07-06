@@ -248,6 +248,7 @@ from .retrieval_rl import RetrievalPolicy, train_policy
 from .interpretability_dashboard import InterpretabilityDashboard
 from .graph_ui import GraphUI
 from .nl_graph_editor import NLGraphEditor
+from .voice_graph_controller import VoiceGraphController
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
