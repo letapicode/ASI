@@ -5,6 +5,12 @@ import sys
 torch_stub = types.SimpleNamespace(
     tensor=lambda *a, **k: None,
     randn=lambda *a, **k: None,
+    Tensor=object,
+    nn=types.SimpleNamespace(
+        Module=object,
+        Linear=lambda *a, **k: None,
+        functional=types.SimpleNamespace(cosine_similarity=lambda *a, **k: None),
+    ),
 )
 sys.modules['torch'] = torch_stub
 import importlib.machinery
