@@ -31,6 +31,7 @@ from .vector_store import VectorStore, FaissVectorStore
 from .encrypted_vector_store import EncryptedVectorStore
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
+from .ephemeral_vector_store import EphemeralVectorStore
 from .iter_align import IterativeAligner
 from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 from .chunkwise_retrainer import ChunkWiseRetrainer

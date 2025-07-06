@@ -344,6 +344,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      for vector search using `quantum_retrieval.amplify_search`. The accompanying
      `QuantumMemoryClient` lets peers push embeddings and query the server over
      the network.
+37c. **Ephemeral vector store**: `EphemeralVectorStore` keeps in-memory vectors
+     with a TTL and integrates into `HierarchicalMemory` via `store_type="ephemeral"`.
 38. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.

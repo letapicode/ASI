@@ -18,6 +18,7 @@ from .encrypted_vector_store import EncryptedVectorStore
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .hopfield_memory import HopfieldMemory
+from .ephemeral_vector_store import EphemeralVectorStore
 from .data_ingest import CrossLingualTranslator
 from .retrieval_rl import RetrievalPolicy
 from .user_preferences import UserPreferences
@@ -125,6 +126,8 @@ class HierarchicalMemory:
         retrieval_policy: "RetrievalPolicy | None" = None,
 
         encryption_key: bytes | None = None,
+        store_type: str | None = None,
+        ephemeral_ttl: float = 60.0,
 
     ) -> None:
         if temporal_decay is None:
@@ -135,7 +138,9 @@ class HierarchicalMemory:
             )
         self.use_async = use_async
         self._next_id = 0
-        if use_hopfield:
+        if store_type == "ephemeral":
+            self.store = EphemeralVectorStore(dim=compressed_dim, ttl=ephemeral_ttl)
+        elif use_hopfield:
             self.store = HopfieldStore(dim=compressed_dim)
         elif use_async:
             self.store = AsyncFaissVectorStore(dim=compressed_dim, path=db_path)
