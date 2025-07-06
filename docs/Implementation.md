@@ -827,6 +827,12 @@ files is logged through `DatasetLineageManager`. To quantify fairness gains,
 run `CrossLingualFairnessEvaluator` on the dataset before and after augmentation
 and compare the demographic parity gap.
 
+`src/dataset_weight_agent.py` maintains per-dataset weights by combining
+license checks from `LicenseInspector`, bias scores from `dataset_bias_detector`
+and Q-learning updates from validation accuracy and fairness statistics.
+`ActiveDataSelector` multiplies sample weights by these learned factors so
+biased or non-compliant datasets are down‑weighted during training.
+
 ## LoRA Merger
 
 `src/lora_merger.py` merges multiple LoRA checkpoints by weighted averaging. Use `scripts/merge_lora.py` to create a single adapter file before loading it in the model.

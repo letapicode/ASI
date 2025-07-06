@@ -448,9 +448,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     lightweight SQLite database. `license_inspector.py` loads the database to
     flag incompatible licenses. The plan is to crowd‑source additional data hub
     scrapers so community members can contribute new sources via pull requests.
-    Discovered entries are now scored by `rl_dataset_discovery.DatasetQualityAgent`
-    which weights datasets based on license compatibility, diversity metrics and
-    novelty. `store_datasets()` saves this weight for downstream ranking.
+    Discovered entries are scored by `rl_dataset_discovery.DatasetQualityAgent`
+    and the new `dataset_weight_agent.DatasetWeightAgent`, which tracks bias
+    scores and license validity to refine weights via Q-learning. `store_datasets()`
+    saves these weights for downstream ranking.
  
 83. **Analogy-based retrieval evaluation**: Use `analogical_retrieval.analogy_search()`
     on a small word-analogy dataset. For each tuple `(A, B, Q)` compute the

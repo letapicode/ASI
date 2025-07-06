@@ -174,6 +174,7 @@ from .dataset_bias_detector import (
     text_bias_score,
     file_bias_score,
 )
+from .dataset_weight_agent import DatasetWeightAgent
 from .data_bias_mitigator import DataBiasMitigator
 from .data_poison_detector import DataPoisonDetector
 from .auto_labeler import AutoLabeler

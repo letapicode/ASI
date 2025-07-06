@@ -139,6 +139,22 @@ except Exception:  # pragma: no cover - for tests
             def pull(self, *a: Any, **kw: Any) -> None:
                 pass
 
+try:
+    from .dataset_weight_agent import DatasetWeightAgent
+except Exception:  # pragma: no cover - for tests
+    class DatasetWeightAgent:  # type: ignore
+        def weight(self, name: str) -> float:
+            return 1.0
+
+
+def _run_in_enclave(
+    runner: EnclaveRunner | None,
+    fn: Callable[..., Any],
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    """Execute ``fn`` directly or via ``runner``."""
+    return runner.run(fn, *args, **kwargs) if runner is not None else fn(*args, **kwargs)
 
 def _run_in_enclave(
     runner: EnclaveRunner | None,
@@ -165,6 +181,7 @@ class ActiveDataSelector:
         self,
         triples: Iterable[Tuple[Any, Any, Any]],
         probs: Iterable[np.ndarray],
+        weight_agent: DatasetWeightAgent | None = None,
     ) -> list[Tuple[Tuple[Any, Any, Any], float]]:
         """Return ``(triple, weight)`` pairs with bias-adjusted weights."""
         results: list[tuple[tuple[Any, Any, Any], float]] = []
@@ -176,6 +193,12 @@ class ActiveDataSelector:
                 w *= bias
             except Exception:
                 pass
+            if weight_agent is not None:
+                try:
+                    name = Path(t[0]).parent.name
+                    w *= weight_agent.weight(name)
+                except Exception:
+                    pass
             results.append((t, float(w)))
         return results
 
@@ -645,6 +668,24 @@ def filter_dataset(text_files: Iterable[str | Path], threshold: float = -3.0, ru
     return _run_in_enclave(runner, _filter_dataset_impl, text_files, threshold)
 
 
+
+def choose_weighted_dataset(
+    dataset_dirs: Iterable[str | Path], agent: DatasetWeightAgent
+) -> Path:
+    """Return a dataset directory sampled according to ``agent`` weights."""
+    dirs = list(dataset_dirs)
+    if not dirs:
+        raise ValueError("no dataset directories provided")
+    names = [Path(d).name for d in dirs]
+    weights = np.array([agent.weight(n) for n in names], dtype=float)
+    if weights.sum() <= 0:
+        weights = np.ones_like(weights)
+    probs = weights / weights.sum()
+    idx = int(np.random.choice(len(dirs), p=probs))
+    return Path(dirs[idx])
+
+
+
 def _auto_label_triples_impl(
     triples: Iterable[Tuple[str | Path, str | Path, str | Path]],
     labeler: "AutoLabeler",
@@ -897,6 +938,7 @@ __all__ = [
     "ingest_translated_triples",
     "push_dataset",
     "pull_dataset",
+    "choose_weighted_dataset",
     "ActiveDataSelector",
     "CrossLingualTranslator",
     "CrossLingualSpeechTranslator",
