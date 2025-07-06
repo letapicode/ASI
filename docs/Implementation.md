@@ -743,6 +743,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   script `scripts/resource_broker_demo.py`. The broker now reports per-accelerator
   utilisation via `get_load()` and allows allocating jobs to specific
   accelerator types.
+- Introduce an `ARDebugger` that streams robot state via WebSockets so predicted
+  and actual trajectories from `world_model_rl` can be overlaid in an AR client.
+  See `scripts/ar_robot_demo.py` for a minimal demo.
 - Add `research_ingest.py` which fetches new papers and outputs daily summaries
   under `research_logs/`.
 - Expand `GenerativeDataAugmentor` with `synthesize_3d()` for basic 3D asset
