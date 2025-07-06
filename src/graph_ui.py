@@ -10,6 +10,7 @@ import uvicorn
 
 from .graph_of_thought import GraphOfThought
 from .reasoning_history import ReasoningHistoryLogger
+from .nl_graph_editor import NLGraphEditor
 
 
 _HTML = """
@@ -22,6 +23,10 @@ _HTML = """
 </head>
 <body>
 <h1>Reasoning Graph</h1>
+<div>
+  <input id='cmd' type='text' placeholder='Edit command'>
+  <button onclick='sendCmd()'>Apply</button>
+</div>
 <svg width="600" height="400"></svg>
 <script>
 async function load() {
@@ -56,6 +61,15 @@ async function load() {
         .attr('cy', d => d.y);
   });
 }
+async function sendCmd() {
+  const text = document.getElementById('cmd').value;
+  await fetch('/graph/nl_edit', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({command: text})
+  });
+  await load();
+}
 load();
 </script>
 </body>
@@ -69,6 +83,7 @@ class GraphUI:
     def __init__(self, graph: GraphOfThought, logger: ReasoningHistoryLogger) -> None:
         self.graph = graph
         self.logger = logger
+        self.editor = NLGraphEditor(graph)
         self.app = FastAPI()
         self._setup_routes()
         self.thread: threading.Thread | None = None
@@ -129,6 +144,17 @@ class GraphUI:
                 self.graph.edges[src] = [d for d in self.graph.edges[src] if d != dst]
             await _record()
             return JSONResponse({'status': 'ok'})
+
+        @self.app.post('/graph/nl_edit')
+        async def nl_edit(req: Request) -> Any:
+            data = await req.json()
+            cmd = data.get('command', '')
+            try:
+                result = self.editor.apply(cmd)
+            except Exception as e:
+                return JSONResponse({'status': 'error', 'error': str(e)}, status_code=400)
+            await _record()
+            return JSONResponse(result)
 
         @self.app.post('/graph/recompute')
         async def recompute() -> Any:
