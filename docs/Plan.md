@@ -462,6 +462,7 @@ drops below a threshold, while `submit_at_optimal_time()` waits for the lowest
 forecast in the next 24 h.  Both helpers call `submit_job()` once conditions are
 favourable, reducing cluster emissions without manual tuning.
 
+The new `CarbonCostAwareScheduler` extends this by also polling cloud price APIs and weighting the forecasts. Configurable `carbon_weight` and `cost_weight` pick the cheapest-greenest slot before calling `submit_job()`.
 
 
 
