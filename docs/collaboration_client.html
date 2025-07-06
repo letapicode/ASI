@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Collaboration Client</title>
+</head>
+<body>
+<h1>Collaboration Client</h1>
+<ul id="tasks"></ul>
+<ul id="logs"></ul>
+<input id="taskInput" placeholder="new task">
+<button id="addTask">Add</button>
+<input id="logInput" placeholder="log message">
+<button id="addLog">Log</button>
+<script>
+const ws = new WebSocket(`ws://${location.hostname}:${location.port}/ws`);
+ws.onmessage = (ev) => {
+  const data = JSON.parse(ev.data);
+  if (data.tasks) {
+    const ul = document.getElementById('tasks');
+    ul.innerHTML = '';
+    data.tasks.forEach(t => {
+      const li = document.createElement('li');
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+  }
+  if (data.logs) {
+    const ul = document.getElementById('logs');
+    ul.innerHTML = '';
+    data.logs.forEach(([ts, msg]) => {
+      const li = document.createElement('li');
+      li.textContent = `${ts}: ${msg}`;
+      ul.appendChild(li);
+    });
+  }
+};
+document.getElementById('addTask').onclick = () => {
+  const task = document.getElementById('taskInput').value;
+  ws.send(JSON.stringify({type: 'add_task', task, ts: new Date().toISOString()}));
+};
+document.getElementById('addLog').onclick = () => {
+  const msg = document.getElementById('logInput').value;
+  ws.send(JSON.stringify({type: 'log', message: msg, ts: new Date().toISOString()}));
+};
+</script>
+</body>
+</html>

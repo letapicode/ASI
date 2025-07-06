@@ -2,10 +2,20 @@ import unittest
 import http.client
 import json
 import time
+import importlib
+import types
+import sys
+from pathlib import Path
 
-from asi.collaboration_portal import CollaborationPortal
-from asi.telemetry import TelemetryLogger
-from asi.reasoning_history import ReasoningHistoryLogger
+asi_pkg = types.ModuleType('asi')
+sys.modules.setdefault('asi', asi_pkg)
+src_pkg = types.ModuleType('src')
+src_pkg.__path__ = [str(Path('src'))]
+sys.modules.setdefault('src', src_pkg)
+
+CollaborationPortal = importlib.import_module('src.collaboration_portal').CollaborationPortal
+TelemetryLogger = importlib.import_module('src.telemetry').TelemetryLogger
+ReasoningHistoryLogger = importlib.import_module('src.reasoning_history').ReasoningHistoryLogger
 
 
 class TestCollaborationPortal(unittest.TestCase):
