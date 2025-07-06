@@ -86,6 +86,8 @@ Citations point to the most recent public work so you can drill straight into th
 
 The helper `download_triples()` now uses `aiohttp` to fetch files concurrently, speeding up dataset preparation.
 
+`CarbonAwareDatasetIngest` wraps this helper with `CarbonAwareScheduler`. Set `threshold` and `region` to postpone downloads until carbon intensity drops below the limit. Internal runs with `threshold=300` gCO₂/kWh saved ~30 % of the energy versus immediate fetching.
+
 ---
 
 ## 6  Will “just scaling Transformers” reach ASI?
