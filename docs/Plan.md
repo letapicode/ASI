@@ -480,6 +480,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     reconstructed and passed through the model for consolidation. Integrated
     with `DistributedTrainer` via the new replay hook.
 
+87. **Dependency security scan**: `scripts/security_scan.py` runs `pip-audit`
+    and `bandit` to catch vulnerable packages and risky code. The CI workflow
+    executes this scan after the unit tests.
+
 
 
 
