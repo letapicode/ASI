@@ -7,6 +7,7 @@ import importlib.machinery
 import importlib.util
 import sys
 import types
+import wave
 loader_ana = importlib.machinery.SourceFileLoader('src.dataset_anonymizer', 'src/dataset_anonymizer.py')
 spec_ana = importlib.util.spec_from_loader(loader_ana.name, loader_ana)
 ana_mod = importlib.util.module_from_spec(spec_ana)
@@ -244,6 +245,56 @@ class TestDataIngest(unittest.TestCase):
             self.assertTrue(out)
             log = json.loads((Path(root) / "dataset_lineage.json").read_text())
             self.assertIn("paraphrase_multilingual", log[-1]["note"])
+
+    def test_ingest_stats(self):
+        class DummyDataset(list):
+            def __init__(self, items, tok):
+                super().__init__(items)
+                self.tok = tok
+
+            def __getitem__(self, idx):
+                t, i, a = super().__getitem__(idx)
+                import torch
+                return (
+                    torch.tensor(self.tok(t), dtype=torch.long),
+                    torch.tensor(i),
+                    torch.tensor(a),
+                )
+
+            def __len__(self):
+                return super().__len__()
+
+        def dummy_encode_all(model, dataset, batch_size=4):
+            import torch
+            n = len(dataset)
+            return torch.zeros(n, 2), torch.zeros(n, 2), torch.zeros(n, 2)
+
+        with tempfile.TemporaryDirectory() as root:
+            t = Path(root) / "0.txt"
+            i = Path(root) / "0.npy"
+            a = Path(root) / "0.wav"
+            t.write_text("hi")
+            np.save(i, np.zeros((2, 2), dtype=np.float32))
+            with wave.open(str(a), "wb") as w:
+                w.setnchannels(1)
+                w.setsampwidth(2)
+                w.setframerate(16000)
+                w.writeframes(np.zeros(2, dtype=np.int16))
+
+            mem = types.SimpleNamespace(add_multimodal=lambda *a, **kw: None)
+
+            tok = lambda x: list(range(len(x)))
+
+            dummy_mod = types.ModuleType("src.cross_modal_fusion")
+            dummy_mod.MultiModalDataset = DummyDataset
+            dummy_mod.encode_all = dummy_encode_all
+            with patch.dict(sys.modules, {"src.cross_modal_fusion": dummy_mod}):
+                vecs = di.ingest_translated_triples(
+                    [(t, i, a)], tok, object(), mem, batch_size=1, return_stats=True
+                )
+            self.assertEqual(vecs[3]["text_tokens"], 2)
+            self.assertEqual(vecs[3]["image_pixels"], 4)
+            self.assertEqual(vecs[3]["audio_samples"], 2)
 
 
 if __name__ == '__main__':

@@ -367,6 +367,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     fairness gains by running `CrossLingualFairnessEvaluator` on the dataset
     before and after augmentation—expect the demographic parity gap to shrink
     by at least 5%.
+40c. **Image and audio fairness metrics**: `FairnessEvaluator.evaluate_multimodal()`
+    computes demographic parity and equal opportunity for image and audio
+    datasets. `ingest_translated_triples()` now records per-modality statistics
+    so these metrics reflect dataset composition.
 41a. **Cross-lingual summarization memory**: `ContextSummaryMemory` stores summaries
      in the source language and translated forms. Results are translated back
      to the query language. See `docs/Implementation.md` for details.

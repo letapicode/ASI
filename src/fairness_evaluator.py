@@ -33,4 +33,16 @@ class FairnessEvaluator:
             "equal_opportunity": self.equal_opportunity(stats),
         }
 
+    def evaluate_multimodal(
+        self, stats: Dict[str, Dict[str, Dict[str, int]]], positive_label: str = "1"
+    ) -> Dict[str, Dict[str, float]]:
+        """Return metrics for each modality in ``stats``.
+
+        ``stats`` maps modality → group → label counts.
+        """
+        results: Dict[str, Dict[str, float]] = {}
+        for modality, groups in stats.items():
+            results[modality] = self.evaluate(groups, positive_label)
+        return results
+
 __all__ = ["FairnessEvaluator"]

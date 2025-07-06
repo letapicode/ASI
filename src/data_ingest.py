@@ -794,13 +794,15 @@ def _ingest_translated_triples_impl(
     memory: "HierarchicalMemory",
     translator: Optional[CrossLingualTranslator] = None,
     batch_size: int = 4,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    return_stats: bool = False,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor] | Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, int]]:
     # Translate ``triples`` and store fused embeddings in ``memory``
 
     from .cross_modal_fusion import MultiModalDataset, encode_all
 
     items: List[Tuple[str, Any, Any]] = []
     metas: List[Dict[str, str]] = []
+    stats: Dict[str, int] = {"text_tokens": 0, "image_pixels": 0, "audio_samples": 0}
 
     for triple in triples:
         if len(triple) == 4:
@@ -813,17 +815,21 @@ def _ingest_translated_triples_impl(
             image = np.load(i_path)
         else:
             image = np.array(Image.open(i_path))
+        stats["image_pixels"] += int(np.asarray(image).size)
         if str(a_path).endswith(".npy"):
             audio = np.load(a_path)
         else:
             with wave.open(str(a_path), "rb") as f:
                 frames = f.readframes(f.getnframes())
                 audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32)
+        stats["audio_samples"] += int(np.asarray(audio).size)
 
         translations = (
             translator.translate_all(text) if translator is not None else {"orig": text}
         )
         for lang, txt in translations.items():
+            tokens = tokenizer(txt)
+            stats["text_tokens"] += len(tokens)
             items.append((txt, image, audio))
             meta = {"lang": lang}
             if ts is not None:
@@ -833,6 +839,8 @@ def _ingest_translated_triples_impl(
     dataset = MultiModalDataset(items, tokenizer)
     t_vecs, i_vecs, a_vecs = encode_all(model, dataset, batch_size=batch_size)
     memory.add_multimodal(t_vecs, i_vecs, a_vecs, metas)
+    if return_stats:
+        return t_vecs, i_vecs, a_vecs, stats
     return t_vecs, i_vecs, a_vecs
 
 
@@ -847,7 +855,8 @@ def ingest_translated_triples(
     translator: Optional[CrossLingualTranslator] = None,
     batch_size: int = 4,
     runner: EnclaveRunner | None = None,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    return_stats: bool = False,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor] | Tuple[torch.Tensor, torch.Tensor, torch.Tensor, Dict[str, int]]:
     # Translate triples and store fused embeddings
 
     return _run_in_enclave(
@@ -859,6 +868,7 @@ def ingest_translated_triples(
         memory,
         translator,
         batch_size,
+        return_stats,
     )
 
 
