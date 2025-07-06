@@ -18,6 +18,8 @@ def get_current_price(provider: str, region: str, instance_type: str) -> float:
         url = f"https://pricing.aws.com/{region}/{instance_type}/price"
     elif provider.lower() in {"gcp", "google"}:
         url = f"https://cloudpricing.googleapis.com/{region}/{instance_type}/price"
+    elif provider.lower() in {"azure", "az"}:
+        url = f"https://azurepricing.microsoft.com/{region}/{instance_type}/price"
     else:
         raise ValueError(f"Unknown provider {provider}")
     try:
@@ -35,6 +37,8 @@ def get_hourly_price_forecast(provider: str, region: str, instance_type: str) ->
         url = f"https://pricing.aws.com/{region}/{instance_type}/forecast"
     elif provider.lower() in {"gcp", "google"}:
         url = f"https://cloudpricing.googleapis.com/{region}/{instance_type}/forecast"
+    elif provider.lower() in {"azure", "az"}:
+        url = f"https://azurepricing.microsoft.com/{region}/{instance_type}/forecast"
     else:
         raise ValueError(f"Unknown provider {provider}")
     try:
@@ -104,9 +108,46 @@ class CarbonCostAwareScheduler(CarbonAwareScheduler):
         return submit_job(command, backend=self.backend)
 
 
+@dataclass
+class MultiProviderScheduler(CarbonCostAwareScheduler):
+    """Select the cheapest-greenest cloud provider."""
+
+    providers: List[str] = field(default_factory=lambda: ["aws", "gcp", "azure"])
+    backend_map: dict[str, str] = field(
+        default_factory=lambda: {"aws": "slurm", "gcp": "k8s", "azure": "slurm"}
+    )
+
+    def submit_at_optimal_time(
+        self, command: Union[str, List[str]], max_delay: float = 21600.0
+    ) -> str:
+        carbon_forecast = get_hourly_forecast(self.region)
+        best_provider = self.provider
+        best_score = float("inf")
+        best_delay = 0.0
+        for prov in self.providers:
+            price_forecast = get_hourly_price_forecast(prov, self.region, self.instance_type)
+            n = min(len(carbon_forecast), len(price_forecast))
+            if not n:
+                continue
+            scores = [
+                self.carbon_weight * carbon_forecast[i] + self.cost_weight * price_forecast[i]
+                for i in range(n)
+            ]
+            idx = int(min(range(n), key=lambda i: scores[i]))
+            if scores[idx] < best_score:
+                best_score = scores[idx]
+                best_delay = idx * 3600.0
+                best_provider = prov
+        if best_delay and best_delay <= max_delay:
+            time.sleep(best_delay)
+        backend = self.backend_map.get(best_provider, self.backend)
+        return submit_job(command, backend=backend)
+
+
 __all__ = [
     "get_current_price",
     "get_hourly_price_forecast",
     "CostAwareScheduler",
     "CarbonCostAwareScheduler",
+    "MultiProviderScheduler",
 ]

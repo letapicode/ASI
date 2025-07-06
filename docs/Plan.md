@@ -163,6 +163,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   these energy-efficient neurons. When the optional Loihi SDK is installed,
   enable `use_loihi=True` to run them on neuromorphic hardware via
   `src/loihi_backend.py`.
+- `src/edge_rl_trainer.py` now takes a `use_loihi` flag and logs power
+  consumption for CPU vs. Loihi execution through `TelemetryLogger`.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
@@ -338,6 +340,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      accepts language tags from `CrossLingualMemory`; running
      `scripts/quantum_crosslingual_benchmark.py` shows parity across languages
      with ~1.5× latency.
+37b. **Quantum memory server**: `quantum_memory_server` exposes gRPC APIs
+     for vector search using `quantum_retrieval.amplify_search`. The accompanying
+     `QuantumMemoryClient` lets peers push embeddings and query the server over
+     the network.
 38. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
@@ -391,6 +397,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     with top-k sparsification or quantized gradients and integrate it with
     `DistributedTrainer`.
 56. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
+56a. **WASM export**: Add `export_to_wasm()` to turn the ONNX graphs into WebAssembly bundles for `onnxruntime-web`.
 57. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
 58. **Secure federated learner**: Train models across remote peers using encrypted gradient aggregation. Accuracy should stay within 2% of centralized training.
 59. **GPU-aware scheduler**: Monitor GPU memory and compute load to dispatch jobs dynamically. Combined with `ComputeBudgetTracker`, the new `AdaptiveScheduler` automatically pauses or resumes runs based on remaining GPU hours and historical improvement. *Carbon-intensity data now guide the scheduler to prefer lower-emission nodes, reducing the environmental footprint.*
@@ -402,7 +409,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 64. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
 65. **GraphQL memory gateway**: Expose `MemoryServer` queries through a GraphQL API and keep retrieval accuracy unchanged with <1.2× latency.
 66. **Fine-grained telemetry profiler**: Record per-module compute and memory via `FineGrainedProfiler` and ensure overhead stays below 3%.
-67. **Auto-labeling pipeline**: Use the world model to generate weak labels for unlabeled triples during ingestion and measure dataset quality improvements.
+67. **Auto-labeling pipeline**: Use the world model to generate weak labels for unlabeled triples during ingestion and refine them with an RL agent that learns from bias metrics and user feedback.
 68. **Context window profiler**: Measure memory and latency across sequence lengths. Implemented in `src/context_profiler.py` and integrated with `eval_harness.py`.
 69. **Differential privacy memory**: Use `DifferentialPrivacyMemory` to store noisy embeddings with <2% recall drop at ε=1. *Implemented in `src/dp_memory.py` with tests.*
 70. **Unified multi-modal evaluation**: Add `MultiModalEval` to `eval_harness` and target ≥90% recall on the toy dataset. *Implemented in `src/eval_harness.py` with tests.*
@@ -441,15 +448,20 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     lightweight SQLite database. `license_inspector.py` loads the database to
     flag incompatible licenses. The plan is to crowd‑source additional data hub
     scrapers so community members can contribute new sources via pull requests.
-    Discovered entries are now scored by `rl_dataset_discovery.DatasetQualityAgent`
-    which weights datasets based on license compatibility, diversity metrics and
-    novelty. `store_datasets()` saves this weight for downstream ranking.
+    Discovered entries are scored by `rl_dataset_discovery.DatasetQualityAgent`
+    and the new `dataset_weight_agent.DatasetWeightAgent`, which tracks bias
+    scores and license validity to refine weights via Q-learning. `store_datasets()`
+    saves these weights for downstream ranking.
  
 83. **Analogy-based retrieval evaluation**: Use `analogical_retrieval.analogy_search()`
     on a small word-analogy dataset. For each tuple `(A, B, Q)` compute the
     offset `B - A` and query `HierarchicalMemory.search(mode="analogy")`. Report
     the percentage of cases where the top result matches the expected word; aim
     for ≥70% accuracy on the toy set.
+
+83b. **Cross-lingual analogy evaluation**: `crosslingual_analogy_eval.analogy_accuracy`
+    loads a multilingual analogy dataset and computes accuracy using
+    `CrossLingualTranslator` so offsets can span languages.
     
 
 84. **Privacy-preserving federated RL**: Wrap `EdgeRLTrainer` with encrypted gradient
@@ -460,6 +472,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `ZKGradientProof` for each encrypted gradient. `FederatedWorldModelTrainer`
     verifies these proofs before applying updates so compromised peers cannot
     inject arbitrary gradients.
+85a. **FHE gradient aggregation**: `FHEFederatedTrainer` wraps the secure learner
+     and uses `run_fhe` to decrypt TenSEAL-encrypted gradients. Reward on the RL
+     benchmark should drop less than 5% versus plaintext training.
 86. **Offline memory replay**: `run_nightly_replay()` schedules daily sessions
     where embeddings from `HierarchicalMemory` and `ContextSummaryMemory` are
     reconstructed and passed through the model for consolidation. Integrated

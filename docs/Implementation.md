@@ -490,6 +490,23 @@ def tokenizer(t: str):
 triples = offline_synthesizer(wm, tokenizer, "hello", np.zeros((1, 4, 4)), policy, steps=2)
 ```
 
+Sensitive ingestion steps can be isolated using `EnclaveRunner`:
+
+```python
+from asi.enclave_runner import EnclaveRunner
+from asi.license_inspector import LicenseInspector
+from asi.dataset_lineage_manager import DatasetLineageManager
+from asi.data_ingest import download_triples, paraphrase_multilingual
+from pathlib import Path
+
+runner = EnclaveRunner()
+inspector = LicenseInspector()
+lineage = DatasetLineageManager("./data")
+
+triples = download_triples(text_urls, img_urls, aud_urls, "./data", lineage=lineage, runner=runner)
+paraphrase_multilingual([Path("./data/text/0.txt")], translator, None, inspector, lineage, runner=runner)
+```
+
 ## L-6 Mechanistic Interpretability Tools
 
 - `src/transformer_circuits.py` provides utilities to record attention weights
@@ -620,6 +637,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add a `CrossLingualReasoningGraph` to store reasoning nodes with language tags
   and translate them via `CrossLingualTranslator`. `GraphOfThoughtPlanner` logs
   ranked strategies to this graph when provided.
+- Extend `CrossLingualReasoningGraph` with `summarize_old_steps()` which calls
+  `ContextSummaryMemory` when traces grow beyond a threshold. Translated
+  summaries are stored via `CrossLingualTranslator.translate_all` and can be
+  returned during planning through `GraphOfThought.plan_refactor(summary_memory=)`.
 - Create a `WorldModelDistiller` module and a `scripts/distill_world_model.py`
   utility to train smaller student models from the large world model.
   **Implemented in `src/world_model_distiller.py` with the script
@@ -702,8 +723,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   **Implemented in `src/graphql_memory_gateway.py` with `scripts/graphql_memory_server.py`.**
 - Add a `FineGrainedProfiler` in `telemetry.py` to record per-module compute and memory usage and stream the metrics through `TelemetryLogger`.
   **Implemented in `src/telemetry.py`.**
-- Create an `AutoLabeler` that invokes the world model during ingestion to generate weak labels for unlabeled triples.
-  **Implemented in `src/auto_labeler.py`.**
+ - Create an `AutoLabeler` that invokes the world model during ingestion to generate weak labels for unlabeled triples. A reinforcement-learning agent now refines those labels using bias metrics and user feedback.
+   **Implemented in `src/auto_labeler.py`.**
 - Implement a `SensorimotorPretrainer` that performs self-supervised pretraining
   of `MultiModalWorldModel` on raw sensor logs. Provided
   `pretrain_sensorimotor()` in `src/sensorimotor_pretrainer.py` with a unit
@@ -806,6 +827,12 @@ files is logged through `DatasetLineageManager`. To quantify fairness gains,
 run `CrossLingualFairnessEvaluator` on the dataset before and after augmentation
 and compare the demographic parity gap.
 
+`src/dataset_weight_agent.py` maintains per-dataset weights by combining
+license checks from `LicenseInspector`, bias scores from `dataset_bias_detector`
+and Q-learning updates from validation accuracy and fairness statistics.
+`ActiveDataSelector` multiplies sample weights by these learned factors so
+biased or non-compliant datasets are down‑weighted during training.
+
 ## LoRA Merger
 
 `src/lora_merger.py` merges multiple LoRA checkpoints by weighted averaging. Use `scripts/merge_lora.py` to create a single adapter file before loading it in the model.
@@ -813,6 +840,9 @@ and compare the demographic parity gap.
 ## Edge RL Trainer
 
 `src/edge_rl_trainer.py` trains world models under a compute budget. It checks `ComputeBudgetTracker.remaining()` each step and stops when resources run low. See `scripts/train_edge_rl.py` for a usage example.
+`EdgeRLTrainer` now accepts `use_loihi=True` to run spiking layers on neuromorphic
+hardware. Energy usage for CPU vs. Loihi runs is tracked via
+`TelemetryLogger` and exposed through the new `power_usage` attribute.
 
 `src/fhe_runner.py` provides `run_fhe()` to execute small models with fully
 homomorphic encryption. It relies on the open‑source TenSEAL library and

@@ -20,6 +20,7 @@ from .async_vector_store import AsyncFaissVectorStore
 from .hopfield_memory import HopfieldMemory
 from .data_ingest import CrossLingualTranslator
 from .retrieval_rl import RetrievalPolicy
+from .user_preferences import UserPreferences
 
 
 class SSDCache:
@@ -221,10 +222,14 @@ class HierarchicalMemory:
         self.add_modalities(text, images, audio, metadata)
 
     def search_by_modality(
-        self, query: torch.Tensor, k: int = 5, modality: str | None = None
+        self,
+        query: torch.Tensor,
+        k: int = 5,
+        modality: str | None = None,
+        preferences: "UserPreferences | None" = None,
     ) -> Tuple[torch.Tensor, List[Any]]:
         """Retrieve vectors filtered by modality."""
-        vecs, metas = self.search(query, k=max(k, len(self)))
+        vecs, metas = self.search(query, k=max(k, len(self)), preferences=preferences)
         if modality is None:
             return vecs[:k], metas[:k]
         target_id = None
@@ -283,6 +288,56 @@ class HierarchicalMemory:
                 if triples:
                     self.kg.add_triples(triples)
             self._evict_if_needed()
+
+    def add_compressed(
+        self, comp: torch.Tensor, metadata: Iterable[Any] | None = None
+    ) -> None:
+        """Store already-compressed vectors directly in the vector store."""
+        if isinstance(self.store, AsyncFaissVectorStore):
+            import asyncio
+
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                asyncio.run(self.aadd_compressed(comp, metadata))
+            else:
+                return loop.create_task(self.aadd_compressed(comp, metadata))
+        arr = comp.detach().cpu().numpy()
+        metas = list(metadata) if metadata is not None else []
+        if not metas:
+            metas = [self._next_id + i for i in range(arr.shape[0])]
+            self._next_id += arr.shape[0]
+        self.store.add(arr, metas)
+        for m in metas:
+            self._usage[m] = 0
+        if self.kg is not None:
+            triples = [t for t in metas if isinstance(t, tuple) and len(t) == 3]
+            if triples:
+                self.kg.add_triples(triples)
+        self._evict_if_needed()
+
+    async def aadd_compressed(
+        self, comp: torch.Tensor, metadata: Iterable[Any] | None = None
+    ) -> None:
+        """Asynchronously store already-compressed vectors."""
+        import asyncio
+        arr = comp.detach().cpu().numpy()
+        metas = list(metadata) if metadata is not None else []
+        if not metas:
+            metas = [self._next_id + i for i in range(arr.shape[0])]
+            self._next_id += arr.shape[0]
+        if isinstance(self.store, AsyncFaissVectorStore):
+            await self.store.aadd(arr, metas)
+        else:
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, self.store.add, arr, metas)
+        for m in metas:
+            self._usage[m] = 0
+        if self.kg is not None:
+            triples = [t for t in metas if isinstance(t, tuple) and len(t) == 3]
+            if triples:
+                self.kg.add_triples(triples)
+        self._evict_if_needed()
 
     def add_multimodal(
         self,
@@ -402,6 +457,7 @@ class HierarchicalMemory:
         mode: str = "standard",
         offset: torch.Tensor | None = None,
         language: str | None = None,
+        preferences: "UserPreferences | None" = None,
     ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
         """Retrieve top-k decoded vectors and their metadata.
 
@@ -419,9 +475,9 @@ class HierarchicalMemory:
             try:
                 loop = asyncio.get_running_loop()
             except RuntimeError:
-                return asyncio.run(self.asearch(query, k))
+                return asyncio.run(self.asearch(query, k, preferences=preferences))
             else:
-                return loop.create_task(self.asearch(query, k))
+                return loop.create_task(self.asearch(query, k, preferences=preferences))
         if self.cache is not None:
             c_vecs, c_meta = self.cache.search(query.detach().cpu().numpy(), k)
         else:
@@ -456,9 +512,20 @@ class HierarchicalMemory:
             self.last_trace = None
             return empty, []
         vec = torch.cat(out_vecs, dim=0)
-        scores = torch.nn.functional.cosine_similarity(
+        base_scores = torch.nn.functional.cosine_similarity(
             vec, query.expand_as(vec), dim=1
-        ).tolist()
+        )
+        if preferences is not None and preferences.vectors:
+            pref_arr = next(iter(preferences.vectors.values()))
+            pref = torch.as_tensor(pref_arr, dtype=vec.dtype, device=vec.device)
+            if pref.numel() < vec.size(1):
+                pref = torch.nn.functional.pad(pref, (0, vec.size(1) - pref.numel()))
+            elif pref.numel() > vec.size(1):
+                pref = pref[: vec.size(1)]
+            weight = vec @ pref
+            scores = (base_scores * weight).tolist()
+        else:
+            scores = base_scores.tolist()
         if self.retrieval_policy is not None:
             order = self.retrieval_policy.rank(out_meta, scores)
             if order:
@@ -491,10 +558,10 @@ class HierarchicalMemory:
         return vec, out_meta
 
     def search_with_kg(
-        self, query: torch.Tensor, k: int = 5
+        self, query: torch.Tensor, k: int = 5, preferences: "UserPreferences | None" = None
     ) -> Tuple[torch.Tensor, List[Any], List[TimedTriple]]:
         """Retrieve vectors and matching knowledge graph triples."""
-        vecs, meta = self.search(query, k)
+        vecs, meta = self.search(query, k, preferences=preferences)
         triples: list[TimedTriple] = []
         if self.kg is not None:
             for m in meta:
@@ -509,6 +576,7 @@ class HierarchicalMemory:
         return_provenance: bool = False,
         *,
         language: str | None = None,
+        preferences: "UserPreferences | None" = None,
     ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
         """Asynchronously retrieve vectors and metadata."""
         if self.cache is not None:
@@ -548,9 +616,20 @@ class HierarchicalMemory:
             self.last_trace = None
             return empty, []
         vec = torch.cat(out_vecs, dim=0)
-        scores = torch.nn.functional.cosine_similarity(
+        base_scores = torch.nn.functional.cosine_similarity(
             vec, query.expand_as(vec), dim=1
-        ).tolist()
+        )
+        if preferences is not None and preferences.vectors:
+            pref_arr = next(iter(preferences.vectors.values()))
+            pref = torch.as_tensor(pref_arr, dtype=vec.dtype, device=vec.device)
+            if pref.numel() < vec.size(1):
+                pref = torch.nn.functional.pad(pref, (0, vec.size(1) - pref.numel()))
+            elif pref.numel() > vec.size(1):
+                pref = pref[: vec.size(1)]
+            weight = vec @ pref
+            scores = (base_scores * weight).tolist()
+        else:
+            scores = base_scores.tolist()
         if self.retrieval_policy is not None:
             order = self.retrieval_policy.rank(out_meta, scores)
             if order:

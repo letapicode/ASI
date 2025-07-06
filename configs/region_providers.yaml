@@ -1,0 +1,4 @@
+us-east-1: aws
+us-central1: gcp
+eastus: azure
+default: aws

@@ -4,6 +4,9 @@ import threading
 import time
 from collections import deque
 from typing import Callable, Deque, Any
+import yaml
+
+from .cost_aware_scheduler import get_current_price
 
 try:  # pragma: no cover - optional torch dependency
     import torch  # type: ignore
@@ -44,6 +47,7 @@ class AdaptiveScheduler:
         *,
         energy_scheduler: bool = False,
         intensity_threshold: float = 0.5,
+        region_config: str | None = None,
     ) -> None:
         if energy_scheduler and type(self) is AdaptiveScheduler:
             from .energy_aware_scheduler import EnergyAwareScheduler
@@ -67,6 +71,13 @@ class AdaptiveScheduler:
         self.max_mem = max_mem
         self.check_interval = check_interval
         self.queue: list[tuple[Callable[[], None], str | None]] = []
+        self.region_providers: dict[str, str] = {}
+        if region_config:
+            try:
+                with open(region_config) as f:
+                    self.region_providers = yaml.safe_load(f) or {}
+            except Exception:
+                self.region_providers = {}
         self._stop = threading.Event()
         self.thread = threading.Thread(target=self._loop, daemon=True)
         self.budget.start(run_id)
@@ -93,6 +104,15 @@ class AdaptiveScheduler:
         return False
 
     # --------------------------------------------------------------
+    def _get_cost_index(self, region: str | None) -> float:
+        provider = self.region_providers.get(region or "default")
+        if provider:
+            price = get_current_price(provider, region or "", "m5.large")
+            carbon = self.telemetry.get_live_carbon_intensity(region)
+            return price * carbon
+        return self.telemetry.get_cost_index(region)
+
+    # --------------------------------------------------------------
     def _loop(self) -> None:
         while not self._stop.is_set():
             if not self.queue:
@@ -109,7 +129,7 @@ class AdaptiveScheduler:
             if mem < self.max_mem:
                 idx = min(
                     range(len(self.queue)),
-                    key=lambda i: self.telemetry.get_cost_index(self.queue[i][1]),
+                    key=lambda i: self._get_cost_index(self.queue[i][1]),
                 )
                 job, _ = self.queue.pop(idx)
                 res = job()

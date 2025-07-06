@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Sequence
+
+from .context_summary_memory import ContextSummaryMemory
 import json
 
 
@@ -66,11 +68,26 @@ class GraphOfThought:
         return ([], "") if explain else []
 
     def plan_refactor(
-        self, start: int, keyword: str = "refactor", explain: bool = False
-    ) -> List[int] | tuple[List[int], str]:
-        """Search for a node containing ``keyword`` in its text."""
+        self,
+        start: int,
+        keyword: str = "refactor",
+        explain: bool = False,
+        summary_memory: "ContextSummaryMemory | None" = None,
+        summary_threshold: int = 10,
+    ) -> List[int] | tuple[List[int], Any]:
+        """Search for ``keyword`` and optionally summarize the path."""
         key = keyword.lower()
-        return self.search(start, lambda node: key in node.text.lower(), explain)
+        path, summary = self.search(
+            start, lambda node: key in node.text.lower(), explain=True
+        )
+        if summary_memory is not None and path:
+            if len(path) > summary_threshold:
+                summary = summary_memory.summarizer.summarize(summary)
+                if summary_memory.translator is not None:
+                    trans = summary_memory.translator.translate_all(summary)
+                    summary = {"summary": summary, "translations": trans}
+            return (path, summary)
+        return (path, summary) if explain else path
 
     def self_reflect(self) -> str:
         """Return a concise summary of all reasoning steps."""

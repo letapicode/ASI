@@ -11,7 +11,7 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 - `python -m src.autobench` runs each test file in isolation and reports a summary.
 - `meta-rl-refactor` parses action/reward logs and suggests the next refactoring step.
 - `scripts/dataset_summary.py` prints lineage and license info. Use `--content` to cluster dataset samples and store summaries under `docs/datasets/`.
-- `scripts/ar_robot_demo.py` streams predicted and actual robot trajectories to a WebSocket server for lightweight AR visualization.
+- `scripts/ar_robot_demo.py` streams predicted and actual robot trajectories to a WebSocket server for lightweight AR visualization. Pass `--show-graph` to also broadcast `GraphOfThought` nodes.
 
 Example:
 
@@ -28,9 +28,30 @@ meta-rl-refactor sample_log.csv
 4. Optional: `pip install faiss-cpu` to enable disk-backed vector storage in `src/vector_store.py`.
 5. Run `pip install -e .` to enable imports from the `asi` package.
 6. The project runs without these optional packages, but FlashAttention-3 and persistent storage will be disabled.
-7. Launch the AR demo with `python scripts/ar_robot_demo.py` and connect your AR client to `ws://localhost:8765/ws`.
+7. Launch the AR demo with `python scripts/ar_robot_demo.py` (add `--show-graph` to stream the reasoning graph) and connect your AR client to `ws://localhost:8765/ws`.
 
 Run the scripts directly with `python` to see parameter and FLOP estimates.
+
+### Browser inference
+
+Use `scripts/export_wasm.py` to create WebAssembly bundles from the example
+models:
+
+```bash
+python scripts/export_wasm.py
+```
+
+Serve the generated files along with `onnxruntime-web` and load them in the
+browser:
+
+```html
+<script src="node_modules/onnxruntime-web/dist/ort.wasm.min.js"></script>
+<script type="module">
+  import * as ort from 'onnxruntime-web';
+  const session = await ort.InferenceSession.create('wasm_models/world_model.onnx');
+  const output = await session.run({/* inputs */});
+</script>
+```
 
 ## Telemetry
 

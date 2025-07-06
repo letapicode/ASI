@@ -157,13 +157,25 @@ def train_fusion_model(
             opt.step()
 
 
+from .quantum_multimodal_retrieval import quantum_crossmodal_search
+
+
 def encode_all(
     model: CrossModalFusion,
     dataset: Dataset,
     batch_size: int = 8,
     memory: "HierarchicalMemory | None" = None,
+    *,
+    quantum: bool = False,
+    k: int = 5,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Return all modality embeddings and optionally store them."""
+    """Return all modality embeddings and optionally store them.
+
+    When ``quantum`` is ``True`` and ``memory`` is provided, each fused
+    embedding is queried using :func:`quantum_crossmodal_search` after being
+    stored. The search results are not returned but this warms the quantum
+    retrieval index.
+    """
     loader = DataLoader(dataset, batch_size=batch_size)
     device = next(model.parameters()).device
     model.eval()
@@ -179,6 +191,10 @@ def encode_all(
                 start = idx * batch_size
                 metas = [start + i for i in range(tokens.size(0))]
                 memory.add_multimodal(t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), metas)
+                if quantum:
+                    fused = (t_emb + i_emb + a_emb) / 3.0
+                    for q in fused:
+                        quantum_crossmodal_search(q, memory, k=k)
     all_t = torch.cat(text_vecs, dim=0)
     all_i = torch.cat(img_vecs, dim=0)
     all_a = torch.cat(aud_vecs, dim=0)

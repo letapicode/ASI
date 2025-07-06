@@ -10,6 +10,7 @@ import torch
 
 from .retrieval_explainer import RetrievalExplainer
 from .retrieval_visualizer import RetrievalVisualizer
+from .memory_timeline_viewer import MemoryTimelineViewer
 
 from .hierarchical_memory import MemoryServer
 
@@ -83,7 +84,7 @@ class MemoryDashboard:
     def pattern_image(self) -> str:
         if self.visualizer is None:
             return ""
-        return self.visualizer.to_image()
+        return self.visualizer.pattern_image()
 
     # ----------------------------------------------------------
     def to_html(self) -> str:
@@ -164,6 +165,15 @@ class MemoryDashboard:
                     self.send_header("Content-Type", "text/html")
                     self.end_headers()
                     self.wfile.write(html)
+                elif self.path == "/timeline":
+                    viewer = None
+                    if dashboard.servers and dashboard.servers[0].telemetry is not None:
+                        viewer = MemoryTimelineViewer(dashboard.servers[0].telemetry)
+                    data = viewer.to_json().encode() if viewer else b"{}"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(data)
                 elif self.path in ("/stats", "/json"):
                     data = json.dumps(dashboard.aggregate()).encode()
                     self.send_response(200)

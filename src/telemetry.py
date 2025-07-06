@@ -10,6 +10,7 @@ from typing import Dict, Any, Callable, Optional, List
 
 from typing import Dict, Any, Callable, Optional
 import json
+import subprocess
 import urllib.request
 
 
@@ -217,6 +218,37 @@ class TelemetryLogger:
     def get_cost_index(self, region: Optional[str] = None) -> float:
         """Return cost index combining price and carbon intensity."""
         return self.get_energy_price(region) * self.get_live_carbon_intensity(region)
+
+    # --------------------------------------------------------------
+    def gpu_temperature(self, index: int = 0) -> float:
+        """Return GPU temperature in Celsius or ``0.0`` if unavailable."""
+        try:
+            out = subprocess.check_output(
+                [
+                    "nvidia-smi",
+                    f"--query-gpu=temperature.gpu",
+                    "--format=csv,noheader,nounits",
+                    "-i",
+                    str(index),
+                ],
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+            line = out.splitlines()[0]
+            return float(line.strip())
+        except Exception:
+            pass
+        try:
+            import pynvml  # type: ignore
+
+            pynvml.nvmlInit()
+            handle = pynvml.nvmlDeviceGetHandleByIndex(index)
+            temp = pynvml.nvmlDeviceGetTemperature(
+                handle, pynvml.NVML_TEMPERATURE_GPU
+            )
+            return float(temp)
+        except Exception:
+            return 0.0
 
     # --------------------------------------------------------------
     def _post(self, data: Dict[str, Any]) -> None:

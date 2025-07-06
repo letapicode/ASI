@@ -122,6 +122,7 @@ from .data_ingest import (
     ActiveDataSelector,
     CrossLingualTranslator,
 )
+from .adaptive_translator import AdaptiveTranslator
 from .generative_data_augmentor import GenerativeDataAugmentor
 from .diffusion_world_model import DiffusionWorldModel
 from .causal_graph_learner import CausalGraphLearner
@@ -173,6 +174,7 @@ from .dataset_bias_detector import (
     text_bias_score,
     file_bias_score,
 )
+from .dataset_weight_agent import DatasetWeightAgent
 from .data_bias_mitigator import DataBiasMitigator
 from .data_poison_detector import DataPoisonDetector
 from .auto_labeler import AutoLabeler
@@ -202,6 +204,7 @@ from .federated_world_model_trainer import (
     FederatedWorldModelTrainer,
     FederatedTrainerConfig,
 )
+from .fhe_federated_trainer import FHEFederatedTrainer, FHEFederatedTrainerConfig
 from .adversarial_robustness import AdversarialRobustnessSuite
 from .graph_of_thought import ReasoningDebugger
 from .multi_stage_oversight import MultiStageOversight
@@ -219,6 +222,7 @@ from .resource_broker import ResourceBroker
 from .research_ingest import run_ingestion, suggest_modules
 from .quantum_sampler import sample_actions_qae
 from .quantum_retrieval import amplify_search
+from .quantum_multimodal_retrieval import quantum_crossmodal_search
 from .risk_scoreboard import RiskScoreboard
 from .semantic_drift_detector import SemanticDriftDetector
 from .data_provenance_ledger import DataProvenanceLedger
