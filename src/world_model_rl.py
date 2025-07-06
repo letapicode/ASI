@@ -47,6 +47,7 @@ from torch.utils.data import DataLoader, Dataset, ConcatDataset
 
 from .compute_budget_tracker import ComputeBudgetTracker
 from .causal_graph_learner import CausalGraphLearner
+from .sim2real_adapter import Sim2RealAdapter, Sim2RealConfig
 from .rl_decision_narrator import RLDecisionNarrator
 try:
     from .budget_aware_scheduler import BudgetAwareScheduler
@@ -109,10 +110,17 @@ def train_world_model(
     budget: ComputeBudgetTracker | None = None,
     synth_3d: Iterable[tuple[str, np.ndarray]] | None = None,
     use_differentiable_memory: bool = False,
-    learner: CausalGraphLearner | None = None
+    learner: CausalGraphLearner | None = None,
+    calibration_traces: Iterable[tuple[torch.Tensor, torch.Tensor]] | None = None
 
 ) -> WorldModel:
     model = WorldModel(cfg)
+    adapter: Sim2RealAdapter | None = None
+    if calibration_traces is not None:
+        traces = list(calibration_traces)
+        if traces:
+            adapter = Sim2RealAdapter(Sim2RealConfig(state_dim=cfg.state_dim))
+            adapter.fit(traces)
     if synth_3d is not None:
         extra: list[tuple[torch.Tensor, int, torch.Tensor, float]] = []
         for _txt, vol in synth_3d:
@@ -145,6 +153,9 @@ def train_world_model(
             scheduler.schedule_step(cfg)
             loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
         for state, action, next_state, reward in loader:
+            if adapter is not None:
+                state = adapter(state)
+                next_state = adapter(next_state)
             state = state.to(device)
             action = action.to(device)
             next_state = next_state.to(device)
@@ -162,10 +173,12 @@ def train_world_model(
         eps = dp_cfg.noise_std * len(dataset) / cfg.batch_size
         pbm.consume(run_id, eps, 0.0)
     if learner is not None:
-        transitions = [
-            (s.numpy(), int(a), ns.numpy())
-            for s, a, ns, _r in dataset
-        ]
+        transitions = []
+        for s, a, ns, _r in dataset:
+            if adapter is not None:
+                s = adapter(torch.tensor(s)).detach()
+                ns = adapter(torch.tensor(ns)).detach()
+            transitions.append((s.numpy(), int(a), ns.numpy()))
         learner.fit(transitions)
     return model
 
@@ -240,6 +253,7 @@ def train_with_self_play(
     dp_cfg: DifferentialPrivacyConfig | None = None,
     sampler_fn: Callable[[torch.Tensor], torch.Tensor] | None = None,
     narrator: RLDecisionNarrator | None = None,
+    calibration_traces: Iterable[tuple[torch.Tensor, torch.Tensor]] | None = None,
 ) -> tuple[WorldModel, SkillTransferModel]:
     """Run self-play to gather transitions and fit a world model."""
 
@@ -289,7 +303,13 @@ def train_with_self_play(
         self_play_skill_loop.rollout_env = orig  # type: ignore
 
     dataset = TrajectoryDataset(transitions)
-    wm = train_world_model(rl_cfg, dataset, dp_cfg, use_differentiable_memory=False)
+    wm = train_world_model(
+        rl_cfg,
+        dataset,
+        dp_cfg,
+        use_differentiable_memory=False,
+        calibration_traces=calibration_traces,
+    )
     return wm, skill_model
 
 

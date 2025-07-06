@@ -62,6 +62,15 @@ class TestWorldModelRL(unittest.TestCase):
         self.assertEqual(len(states), 3)
         self.assertEqual(len(rewards), 3)
 
+    def test_calibration_traces(self):
+        logs = []
+        for _ in range(20):
+            s = torch.randn(3)
+            logs.append((s, s + 1))
+        model = train_world_model(self.cfg, self.dataset, calibration_traces=logs)
+        out, _ = model(torch.zeros(3), torch.tensor(0))
+        self.assertEqual(out.shape[0], 3)
+
 
 if __name__ == "__main__":
     unittest.main()

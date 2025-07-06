@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Tuple, List, Dict, Optional, Union
+
+try:
+    from .knowledge_base_client import KnowledgeBaseClient
+except Exception:  # pragma: no cover - fallback for tests
+    KnowledgeBaseClient = None  # type: ignore
 import json
 
 
@@ -19,10 +24,11 @@ class TimedTriple:
 class KnowledgeGraphMemory:
     """Store triples of the form ``(subject, predicate, object)``."""
 
-    def __init__(self, path: str | Path | None = None) -> None:
+    def __init__(self, path: str | Path | None = None, kb_client: "KnowledgeBaseClient | None" = None) -> None:
         self.triples: List[Tuple[str, str, str]] = []
         self.timestamps: List[Optional[float]] = []
         self.path = Path(path) if path is not None else None
+        self.kb_client = kb_client
         if self.path and self.path.exists():
             data = json.loads(self.path.read_text())
             for item in data:
@@ -78,9 +84,21 @@ class KnowledgeGraphMemory:
                     continue
                 if start_time is not None and ts < start_time:
                     continue
-                if end_time is not None and ts > end_time:
-                    continue
+            if end_time is not None and ts > end_time:
+                continue
             out.append(TimedTriple(s, p, o, ts))
+        if not out and self.kb_client is not None:
+            parts = []
+            if subject:
+                parts.append(f"?s='{subject}'")
+            if predicate:
+                parts.append(f"?p='{predicate}'")
+            if object:
+                parts.append(f"?o='{object}'")
+            filter_str = " && ".join(parts) if parts else ""
+            query = "SELECT ?s ?p ?o WHERE { ?s ?p ?o ." + (f" FILTER({filter_str})" if filter_str else "") + " }"
+            for s, p, o in self.kb_client.query(query):
+                out.append(TimedTriple(s, p, o, None))
         return out
 
 
