@@ -27,6 +27,10 @@ for _m in [
     "quantum_retrieval",
     "quantum_sampler",
     "quantum_hpo",
+    "memory_pb2",
+    "memory_pb2_grpc",
+    "quantum_memory_server",
+    "quantum_memory_client",
 ]:
     _import(_m)
 
