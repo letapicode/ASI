@@ -480,6 +480,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     reconstructed and passed through the model for consolidation. Integrated
     with `DistributedTrainer` via the new replay hook.
 
+87. **RL decision narrator**: `RLDecisionNarrator` intercepts action choices
+    in `world_model_rl` and `MetaRLRefactorAgent`. Each decision logs a brief
+    explanation via `ReasoningHistoryLogger` for self-improvement analysis.
+
 
 
 

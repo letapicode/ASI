@@ -14,6 +14,8 @@ except Exception:  # pragma: no cover - fallback for direct module load
     spec.loader.exec_module(module)  # type: ignore[attr-defined]
     QAEHyperparamSearch = module.QAEHyperparamSearch
 
+from .rl_decision_narrator import RLDecisionNarrator
+
 
 class MetaRLRefactorAgent:
     """Simple Q-learning agent for Plan.md task A-3."""
@@ -25,6 +27,7 @@ class MetaRLRefactorAgent:
         alpha: float = 0.5,
         gamma: float = 0.9,
         searcher: "QAEHyperparamSearch | None" = None,
+        narrator: "RLDecisionNarrator | None" = None,
     ) -> None:
         self.actions = tuple(actions)
         self.epsilon = epsilon
@@ -32,17 +35,26 @@ class MetaRLRefactorAgent:
         self.gamma = gamma
         self.q: dict[Tuple[Any, str], float] = {}
         self.searcher = searcher
+        self.narrator = narrator
 
     def select_action(self, state: Any) -> str:
         """Choose an action using an epsilon-greedy policy."""
         if random.random() < self.epsilon:
-            return random.choice(self.actions)
+            action = random.choice(self.actions)
+            if self.narrator is not None:
+                self.narrator.record_decision(state, action)
+            return action
         qvals = [self.q.get((state, a), 0.0) for a in self.actions]
         max_q = max(qvals)
         for action, qval in zip(self.actions, qvals):
             if qval == max_q:
+                if self.narrator is not None:
+                    self.narrator.record_decision(state, action)
                 return action
-        return self.actions[0]
+        action = self.actions[0]
+        if self.narrator is not None:
+            self.narrator.record_decision(state, action)
+        return action
 
     def update(self, state: Any, action: str, reward: float, next_state: Any) -> None:
         """Update the Q-value table given a transition."""
