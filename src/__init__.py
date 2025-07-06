@@ -220,6 +220,7 @@ from .resource_broker import ResourceBroker
 from .research_ingest import run_ingestion, suggest_modules
 from .quantum_sampler import sample_actions_qae
 from .quantum_retrieval import amplify_search
+from .quantum_multimodal_retrieval import quantum_crossmodal_search
 from .risk_scoreboard import RiskScoreboard
 from .semantic_drift_detector import SemanticDriftDetector
 from .data_provenance_ledger import DataProvenanceLedger
