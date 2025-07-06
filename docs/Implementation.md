@@ -505,6 +505,7 @@ lineage = DatasetLineageManager("./data")
 
 triples = download_triples(text_urls, img_urls, aud_urls, "./data", lineage=lineage, runner=runner)
 paraphrase_multilingual([Path("./data/text/0.txt")], translator, None, inspector, lineage, runner=runner)
+Run `scripts/lineage_viewer.py ./data` to browse the recorded steps.
 ```
 
 ## L-6 Mechanistic Interpretability Tools
