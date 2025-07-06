@@ -25,6 +25,15 @@ sys.modules[logger_loader.name] = logger_mod
 logger_loader.exec_module(logger_mod)
 ReasoningHistoryLogger = logger_mod.ReasoningHistoryLogger
 
+mem_loader = importlib.machinery.SourceFileLoader(
+    'context_summary_memory', 'src/context_summary_memory.py'
+)
+mem_spec = importlib.util.spec_from_loader(mem_loader.name, mem_loader)
+mem_mod = importlib.util.module_from_spec(mem_spec)
+sys.modules[mem_loader.name] = mem_mod
+mem_loader.exec_module(mem_mod)
+ContextSummaryMemory = mem_mod.ContextSummaryMemory
+
 
 class TestGraphOfThought(unittest.TestCase):
     def test_add_and_search(self):
@@ -60,6 +69,30 @@ class TestGraphOfThought(unittest.TestCase):
         hist = logger.get_history()
         self.assertEqual(len(hist), 1)
         self.assertEqual(hist[0][1], summary)
+
+    def test_plan_refactor_with_summary(self):
+        g = GraphOfThought()
+        a = g.add_step("start")
+        b = g.add_step("analyze")
+        c = g.add_step("apply refactor")
+        g.connect(a, b)
+        g.connect(b, c)
+
+        class DummySummarizer:
+            def summarize(self, text):
+                return "sum"
+
+            def expand(self, text):
+                return 0
+
+        mem = ContextSummaryMemory(
+            dim=2, compressed_dim=1, capacity=2, summarizer=DummySummarizer()
+        )
+        path, summary = g.plan_refactor(
+            a, summary_memory=mem, summary_threshold=1
+        )
+        self.assertEqual(path, [a, b, c])
+        self.assertEqual(summary, "sum")
 
 
 class TestGraphOfThoughtCLI(unittest.TestCase):

@@ -620,6 +620,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Add a `CrossLingualReasoningGraph` to store reasoning nodes with language tags
   and translate them via `CrossLingualTranslator`. `GraphOfThoughtPlanner` logs
   ranked strategies to this graph when provided.
+- Extend `CrossLingualReasoningGraph` with `summarize_old_steps()` which calls
+  `ContextSummaryMemory` when traces grow beyond a threshold. Translated
+  summaries are stored via `CrossLingualTranslator.translate_all` and can be
+  returned during planning through `GraphOfThought.plan_refactor(summary_memory=)`.
 - Create a `WorldModelDistiller` module and a `scripts/distill_world_model.py`
   utility to train smaller student models from the large world model.
   **Implemented in `src/world_model_distiller.py` with the script
