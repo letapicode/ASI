@@ -429,7 +429,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 83. **Graph UI**: `GraphUI` serves interactive D3 graphs via FastAPI. Visit `http://localhost:8070/graph` while the server is running to explore reasoning steps. `http://localhost:8070/history` shows stored summaries.
 
 
-84. **Temporal telemetry monitoring**: `MemoryEventDetector` parses logged hardware metrics and flags change points. `TelemetryLogger` stores these events so the memory dashboard exposes them via `/events`.
+84. **Natural-language graph editor**: `nl_graph_editor.py` interprets commands like "merge nodes A and B" or "add edge from X to Y". `GraphUI` exposes `/graph/nl_edit` so the web UI accepts these instructions.
+
+85. **Temporal telemetry monitoring**: `MemoryEventDetector` parses logged hardware metrics and flags change points. `TelemetryLogger` stores these events so the memory dashboard exposes them via `/events`.
 82. **Dataset discovery pipeline**: `dataset_discovery.py` scans RSS feeds from
     HuggingFace and Kaggle, storing dataset names, URLs and license text in a
     lightweight SQLite database. `license_inspector.py` loads the database to

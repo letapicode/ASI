@@ -87,6 +87,20 @@ portal.start(port=8090)
 
 Visit `http://localhost:8090` to inspect progress.
 
+### Graph UI Editing
+
+`GraphUI` visualizes reasoning graphs. With `NLGraphEditor` you can type plain
+English commands into the text box at `/graph` to modify the graph. Examples:
+
+```text
+add node analysis
+add edge from start to analysis
+merge nodes analysis and finish
+```
+
+Each command triggers a recomputation of the concise summary stored in
+`ReasoningHistoryLogger`. See [docs/Plan.md](docs/Plan.md) for the roadmap.
+
 ## Testing
 
 1. Install requirements: `pip install -r requirements.txt` (or run
