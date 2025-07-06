@@ -11,6 +11,8 @@ This repository includes starter modules for the first two algorithms listed in 
   - `ElasticMoERouter` dynamically reduces the number of active experts when GPU
     memory utilization gets high. It inherits from `SwitchRouter` and exposes
     `active_experts` to track the current count.
+  - `RLMoERouter` learns routing probabilities with a REINFORCE update and
+    mirrors the `ElasticMoERouter` API for plug-and-play experiments.
 - `src/moe_layer.py` implements a small MoE feed-forward block using these routers. It accepts an optional
   `balance_weight` which multiplies the `balance_loss()` penalty derived from the router's assignments and
   returns it alongside the layer output.
@@ -583,6 +585,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   architecture search. **Implemented in `src/quantum_hpo.py` with unit tests.**
 - **Implemented** an `ElasticMoERouter` that scales the number of active experts
   according to real-time GPU utilization.
+- **Implemented** an `RLMoERouter` that trains routing weights via a simple
+  reinforcement learning loop for improved load balance.
 - Extend `HierarchicalMemory` with an `SSDCache` that prefetches high-frequency
   vectors for faster retrieval. *Implemented with a disk-backed cache and
   persistence helpers in `src/hierarchical_memory.py`.*
