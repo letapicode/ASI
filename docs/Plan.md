@@ -83,11 +83,23 @@ Citations point to the most recent public work so you can drill straight into th
 | **M-1** | **Cross-Modal Fusion Architecture**     | Learn a single latent space for text, images and audio                              | ≥85 % F1 on zero-shot image↔text retrieval; audio caption BLEU within 5 % of SOTA |
 | **M-2** | **World-Model RL Bridge**               | Train a generative world model from logs and run model-based RL for fast policy updates | Real robot tasks reach 90 % of offline policy reward after <10k physical steps   |
 | **M-3** | **Self-Calibration for Embodied Agents**| Adapt sensors and actuators from small real-world samples                           | Simulation-trained policies retain ≥80 % success with <1k labelled real samples   |
+|         | *Sim2Real Adapter workflow* | Learn a linear mapping from real logs and pass ``calibration_traces`` into ``train_world_model`` to align the simulator. |
 | **M-4** | **Cross-Modal Data Ingestion Pipeline** | Pair text, images and audio from open datasets with augmentations | Prepare 1 M aligned triples in under 1 h with retrieval F1 near baseline |
 
 The helper `download_triples()` now uses `aiohttp` to fetch files concurrently, speeding up dataset preparation.
 
 `CarbonAwareDatasetIngest` wraps this helper with `CarbonAwareScheduler`. Set `threshold` and `region` to postpone downloads until carbon intensity drops below the limit. Internal runs with `threshold=300` gCO₂/kWh saved ~30 % of the energy versus immediate fetching.
+
+Example usage:
+
+```python
+from asi.sim2real_adapter import Sim2RealAdapter, Sim2RealConfig
+from asi.world_model_rl import train_world_model
+
+adapter = Sim2RealAdapter(Sim2RealConfig(state_dim=3))
+adapter.fit(real_logs)  # list of (sim_state, real_state)
+wm = train_world_model(cfg, dataset, calibration_traces=real_logs)
+```
 
 ---
 

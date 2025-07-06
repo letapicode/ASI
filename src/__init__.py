@@ -220,6 +220,7 @@ from .adversarial_robustness import AdversarialRobustnessSuite
 from .graph_of_thought import ReasoningDebugger
 from .multi_stage_oversight import MultiStageOversight
 from .knowledge_graph_memory import KnowledgeGraphMemory
+from .knowledge_base_client import KnowledgeBaseClient
 from .memory_dashboard import MemoryDashboard
 from .multi_agent_coordinator import MultiAgentCoordinator, RLNegotiator, NegotiationProtocol
 from .dp_memory import DifferentialPrivacyMemory

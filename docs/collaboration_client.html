@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Collaboration Client</title>
+</head>
+<body>
+<h1>Tasks</h1>
+<ul id="tasks"></ul>
+<h1>Logs</h1>
+<ul id="logs"></ul>
+<script>
+const ws = new WebSocket('ws://localhost:8767/ws');
+ws.onmessage = (ev) => {
+  const data = JSON.parse(ev.data);
+  const tList = document.getElementById('tasks');
+  tList.innerHTML = '';
+  for (const t of data.tasks) {
+    const li = document.createElement('li');
+    li.textContent = t;
+    tList.appendChild(li);
+  }
+  const lList = document.getElementById('logs');
+  lList.innerHTML = '';
+  for (const [ts, msg] of data.logs) {
+    const li = document.createElement('li');
+    li.textContent = ts + ': ' + (msg.summary || msg);
+    lList.appendChild(li);
+  }
+};
+</script>
+</body>
+</html>
