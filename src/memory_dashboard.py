@@ -83,7 +83,7 @@ class MemoryDashboard:
     def pattern_image(self) -> str:
         if self.visualizer is None:
             return ""
-        return self.visualizer.to_image()
+        return self.visualizer.pattern_image()
 
     # ----------------------------------------------------------
     def to_html(self) -> str:

@@ -1,17 +1,17 @@
 import unittest
-import http.client
-import json
-import torch
 import importlib.machinery
 import importlib.util
 import types
 import sys
+import http.client
+import torch
 
 pkg = types.ModuleType('asi')
 pkg.__path__ = ['src']
 pkg.__spec__ = importlib.machinery.ModuleSpec('asi', None, is_package=True)
 sys.modules['asi'] = pkg
 
+# stub cryptography dependency
 crypto = types.ModuleType('cryptography')
 haz = types.ModuleType('cryptography.hazmat')
 prim = types.ModuleType('cryptography.hazmat.primitives')
@@ -55,40 +55,43 @@ def _load(name, path):
         mod.MemoryServer = MemoryServer
     return mod
 
+RetrievalSaliency = _load('asi.retrieval_saliency', 'src/retrieval_saliency.py')
+_load('asi.streaming_compression', 'src/streaming_compression.py')
+_load('asi.retrieval_explainer', 'src/retrieval_explainer.py')
 HierarchicalMemory = _load('asi.hierarchical_memory', 'src/hierarchical_memory.py').HierarchicalMemory
 MemoryDashboard = _load('asi.memory_dashboard', 'src/memory_dashboard.py').MemoryDashboard
 RetrievalVisualizer = _load('asi.retrieval_visualizer', 'src/retrieval_visualizer.py').RetrievalVisualizer
 
 
-class TestRetrievalVisualizer(unittest.TestCase):
-    def test_logging(self):
-        mem = HierarchicalMemory(dim=2, compressed_dim=1, capacity=10, encryption_key=b'0'*16)
-        vis = RetrievalVisualizer(mem)
-        vis.start()
-        mem.search(torch.tensor([0.0, 0.0]), k=1)  # miss
-        data = torch.tensor([[0.1, 0.2]])
-        mem.add(data)
-        mem.search(data[0], k=1)  # hit
-        self.assertEqual(len(vis.log), 2)
-        hits = [e["hit"] for e in vis.log]
-        self.assertEqual(hits, [0.0, 1.0])
-        vis.stop()
+class TestRetrievalSaliency(unittest.TestCase):
+    def test_shapes(self):
+        tokens = torch.randn(3, 4)
+        res = torch.randn(2, 4)
+        sal = RetrievalSaliency.token_saliency(tokens, res)
+        self.assertEqual(sal.shape, (2, 3))
 
-    def test_patterns_endpoint(self):
-        mem = HierarchicalMemory(dim=2, compressed_dim=1, capacity=10, encryption_key=b'0'*16)
+        img = torch.randn(3, 2, 2)
+        res2 = torch.randn(2, 12)
+        sal2 = RetrievalSaliency.image_saliency(img, res2)
+        self.assertEqual(sal2.shape, (2, 2, 2))
+
+    def test_dashboard_integration(self):
+        mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, encryption_key=b'0'*16)
         vis = RetrievalVisualizer(mem)
         vis.start()
-        mem.add(torch.tensor([[0.3, 0.4]]))
-        mem.search(torch.tensor([0.3, 0.4]), k=1)
-        server = type("Stub", (), {"memory": mem, "telemetry": None})()
+        vec = torch.randn(1, 4)
+        mem.add(vec)
+        mem.search(vec[0], k=1)
+        self.assertTrue(len(vis.saliencies) > 0)
+        server = type('Stub', (), {'memory': mem, 'telemetry': None})()
         dash = MemoryDashboard([server], visualizer=vis)
         dash.start(port=0)
         port = dash.port
-        conn = http.client.HTTPConnection("localhost", port)
-        conn.request("GET", "/patterns")
+        conn = http.client.HTTPConnection('localhost', port)
+        conn.request('GET', '/patterns')
         resp = conn.getresponse()
         html = resp.read().decode()
-        self.assertIn("<img", html)
+        self.assertIn('<img', html)
         dash.stop()
         vis.stop()
 
