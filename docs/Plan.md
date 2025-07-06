@@ -459,6 +459,12 @@ drops below a threshold, while `submit_at_optimal_time()` waits for the lowest
 forecast in the next 24 h.  Both helpers call `submit_job()` once conditions are
 favourable, reducing cluster emissions without manual tuning.
 
+`rl_carbon_scheduler.RLCarbonScheduler` goes a step further by learning when to
+launch jobs from historical intensity and job-duration traces.  It employs a
+Q-learning policy to trade off energy consumption against queueing delay.  The
+scheduler plugs into `DistributedTrainer` like the rule-based versions and
+records estimated energy usage and wait time via `TelemetryLogger`.
+
 
 
 

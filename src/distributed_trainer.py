@@ -124,7 +124,10 @@ class DistributedTrainer:
                 ]
                 if self.grad_compression is not None:
                     cmd += ["--comp-cfg", json.dumps(self.grad_compression)]
-                submit_job(cmd, backend=self.hpc_backend)
+                if self.scheduler is not None and hasattr(self.scheduler, "submit_job"):
+                    self.scheduler.submit_job(cmd, backend=self.hpc_backend)
+                else:
+                    submit_job(cmd, backend=self.hpc_backend)
                 self.step += 1
                 continue
 

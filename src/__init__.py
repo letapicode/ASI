@@ -250,6 +250,7 @@ from .hpc_scheduler import submit_job, monitor_job, cancel_job
 from .carbon_aware_scheduler import CarbonAwareScheduler
 
 from .carbon_hpc_scheduler import CarbonAwareScheduler
+from .rl_carbon_scheduler import RLCarbonScheduler
 
 from .collaboration_portal import CollaborationPortal
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
