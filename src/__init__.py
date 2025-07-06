@@ -122,6 +122,7 @@ from .data_ingest import (
     ActiveDataSelector,
     CrossLingualTranslator,
 )
+from .adaptive_translator import AdaptiveTranslator
 from .generative_data_augmentor import GenerativeDataAugmentor
 from .diffusion_world_model import DiffusionWorldModel
 from .causal_graph_learner import CausalGraphLearner
