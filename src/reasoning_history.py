@@ -2,22 +2,33 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, TYPE_CHECKING
 import json
 from collections import Counter
+
+if TYPE_CHECKING:  # pragma: no cover - only for type hints
+    from .data_ingest import CrossLingualTranslator
 
 
 @dataclass
 class ReasoningHistoryLogger:
     """Store reasoning summaries with timestamps."""
 
-    entries: List[Tuple[str, str]] = field(default_factory=list)
+    entries: List[Tuple[str, Any]] = field(default_factory=list)
+    translator: CrossLingualTranslator | None = None
 
     def log(self, summary: str) -> None:
         ts = datetime.utcnow().isoformat()
-        self.entries.append((ts, summary))
+        if self.translator is not None:
+            entry = {
+                "summary": summary,
+                "translations": self.translator.translate_all(summary),
+            }
+            self.entries.append((ts, entry))
+        else:
+            self.entries.append((ts, summary))
 
-    def get_history(self) -> List[Tuple[str, str]]:
+    def get_history(self) -> List[Tuple[str, Any]]:
         return list(self.entries)
 
     def save(self, path: str) -> None:
@@ -40,7 +51,8 @@ class ReasoningHistoryLogger:
         counts: Counter[str] = Counter()
         contradictions: set[Tuple[str, str]] = set()
         for _ts, summary in self.entries:
-            steps = [s.strip() for s in summary.split("->")]
+            text = summary["summary"] if isinstance(summary, dict) else summary
+            steps = [s.strip() for s in text.split("->")]
             for step in steps:
                 counts[step] += 1
                 neg = f"not {step}"
