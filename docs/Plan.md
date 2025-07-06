@@ -455,6 +455,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     offset `B - A` and query `HierarchicalMemory.search(mode="analogy")`. Report
     the percentage of cases where the top result matches the expected word; aim
     for ≥70% accuracy on the toy set.
+
+83b. **Cross-lingual analogy evaluation**: `crosslingual_analogy_eval.analogy_accuracy`
+    loads a multilingual analogy dataset and computes accuracy using
+    `CrossLingualTranslator` so offsets can span languages.
     
 
 84. **Privacy-preserving federated RL**: Wrap `EdgeRLTrainer` with encrypted gradient

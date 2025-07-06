@@ -1,0 +1,2 @@
+{"query":"king","query_lang":"en","a":"man","a_lang":"en","b":"woman","b_lang":"es","expected":"queen"}
+{"query":"paris","query_lang":"en","a":"france","a_lang":"en","b":"germany","b_lang":"es","expected":"berlin"}
