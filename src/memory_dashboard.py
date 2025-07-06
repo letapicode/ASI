@@ -9,6 +9,7 @@ import numpy as np
 import torch
 
 from .retrieval_explainer import RetrievalExplainer
+from .retrieval_visualizer import RetrievalVisualizer
 
 from .hierarchical_memory import MemoryServer
 
@@ -16,8 +17,13 @@ from .hierarchical_memory import MemoryServer
 class MemoryDashboard:
     """Aggregate telemetry stats from multiple ``MemoryServer`` instances."""
 
-    def __init__(self, servers: Iterable[MemoryServer]):
+    def __init__(
+        self,
+        servers: Iterable[MemoryServer],
+        visualizer: RetrievalVisualizer | None = None,
+    ) -> None:
         self.servers = list(servers)
+        self.visualizer = visualizer
         self.httpd: HTTPServer | None = None
         self.thread: threading.Thread | None = None
         self.port: int | None = None
@@ -72,6 +78,12 @@ class MemoryDashboard:
             if srv.telemetry is not None:
                 all_events.extend(srv.telemetry.get_events())
         return all_events
+
+    # ----------------------------------------------------------
+    def pattern_image(self) -> str:
+        if self.visualizer is None:
+            return ""
+        return self.visualizer.to_image()
 
     # ----------------------------------------------------------
     def to_html(self) -> str:
@@ -145,6 +157,13 @@ class MemoryDashboard:
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
                     self.wfile.write(data)
+                elif self.path == "/patterns":
+                    img = dashboard.pattern_image()
+                    html = f"<html><body><img src='{img}'></body></html>".encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html")
+                    self.end_headers()
+                    self.wfile.write(html)
                 elif self.path in ("/stats", "/json"):
                     data = json.dumps(dashboard.aggregate()).encode()
                     self.send_response(200)
