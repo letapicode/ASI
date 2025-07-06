@@ -67,6 +67,7 @@ from .self_play_skill_loop import (
     run_loop,
     self_play_skill_loop,
 )
+from .opponent_generator import OpponentGenerator
 from .adaptive_curriculum import AdaptiveCurriculum
 from .formal_verifier import (
     VerificationResult,
