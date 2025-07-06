@@ -51,6 +51,7 @@ try:
     from .budget_aware_scheduler import BudgetAwareScheduler
 except Exception:  # pragma: no cover - for tests
     BudgetAwareScheduler = None
+from .sim2real_adapter import Sim2RealParams, learn_env_params, apply_correction
 
 
 @dataclass
@@ -108,7 +109,8 @@ def train_world_model(
     budget: ComputeBudgetTracker | None = None,
     synth_3d: Iterable[tuple[str, np.ndarray]] | None = None,
     use_differentiable_memory: bool = False,
-    learner: CausalGraphLearner | None = None
+    learner: CausalGraphLearner | None = None,
+    calibration_traces: Iterable[tuple[torch.Tensor, torch.Tensor]] | None = None
 
 ) -> WorldModel:
     model = WorldModel(cfg)
@@ -123,6 +125,10 @@ def train_world_model(
                 t = t[: cfg.state_dim]
             extra.append((t, 0, t.clone(), 0.0))
         dataset = ConcatDataset([dataset, TransitionDataset(extra)])
+    if calibration_traces is not None:
+        params = learn_env_params(calibration_traces)
+        trans = [dataset[i] for i in range(len(dataset))]
+        dataset = TransitionDataset(apply_correction(trans, params))
     scheduler = (
         BudgetAwareScheduler(budget, run_id)
         if budget is not None and BudgetAwareScheduler is not None
@@ -229,6 +235,7 @@ def train_with_self_play(
     actions: Iterable[int],
     dp_cfg: DifferentialPrivacyConfig | None = None,
     sampler_fn: Callable[[torch.Tensor], torch.Tensor] | None = None,
+    calibration_traces: Iterable[tuple[torch.Tensor, torch.Tensor]] | None = None,
 ) -> tuple[WorldModel, SkillTransferModel]:
     """Run self-play to gather transitions and fit a world model."""
 
@@ -275,7 +282,7 @@ def train_with_self_play(
         self_play_skill_loop.rollout_env = orig  # type: ignore
 
     dataset = TrajectoryDataset(transitions)
-    wm = train_world_model(rl_cfg, dataset, dp_cfg, use_differentiable_memory=False)
+    wm = train_world_model(rl_cfg, dataset, dp_cfg, use_differentiable_memory=False, calibration_traces=calibration_traces)
     return wm, skill_model
 
 

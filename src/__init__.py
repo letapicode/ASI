@@ -100,6 +100,11 @@ from .embodied_calibration import (
     CalibrationModel,
     calibrate,
 )
+from .sim2real_adapter import (
+    Sim2RealParams,
+    learn_env_params,
+    apply_correction,
+)
 from .lora_quant import LoRAQuantLinear, apply_quant_lora
 from .gradient_compression import GradientCompressionConfig, GradientCompressor
 from .low_rank_adapter import LowRankLinear, apply_low_rank_adaptation

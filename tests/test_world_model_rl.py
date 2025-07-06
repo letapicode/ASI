@@ -1,18 +1,32 @@
 import unittest
 import importlib.machinery
 import importlib.util
+import types
 import sys
 import torch
 
-loader = importlib.machinery.SourceFileLoader('wmrl', 'src/world_model_rl.py')
-spec = importlib.util.spec_from_loader(loader.name, loader)
-wmrl = importlib.util.module_from_spec(spec)
-sys.modules[loader.name] = wmrl
-loader.exec_module(wmrl)
+pkg = types.ModuleType("src")
+pkg.__path__ = ["src"]
+pkg.__spec__ = importlib.machinery.ModuleSpec("src", None, is_package=True)
+sys.modules["src"] = pkg
+
+mods = ["self_play_env", "world_model_rl", "sim2real_adapter"]
+for m in mods:
+    loader = importlib.machinery.SourceFileLoader(f"src.{m}", f"src/{m}.py")
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    mod = importlib.util.module_from_spec(spec)
+    mod.__package__ = "src"
+    sys.modules[f"src.{m}"] = mod
+    loader.exec_module(mod)
+
+wmrl = sys.modules["src.world_model_rl"]
 RLBridgeConfig = wmrl.RLBridgeConfig
 TransitionDataset = wmrl.TransitionDataset
 train_world_model = wmrl.train_world_model
 rollout_policy = wmrl.rollout_policy
+learn_env_params = sys.modules["src.sim2real_adapter"].learn_env_params
+apply_correction = sys.modules["src.sim2real_adapter"].apply_correction
+Sim2RealParams = sys.modules["src.sim2real_adapter"].Sim2RealParams
 
 
 class TestWorldModelRL(unittest.TestCase):
@@ -38,6 +52,18 @@ class TestWorldModelRL(unittest.TestCase):
         states, rewards = rollout_policy(model, policy, init_state, steps=3)
         self.assertEqual(len(states), 3)
         self.assertEqual(len(rewards), 3)
+
+    def test_calibrated_training(self):
+        logs = [
+            (torch.zeros(3), torch.ones(3)),
+            (torch.ones(3), torch.ones(3) * 2),
+        ]
+        model = train_world_model(
+            self.cfg,
+            self.dataset,
+            calibration_traces=logs,
+        )
+        self.assertIsInstance(model, torch.nn.Module)
 
 
 if __name__ == "__main__":

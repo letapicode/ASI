@@ -174,6 +174,14 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/robot_skill_transfer.py` maps demonstration frames to control commands.
 - `src/self_play_env.py` and `src/embodied_calibration.py` offer a sandbox for
   self-play and a sensor calibration routine.
+- `src/sim2real_adapter.py` learns environment parameters from logged traces and
+  lets `train_world_model(calibration_traces=...)` correct simulated data. For
+  example:
+
+  ```python
+  logs = [(sim_obs, real_obs)]
+  model = train_world_model(cfg, dataset, calibration_traces=logs)
+  ```
 - `src/formal_verifier.py` checks model snapshots against custom invariants.
 - `src/eval_harness.py` aggregates metrics from all modules and prints a pass/fail scoreboard. The CLI now supports a `--concurrent` flag to run evaluations asynchronously via `evaluate_modules_async()`.
 - `scripts/distributed_eval.py` runs the harness across multiple processes or hosts and aggregates the results for large-scale testing.
