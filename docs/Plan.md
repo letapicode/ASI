@@ -480,6 +480,16 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     reconstructed and passed through the model for consolidation. Integrated
     with `DistributedTrainer` via the new replay hook.
 
+86a. **Consensus reasoner**: `consensus_reasoner.compute_consensus()` merges
+     reasoning graphs from a `MultiAgentCoordinator` and returns any timestamp
+     conflicts. Use `report_disagreements()` to print a summary.
+
+```python
+from asi import consensus_reasoner
+merged, issues = consensus_reasoner.compute_consensus(coord)
+print(consensus_reasoner.report_disagreements(issues))
+```
+
 
 
 
