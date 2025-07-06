@@ -551,6 +551,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   in `src/distributed_trainer.py` with tests.
 - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemory`
   so edge devices can handle large-context inference. **Implemented**
+- The client now keeps a local queue when the network is unreachable and
+  periodically flushes queued `add`/`delete` operations once connectivity
+  returns. Run `scripts/edge_memory_client_demo.py --offline` to observe
+  queued updates syncing after the server starts.
 - Create an `AdaptiveCurriculum` that blends curated data with
   self-play logs using reinforcement learning. **Implemented in `src/adaptive_curriculum.py` with tests.**
 - Extend `QAEHyperparamSearch` to explore novel transformer components during
