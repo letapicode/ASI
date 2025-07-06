@@ -3,6 +3,8 @@ from __future__ import annotations
 import random
 from typing import Callable, List, Tuple, Optional
 
+from .data_ingest import CrossLingualTranslator
+
 from .user_preferences import UserPreferences
 from .emotion_detector import detect_emotion
 
@@ -42,7 +44,16 @@ class PromptOptimizer:
         return " ".join(words)
 
     # ------------------------------------------------------------
-    def _score(self, prompt: str) -> float:
+    def _score(self, prompt: str, translator: "CrossLingualTranslator | None" = None) -> float:
+        if (
+            translator is not None
+            and self.user_preferences is not None
+            and self.user_id is not None
+        ):
+            lang = self.user_preferences.get_language(self.user_id)
+            if lang:
+                prompt = translator.translate(prompt, lang)
+
         score = self.scorer(prompt)
         if self.user_preferences and self.user_id is not None:
             pref = self.user_preferences.get_vector(self.user_id)
@@ -55,25 +66,47 @@ class PromptOptimizer:
                 bias = (pos - neg) / float(pos + neg)
 
             emotion = detect_emotion(prompt)
-            if emotion == "positive":
-                score += bias
-            elif emotion == "negative":
-                score -= bias
+            target = self.user_preferences.get_emotion(self.user_id)
+            if target:
+                if emotion == target:
+                    score += bias
+                else:
+                    score -= bias
+            else:
+                if emotion == "positive":
+                    score += bias
+                elif emotion == "negative":
+                    score -= bias
         return score
 
-    def step(self) -> str:
+    def step(self, translator: "CrossLingualTranslator | None" = None) -> str:
         """Mutate the current prompt and keep it if score improves."""
         candidate = self._mutate(self.prompt)
-        new_score = self._score(candidate)
-        old_score = self._score(self.prompt)
+        new_score = self._score(candidate, translator=translator)
+        old_score = self._score(self.prompt, translator=translator)
         if new_score >= old_score or random.random() < self.lr:
             self.prompt = candidate
             self.history.append((candidate, new_score))
         return self.prompt
 
-    def optimize(self, steps: int = 10) -> str:
+    def optimize(
+        self,
+        steps: int = 10,
+        translator: "CrossLingualTranslator | None" = None,
+    ) -> str:
         for _ in range(steps):
-            self.step()
+            self.step(translator=translator)
+
+        if self.user_preferences and self.user_id is not None:
+            final = self.prompt
+            if translator is not None:
+                lang = self.user_preferences.get_language(self.user_id)
+                if lang:
+                    final = translator.translate(final, lang)
+            emotion = detect_emotion(final)
+            self.user_preferences.set_emotion(self.user_id, emotion)
+            return final
+
         return self.prompt
 
 __all__ = ["PromptOptimizer"]
