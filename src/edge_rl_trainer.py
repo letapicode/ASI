@@ -17,12 +17,16 @@ class EdgeRLTrainer:
         budget: ComputeBudgetTracker,
         run_id: str = "edge",
         micro_batcher: AdaptiveMicroBatcher | None = None,
+        *,
+        use_loihi: bool = False,
     ) -> None:
         self.model = model
         self.opt = optimizer
         self.budget = budget
         self.run_id = run_id
         self.micro_batcher = micro_batcher
+        self.use_loihi = use_loihi
+        self.power_usage: dict[str, float] = {"cpu": 0.0, "loihi": 0.0}
 
     def train(
         self,
@@ -31,6 +35,8 @@ class EdgeRLTrainer:
     ) -> int:
         steps = 0
         micro = self.micro_batcher
+        telemetry = self.budget.telemetry
+        start_energy = telemetry.get_stats().get("energy_kwh", 0.0)
         batches: Iterable[List[Tuple[torch.Tensor, torch.Tensor]]]
         if micro is not None:
             micro.start()
@@ -54,6 +60,10 @@ class EdgeRLTrainer:
 
         if micro is not None:
             micro.stop()
+        end_energy = telemetry.get_stats().get("energy_kwh", start_energy)
+        delta = end_energy - start_energy
+        key = "loihi" if self.use_loihi else "cpu"
+        self.power_usage[key] += max(delta, 0.0)
         return steps
 
 __all__ = ["EdgeRLTrainer"]

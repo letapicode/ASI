@@ -163,6 +163,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   these energy-efficient neurons. When the optional Loihi SDK is installed,
   enable `use_loihi=True` to run them on neuromorphic hardware via
   `src/loihi_backend.py`.
+- `src/edge_rl_trainer.py` now takes a `use_loihi` flag and logs power
+  consumption for CPU vs. Loihi execution through `TelemetryLogger`.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for

@@ -830,6 +830,9 @@ and compare the demographic parity gap.
 ## Edge RL Trainer
 
 `src/edge_rl_trainer.py` trains world models under a compute budget. It checks `ComputeBudgetTracker.remaining()` each step and stops when resources run low. See `scripts/train_edge_rl.py` for a usage example.
+`EdgeRLTrainer` now accepts `use_loihi=True` to run spiking layers on neuromorphic
+hardware. Energy usage for CPU vs. Loihi runs is tracked via
+`TelemetryLogger` and exposed through the new `power_usage` attribute.
 
 `src/fhe_runner.py` provides `run_fhe()` to execute small models with fully
 homomorphic encryption. It relies on the open‑source TenSEAL library and
