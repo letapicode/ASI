@@ -4,6 +4,7 @@ from typing import Any, Dict, Sequence
 
 from .graph_of_thought import GraphOfThought
 from .data_ingest import CrossLingualTranslator
+from .context_summary_memory import ContextSummaryMemory
 
 
 class CrossLingualReasoningGraph(GraphOfThought):
@@ -23,6 +24,28 @@ class CrossLingualReasoningGraph(GraphOfThought):
         meta = dict(metadata or {})
         meta["lang"] = lang
         return super().add_step(text, meta, node_id)
+
+    def summarize_old_steps(
+        self,
+        trace: Sequence[int],
+        memory: ContextSummaryMemory,
+        threshold: int = 10,
+    ) -> Sequence[int]:
+        """Summarize ``trace`` when it exceeds ``threshold`` nodes."""
+        if len(trace) <= threshold:
+            return list(trace)
+        prefix = trace[:-threshold]
+        summary_text = super().summarize_trace(prefix)
+        summary = memory.summarizer.summarize(summary_text)
+        translator = memory.translator or self.translator
+        translations: Dict[str, str] | None = None
+        if translator is not None:
+            translations = translator.translate_all(summary)
+        meta: Dict[str, Any] = {"summary": True}
+        if translations is not None:
+            meta["translations"] = translations
+        nid = self.add_step(summary, metadata=meta)
+        return [nid] + list(trace[-threshold:])
 
     def translate_node(self, node_id: int, target_lang: str) -> str:
         if node_id not in self.nodes:
