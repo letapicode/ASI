@@ -21,10 +21,7 @@ def _load(name: str, path: str):
 _load("asi.streaming_compression", "src/streaming_compression.py")
 _load("asi.encrypted_vector_store", "src/encrypted_vector_store.py")
 HierarchicalMemory = _load("asi.hierarchical_memory", "src/hierarchical_memory.py").HierarchicalMemory
-ContextSummaryMemory = _load("asi.context_summary_memory", "src/context_summary_memory.py").ContextSummaryMemory
-bm = _load("asi.bio_memory_replay", "src/bio_memory_replay.py")
-BioMemoryReplayer = bm.BioMemoryReplayer
-run_nightly_replay = bm.run_nightly_replay
+BioMemoryReplayer = _load("asi.bio_memory_replay", "src/bio_memory_replay.py").BioMemoryReplayer
 dt_mod = _load("asi.distributed_trainer", "src/distributed_trainer.py")
 DistributedTrainer = dt_mod.DistributedTrainer
 MemoryConfig = dt_mod.MemoryConfig
@@ -42,47 +39,42 @@ class DummyModel(torch.nn.Module):
         return self.lin(x)
 
 
-class DummySummarizer:
-    def summarize(self, x):
-        return "s"
-
-    def expand(self, text):
-        return torch.ones(4)
-
-
 def simple_worker(memory: DistributedMemory, step: int, compress=None) -> None:
-    tensor = torch.ones(1, memory.compressor.encoder.in_features) * (step + 1)
+    tensor = torch.ones(1, memory.compressor.encoder.in_features)
     if compress is not None:
         tensor = compress(tensor)
     memory.add(tensor, metadata=[f"s{step}"])
 
 
-class TestBioMemoryReplay(unittest.TestCase):
-    def test_replayer_hierarchical(self):
+class TestBioConsolidation(unittest.TestCase):
+    def test_reinsertion_compressed(self):
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, encryption_key=b"0"*16)
-        data = torch.randn(3, 4)
-        mem.add(data, metadata=["a", "b", "c"])
+        data = torch.randn(2, 4)
+        mem.add(data, metadata=["a", "b"])
+        before_len = len(mem)
+        before_buf = len(mem.compressor.buffer.data)
         model = DummyModel()
-        replayer = BioMemoryReplayer(model, mem, batch_size=2)
+        replayer = BioMemoryReplayer(model, mem, batch_size=1)
         replayer.replay()
-        self.assertEqual(model.count, 3)
+        self.assertEqual(len(mem), before_len + 2)
+        self.assertEqual(len(mem.compressor.buffer.data), before_buf)
 
-
-    def test_run_nightly_replay(self):
+    def test_consolidation_hook(self):
         cfg = MemoryConfig(dim=4, compressed_dim=2, capacity=10)
-        with unittest.mock.patch("time.time", side_effect=[0.0, 1.0, 2.0, 3.0]):
-            trainer = DistributedTrainer(simple_worker, cfg, "tmp", max_restarts=1)
-            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, encryption_key=b"0"*16)
-            mem.add(torch.randn(1, 4), metadata=["z"])
-            model = DummyModel()
-            run_nightly_replay(trainer, model, mem, batch_size=1)
-            trainer.replay_interval = 0.0
-            with unittest.mock.patch("multiprocessing.Process") as proc:
-                proc.return_value.start = lambda: None
-                proc.return_value.join = lambda: None
-                proc.return_value.exitcode = 0
-                trainer.run(steps=1)
-            self.assertEqual(model.count, 1)
+        trainer = DistributedTrainer(simple_worker, cfg, "tmp", max_restarts=1)
+        called = []
+
+        def hook():
+            called.append(True)
+
+        trainer.consolidation_hook = hook
+        trainer.consolidation_interval = 0.0
+        with unittest.mock.patch("multiprocessing.Process") as proc:
+            proc.return_value.start = lambda: None
+            proc.return_value.join = lambda: None
+            proc.return_value.exitcode = 0
+            trainer.run(steps=1)
+        self.assertTrue(called)
 
 
 if __name__ == "__main__":
