@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import subprocess
+from pathlib import Path
+
 import torch
 from torch import nn
 
@@ -42,4 +45,26 @@ def export_to_onnx(model: nn.Module, path: str) -> None:
         )
 
 
-__all__ = ["export_to_onnx"]
+def export_to_wasm(onnx_path: str | Path, output_dir: str | Path) -> None:
+    """Convert an ONNX model into a WebAssembly bundle via ``onnxruntime-web``."""
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    cmd = [
+        "npx",
+        "onnxruntime-web",
+        "build",
+        "--input",
+        str(onnx_path),
+        "--output",
+        str(out),
+    ]
+    try:
+        subprocess.check_call(cmd)
+    except FileNotFoundError as exc:  # pragma: no cover - env dependent
+        raise RuntimeError(
+            "Node.js with the onnxruntime-web package is required for WASM export"
+        ) from exc
+
+
+__all__ = ["export_to_onnx", "export_to_wasm"]

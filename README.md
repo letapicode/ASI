@@ -32,6 +32,27 @@ meta-rl-refactor sample_log.csv
 
 Run the scripts directly with `python` to see parameter and FLOP estimates.
 
+### Browser inference
+
+Use `scripts/export_wasm.py` to create WebAssembly bundles from the example
+models:
+
+```bash
+python scripts/export_wasm.py
+```
+
+Serve the generated files along with `onnxruntime-web` and load them in the
+browser:
+
+```html
+<script src="node_modules/onnxruntime-web/dist/ort.wasm.min.js"></script>
+<script type="module">
+  import * as ort from 'onnxruntime-web';
+  const session = await ort.InferenceSession.create('wasm_models/world_model.onnx');
+  const output = await session.run({/* inputs */});
+</script>
+```
+
 ## Telemetry
 
 `MemoryServer` can record resource usage via `TelemetryLogger`. Metrics start
