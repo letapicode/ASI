@@ -400,7 +400,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
 75. **Dataset summarization**: `scripts/dataset_summary.py --content` clusters text samples with `dataset_summarizer.summarize_dataset()` and writes the result to `docs/datasets/`.
-76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
+76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging. When initialised with a `CrossLingualTranslator` the logger records translated summaries for multilingual inspection.
 77. **User preference modeling**: `UserPreferences` maintains per-user vectors and feedback counts so `PromptOptimizer` can personalise prompts. Aggregate stats expose fairness gaps across demographics.
 
 76. **Trusted execution inference**: `EnclaveRunner` launches model inference inside a trusted enclave. `DistributedTrainer` can route its steps through the enclave to keep weights in a protected address space. This guards intermediate activations but does not eliminate side-channel risk.
@@ -409,7 +409,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 78. **Cluster carbon dashboard**: `TelemetryLogger` now publishes per-node carbon metrics to a central `ClusterCarbonDashboard`. `RiskDashboard` links to the dashboard so operators can track environmental impact across nodes.
 79. **Federated knowledge graph memory**: Replicate triples across nodes via `FederatedKGMemoryServer` so that after network partitions all servers agree on the same graph. Success is 100% retrieval consistency across two peers after concurrent updates.
 80. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
-81. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps. The logger now provides `analyze()` to cluster repeated steps and flag inconsistencies. Use `python -m asi.self_reflection` to print a report from saved histories.
+81. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps. The logger now provides `analyze()` to cluster repeated steps and flag inconsistencies, and can translate summaries when a `CrossLingualTranslator` is supplied. Use `python -m asi.self_reflection` to print a report from saved histories.
 82. **Graph-of-thought visualizer**: Use `src/got_visualizer.py` and the CLI
     `scripts/got_visualizer.py trace.json --out graph.html` to render reasoning
     traces for collaborative editing sessions.
