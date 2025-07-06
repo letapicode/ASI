@@ -346,6 +346,38 @@ def _eval_emotion_detector() -> Tuple[bool, str]:
     return correct == len(samples), f"acc={correct}/{len(samples)}"
 
 
+def _eval_cross_modal_analogy() -> Tuple[bool, str]:
+    """Run a minimal cross-modal analogy retrieval benchmark."""
+    from asi.cross_modal_fusion import (
+        CrossModalFusionConfig,
+        CrossModalFusion,
+        MultiModalDataset,
+    )
+    from asi.cross_modal_analogy import cross_modal_analogy_search
+    from asi.hierarchical_memory import HierarchicalMemory
+
+    cfg = CrossModalFusionConfig(
+        vocab_size=50,
+        text_dim=4,
+        img_channels=3,
+        audio_channels=1,
+        latent_dim=4,
+    )
+    model = CrossModalFusion(cfg)
+    data = [
+        ("aa", torch.randn(3, 4, 4), torch.randn(1, 8)),
+        ("bb", torch.randn(3, 4, 4), torch.randn(1, 8)),
+        ("cc", torch.randn(3, 4, 4), torch.randn(1, 8)),
+    ]
+    ds = MultiModalDataset(data, lambda t: [ord(c) % cfg.vocab_size for c in t])
+    mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+    vec, meta = cross_modal_analogy_search(
+        model, ds, mem, 0, 1, 2, k=1, batch_size=1
+    )
+    ok = vec.shape[-1] == cfg.latent_dim and len(meta) == 1
+    return ok, f"shape={tuple(vec.shape)}"
+
+
 EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "moe_router": _eval_moe_router,
     "flash_attention3": _eval_flash_attention3,
@@ -370,6 +402,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "context_profiler": _eval_context_profiler,
     "voxel_rollout": _eval_voxel_rollout,
     "emotion_detector": _eval_emotion_detector,
+    "cross_modal_analogy": _eval_cross_modal_analogy,
 }
 
 
