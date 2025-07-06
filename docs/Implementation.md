@@ -490,6 +490,23 @@ def tokenizer(t: str):
 triples = offline_synthesizer(wm, tokenizer, "hello", np.zeros((1, 4, 4)), policy, steps=2)
 ```
 
+Sensitive ingestion steps can be isolated using `EnclaveRunner`:
+
+```python
+from asi.enclave_runner import EnclaveRunner
+from asi.license_inspector import LicenseInspector
+from asi.dataset_lineage_manager import DatasetLineageManager
+from asi.data_ingest import download_triples, paraphrase_multilingual
+from pathlib import Path
+
+runner = EnclaveRunner()
+inspector = LicenseInspector()
+lineage = DatasetLineageManager("./data")
+
+triples = download_triples(text_urls, img_urls, aud_urls, "./data", lineage=lineage, runner=runner)
+paraphrase_multilingual([Path("./data/text/0.txt")], translator, None, inspector, lineage, runner=runner)
+```
+
 ## L-6 Mechanistic Interpretability Tools
 
 - `src/transformer_circuits.py` provides utilities to record attention weights

@@ -59,12 +59,18 @@ import numpy as np
 import asyncio
 from unittest.mock import patch
 
-mm = types.SimpleNamespace(
-    MultiModalWorldModel=object,
-    MultiModalWorldModelConfig=object,
-)
-MultiModalWorldModel = mm.MultiModalWorldModel
-MultiModalWorldModelConfig = mm.MultiModalWorldModelConfig
+class DummyWM:
+    def __init__(self, *a, **kw):
+        pass
+
+
+class DummyCfg:
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+
+
+MultiModalWorldModel = DummyWM
+MultiModalWorldModelConfig = DummyCfg
 
 
 class TestDataIngest(unittest.TestCase):

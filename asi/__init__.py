@@ -27,6 +27,7 @@ for _m in [
     "quantum_retrieval",
     "quantum_sampler",
     "quantum_hpo",
+    "enclave_runner",
 ]:
     _import(_m)
 
