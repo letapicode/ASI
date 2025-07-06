@@ -338,6 +338,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      accepts language tags from `CrossLingualMemory`; running
      `scripts/quantum_crosslingual_benchmark.py` shows parity across languages
      with ~1.5× latency.
+37b. **Quantum memory server**: `quantum_memory_server` exposes gRPC APIs
+     for vector search using `quantum_retrieval.amplify_search`. The accompanying
+     `QuantumMemoryClient` lets peers push embeddings and query the server over
+     the network.
 38. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
