@@ -399,6 +399,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 72. **Self-debugging world model**: Automatically patch the world model when rollout errors exceed 1%, keeping long-term error <1%. *Implemented in `src/world_model_debugger.py` with tests.*
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
+74a. **Data poisoning detector**: `DataPoisonDetector` scans ingested text for anomalous vocabulary. Success criterion: >90% detection on a poison benchmark.
 75. **Dataset summarization**: `scripts/dataset_summary.py --content` clusters text samples with `dataset_summarizer.summarize_dataset()` and writes the result to `docs/datasets/`.
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging. When initialised with a `CrossLingualTranslator` the logger records translated summaries for multilingual inspection.
 77. **User preference modeling**: `UserPreferences` maintains per-user vectors and feedback counts so `PromptOptimizer` can personalise prompts. Aggregate stats expose fairness gaps across demographics.
