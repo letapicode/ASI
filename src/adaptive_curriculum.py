@@ -7,6 +7,7 @@ import torch
 
 from .robot_skill_transfer import VideoPolicyDataset
 from .self_play_env import PrioritizedReplayBuffer
+from .cognitive_load_monitor import CognitiveLoadMonitor
 
 
 @dataclass
@@ -24,15 +25,26 @@ class AdaptiveCurriculum:
         curated: VideoPolicyDataset,
         buffer: PrioritizedReplayBuffer,
         cfg: CurriculumConfig | None = None,
+        *,
+        load_monitor: CognitiveLoadMonitor | None = None,
     ) -> None:
         self.curated = curated
         self.buffer = buffer
         self.cfg = cfg or CurriculumConfig()
         self.prefs = torch.zeros(2, dtype=torch.float32)
         self.baseline = 0.0
+        self.load_monitor = load_monitor
 
     def _probs(self) -> torch.Tensor:
-        return torch.softmax(self.prefs, dim=0)
+        probs = torch.softmax(self.prefs, dim=0)
+        if self.load_monitor is not None:
+            load = self.load_monitor.cognitive_load()
+            if load > 0:
+                p0 = float(probs[0]) + load * (1.0 - float(probs[0]))
+                p0 = min(max(p0, 0.0), 1.0)
+                p1 = 1.0 - p0
+                probs = torch.tensor([p0, p1], dtype=probs.dtype)
+        return probs
 
     def sample(self, batch_size: int) -> Tuple[List[torch.Tensor], List[int], int]:
         """Return batch of (frames, actions) and chosen dataset index."""
