@@ -223,6 +223,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 11. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
    trajectories from `self_play_skill_loop.run_loop` and feeds them into
    `train_world_model` for mixed-modality experiments.
+12. **Opponent strategy evolution**: `opponent_generator.OpponentGenerator`
+    maintains a pool of past policies and samples them by reward.
+    Success criterion: ≥10 % performance gain on held-out tasks after
+    five self-play cycles.
 12. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
     `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard.
