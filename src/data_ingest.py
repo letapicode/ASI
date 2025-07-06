@@ -111,6 +111,22 @@ except Exception:  # pragma: no cover - for tests
         def file_bias_score(path: str | Path) -> float:  # type: ignore
             return 1.0
 
+try:  # pragma: no cover - optional secure exchange
+    from .secure_dataset_exchange import SecureDatasetExchange
+except Exception:  # pragma: no cover - for tests
+    try:
+        from secure_dataset_exchange import SecureDatasetExchange  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        class SecureDatasetExchange:  # type: ignore
+            def __init__(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def push(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def pull(self, *a: Any, **kw: Any) -> None:
+                pass
+
 
 
 class ActiveDataSelector:
@@ -635,6 +651,28 @@ def ingest_translated_triples(
     return t_vecs, i_vecs, a_vecs
 
 
+def push_dataset(
+    directory: str | Path,
+    package: str | Path,
+    key: bytes,
+    signing_key: bytes | None = None,
+) -> Path:
+    """Encrypt ``directory`` and store it as ``package``."""
+    exchange = SecureDatasetExchange(key, signing_key=signing_key)
+    return exchange.push(directory, package)
+
+
+def pull_dataset(
+    package: str | Path,
+    directory: str | Path,
+    key: bytes,
+    verify_key: bytes | None = None,
+) -> None:
+    """Decrypt ``package`` into ``directory``."""
+    exchange = SecureDatasetExchange(key, verify_key=verify_key)
+    exchange.pull(package, directory)
+
+
 __all__ = [
     "download_triples",
     "download_triples_async",
@@ -651,6 +689,8 @@ __all__ = [
     "auto_label_triples",
     "paraphrase_multilingual",
     "ingest_translated_triples",
+    "push_dataset",
+    "pull_dataset",
     "ActiveDataSelector",
     "CrossLingualTranslator",
     "CrossLingualSpeechTranslator",
