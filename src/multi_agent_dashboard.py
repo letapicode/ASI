@@ -25,6 +25,7 @@ class MultiAgentDashboard:
         telemetry: Dict[str, float] = {}
         reasoning: Dict[str, list] = {}
         graphs: Dict[str, Any] = {}
+        languages: Dict[str, list[str]] = {}
         for name, agent in self.coordinator.agents.items():
             tel = getattr(agent, "telemetry", None)
             hist = (
@@ -43,6 +44,9 @@ class MultiAgentDashboard:
                         telemetry[k] = telemetry.get(k, 0.0) + float(v)
             if hist is not None and hasattr(hist, "get_history"):
                 reasoning[name] = list(hist.get_history())
+                tr = getattr(hist, "translator", None)
+                if tr is not None:
+                    languages[name] = list(tr.languages)
             if graph is not None:
                 graphs[name] = graph
 
@@ -63,6 +67,7 @@ class MultiAgentDashboard:
             "reasoning": reasoning,
             "merged_reasoning": merged,
             "inconsistencies": inconsistencies,
+            "languages": languages,
         }
 
     # --------------------------------------------------------------
@@ -70,6 +75,9 @@ class MultiAgentDashboard:
         data = self.aggregate()
         tele = data.get("telemetry", {})
         carbon = tele.get("carbon_g", 0.0)
+        langs = {
+            name: ', '.join(l) for name, l in data.get("languages", {}).items()
+        }
         rows = [
             f"<tr><td>{a}</td><td>{r}</td><td>{act}</td><td>{rew:.2f}</td></tr>"
             for a, r, act, rew in data.get("assignments", [])
@@ -77,10 +85,15 @@ class MultiAgentDashboard:
         rrows = []
         for name, entries in data.get("reasoning", {}).items():
             for ts, summary in entries[-3:]:
-                rrows.append(f"<tr><td>{name}</td><td>{ts}</td><td>{summary}</td></tr>")
+                rrows.append(
+                    f"<tr><td>{name}</td><td>{ts}</td><td>{summary}</td></tr>"
+                )
         return (
             "<html><body><h1>Multi-Agent Dashboard</h1>"
             f"<p>Carbon emitted: {carbon:.2f} g</p>"
+            "<h2>Languages</h2><ul>"
+            + "".join(f"<li>{n}: {l}</li>" for n, l in langs.items())
+            + "</ul>"
             "<h2>Task Log</h2><table border='1'>"
             "<tr><th>Agent</th><th>Repo</th><th>Action</th><th>Reward</th></tr>"
             f"{''.join(rows)}</table>"

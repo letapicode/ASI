@@ -28,13 +28,15 @@ except Exception:  # pragma: no cover - fallback for tests
         from lora_quant import apply_quant_lora  # type: ignore
 
 
-def _replace_linears(mod: nn.Module) -> None:
+def _replace_mlps(mod: nn.Module, *, use_loihi: bool = False) -> None:
+    """Recursively swap MLP ``Linear`` layers with ``SpikingLinear``."""
     for name, child in list(mod.named_children()):
-        if isinstance(child, nn.Linear):
+        if isinstance(child, nn.Linear) and name in {"linear1", "linear2", "state_proj", "reward_head"}:
             new = SpikingLinear(
                 child.in_features,
                 child.out_features,
                 bias=child.bias is not None,
+                use_loihi=use_loihi,
             )
             with torch.no_grad():
                 new.linear.weight.copy_(child.weight)
@@ -43,7 +45,7 @@ def _replace_linears(mod: nn.Module) -> None:
                     new.linear.bias.copy_(child.bias)
             setattr(mod, name, new)
         else:
-            _replace_linears(child)
+            _replace_mlps(child, use_loihi=use_loihi)
 
 
 class ActionEncoder(nn.Module):
@@ -108,6 +110,7 @@ class MultiModalWorldModelConfig:
     checkpoint_blocks: bool = False
     use_lora: bool = False
     use_spiking: bool = False
+    use_loihi: bool = False
 
 
 class MultiModalWorldModel(nn.Module):
@@ -137,8 +140,8 @@ class MultiModalWorldModel(nn.Module):
                 ],
             )
         if cfg.use_spiking:
-            _replace_linears(self.obs_enc)
-            _replace_linears(self.dyn)
+            _replace_mlps(self.obs_enc, use_loihi=cfg.use_loihi)
+            _replace_mlps(self.dyn, use_loihi=cfg.use_loihi)
 
     def encode_obs(self, text: torch.Tensor, image: torch.Tensor) -> torch.Tensor:
         if self.cfg.checkpoint_blocks:

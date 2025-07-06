@@ -84,6 +84,8 @@ class DistributedTrainer:
         micro_batcher: AdaptiveMicroBatcher | None = None,
         hpc_backend: str | None = None,
         enclave: EnclaveConfig | None = None,
+        replay_hook: Callable[[], None] | None = None,
+        replay_interval: float | None = None,
 
     ) -> None:
         self.train_fn = train_fn
@@ -98,6 +100,9 @@ class DistributedTrainer:
         self.micro_batcher = micro_batcher
         self.hpc_backend = hpc_backend
         self.enclave_cfg = enclave.__dict__ if isinstance(enclave, EnclaveConfig) else enclave
+        self.replay_hook = replay_hook
+        self.replay_interval = replay_interval
+        self._last_replay = time.time()
 
 
     def run(self, steps: int) -> None:
@@ -168,6 +173,10 @@ class DistributedTrainer:
                 print("telemetry", stats)
             if self.micro_batcher:
                 self.micro_batcher.tick()
+            if self.replay_hook is not None and self.replay_interval is not None:
+                if time.time() - self._last_replay >= self.replay_interval:
+                    self.replay_hook()
+                    self._last_replay = time.time()
         if self.telemetry:
             self.telemetry.stop()
         if self.micro_batcher:

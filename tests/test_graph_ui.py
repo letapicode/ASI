@@ -20,6 +20,7 @@ def _load(name, path):
 
 GraphOfThought = _load('asi.graph_of_thought', 'src/graph_of_thought.py').GraphOfThought
 ReasoningHistoryLogger = _load('asi.reasoning_history', 'src/reasoning_history.py').ReasoningHistoryLogger
+_load('asi.nl_graph_editor', 'src/nl_graph_editor.py')
 GraphUI = _load('asi.graph_ui', 'src/graph_ui.py').GraphUI
 
 
@@ -42,13 +43,16 @@ class TestGraphUI(unittest.TestCase):
         conn.request('POST', '/graph/edge', json.dumps({'src': a, 'dst': node_id}),
                      {'Content-Type': 'application/json'})
         conn.getresponse().read()
+        conn.request('POST', '/graph/nl_edit', json.dumps({'command': 'add node extra'}),
+                     {'Content-Type': 'application/json'})
+        conn.getresponse().read()
         conn.request('POST', '/graph/recompute')
         summary = json.loads(conn.getresponse().read())['summary']
         self.assertIn('start', summary)
         conn.request('GET', '/graph/data')
         resp = conn.getresponse()
         data = json.loads(resp.read())
-        self.assertEqual(len(data['nodes']), 3)
+        self.assertEqual(len(data['nodes']), 4)
         conn.request('GET', '/history')
         resp = conn.getresponse()
         hist = json.loads(resp.read())

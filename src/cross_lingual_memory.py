@@ -1,9 +1,33 @@
 import numpy as np
-import torch
 from typing import Iterable, Any, Tuple, List
+
+try:  # optional torch dependency
+    import torch
+    from torch import nn
+    _cos_sim = nn.functional.cosine_similarity
+except Exception:  # pragma: no cover - allow running without torch
+    import types
+
+    class _DummyTorch(types.SimpleNamespace):
+        def from_numpy(self, arr):
+            return arr
+
+        def stack(self, seq):
+            return np.stack(seq)
+
+    torch = _DummyTorch()
+
+    def _cos_sim(a, b, dim=1):
+        a = np.asarray(a)
+        b = np.asarray(b)
+        dot = (a * b).sum(axis=dim)
+        na = np.linalg.norm(a, axis=dim)
+        nb = np.linalg.norm(b, axis=dim)
+        return dot / (na * nb + 1e-8)
 
 from .hierarchical_memory import HierarchicalMemory
 from .data_ingest import CrossLingualTranslator, CrossLingualSpeechTranslator
+from .quantum_retrieval import amplify_search
 
 
 def _embed_text(text: str, dim: int) -> torch.Tensor:
@@ -91,44 +115,50 @@ class CrossLingualMemory(HierarchicalMemory):
         else:
             super().add(x, metadata)
 
-    def search_text(self, text: str, k: int = 5) -> Tuple[torch.Tensor, List[Any]]:
+    def search_text(self, text: str, k: int = 5, *, quantum: bool = False) -> Tuple[torch.Tensor, List[Any]]:
         """Search for ``text`` across languages."""
         queries = [text]
+        langs = ["orig"]
         if self.translator is not None:
-            queries += list(self.translator.translate_all(text).values())
-        results: List[tuple[float, torch.Tensor, Any]] = []
-        for q in queries:
+            for l, trans in self.translator.translate_all(text).items():
+                queries.append(trans)
+                langs.append(l)
+        results: List[tuple[float, torch.Tensor, Any, str]] = []
+        for q, lg in zip(queries, langs):
             q_vec = _embed_text(q, self.text_dim)
             vecs, meta = super().search(q_vec, k)
-            scores = torch.nn.functional.cosine_similarity(
-                vecs, q_vec.expand_as(vecs), dim=1
-            )
-            results.extend([(s.item(), v, m) for s, v, m in zip(scores, vecs, meta)])
+            scores = _cos_sim(vecs, q_vec.expand_as(vecs), dim=1)
+            results.extend([(s.item(), v, m, lg) for s, v, m in zip(scores, vecs, meta)])
         if not results:
             return torch.empty(0, self.text_dim), []
-        results.sort(key=lambda x: x[0], reverse=True)
-        top = results[:k]
+        scores = [r[0] for r in results]
+        tags = [r[3] for r in results]
+        if quantum:
+            order = amplify_search(scores, k, tags)
+        else:
+            order = np.argsort(scores)[::-1][:k]
+        top = [results[i] for i in order]
         out_vecs = torch.stack([r[1] for r in top])
         out_meta = [r[2] for r in top]
         return out_vecs, out_meta
 
     def search_audio(
-        self, audio: str | torch.Tensor, k: int = 5
+        self, audio: str | torch.Tensor, k: int = 5, *, quantum: bool = False
     ) -> Tuple[torch.Tensor, List[Any]]:
         """Transcribe ``audio`` then search translations."""
         if self.speech_translator is None:
             return torch.empty(0, self.text_dim), []
         text = self.speech_translator.transcribe(audio)
-        return self.search_text(text, k)
+        return self.search_text(text, k, quantum=quantum)
 
     def search(
-        self, query: torch.Tensor | str, k: int = 5
+        self, query: torch.Tensor | str, k: int = 5, *, quantum: bool = False
     ) -> Tuple[torch.Tensor, List[Any]]:  # type: ignore[override]
         """Search by embedding, text or audio path."""
         if isinstance(query, str):
             if query.endswith(".wav") and self.speech_translator is not None:
-                return self.search_audio(query, k)
-            return self.search_text(query, k)
+                return self.search_audio(query, k, quantum=quantum)
+            return self.search_text(query, k, quantum=quantum)
         return super().search(query, k)
 
 

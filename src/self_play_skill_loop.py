@@ -38,6 +38,10 @@ except Exception:  # pragma: no cover - fallback for tests
         SkillTransferModel,
         transfer_skills,
     )
+try:
+    from .opponent_generator import OpponentGenerator
+except Exception:  # pragma: no cover - fallback for tests
+    from opponent_generator import OpponentGenerator  # type: ignore
 
 
 class SafetyPolicyMonitor:
@@ -73,6 +77,7 @@ def run_loop(
     frames: Iterable[torch.Tensor],
     actions: Iterable[int],
     monitor: SafetyPolicyMonitor | None = None,
+    opponent_gen: "OpponentGenerator | None" = None,
 ) -> Tuple[List[float], SkillTransferModel]:
     """Run alternating self-play and skill transfer cycles."""
 
@@ -91,17 +96,26 @@ def run_loop(
 
     history: List[float] = []
     current_policy = policy
+    if opponent_gen is not None:
+        opponent_gen.update(current_policy, 0.0)
     model: SkillTransferModel | None = None
     for _ in range(cfg.cycles):
+        use_policy = current_policy
+        if opponent_gen is not None:
+            try:
+                use_policy = opponent_gen.sample()
+            except Exception:
+                use_policy = current_policy
         obs_list, rewards, acts = rollout_env(
-            env, current_policy, steps=cfg.steps, return_actions=True
+            env, use_policy, steps=cfg.steps, return_actions=True
         )
         for o, a, r in zip(obs_list, acts, rewards):
             buffer.add(o, a, r)
         if monitor is not None:
             transcript = "\n".join(f"{o.tolist()}:{a}" for o, a in zip(obs_list, acts))
             monitor.check(transcript)
-        history.append(sum(rewards) / len(rewards) if rewards else 0.0)
+        mean_r = sum(rewards) / len(rewards) if rewards else 0.0
+        history.append(mean_r)
         sample_frames, sample_actions = buffer.sample_by_priority(cfg.batch_size)
         dataset = VideoPolicyDataset(sample_frames, sample_actions)
         model = transfer_skills(transfer_cfg, dataset)
@@ -114,6 +128,8 @@ def run_loop(
                 return logits.argmax(dim=-1).squeeze(0)
 
         current_policy = new_policy
+        if opponent_gen is not None:
+            opponent_gen.update(current_policy, mean_r)
 
     assert model is not None
     return history, model
@@ -127,6 +143,7 @@ def self_play_skill_loop(
     cycles: int = 3,
     steps: int = 20,
     monitor: SafetyPolicyMonitor | None = None,
+    opponent_gen: "OpponentGenerator | None" = None,
 ) -> list[list[float]]:
     """Backward-compatible wrapper around :func:`run_loop`."""
 
@@ -142,7 +159,12 @@ def self_play_skill_loop(
         cycles=cycles,
     )
     rewards, _ = run_loop(
-        cfg, policy, real_dataset.frames, real_dataset.actions, monitor
+        cfg,
+        policy,
+        real_dataset.frames,
+        real_dataset.actions,
+        monitor,
+        opponent_gen,
     )
     return [[r] for r in rewards]
 

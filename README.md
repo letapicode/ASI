@@ -11,6 +11,7 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 - `python -m src.autobench` runs each test file in isolation and reports a summary.
 - `meta-rl-refactor` parses action/reward logs and suggests the next refactoring step.
 - `scripts/dataset_summary.py` prints lineage and license info. Use `--content` to cluster dataset samples and store summaries under `docs/datasets/`.
+- `scripts/ar_robot_demo.py` streams predicted and actual robot trajectories to a WebSocket server for lightweight AR visualization.
 
 Example:
 
@@ -27,6 +28,7 @@ meta-rl-refactor sample_log.csv
 4. Optional: `pip install faiss-cpu` to enable disk-backed vector storage in `src/vector_store.py`.
 5. Run `pip install -e .` to enable imports from the `asi` package.
 6. The project runs without these optional packages, but FlashAttention-3 and persistent storage will be disabled.
+7. Launch the AR demo with `python scripts/ar_robot_demo.py` and connect your AR client to `ws://localhost:8765/ws`.
 
 Run the scripts directly with `python` to see parameter and FLOP estimates.
 
@@ -84,6 +86,20 @@ portal.start(port=8090)
 ```
 
 Visit `http://localhost:8090` to inspect progress.
+
+### Graph UI Editing
+
+`GraphUI` visualizes reasoning graphs. With `NLGraphEditor` you can type plain
+English commands into the text box at `/graph` to modify the graph. Examples:
+
+```text
+add node analysis
+add edge from start to analysis
+merge nodes analysis and finish
+```
+
+Each command triggers a recomputation of the concise summary stored in
+`ReasoningHistoryLogger`. See [docs/Plan.md](docs/Plan.md) for the roadmap.
 
 ## Testing
 
