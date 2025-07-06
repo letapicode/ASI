@@ -258,3 +258,4 @@ from .spiking_layers import LIFNeuron, SpikingLinear
 
 
 from .fhe_runner import run_fhe
+from .emotion_detector import detect_emotion

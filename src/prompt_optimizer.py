@@ -4,6 +4,7 @@ import random
 from typing import Callable, List, Tuple, Optional
 
 from .user_preferences import UserPreferences
+from .emotion_detector import detect_emotion
 
 class PromptOptimizer:
     """Simple prompt optimizer using random mutations and acceptance by score.
@@ -24,9 +25,9 @@ class PromptOptimizer:
         self.scorer = scorer
         self.prompt = base_prompt
         self.lr = lr
-        self.history: List[Tuple[str, float]] = [(base_prompt, self._score(base_prompt))]
         self.user_preferences = user_preferences
         self.user_id = user_id
+        self.history: List[Tuple[str, float]] = [(base_prompt, self._score(base_prompt))]
 
     # ------------------------------------------------------------
     def _mutate(self, text: str) -> str:
@@ -47,6 +48,17 @@ class PromptOptimizer:
             pref = self.user_preferences.get_vector(self.user_id)
             emb = self.user_preferences.embed_text(prompt)
             score += float(pref @ emb)
+
+            pos, neg = self.user_preferences.get_stats(self.user_id)
+            bias = 0.0
+            if pos + neg:
+                bias = (pos - neg) / float(pos + neg)
+
+            emotion = detect_emotion(prompt)
+            if emotion == "positive":
+                score += bias
+            elif emotion == "negative":
+                score -= bias
         return score
 
     def step(self) -> str:

@@ -33,12 +33,15 @@ def load(name, path):
 
 # load required modules
 fe = load('asi.fairness_evaluator', 'src/fairness_evaluator.py')
+di = load('asi.data_ingest', 'src/data_ingest.py')
 clf = load('asi.cross_lingual_fairness', 'src/cross_lingual_fairness.py')
+ed = load('asi.emotion_detector', 'src/emotion_detector.py')
 eh = load('asi.eval_harness', 'src/eval_harness.py')
 
 # reduce evaluators to avoid heavy deps
 eh.EVALUATORS = {
     'cross_lingual_fairness': eh._eval_cross_lingual_fairness,
+    'emotion_detector': eh._eval_emotion_detector,
 }
 
 parse_modules = eh.parse_modules
@@ -54,14 +57,14 @@ class TestEvalHarness(unittest.TestCase):
         self.assertIn('moe_router', mods)
 
     def test_evaluate_subset(self):
-        subset = ['cross_lingual_fairness']
+        subset = ['cross_lingual_fairness', 'emotion_detector']
         results = evaluate_modules(subset)
         for name in subset:
             self.assertIn(name, results)
             self.assertTrue(results[name][0], name)
 
     def test_evaluate_subset_async(self):
-        subset = ['cross_lingual_fairness']
+        subset = ['cross_lingual_fairness', 'emotion_detector']
         results = asyncio.run(evaluate_modules_async(subset))
         for name in subset:
             self.assertIn(name, results)
@@ -72,7 +75,7 @@ class TestEvalHarness(unittest.TestCase):
         self.assertIsInstance(mem, float)
 
     def test_format_results_reports_memory(self):
-        subset = ['cross_lingual_fairness']
+        subset = ['cross_lingual_fairness', 'emotion_detector']
         results = evaluate_modules(subset)
         mem = log_memory_usage()
         out = format_results(results)
@@ -83,6 +86,11 @@ class TestEvalHarness(unittest.TestCase):
         results = evaluate_modules(['cross_lingual_fairness'])
         self.assertIn('cross_lingual_fairness', results)
         self.assertTrue(results['cross_lingual_fairness'][0])
+
+    def test_emotion_detector_evaluator(self):
+        results = evaluate_modules(['emotion_detector'])
+        self.assertIn('emotion_detector', results)
+        self.assertTrue(results['emotion_detector'][0])
 
 
 if __name__ == '__main__':
