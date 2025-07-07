@@ -577,6 +577,15 @@ records estimated energy usage and wait time via `TelemetryLogger`.
 
 The new `CarbonCostAwareScheduler` extends this by also polling cloud price APIs and weighting the forecasts. Configurable `carbon_weight` and `cost_weight` pick the cheapest-greenest slot before calling `submit_job()`.
 
+`hpc_forecast_scheduler.HPCForecastScheduler` fits an ARIMA model to past
+carbon-intensity and price traces for a single cluster and sleeps until the
+predicted lowest-score slot.  Building on that,
+`hpc_multi_scheduler.MultiClusterScheduler` compares those forecasts across
+multiple clusters.  Its `submit_best()` helper returns the chosen cluster and job
+ID, waiting for the optimal delay if necessary.  See the
+`scripts/hpc_multi_schedule.py` CLI for a minimal example that prints which
+cluster was selected.
+
 
 
 
