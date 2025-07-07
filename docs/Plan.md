@@ -186,6 +186,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/iter_align.py` runs a simple iterative alignment loop for **L-3**.
 - `src/critic_rlhf.py` provides a minimal critic-driven RLHF loop for **L-4**.
   See `docs/Implementation.md` and `docs/load_balance.md` for details.
+- `src/bci_feedback_trainer.py` converts EEG signals into rewards and flags
+  discomfort or disagreement patterns. These events pass through
+  `deliberative_alignment.check_alignment()` to flip rewards when the policy
+  deems them misaligned. `AlignmentDashboard` now reports the count of such
+  BCI-derived events.
 - `src/rlaif_trainer.py` runs a synthetic-critic RLAIF loop for **L-7**.
 - `src/pull_request_monitor.py` now supports asynchronous GitHub queries using
   `aiohttp` for faster monitoring of open pull requests.
