@@ -449,9 +449,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      in the source language and translated forms. Results are translated back
      to the query language. See `docs/Implementation.md` for details.
 41b. **Cross-lingual reasoning graph**: `CrossLingualReasoningGraph` stores reasoning
-     steps with language tags. `GraphOfThoughtPlanner` can record ranked plans so
-     they are retrievable in multiple languages. Evaluate by confirming the same
-     plan is found in at least two languages.
+    steps with language tags. `GraphOfThoughtPlanner` can record ranked plans so
+    they are retrievable in multiple languages. Old steps are summarised into
+    `ContextSummaryMemory` with translations so `query_summary()` can return the
+    compressed trace in any language. Evaluate by confirming the same plan is
+    found in at least two languages.
 41c. **Multimodal reasoning graph**: `CrossLingualReasoningGraph.add_step()`
      accepts `image_embed` and `audio_embed`. Use `embed_modalities()` from
      `CrossModalFusion` to generate vectors. `ReasoningHistoryLogger` preserves
