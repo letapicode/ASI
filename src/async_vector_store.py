@@ -23,6 +23,18 @@ class AsyncFaissVectorStore(FaissVectorStore):
         """Schedule ``search`` on a background thread."""
         return self._executor.submit(super().search, query, k)
 
+    # ------------------------------------------------------------------
+    # HyDE search helpers
+
+    def hyde_search_async(self, query: np.ndarray, k: int = 5) -> Future:
+        """Schedule ``hyde_search`` on a background thread."""
+        return self._executor.submit(super().hyde_search, query, k)
+
+    async def ahyde_search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, list[Any]]:
+        """Awaitable ``hyde_search`` wrapper using ``asyncio``."""
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self._executor, super().hyde_search, query, k)
+
     async def save_async(self, path: str | Path) -> None:
         """Awaitable ``save`` wrapper using ``asyncio``."""
         loop = asyncio.get_running_loop()

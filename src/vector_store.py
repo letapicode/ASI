@@ -78,6 +78,25 @@ class VectorStore:
             idx = np.argsort(scores.ravel())[::-1][:k]
         return mat[idx], [self._meta[i] for i in idx]
 
+    # ------------------------------------------------------------------
+    # Hypothetical Document Embedding search
+
+    def _encode_hypothetical(self, query: np.ndarray) -> np.ndarray:
+        """Return a hypothetical document embedding for ``query``.
+
+        The default stub simply returns the query itself so HyDE falls
+        back to standard search. Sub-classes may override this method
+        with a proper generative encoder.
+        """
+        return np.asarray(query, dtype=np.float32)
+
+    def hyde_search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, List[Any]]:
+        """Search using a blended hypothetical document embedding."""
+        q = np.asarray(query, dtype=np.float32)
+        hyp = self._encode_hypothetical(q)
+        blend = (q + hyp) / 2.0
+        return self.search(blend, k)
+
     def save(self, path: str | Path) -> None:
         """Persist vectors and metadata to a compressed ``.npz`` file."""
         vecs = (
@@ -191,6 +210,20 @@ class FaissVectorStore:
             idx = idx[idx >= 0]
         return self._vectors[idx], [self._meta[i] for i in idx]
 
+    # ------------------------------------------------------------------
+    # Hypothetical Document Embedding search
+
+    def _encode_hypothetical(self, query: np.ndarray) -> np.ndarray:
+        """Stub encoder returning ``query`` as the hypothetical document."""
+        return np.asarray(query, dtype=np.float32)
+
+    def hyde_search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, List[Any]]:
+        """Search using a blended hypothetical document embedding."""
+        q = np.asarray(query, dtype=np.float32)
+        hyp = self._encode_hypothetical(q)
+        blend = (q + hyp) / 2.0
+        return self.search(blend, k)
+
     def save(self, path: str | Path) -> None:
         import faiss
 
@@ -287,6 +320,18 @@ class LocalitySensitiveHashIndex:
         idx = np.argsort(scores.ravel())[::-1][:k]
         selected = [candidates[i] for i in idx]
         return mat[idx], [self.meta[i] for i in selected]
+
+    # ------------------------------------------------------------------
+    # Hypothetical Document Embedding search
+
+    def _encode_hypothetical(self, query: np.ndarray) -> np.ndarray:
+        return np.asarray(query, dtype=np.float32)
+
+    def hyde_search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, List[Any]]:
+        q = np.asarray(query, dtype=np.float32)
+        hyp = self._encode_hypothetical(q)
+        blend = (q + hyp) / 2.0
+        return self.search(blend, k)
 
     def save(self, path: str | Path) -> None:
         path = Path(path)

@@ -500,9 +500,9 @@ class HierarchicalMemory:
             try:
                 loop = asyncio.get_running_loop()
             except RuntimeError:
-                return asyncio.run(self.asearch(query, k, preferences=preferences))
+                return asyncio.run(self.asearch(query, k, mode=mode, preferences=preferences))
             else:
-                return loop.create_task(self.asearch(query, k, preferences=preferences))
+                return loop.create_task(self.asearch(query, k, mode=mode, preferences=preferences))
         if self.cache is not None:
             c_vecs, c_meta = self.cache.search(query.detach().cpu().numpy(), k)
         else:
@@ -514,7 +514,10 @@ class HierarchicalMemory:
             q = self.compressor.encoder(query).detach().cpu().numpy()
             if q.ndim == 2:
                 q = q[0]
-            comp_vecs, meta = self.store.search(q, remaining)
+            if mode == "hyde" and hasattr(self.store, "hyde_search"):
+                comp_vecs, meta = self.store.hyde_search(q, remaining)
+            else:
+                comp_vecs, meta = self.store.search(q, remaining)
             if comp_vecs.shape[0] > 0:
                 comp_t = torch.from_numpy(comp_vecs)
                 decoded = self.compressor.decoder(comp_t).to(query.device)
@@ -602,6 +605,7 @@ class HierarchicalMemory:
         return_scores: bool = False,
         return_provenance: bool = False,
         *,
+        mode: str = "standard",
         language: str | None = None,
         preferences: "UserPreferences | None" = None,
     ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
@@ -617,10 +621,18 @@ class HierarchicalMemory:
             q = self.compressor.encoder(query).detach().cpu().numpy()
             if q.ndim == 2:
                 q = q[0]
-            if isinstance(self.store, AsyncFaissVectorStore):
-                comp_vecs, meta = await self.store.asearch(q, remaining)
+            if mode == "hyde" and hasattr(self.store, "hyde_search"):
+                if isinstance(self.store, AsyncFaissVectorStore) and hasattr(self.store, "ahyde_search"):
+                    comp_vecs, meta = await self.store.ahyde_search(q, remaining)
+                elif isinstance(self.store, AsyncFaissVectorStore):
+                    comp_vecs, meta = await self.store.asearch(q, remaining)
+                else:
+                    comp_vecs, meta = self.store.hyde_search(q, remaining)
             else:
-                comp_vecs, meta = self.store.search(q, remaining)
+                if isinstance(self.store, AsyncFaissVectorStore):
+                    comp_vecs, meta = await self.store.asearch(q, remaining)
+                else:
+                    comp_vecs, meta = self.store.search(q, remaining)
             if comp_vecs.shape[0] > 0:
                 comp_t = torch.from_numpy(comp_vecs)
                 decoded = self.compressor.decoder(comp_t).to(query.device)
