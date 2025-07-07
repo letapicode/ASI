@@ -148,6 +148,7 @@ class MultiModalWorldModelConfig:
     use_spiking: bool = False
     use_loihi: bool = False
     use_fpga: bool = False
+    use_analog: bool = False
     use_event_streams: bool = False
     event_channels: int = 0
 

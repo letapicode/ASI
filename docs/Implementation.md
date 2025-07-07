@@ -108,6 +108,24 @@ PyTorch module and executes it on an attached FPGA when the optional
 `configure_fpga()` accepts an `FPGAConfig` with the target device index and
 optimisation flag.
 
+## Analog Acceleration
+
+`src/analog_backend.py` defines an `AnalogAccelerator` interface that calls out
+to an optional analog simulator for matrix multiplies. When no simulator is
+present the helper falls back to `torch.matmul`.
+
+Use it as a context manager to temporarily patch `torch.matmul`:
+
+```python
+from asi.analog_backend import AnalogAccelerator
+
+with AnalogAccelerator():
+    out = torch.matmul(a, b)
+```
+
+Enable the analog path by passing `use_analog=True` in
+`MultiModalWorldModelConfig` or `EdgeRLTrainer`.
+
 ## S-3 Scaling-law Breakpoint Model
 
 `src/scaling_law.py` defines ``BreakpointScalingLaw`` which fits a piecewise
