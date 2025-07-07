@@ -1,0 +1,4 @@
+{
+  "modules": ["prompt_optimizer_variant_b"],
+  "notes": "Example config for prompt optimizer B"
+}

@@ -856,6 +856,11 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   **Implemented as `AdaptiveCompressor` in `src/streaming_compression.py`.**
 - Create a `PromptOptimizer` module that rewrites prompts via reinforcement learning and tracks evaluation improvements automatically.
   **Implemented in `src/prompt_optimizer.py`.**
+- `UserPreferences` now keeps a short history of recent emotions per user and
+  `PromptOptimizer.optimize()` adjusts the final prompt based on this history.
+  A helper script `scripts/ab_prompt_eval.py` compares two optimizer
+  configurations using `ab_evaluator.run_config()`. Example configs live under
+  `configs/ab_prompt_example*.json`.
 - Integrate a `TrainingAnomalyDetector` with `SelfHealingTrainer` to roll back or restart runs when loss spikes beyond a configurable threshold.
   **Implemented via `TrainingAnomalyDetector` in `src/training_anomaly_detector.py`.**
 - Implement a `ParameterEfficientAdapter` that applies low-rank adapters to target modules for cross-task fine-tuning. **Implemented in `src/parameter_efficient_adapter.py` with tests.**

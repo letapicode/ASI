@@ -10,6 +10,7 @@ import numpy as np
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
 sys.modules['scripts'] = types.ModuleType('scripts')
+pkg.__path__ = ['src']
 
 torch = types.ModuleType('torch')
 torch.randn = lambda *s: np.random.randn(*s).astype(np.float32)

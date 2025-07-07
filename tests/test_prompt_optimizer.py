@@ -84,5 +84,22 @@ class TestPromptOptimizer(unittest.TestCase):
         self.assertTrue(res.startswith("[es]"))
         self.assertEqual(prefs.get_emotion("u"), detect_emotion(res))
 
+    def test_history_adjustment(self):
+        prefs = UserPreferences(dim=4)
+        for e in ["negative", "negative", "positive"]:
+            prefs.set_emotion("u", e)
+
+        def scorer(_: str) -> float:
+            return 0.0
+
+        opt = PromptOptimizer(
+            scorer,
+            "hi",
+            user_preferences=prefs,
+            user_id="u",
+        )
+        res = opt.optimize(steps=1)
+        self.assertTrue(res.endswith(":)"))
+
 if __name__ == '__main__':
     unittest.main()

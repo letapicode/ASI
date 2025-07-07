@@ -103,6 +103,14 @@ class PromptOptimizer:
                 lang = self.user_preferences.get_language(self.user_id)
                 if lang:
                     final = translator.translate(final, lang)
+            history = self.user_preferences.get_emotion_history(self.user_id)
+            if history:
+                pos = history.count("positive")
+                neg = history.count("negative")
+                if neg > pos:
+                    final = f"{final} :)"
+                elif pos > neg:
+                    final = f"{final}!"
             emotion = detect_emotion(final)
             self.user_preferences.set_emotion(self.user_id, emotion)
             return final
