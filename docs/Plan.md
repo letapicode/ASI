@@ -443,6 +443,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 49a. **Distributed anomaly monitoring**: `DistributedAnomalyMonitor` collects per-node anomaly metrics and flags cross-run spikes through `RiskDashboard`.
 50. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
 51. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
+51a. **Multi-modal summarization memory**: Compress image and audio features into short summaries stored with text embeddings; retrieval using fused summaries must reach ≥90% accuracy. *Implemented in `src/multimodal_summary_memory.py` with tests.*
 52. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines. *Implemented in `src/dataset_lineage_manager.py`.*
     Use `DataProvenanceLedger` to append a signed hash of each lineage record. Run `scripts/check_provenance.py <root>` to verify the ledger.
 53. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
