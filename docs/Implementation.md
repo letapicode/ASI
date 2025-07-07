@@ -555,6 +555,12 @@ Run `scripts/lineage_viewer.py ./data` to browse the recorded steps.
   `add_multimodal()`. The recognizer now distinguishes common signs like
   **hello** and **thanks** using simple landmark heuristics so retrieval works
   across a broader gesture set.
+  Example usage:
+
+  ```python
+  videos = [np.zeros((1, 1, 3), dtype=np.float32) for _ in range(len(dataset))]
+  t, i, a, s = encode_all(model, dataset, sign_videos=videos, include_sign=True)
+  ```
 - Add a `log_memory_usage()` helper to `eval_harness.py` and print GPU memory usage alongside accuracy metrics. **Implemented**
 - Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the exploration rate during refactoring. **Implemented**
 - Rewrite `download_triples()` with asyncio to fetch dataset files
