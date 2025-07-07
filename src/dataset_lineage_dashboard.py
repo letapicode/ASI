@@ -38,7 +38,8 @@ class DatasetLineageDashboard:
             if out and out not in s.outputs:
                 continue
             if query:
-                hay = " ".join([s.note] + s.inputs + list(s.outputs.keys()) + list(s.outputs.values()))
+                vals = [str(v) for v in s.outputs.values()]
+                hay = " ".join([s.note] + s.inputs + list(s.outputs.keys()) + vals)
                 if query not in hay:
                     continue
             results.append(s)
