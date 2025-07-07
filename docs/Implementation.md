@@ -932,6 +932,11 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   `/graph/recompute` so reasoning graphs can be edited interactively. Each edit
   records a new summary via `ReasoningHistoryLogger`. The script
   `scripts/graph_playground.py` launches this playground.
+- `GraphOfThought.to_json()` now emits a deterministic `stable_id` for each
+  node so snapshots can be diffed across runs. `ReasoningHistoryLogger.save_graph()`
+  persists a graph to disk and logs the path. `scripts/graph_diff.py` compares
+  two saved graphs and reports added or changed nodes and edges. The logger's
+  `analyze()` method returns these diffs alongside step clusters.
 - Provide a `ResourceBroker` module coordinating multiple clusters and a demo
   script `scripts/resource_broker_demo.py`. The broker now reports per-accelerator
   utilisation via `get_load()` and allows allocating jobs to specific

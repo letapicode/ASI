@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, Tuple, TYPE_CHECKING, Sequence
 import json
 from collections import Counter
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from .data_ingest import CrossLingualTranslator
+    from .graph_of_thought import GraphOfThought
 
 
 @dataclass
@@ -60,6 +61,12 @@ class ReasoningHistoryLogger:
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(self.entries, fh)
 
+    def save_graph(self, path: str, graph: "GraphOfThought") -> None:
+        """Persist ``graph`` to ``path`` and record the snapshot."""
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(graph.to_json(), fh)
+        self.log({"graph_path": path})
+
     @classmethod
     def load(cls, path: str) -> "ReasoningHistoryLogger":
         """Load entries from ``path`` and return a logger."""
@@ -76,10 +83,11 @@ class ReasoningHistoryLogger:
         return logger
 
     def analyze(self) -> "HistoryAnalysis":
-        """Cluster steps and detect contradictions."""
+        """Cluster steps, detect contradictions and graph changes."""
         counts: Counter[str] = Counter()
         contradictions: set[Tuple[str, str]] = set()
-        for _ts, summary in self.entries:
+        graph_paths: List[Tuple[str, str]] = []
+        for ts, summary in self.entries:
             text = summary["summary"] if isinstance(summary, dict) else summary
             steps = [s.strip() for s in text.split("->")]
             for step in steps:
@@ -91,13 +99,92 @@ class ReasoningHistoryLogger:
                     base = step[4:]
                     if counts[base]:
                         contradictions.add((base, step))
-        return HistoryAnalysis(dict(counts), sorted(contradictions))
+            if isinstance(summary, dict) and "graph_path" in summary:
+                graph_paths.append((ts, summary["graph_path"]))
+
+        diffs: List[Dict[str, object]] = []
+        prev: dict | None = None
+        for ts, path in graph_paths:
+            try:
+                with open(path, "r", encoding="utf-8") as fh:
+                    data = json.load(fh)
+            except Exception:
+                continue
+            if prev is not None:
+                diff = _diff_graph_data(prev, data)
+                if (
+                    diff["added_nodes"]
+                    or diff["changed_nodes"]
+                    or diff["added_edges"]
+                    or diff["changed_edges"]
+                ):
+                    diffs.append(
+                        {
+                            "timestamp": ts,
+                            "added_nodes": len(diff["added_nodes"]),
+                            "changed_nodes": len(diff["changed_nodes"]),
+                            "added_edges": len(diff["added_edges"]),
+                            "changed_edges": len(diff["changed_edges"]),
+                        }
+                    )
+            prev = data
+
+        return HistoryAnalysis(dict(counts), sorted(contradictions), diffs)
 
 
 @dataclass
 class HistoryAnalysis:
     clusters: Dict[str, int]
     inconsistencies: List[Tuple[str, str]]
+    diffs: List[Dict[str, object]] = field(default_factory=list)
 
 
 __all__ = ["ReasoningHistoryLogger", "HistoryAnalysis"]
+
+
+def _diff_graph_data(old: dict, new: dict) -> Dict[str, object]:
+    """Return added/changed nodes and edges between two graphs."""
+    def _node_map(data: dict) -> Dict[str, dict]:
+        return {
+            n.get("stable_id", str(n.get("id"))): n for n in data.get("nodes", [])
+        }
+
+    def _id_map(data: dict) -> Dict[int, str]:
+        return {
+            int(n.get("id")): n.get("stable_id", str(n.get("id")))
+            for n in data.get("nodes", [])
+        }
+
+    old_nodes = _node_map(old)
+    new_nodes = _node_map(new)
+    added_nodes = [n for sid, n in new_nodes.items() if sid not in old_nodes]
+    changed_nodes = [
+        sid
+        for sid, n in new_nodes.items()
+        if sid in old_nodes
+        and (
+            n.get("text") != old_nodes[sid].get("text")
+            or n.get("metadata") != old_nodes[sid].get("metadata")
+        )
+    ]
+
+    old_ids = _id_map(old)
+    new_ids = _id_map(new)
+    old_edges = {
+        (old_ids.get(e[0], str(e[0])), old_ids.get(e[1], str(e[1]))): e
+        for e in old.get("edges", [])
+    }
+    new_edges = {
+        (new_ids.get(e[0], str(e[0])), new_ids.get(e[1], str(e[1]))): e
+        for e in new.get("edges", [])
+    }
+    added_edges = [k for k in new_edges if k not in old_edges]
+    changed_edges = [
+        k for k in new_edges if k in old_edges and new_edges[k] != old_edges[k]
+    ]
+    return {
+        "added_nodes": added_nodes,
+        "changed_nodes": changed_nodes,
+        "added_edges": added_edges,
+        "changed_edges": changed_edges,
+    }

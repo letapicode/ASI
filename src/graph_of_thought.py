@@ -60,6 +60,20 @@ class GraphOfThought:
         self.analyzer = analyzer
         self.layer = layer
 
+    # --------------------------------------------------------------
+    @staticmethod
+    def _stable_id(text: str, meta: Dict[str, Any] | None = None) -> str:
+        """Return a stable hash for a node."""
+        import hashlib
+
+        h = hashlib.sha256(text.encode())
+        if meta:
+            try:
+                h.update(json.dumps(meta, sort_keys=True).encode())
+            except Exception:
+                h.update(str(meta).encode())
+        return h.hexdigest()[:16]
+
     def add_step(
         self,
         text: str,
@@ -200,6 +214,7 @@ class GraphOfThought:
         nodes = [
             {
                 "id": n.id,
+                "stable_id": self._stable_id(n.text, n.metadata),
                 "text": n.text,
                 "metadata": n.metadata,
                 "timestamp": n.timestamp,
