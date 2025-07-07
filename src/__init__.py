@@ -225,6 +225,7 @@ from .memory_dashboard import MemoryDashboard
 from .multi_agent_coordinator import MultiAgentCoordinator, RLNegotiator, NegotiationProtocol
 from .dp_memory import DifferentialPrivacyMemory
 from .privacy_budget_manager import PrivacyBudgetManager
+from .privacy_auditor import PrivacyAuditor
 from .causal_reasoner import CausalReasoner
 from .multi_agent_graph_planner import MultiAgentGraphPlanner
 from .world_model_debugger import WorldModelDebugger

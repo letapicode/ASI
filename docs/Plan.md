@@ -450,6 +450,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 73. **Versioned model lineage**: Record hashed checkpoints and link them to dataset versions via `ModelVersionManager` for reproducible experiments. *Implemented in `src/model_version_manager.py` with tests.*
 74. **Dataset anonymization**: Sanitize text, image and audio files during ingestion using `DatasetAnonymizer`. The `download_triples()` helper now scrubs PII and logs a summary via `DatasetLineageManager`.
 74a. **Data poisoning detector**: `DataPoisonDetector` scans ingested text for anomalous vocabulary. Success criterion: >90% detection on a poison benchmark.
+74b. **Privacy auditor**: `PrivacyAuditor` combines `PrivacyBudgetManager`, `LicenseInspector` and `DatasetLineageManager`. `download_triples()` logs each triple through the auditor and periodic reports are written to `docs/privacy_reports/`.
 75. **Dataset summarization**: `scripts/dataset_summary.py --content` clusters text samples with `dataset_summarizer.summarize_dataset()` and writes the result to `docs/datasets/`.
 
 75a. **Secure dataset exchange**: `SecureDatasetExchange` encrypts datasets and verifies signatures so collaborators can share data without exposing proprietary content. Use `scripts/secure_dataset_exchange.py` to push and pull archives between nodes.

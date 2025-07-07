@@ -164,6 +164,19 @@ except Exception:  # pragma: no cover - for tests
         def weight(self, name: str) -> float:
             return 1.0
 
+try:
+    from .privacy_auditor import PrivacyAuditor
+except Exception:  # pragma: no cover - for tests
+    try:
+        from privacy_auditor import PrivacyAuditor  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        class PrivacyAuditor:  # type: ignore
+            def audit_triple(self, *a: Any, **kw: Any) -> bool:
+                return True
+
+            def write_report(self, *a: Any, **kw: Any) -> None:
+                pass
+
 
 def _run_in_enclave(
     runner: EnclaveRunner | None,
@@ -336,6 +349,7 @@ def _download_triples_impl(
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
     carbon_tracker: "CarbonFootprintTracker | None" = None,
+    auditor: Optional[PrivacyAuditor] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Implementation for :func:`download_triples`."""
 
@@ -353,6 +367,7 @@ def _download_triples_impl(
             bias_mitigator,
             poison_detector,
             carbon_tracker,
+            auditor,
         )
 
     try:
@@ -376,6 +391,7 @@ def download_triples(
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
     carbon_tracker: "CarbonFootprintTracker | None" = None,
+    auditor: Optional[PrivacyAuditor] = None,
     runner: EnclaveRunner | None = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Download text, image and audio triples into ``out_dir`` concurrently."""
@@ -395,6 +411,7 @@ def download_triples(
         bias_mitigator,
         poison_detector,
         carbon_tracker,
+        auditor,
     )
 
 
@@ -411,6 +428,7 @@ async def download_triples_async(
     bias_mitigator: Optional["DataBiasMitigator"] = None,
     poison_detector: Optional["DataPoisonDetector"] = None,
     carbon_tracker: "CarbonFootprintTracker | None" = None,
+    auditor: Optional[PrivacyAuditor] = None,
 ) -> List[Tuple[Path, Path, Path]]:
     """Asynchronously download text, image and audio triples.
 
@@ -490,6 +508,18 @@ async def download_triples_async(
         flat = [str(p) for tri in triples for p in tri]
         rec = json.dumps({"note": "download_triples", "outputs": flat}, sort_keys=True)
         provenance.append(rec)
+
+    if auditor is not None:
+        for t_path, i_path, a_path in triples:
+            meta = t_path.with_suffix(".json")
+            try:
+                auditor.audit_triple((t_path, i_path, a_path), meta, run_id="download_triples")
+            except Exception:
+                pass
+        try:
+            auditor.write_report("download_triples")
+        except Exception:
+            pass
 
     return triples
 

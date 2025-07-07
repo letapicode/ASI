@@ -54,6 +54,27 @@ sys.modules['asi.dataset_lineage_manager'] = dlm
 loader_dlm.exec_module(dlm)
 DataPoisonDetector = poison_mod.DataPoisonDetector
 
+loader_pbm = importlib.machinery.SourceFileLoader('src.privacy_budget_manager', 'src/privacy_budget_manager.py')
+spec_pbm = importlib.util.spec_from_loader(loader_pbm.name, loader_pbm)
+pbm_mod = importlib.util.module_from_spec(spec_pbm)
+pbm_mod.__package__ = 'src'
+sys.modules['src.privacy_budget_manager'] = pbm_mod
+loader_pbm.exec_module(pbm_mod)
+
+loader_li = importlib.machinery.SourceFileLoader('src.license_inspector', 'src/license_inspector.py')
+spec_li = importlib.util.spec_from_loader(loader_li.name, loader_li)
+li_mod = importlib.util.module_from_spec(spec_li)
+li_mod.__package__ = 'src'
+sys.modules['src.license_inspector'] = li_mod
+loader_li.exec_module(li_mod)
+
+loader_pa = importlib.machinery.SourceFileLoader('src.privacy_auditor', 'src/privacy_auditor.py')
+spec_pa = importlib.util.spec_from_loader(loader_pa.name, loader_pa)
+pa_mod = importlib.util.module_from_spec(spec_pa)
+pa_mod.__package__ = 'src'
+sys.modules['src.privacy_auditor'] = pa_mod
+loader_pa.exec_module(pa_mod)
+
 pair_modalities = di.pair_modalities
 random_crop_image = di.random_crop_image
 add_gaussian_noise = di.add_gaussian_noise
@@ -184,6 +205,32 @@ class TestDataIngest(unittest.TestCase):
             with patch.object(di, '_download_file_async', fake_download):
                 triples = di.download_triples(urls, urls, urls, root, poison_detector=det)
             self.assertEqual(len(triples), 0)
+
+    def test_download_triples_audit(self):
+        async def fake_download(session, url, dest):
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text('x')
+
+        with tempfile.TemporaryDirectory() as root:
+            urls = ['u']
+            pbm = pbm_mod.PrivacyBudgetManager(1.0, 1e-5, Path(root)/'b.json')
+            insp = li_mod.LicenseInspector(['mit'])
+            lin = dlm.DatasetLineageManager(root)
+            auditor = pa_mod.PrivacyAuditor(pbm, insp, lin, report_dir=root)
+            meta = Path(root)/'text'/ '0.json'
+            meta.parent.mkdir(parents=True, exist_ok=True)
+            meta.write_text(json.dumps({'license': 'MIT'}))
+            with patch.object(di, '_download_file_async', fake_download):
+                di._HAS_AIOHTTP = True
+                class DummySession:
+                    async def __aenter__(self):
+                        return self
+                    async def __aexit__(self, exc_type, exc, tb):
+                        pass
+                di.aiohttp = types.SimpleNamespace(ClientSession=DummySession)
+                di.download_triples(urls, urls, urls, root, auditor=auditor)
+            reports = list(Path(root).glob('download_triples_*.json'))
+            self.assertTrue(reports)
 
     def test_offline_synthesizer(self):
         cfg = MultiModalWorldModelConfig(vocab_size=10, img_channels=1, action_dim=2, embed_dim=8)
