@@ -28,10 +28,15 @@ def cross_modal_analogy_search(
     offset ``b - a`` and query ``query + offset``.
     """
 
-    t_vecs, i_vecs, a_vecs = encode_all(
+    out = encode_all(
         model, dataset, batch_size=batch_size, memory=memory, **kwargs
     )
-    fused = (t_vecs + i_vecs + a_vecs) / 3.0
+    if len(out) == 4:
+        t_vecs, i_vecs, a_vecs, b_vecs = out
+        fused = (t_vecs + i_vecs + a_vecs + b_vecs) / 4.0
+    else:
+        t_vecs, i_vecs, a_vecs = out  # type: ignore[misc]
+        fused = (t_vecs + i_vecs + a_vecs) / 3.0
 
     offset = analogy_offset(fused[a_index], fused[b_index])
     return memory.search(fused[query_index], k=k, mode="analogy", offset=offset)

@@ -349,10 +349,14 @@ class HierarchicalMemory:
         text: torch.Tensor,
         images: torch.Tensor,
         audio: torch.Tensor,
+        bci: torch.Tensor | None = None,
         metadata: Iterable[Any] | None = None,
     ) -> None:
         """Store averaged multimodal embeddings."""
-        vecs = (text + images + audio) / 3.0
+        vecs_list = [text, images, audio]
+        if bci is not None and bci.numel():
+            vecs_list.append(bci)
+        vecs = sum(vecs_list) / len(vecs_list)
         self.add(vecs, metadata)
 
     def _evict_if_needed(self) -> None:
@@ -434,10 +438,14 @@ class HierarchicalMemory:
         text: torch.Tensor,
         images: torch.Tensor,
         audio: torch.Tensor,
+        bci: torch.Tensor | None = None,
         metadata: Iterable[Any] | None = None,
     ) -> None:
         """Asynchronously store averaged multimodal embeddings."""
-        vecs = (text + images + audio) / 3.0
+        vecs_list = [text, images, audio]
+        if bci is not None and bci.numel():
+            vecs_list.append(bci)
+        vecs = sum(vecs_list) / len(vecs_list)
         await self.aadd(vecs, metadata)
 
     async def adelete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:

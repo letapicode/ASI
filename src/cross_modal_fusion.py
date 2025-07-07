@@ -62,6 +62,25 @@ class AudioEncoder(nn.Module):
         return x.view(x.size(0), -1)
 
 
+class BCIEncoder(nn.Module):
+    """1D convolutional encoder for EEG/ECoG signals."""
+
+    def __init__(self, in_channels: int, dim: int) -> None:
+        super().__init__()
+        self.conv = nn.Sequential(
+            nn.Conv1d(in_channels, 32, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(),
+            nn.Conv1d(32, 64, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(),
+            nn.Conv1d(64, dim, kernel_size=3, stride=2, padding=1),
+            nn.AdaptiveAvgPool1d(1),
+        )
+
+    def forward(self, signals: torch.Tensor) -> torch.Tensor:
+        x = self.conv(signals)
+        return x.view(x.size(0), -1)
+
+
 class FusionHead(nn.Module):
     """Projection head to map modality features into a shared space."""
 
@@ -89,12 +108,13 @@ class CrossModalFusionConfig:
     img_channels: int
     audio_channels: int
     latent_dim: int
+    bci_channels: int = 0
     lr: float = 1e-4
     temperature: float = 0.07
 
 
 class CrossModalFusion(nn.Module):
-    """Unified encoder for text, images and audio."""
+    """Unified encoder for text, images, audio and BCI signals."""
 
     def __init__(self, cfg: CrossModalFusionConfig) -> None:
         super().__init__()
@@ -102,9 +122,15 @@ class CrossModalFusion(nn.Module):
         self.text_enc = TextEncoder(cfg.vocab_size, cfg.text_dim)
         self.img_enc = ImageEncoder(cfg.img_channels, cfg.text_dim)
         self.audio_enc = AudioEncoder(cfg.audio_channels, cfg.text_dim)
+        self.bci_enc = (
+            BCIEncoder(cfg.bci_channels, cfg.text_dim) if cfg.bci_channels > 0 else None
+        )
         self.text_proj = FusionHead(cfg.text_dim, cfg.latent_dim)
         self.img_proj = FusionHead(cfg.text_dim, cfg.latent_dim)
         self.audio_proj = FusionHead(cfg.text_dim, cfg.latent_dim)
+        self.bci_proj = (
+            FusionHead(cfg.text_dim, cfg.latent_dim) if cfg.bci_channels > 0 else None
+        )
         self.temperature = cfg.temperature
 
     def forward(
@@ -112,27 +138,52 @@ class CrossModalFusion(nn.Module):
         text: torch.Tensor | None = None,
         images: torch.Tensor | None = None,
         audio: torch.Tensor | None = None,
-    ) -> Tuple[torch.Tensor | None, torch.Tensor | None, torch.Tensor | None]:
+        bci: torch.Tensor | None = None,
+    ) -> Tuple[
+        torch.Tensor | None,
+        torch.Tensor | None,
+        torch.Tensor | None,
+        torch.Tensor | None,
+    ]:
         t_feat = self.text_proj(self.text_enc(text)) if text is not None else None
         i_feat = self.img_proj(self.img_enc(images)) if images is not None else None
         a_feat = self.audio_proj(self.audio_enc(audio)) if audio is not None else None
-        return t_feat, i_feat, a_feat
+        b_feat = (
+            self.bci_proj(self.bci_enc(bci))
+            if (bci is not None and self.bci_enc is not None)
+            else None
+        )
+        return t_feat, i_feat, a_feat, b_feat
 
 
 class MultiModalDataset(Dataset):
-    """Dataset of paired text, image and audio."""
+    """Dataset of paired text, image, audio and optional BCI signals."""
 
-    def __init__(self, triples: Iterable[Tuple[Any, Any, Any]], tokenizer) -> None:
-        self.items = list(triples)
+    def __init__(
+        self,
+        entries: Iterable[Tuple[Any, Any, Any, Any | None]],
+        tokenizer,
+        bci_shape: Tuple[int, int] | None = None,
+    ) -> None:
         self.tokenizer = tokenizer
+        self.items = []
+        bci_shape = bci_shape or (1, 8)
+        for e in entries:
+            if len(e) == 3:
+                text, img, aud = e
+                bci = torch.zeros(bci_shape, dtype=torch.float32)
+            else:
+                text, img, aud, bci = e
+                bci = torch.as_tensor(bci, dtype=torch.float32)
+            self.items.append((text, img, aud, bci))
 
     def __len__(self) -> int:
         return len(self.items)
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        text, img, aud = self.items[idx]
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        text, img, aud, bci = self.items[idx]
         tokens = torch.tensor(self.tokenizer(text), dtype=torch.long)
-        return tokens, img, aud
+        return tokens, img, aud, bci
 
 
 def train_fusion_model(
@@ -147,11 +198,18 @@ def train_fusion_model(
     device = next(model.parameters()).device
     model.train()
     for _ in range(epochs):
-        for tokens, imgs, aud in loader:
-            tokens, imgs, aud = tokens.to(device), imgs.to(device), aud.to(device)
-            t_emb, i_emb, a_emb = model(tokens, imgs, aud)
+        for tokens, imgs, aud, bci in loader:
+            tokens, imgs, aud, bci = (
+                tokens.to(device),
+                imgs.to(device),
+                aud.to(device),
+                bci.to(device),
+            )
+            t_emb, i_emb, a_emb, b_emb = model(tokens, imgs, aud, bci)
             loss = _contrastive_loss(t_emb, i_emb, model.temperature)
             loss += _contrastive_loss(t_emb, a_emb, model.temperature)
+            if b_emb is not None:
+                loss += _contrastive_loss(t_emb, b_emb, model.temperature)
             opt.zero_grad()
             loss.backward()
             opt.step()
@@ -168,7 +226,8 @@ def encode_all(
     *,
     quantum: bool = False,
     k: int = 5,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    include_bci: bool = False,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor | None]:
     """Return all modality embeddings and optionally store them.
 
     When ``quantum`` is ``True`` and ``memory`` is provided, each fused
@@ -179,26 +238,37 @@ def encode_all(
     loader = DataLoader(dataset, batch_size=batch_size)
     device = next(model.parameters()).device
     model.eval()
-    text_vecs, img_vecs, aud_vecs = [], [], []
+    text_vecs, img_vecs, aud_vecs, bci_vecs = [], [], [], []
     with torch.no_grad():
-        for idx, (tokens, imgs, aud) in enumerate(loader):
-            tokens, imgs, aud = tokens.to(device), imgs.to(device), aud.to(device)
-            t_emb, i_emb, a_emb = model(tokens, imgs, aud)
+        for idx, (tokens, imgs, aud, bci) in enumerate(loader):
+            tokens, imgs, aud, bci = (
+                tokens.to(device),
+                imgs.to(device),
+                aud.to(device),
+                bci.to(device),
+            )
+            t_emb, i_emb, a_emb, b_emb = model(tokens, imgs, aud, bci)
             text_vecs.append(t_emb.cpu())
             img_vecs.append(i_emb.cpu())
             aud_vecs.append(a_emb.cpu())
+            bci_vecs.append(b_emb.cpu())
             if memory is not None:
                 start = idx * batch_size
                 metas = [start + i for i in range(tokens.size(0))]
-                memory.add_multimodal(t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), metas)
+                memory.add_multimodal(
+                    t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), b_emb.cpu(), metas
+                )
                 if quantum:
-                    fused = (t_emb + i_emb + a_emb) / 3.0
+                    fused = (t_emb + i_emb + a_emb + b_emb) / 4.0
                     for q in fused:
                         quantum_crossmodal_search(q, memory, k=k)
     all_t = torch.cat(text_vecs, dim=0)
     all_i = torch.cat(img_vecs, dim=0)
     all_a = torch.cat(aud_vecs, dim=0)
-    return all_t, all_i, all_a
+    if include_bci:
+        all_b = torch.cat(bci_vecs, dim=0)
+        return all_t, all_i, all_a, all_b
+    return all_t, all_i, all_a, None
 
 
 def retrieval_accuracy(
@@ -207,13 +277,27 @@ def retrieval_accuracy(
     memory: "HierarchicalMemory",
     batch_size: int = 8,
     k: int = 1,
+    include_bci: bool = False,
 ) -> float:
     """Return retrieval accuracy after encoding ``dataset`` into ``memory``."""
 
-    t_vecs, i_vecs, a_vecs = encode_all(model, dataset, batch_size=batch_size, memory=memory)
+    out = encode_all(
+        model,
+        dataset,
+        batch_size=batch_size,
+        memory=memory,
+        include_bci=include_bci,
+    )
+    if include_bci:
+        t_vecs, i_vecs, a_vecs, b_vecs = out
+    else:
+        t_vecs, i_vecs, a_vecs, _ = out
     correct = 0
     for idx in range(len(dataset)):
-        query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx]) / 3.0
+        if include_bci:
+            query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + b_vecs[idx]) / 4.0
+        else:
+            query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx]) / 3.0
         out, meta = memory.search(query, k=k)
         if meta and meta[0] == idx:
             correct += 1
@@ -223,6 +307,7 @@ def retrieval_accuracy(
 __all__ = [
     "CrossModalFusionConfig",
     "CrossModalFusion",
+    "BCIEncoder",
     "MultiModalDataset",
     "train_fusion_model",
     "encode_all",
