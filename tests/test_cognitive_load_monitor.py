@@ -67,6 +67,15 @@ class TestCognitiveLoadMonitor(unittest.TestCase):
         p = ac._probs()
         self.assertGreater(p[0].item(), 0.5)
 
+    def test_callbacks(self):
+        logger = DummyLogger()
+        loads = []
+        monitor = CognitiveLoadMonitor(telemetry=logger, pause_threshold=1.0)
+        monitor.add_callback(loads.append)
+        monitor.log_input('a', timestamp=0.0)
+        monitor.log_input('b', timestamp=1.5)
+        self.assertTrue(loads and isinstance(loads[-1], float))
+
 
 if __name__ == '__main__':
     unittest.main()
