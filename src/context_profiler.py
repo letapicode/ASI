@@ -8,7 +8,7 @@ import torch
 from dataclasses import dataclass
 from typing import Iterable, List, Dict
 
-from .telemetry import FineGrainedProfiler
+from .fine_grained_profiler import FineGrainedProfiler
 
 
 def profile_model(model: torch.nn.Module, lengths: list[int]) -> list[dict[str, float]]:

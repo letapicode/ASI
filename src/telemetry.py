@@ -17,6 +17,7 @@ import urllib.request
 import psutil
 from .carbon_tracker import CarbonFootprintTracker
 from .memory_event_detector import MemoryEventDetector
+from .fine_grained_profiler import FineGrainedProfiler
 try:  # pragma: no cover - optional torch dependency
     import torch  # type: ignore
 except Exception:  # pragma: no cover - allow running without torch
@@ -59,6 +60,8 @@ class TelemetryLogger:
     history: List[Dict[str, float]] = field(default_factory=list)
     events: List[Dict[str, Any]] = field(default_factory=list)
 
+    profiler_stats: Dict[str, Dict[str, float]] = field(default_factory=dict)
+
     publish_url: str | None = None
     node_id: str | None = None
     _published_energy: float = field(default=0.0, init=False)
@@ -82,6 +85,12 @@ class TelemetryLogger:
                 "mem": Gauge("mem_used", "RAM usage"),
                 "net": Gauge("net_sent", "Network bytes sent"),
             }
+            self.metrics.setdefault(
+                "prof_cpu_time", Gauge("prof_cpu_time", "Fine grained CPU time")
+            )
+            self.metrics.setdefault(
+                "prof_gpu_mem", Gauge("prof_gpu_mem", "Fine grained GPU memory")
+            )
         else:
             self.metrics = {}
         if self.carbon_data is None:
@@ -177,9 +186,16 @@ class TelemetryLogger:
             self.carbon_tracker.stop()
 
     def get_stats(self) -> Dict[str, Any]:
-        stats = dict(self.metrics)
+        stats: Dict[str, Any] = {}
+        for k, v in self.metrics.items():
+            if _HAS_PROM and isinstance(v, Gauge):
+                stats[k] = v._value.get()  # type: ignore[attr-defined]
+            else:
+                stats[k] = v
         if self.carbon_tracker is not None:
             stats.update(self.carbon_tracker.get_stats())
+        if self.profiler_stats:
+            stats["profiler_stats"] = {k: dict(v) for k, v in self.profiler_stats.items()}
         return stats
 
     def get_events(self) -> List[Dict[str, Any]]:
@@ -304,28 +320,28 @@ class TelemetryLogger:
             self._published_energy = energy
             self._published_carbon = carbon
 
+    # --------------------------------------------------------------
+    def register_profiler(
+        self, stats: Dict[str, float], node_id: Optional[str] = None
+    ) -> None:
+        """Record fine-grained metrics from a node."""
+        node = node_id or self.node_id or "default"
+        entry = self.profiler_stats.setdefault(node, {"cpu_time": 0.0, "gpu_mem": 0.0})
+        entry["cpu_time"] += float(stats.get("cpu_time", 0.0))
+        entry["gpu_mem"] += float(stats.get("gpu_mem", 0.0))
+        cpu_total = sum(v["cpu_time"] for v in self.profiler_stats.values())
+        gpu_total = sum(v["gpu_mem"] for v in self.profiler_stats.values())
+        if _HAS_PROM:
+            assert isinstance(self.metrics["prof_cpu_time"], Gauge)
+            assert isinstance(self.metrics["prof_gpu_mem"], Gauge)
+            self.metrics["prof_cpu_time"].set(cpu_total)
+            self.metrics["prof_gpu_mem"].set(gpu_total)
+        else:
+            self.metrics["prof_cpu_time"] = cpu_total
+            self.metrics["prof_gpu_mem"] = gpu_total
 
-class FineGrainedProfiler:
-    """Context manager measuring CPU/GPU time for a block."""
 
-    def __init__(self, callback: Callable[[float, float], None]) -> None:
-        self.callback = callback
 
-    def __enter__(self) -> None:
-        self.cpu_start = time.perf_counter()
-        self.gpu_start = (
-            torch.cuda.memory_allocated() if torch.cuda.is_available() else 0
-        )
-        return None
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        cpu_time = time.perf_counter() - self.cpu_start
-        gpu_mem = (
-            torch.cuda.memory_allocated() - self.gpu_start
-            if torch.cuda.is_available()
-            else 0
-        )
-        self.callback(cpu_time, gpu_mem)
 
 
 __all__ = [
