@@ -44,3 +44,20 @@ class DeliberativeAligner:
         """Split ``text`` into lines and check them sequentially."""
         steps = [s.strip() for s in text.splitlines() if s.strip()]
         return self.check(steps)
+
+
+def check_alignment(events: Iterable[str], policy: str | None = None) -> bool:
+    """Return ``True`` if ``events`` comply with ``policy`` rules.
+
+    Parameters
+    ----------
+    events:
+        Sequence of event labels, e.g. ``["discomfort"]``.
+    policy:
+        Optional rules text. Defaults to disallowing discomfort or disagreement
+        signals.
+    """
+
+    policy_text = policy or "no discomfort\nno disagreement"
+    aligner = DeliberativeAligner(policy_text)
+    return aligner.check(events)

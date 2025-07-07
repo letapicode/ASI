@@ -8,6 +8,7 @@ import torch
 
 from .compute_budget_tracker import ComputeBudgetTracker
 from .secure_federated_learner import SecureFederatedLearner
+from .deliberative_alignment import check_alignment
 
 from .world_model_rl import (
     RLBridgeConfig,
@@ -31,6 +32,7 @@ class BCIFeedbackTrainer:
     def __init__(self, rl_cfg: RLBridgeConfig, cfg: BCIFeedbackConfig | None = None) -> None:
         self.rl_cfg = rl_cfg
         self.cfg = cfg or BCIFeedbackConfig()
+        self.feedback_history: list[list[str]] = []
 
     # --------------------------------------------------
     def signal_to_reward(self, signal: np.ndarray | torch.Tensor) -> float:
@@ -53,6 +55,25 @@ class BCIFeedbackTrainer:
         else:
             power = spectrum[mask].mean()
         return float(np.float32(power * self.cfg.reward_scale))
+
+    def detect_feedback(self, signal: np.ndarray | torch.Tensor) -> list[str]:
+        """Return event labels derived from ``signal``."""
+        arr = signal.detach().cpu().numpy() if isinstance(signal, torch.Tensor) else signal
+        arr = np.asarray(arr).ravel()
+        if arr.size == 0:
+            return []
+        freqs = np.fft.rfftfreq(arr.size, d=1.0 / self.cfg.sample_rate)
+        spectrum = np.abs(np.fft.rfft(arr))
+        alpha = (freqs >= 8.0) & (freqs <= 12.0)
+        gamma = (freqs >= 30.0) & (freqs <= 80.0)
+        alpha_p = spectrum[alpha].mean() if np.any(alpha) else 0.0
+        gamma_p = spectrum[gamma].mean() if np.any(gamma) else 0.0
+        events: list[str] = []
+        if gamma_p > alpha_p * 1.5:
+            events.append("discomfort")
+        if arr.mean() < -0.5 * arr.std():
+            events.append("disagreement")
+        return events
 
     def aggregate_signal_rewards(
         self,
@@ -93,11 +114,21 @@ class BCIFeedbackTrainer:
             learner = learner or SecureFederatedLearner()
             for s, a, ns, node_sigs in zip(states, actions, next_states, zip(*signals_nodes), strict=True):
                 r = self.aggregate_signal_rewards(node_sigs, learner)
+                events: list[str] = []
+                for sig in node_sigs:
+                    events.extend(self.detect_feedback(sig))
+                self.feedback_history.append(events)
+                if not check_alignment(events):
+                    r = -abs(r)
                 transitions.append((s, int(a), ns, torch.tensor(r, dtype=torch.float32)))
         else:
             assert signals is not None
             for s, a, ns, sig in zip(states, actions, next_states, signals, strict=True):
                 r = self.signal_to_reward(sig)
+                events = self.detect_feedback(sig)
+                self.feedback_history.append(events)
+                if not check_alignment(events):
+                    r = -abs(r)
                 transitions.append((s, int(a), ns, torch.tensor(r, dtype=torch.float32)))
         return TransitionDataset(transitions)
 
