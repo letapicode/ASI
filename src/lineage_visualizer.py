@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import base64
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from typing import Any
 
 from .dataset_lineage_manager import DatasetLineageManager
@@ -16,6 +18,7 @@ class LineageVisualizer:
         self.httpd: HTTPServer | None = None
         self.thread: threading.Thread | None = None
         self.port: int | None = None
+        self._fairness_img: str | None = None
 
     # --------------------------------------------------------------
     def graph_json(self) -> dict[str, list]:
@@ -31,9 +34,23 @@ class LineageVisualizer:
         return {"nodes": list(nodes.values()), "links": links}
 
     # --------------------------------------------------------------
+    def _load_fairness(self) -> None:
+        if self._fairness_img is not None:
+            return
+        fname = f"{Path(self.manager.root).stem}_fairness.png"
+        path = Path("docs/datasets") / fname
+        if path.exists():
+            b64 = base64.b64encode(path.read_bytes()).decode()
+            self._fairness_img = f"data:image/png;base64,{b64}"
+        else:
+            self._fairness_img = ""
+
+    # --------------------------------------------------------------
     def to_html(self) -> str:
+        self._load_fairness()
+        img = f"<img src='{self._fairness_img}'>" if self._fairness_img else ""
         return (
-            "<html><body><h1>Dataset Lineage</h1>"
+            "<html><body><h1>Dataset Lineage</h1>" + img +
             "<script src='https://cdn.jsdelivr.net/npm/d3@7'></script>"
             "<svg width='800' height='600'></svg>"
             "<script>"

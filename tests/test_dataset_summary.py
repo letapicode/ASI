@@ -61,6 +61,20 @@ class TestDatasetSummary(unittest.TestCase):
             data = json.loads(result)
             self.assertIn('content_summaries', data)
 
+    def test_fairness_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stats = {'g1': {'tp': 1, 'fn': 1}, 'g2': {'tp': 2, 'fn': 0}}
+            stats_file = root / 'fairness.json'
+            stats_file.write_text(json.dumps(stats))
+            out_dir = Path('docs/datasets')
+            if out_dir.exists():
+                for p in out_dir.iterdir():
+                    p.unlink()
+            summary_mod.main([str(root), '--fairness-report', str(stats_file)])
+            out_img = out_dir / f'{root.name}_fairness.png'
+            self.assertTrue(out_img.exists())
+
 
 if __name__ == '__main__':
     unittest.main()
