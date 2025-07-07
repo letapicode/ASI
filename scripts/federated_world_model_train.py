@@ -6,6 +6,7 @@ from asi.federated_world_model_trainer import (
     FederatedTrainerConfig,
 )
 from asi.fhe_federated_trainer import FHEFederatedTrainer, FHEFederatedTrainerConfig
+from asi.dp_federated_trainer import DPFederatedTrainer, DPFederatedTrainerConfig
 import tenseal as ts
 
 def main() -> None:
@@ -13,6 +14,7 @@ def main() -> None:
     parser.add_argument("--rounds", type=int, default=1)
     parser.add_argument("--local-epochs", type=int, default=1, dest="local_epochs")
     parser.add_argument("--use-fhe", action="store_true", help="train with FHE-encrypted gradients")
+    parser.add_argument("--dp", action="store_true", help="apply differential privacy to aggregation")
     args = parser.parse_args()
 
     cfg = RLBridgeConfig(state_dim=4, action_dim=2)
@@ -39,6 +41,13 @@ def main() -> None:
             rounds=args.rounds, local_epochs=args.local_epochs, lr=tcfg.lr
         )
         trainer = FHEFederatedTrainer(cfg, [ds1, ds2], ctx, trainer_cfg=ftcfg)
+    elif args.dp:
+        dpcfg = DPFederatedTrainerConfig(
+            rounds=args.rounds,
+            local_epochs=args.local_epochs,
+            lr=tcfg.lr,
+        )
+        trainer = DPFederatedTrainer(cfg, [ds1, ds2], dp_cfg=dpcfg)
     else:
         trainer = FederatedWorldModelTrainer(cfg, [ds1, ds2], trainer_cfg=tcfg)
     model = trainer.train()

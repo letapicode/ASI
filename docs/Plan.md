@@ -607,6 +607,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 85a. **FHE gradient aggregation**: `FHEFederatedTrainer` wraps the secure learner
      and uses `run_fhe` to decrypt TenSEAL-encrypted gradients. Reward on the RL
      benchmark should drop less than 5% versus plaintext training.
+85b. **Differentially private federated trainer**: `DPFederatedTrainer` applies
+     `DifferentialPrivacyOptimizer` to the aggregated gradients from
+     `SecureFederatedLearner`. Run `scripts/federated_world_model_train.py --dp`
+     or `scripts/federated_edge_rl_demo.py --dp` to enable this mode.
 86. **Offline memory replay**: `run_nightly_replay()` schedules daily sessions
     where embeddings from `HierarchicalMemory` and `ContextSummaryMemory` are
     reconstructed and passed through the model for consolidation. Integrated
