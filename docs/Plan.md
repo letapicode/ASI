@@ -508,6 +508,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 83b. **Cross-lingual analogy evaluation**: `crosslingual_analogy_eval.analogy_accuracy`
     loads a multilingual analogy dataset and computes accuracy using
     `CrossLingualTranslator` so offsets can span languages.
+
+83c. **Analogical reasoning debugger**: `AnalogicalReasoningDebugger` checks
+    reasoning steps with expected analogies by calling
+    `analogical_retrieval.analogy_search()` and logs mismatches via
+    `ReasoningHistoryLogger`.
     
 
 84. **Privacy-preserving federated RL**: Wrap `EdgeRLTrainer` with encrypted gradient

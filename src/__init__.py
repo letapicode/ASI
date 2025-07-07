@@ -217,7 +217,7 @@ from .federated_world_model_trainer import (
 )
 from .fhe_federated_trainer import FHEFederatedTrainer, FHEFederatedTrainerConfig
 from .adversarial_robustness import AdversarialRobustnessSuite
-from .graph_of_thought import ReasoningDebugger
+from .graph_of_thought import ReasoningDebugger, AnalogicalReasoningDebugger
 from .multi_stage_oversight import MultiStageOversight
 from .knowledge_graph_memory import KnowledgeGraphMemory
 from .knowledge_base_client import KnowledgeBaseClient
