@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import socket
+import time
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -12,6 +13,8 @@ from .graph_of_thought import GraphOfThought
 from .reasoning_history import ReasoningHistoryLogger
 from .nl_graph_editor import NLGraphEditor
 from .voice_graph_controller import VoiceGraphController
+from .cognitive_load_monitor import CognitiveLoadMonitor
+from .telemetry import TelemetryLogger
 
 
 _HTML = """
@@ -85,18 +88,59 @@ load();
 class GraphUI:
     """Serve reasoning graphs and history via FastAPI."""
 
-    def __init__(self, graph: GraphOfThought, logger: ReasoningHistoryLogger) -> None:
+    def __init__(
+        self,
+        graph: GraphOfThought,
+        logger: ReasoningHistoryLogger,
+        *,
+        load_monitor: CognitiveLoadMonitor | None = None,
+        throttle_threshold: float = 0.7,
+        update_interval: float = 1.0,
+        telemetry: TelemetryLogger | None = None,
+    ) -> None:
         self.graph = graph
         self.logger = logger
         self.editor = NLGraphEditor(graph)
         self.voice = VoiceGraphController(self.editor)
         self.app = FastAPI()
-        self._setup_routes()
         self.thread: threading.Thread | None = None
         self.server: uvicorn.Server | None = None
         self.port: int | None = None
+
+        self.load_monitor = load_monitor
+        self.throttle_threshold = throttle_threshold
+        self.update_interval = update_interval
+        self.telemetry = telemetry
+        self._high_load = False
+        self._last_update = 0.0
+        self._cached_data: dict | None = None
+
+        if self.load_monitor is not None:
+            self.load_monitor.add_callback(self._on_load)
+        self._setup_routes()
         # store initial summary
         self.logger.log(self.graph.self_reflect())
+
+    def _on_load(self, load: float) -> None:
+        prev = self._high_load
+        self._high_load = load >= self.throttle_threshold
+        if self._high_load and not prev and self.telemetry is not None:
+            self.telemetry.events.append({"event": "ui_throttle", "load": load})
+
+    def _get_graph_json(self) -> dict:
+        now = time.time()
+        if self._high_load and self._cached_data is not None:
+            if now - self._last_update < self.update_interval:
+                return self._cached_data
+        data = self.graph.to_json()
+        if self._high_load:
+            for node in data.get("nodes", []):
+                text = node.get("text", "")
+                if len(text) > 30:
+                    node["text"] = text[:30] + "..."
+        self._cached_data = data
+        self._last_update = now
+        return data
 
     # --------------------------------------------------------------
     def _setup_routes(self) -> None:
@@ -113,7 +157,7 @@ class GraphUI:
 
         @self.app.get('/graph/data')
         async def graph_data() -> Any:
-            return JSONResponse(self.graph.to_json())
+            return JSONResponse(self._get_graph_json())
 
         @self.app.get('/history')
         async def history() -> Any:

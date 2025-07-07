@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Callable
 
 try:
     from prometheus_client import Gauge  # pragma: no cover - optional
@@ -23,6 +23,7 @@ class CognitiveLoadMonitor:
     pauses: List[float] = field(default_factory=list)
     corrections: int = 0
     total_inputs: int = 0
+    callbacks: List[Callable[[float], None]] = field(default_factory=list)
     _last_time: float | None = None
 
     def __post_init__(self) -> None:
@@ -30,6 +31,10 @@ class CognitiveLoadMonitor:
         if _HAS_PROM:
             for name in ["avg_pause", "correction_rate", "cognitive_load"]:
                 self.telemetry.metrics.setdefault(name, Gauge(name, name))
+
+    def add_callback(self, callback: Callable[[float], None]) -> None:
+        """Register a callback to receive load updates."""
+        self.callbacks.append(callback)
 
     # --------------------------------------------------------------
     def log_input(self, text: str = "", timestamp: Optional[float] = None) -> None:
@@ -72,6 +77,11 @@ class CognitiveLoadMonitor:
             self.telemetry.metrics["avg_pause"] = avg_pause
             self.telemetry.metrics["correction_rate"] = corr_rate
             self.telemetry.metrics["cognitive_load"] = load
+        for cb in list(self.callbacks):
+            try:
+                cb(load)
+            except Exception:
+                pass
 
     # --------------------------------------------------------------
     def get_metrics(self) -> Dict[str, float]:

@@ -22,6 +22,19 @@ GraphOfThought = _load('asi.graph_of_thought', 'src/graph_of_thought.py').GraphO
 ReasoningHistoryLogger = _load('asi.reasoning_history', 'src/reasoning_history.py').ReasoningHistoryLogger
 _load('asi.nl_graph_editor', 'src/nl_graph_editor.py')
 GraphUI = _load('asi.graph_ui', 'src/graph_ui.py').GraphUI
+TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
+CognitiveLoadMonitor = _load('asi.cognitive_load_monitor', 'src/cognitive_load_monitor.py').CognitiveLoadMonitor
+
+
+class DummyLogger(TelemetryLogger):
+    def __init__(self):
+        super().__init__(interval=0.01)
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
 
 
 class TestGraphUI(unittest.TestCase):
@@ -57,6 +70,22 @@ class TestGraphUI(unittest.TestCase):
         resp = conn.getresponse()
         hist = json.loads(resp.read())
         self.assertGreaterEqual(len(hist), 2)
+        ui.stop()
+
+    def test_high_load(self):
+        g = GraphOfThought()
+        g.add_step('long text ' * 10)
+        logger = ReasoningHistoryLogger()
+        tele = DummyLogger()
+        monitor = CognitiveLoadMonitor(telemetry=tele, pause_threshold=1.0)
+        ui = GraphUI(g, logger, load_monitor=monitor, throttle_threshold=0.5, update_interval=0.1, telemetry=tele)
+        ui.start(port=0)
+        monitor.log_input('a', timestamp=0.0)
+        monitor.log_input('b', timestamp=2.0)
+        conn = http.client.HTTPConnection('localhost', ui.port)
+        conn.request('GET', '/graph/data')
+        data = json.loads(conn.getresponse().read())
+        self.assertTrue(data['nodes'][0]['text'].endswith('...'))
         ui.stop()
 
 

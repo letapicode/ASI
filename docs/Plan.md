@@ -265,9 +265,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     via reinforcement learning to accelerate skill acquisition. Implemented in
     `adaptive_curriculum.py` and used by `self_play_skill_loop`.
 15a. **Cognitive load monitor**: `cognitive_load_monitor.CognitiveLoadMonitor`
-    tracks pause durations and correction rates. `AdaptiveCurriculum` adjusts
-    retrieval depth or task difficulty based on the resulting load metric and
-    exposes the values through `TelemetryLogger`.
+    tracks pause durations and correction rates. Callbacks receive each load
+    update so UI components can react in real time. `AdaptiveCurriculum`
+    adjusts retrieval depth or task difficulty based on the metric and exposes
+    values through `TelemetryLogger`.
 16. **Quantum architecture search**: Extend `QAEHyperparamSearch` to explore
     novel transformer components and report promising variants.
     *Implemented in `src/quantum_hpo.py` with unit tests.*
@@ -474,7 +475,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 82. **Graph-of-thought visualizer**: Use `src/got_visualizer.py` and the CLI
     `scripts/got_visualizer.py trace.json --out graph.html` to render reasoning
     traces for collaborative editing sessions.
-83. **Graph UI**: `GraphUI` serves interactive D3 graphs via FastAPI. Visit `http://localhost:8070/graph` while the server is running to explore reasoning steps. `http://localhost:8070/history` shows stored summaries.
+83. **Graph UI**: `GraphUI` serves interactive D3 graphs via FastAPI. When
+    cognitive load exceeds a threshold the UI throttles update frequency and
+    shortens node text. Visit `http://localhost:8070/graph` while the server is
+    running to explore reasoning steps. `http://localhost:8070/history` shows
+    stored summaries.
 
 
 84. **Natural-language graph editor**: `nl_graph_editor.py` interprets commands like "merge nodes A and B" or "add edge from X to Y". `GraphUI` exposes `/graph/nl_edit` so the web UI accepts these instructions.
