@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 from pathlib import Path
 
@@ -74,6 +75,11 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("root", help="Dataset root directory")
     parser.add_argument("--format", choices=["md", "json"], default="md")
     parser.add_argument("--content", action="store_true", help="Summarize dataset content")
+    parser.add_argument(
+        "--fairness-report",
+        metavar="STATS",
+        help="Path to JSON stats for fairness visualization",
+    )
     args = parser.parse_args(argv)
     out = summarize(args.root, args.format, args.content)
     if args.content and args.format == "md":
@@ -82,6 +88,23 @@ def main(argv: list[str] | None = None) -> None:
         out_file = out_dir / f"{Path(args.root).stem}.md"
         out_file.write_text(out)
         print(f"Wrote {out_file}")
+    if args.fairness_report:
+        from asi.fairness_visualizer import FairnessVisualizer
+
+        stats_path = Path(args.fairness_report)
+        if not stats_path.is_file():
+            stats_path = Path(args.root) / stats_path
+        if stats_path.is_file():
+            data = json.loads(stats_path.read_text())
+            vis = FairnessVisualizer()
+            img = vis.to_image(data)
+            out_dir = Path("docs/datasets")
+            out_dir.mkdir(parents=True, exist_ok=True)
+            out_file = out_dir / f"{Path(args.root).stem}_fairness.png"
+            out_file.write_bytes(base64.b64decode(img.split(",", 1)[1]))
+            print(f"Wrote {out_file}")
+        else:
+            print(f"Fairness stats not found: {stats_path}")
     print(out)
 
 

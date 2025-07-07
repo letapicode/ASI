@@ -260,6 +260,7 @@ from .semantic_drift_detector import SemanticDriftDetector
 from .data_provenance_ledger import DataProvenanceLedger
 from .blockchain_provenance_ledger import BlockchainProvenanceLedger
 from .fairness_evaluator import FairnessEvaluator
+from .fairness_visualizer import FairnessVisualizer
 from .cross_lingual_fairness import CrossLingualFairnessEvaluator
 from .risk_dashboard import RiskDashboard
 from .alignment_dashboard import AlignmentDashboard
