@@ -329,6 +329,12 @@ from .emotion_detector import detect_emotion
 from .bio_memory_replay import run_nightly_replay
 from .sign_language import SignLanguageRecognizer
 from .reasoning_summary_translator import ReasoningSummaryTranslator
+from .reasoning_kb_bridge import (
+    graph_to_triples,
+    HistoryKGExporter,
+    get_following_steps,
+    get_step_metadata,
+)
 
 from .multi_agent_self_play import MultiAgentSelfPlayConfig, run_multi_agent_self_play, MultiAgentSelfPlay
 
