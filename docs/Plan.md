@@ -462,6 +462,12 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      accepts `image_embed` and `audio_embed`. Use `embed_modalities()` from
      `CrossModalFusion` to generate vectors. `ReasoningHistoryLogger` preserves
      `image_vec` and `audio_vec` when saving histories.
+41d. **Reasoning-graph knowledge bridge**: `reasoning_kb_bridge.graph_to_triples()`
+     converts graph nodes and edges into `(subject, predicate, object)` triples
+     for `KnowledgeGraphMemory`. `HistoryKGExporter` periodically pushes
+     `ReasoningHistoryLogger` summaries into the knowledge graph with
+     timestamps so planners can query past reasoning steps via
+     `get_following_steps()`.
 42. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
