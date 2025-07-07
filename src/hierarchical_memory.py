@@ -22,6 +22,7 @@ from .ephemeral_vector_store import EphemeralVectorStore
 from .data_ingest import CrossLingualTranslator
 from .retrieval_rl import RetrievalPolicy
 from .user_preferences import UserPreferences
+from .memory_pruning_manager import MemoryPruningManager
 
 
 class SSDCache:
@@ -124,6 +125,7 @@ class HierarchicalMemory:
         use_kg: bool = False,
         translator: "CrossLingualTranslator | None" = None,
         retrieval_policy: "RetrievalPolicy | None" = None,
+        pruner: "MemoryPruningManager | None" = None,
 
         encryption_key: bytes | None = None,
         store_type: str | None = None,
@@ -179,6 +181,10 @@ class HierarchicalMemory:
             self.encryption_key = self.store.key
         else:
             self.encryption_key = None
+
+        self.pruner = pruner
+        if self.pruner is not None:
+            self.pruner.attach(self)
 
 
     def __len__(self) -> int:
@@ -567,6 +573,8 @@ class HierarchicalMemory:
             "scores": scores,
             "provenance": list(out_meta),
         }
+        if self.pruner is not None:
+            self.pruner.prune()
         if return_scores or return_provenance:
             extras: list = []
             if return_scores:
@@ -671,6 +679,8 @@ class HierarchicalMemory:
             "scores": scores,
             "provenance": list(out_meta),
         }
+        if self.pruner is not None:
+            self.pruner.prune()
         if return_scores or return_provenance:
             extras = []
             if return_scores:

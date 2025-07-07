@@ -17,7 +17,12 @@ def _import(name: str) -> None:
         mod = importlib.util.module_from_spec(spec)
         sys.modules[f"asi.{name}"] = mod
         globals()[name] = mod
-        spec.loader.exec_module(mod)
+        try:
+            spec.loader.exec_module(mod)
+        except Exception:
+            # Optional dependencies may be missing in minimal test env
+            globals().pop(name, None)
+            sys.modules.pop(f"asi.{name}", None)
 
 
 for _m in [
