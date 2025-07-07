@@ -1,0 +1,24 @@
+syntax = "proto3";
+package asi;
+
+import "memory.proto";
+
+service FHEMemoryService {
+  rpc Push (FHEPushRequest) returns (PushReply);
+  rpc Query (FHEQueryRequest) returns (FHEQueryReply);
+}
+
+message FHEPushRequest {
+  bytes vector = 1;
+  string metadata = 2;
+}
+
+message FHEQueryRequest {
+  bytes vector = 1;
+  int32 k = 2;
+}
+
+message FHEQueryReply {
+  bytes vectors = 1;
+  repeated string metadata = 2;
+}

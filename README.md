@@ -82,6 +82,23 @@ mem.add("hello")
 mem.search("[es] hello")
 ```
 
+For encrypted retrieval, pass a TenSEAL context to `serve`:
+
+```python
+import tenseal as ts
+from asi.hierarchical_memory import HierarchicalMemory
+from asi.memory_service import serve
+
+ctx = ts.context(
+    ts.SCHEME_TYPE.CKKS,
+    poly_modulus_degree=8192,
+    coeff_mod_bit_sizes=[60, 40, 40, 60],
+)
+ctx.generate_galois_keys()
+mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+server = serve(mem, "localhost:50900", fhe_context=ctx)
+```
+
 Visit `http://localhost:8000` to view Prometheus metrics.
 
 `RiskDashboard` combines these metrics with ethical risk scores from

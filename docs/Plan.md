@@ -34,7 +34,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-10** | **RL-guided retrieval** | Learn a policy to rank memory vectors by hit rate and latency | Recall improves after online training from query logs |
 | **C-11** | **Emotion-conditioned retrieval** | Re-rank memory hits by matching sentiment | Positive/negative queries return ≥1 matching-tone item first |
 
-**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.  Privacy-preserving retrieval is now possible via `EncryptedVectorStore`, which stores AES-encrypted embeddings and manages keys through `HierarchicalMemory`.
+**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.  Privacy-preserving retrieval is now possible via `EncryptedVectorStore`, which stores AES-encrypted embeddings and manages keys through `HierarchicalMemory`. FHEMemoryServer goes a step further, allowing remote encrypted queries via TenSEAL.
 
 ---
 
