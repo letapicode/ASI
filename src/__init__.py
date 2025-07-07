@@ -35,6 +35,7 @@ from .async_vector_store import AsyncFaissVectorStore
 from .ephemeral_vector_store import EphemeralVectorStore
 from .iter_align import IterativeAligner
 from .critic_rlhf import CriticScorer, CriticRLHFTrainer
+from .rlaif_trainer import RLAIFTrainer, SyntheticCritic
 from .chunkwise_retrainer import ChunkWiseRetrainer
 from .secure_dataset_exchange import SecureDatasetExchange
 from .p2p_dataset_exchange import P2PDatasetExchange

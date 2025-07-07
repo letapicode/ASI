@@ -74,6 +74,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **L-4** | **Critic-in-the-Loop RLHF**                             | Use a stronger “CriticGPT” to grade outputs                   | Bug-catch rate +60 % vs human-only RLHF ([wired.com][21])                                    |
 | **L-5** | **Formal Verification Harness** | Prove critical safety invariants over model updates | 95 % of release candidates pass property checks |
 | **L-6** | **Mechanistic Interpretability Tools** | Instrument and ablate transformer circuits for transparent debugging | Replicable head-importance traces on a 10 B+ parameter model |
+| **L-7** | **RLAIF Trainer** | Reinforcement learning from AI feedback via a local synthetic critic | Policy converges to critic-preferred actions on toy tasks |
 
 ---
 
@@ -170,6 +171,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/iter_align.py` runs a simple iterative alignment loop for **L-3**.
 - `src/critic_rlhf.py` provides a minimal critic-driven RLHF loop for **L-4**.
   See `docs/Implementation.md` and `docs/load_balance.md` for details.
+- `src/rlaif_trainer.py` runs a synthetic-critic RLAIF loop for **L-7**.
 - `src/pull_request_monitor.py` now supports asynchronous GitHub queries using
   `aiohttp` for faster monitoring of open pull requests.
 - `src/lora_quant.py` provides 4-bit LoRA adapters and `apply_quant_lora()` to
