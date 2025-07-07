@@ -759,7 +759,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Extend `CrossLingualReasoningGraph` with `summarize_old_steps()` which calls
   `ContextSummaryMemory` when traces grow beyond a threshold. Translated
   summaries are stored via `CrossLingualTranslator.translate_all` and can be
-  returned during planning through `GraphOfThought.plan_refactor(summary_memory=)`.
+  returned during planning through `GraphOfThought.plan_refactor(summary_memory)`.
+  `query_summary()` retrieves these summaries in any supported language and
+  `ReasoningHistoryLogger.log()` records which node ids were summarised along
+  with the memory location for later inspection.
 - Create a `WorldModelDistiller` module and a `scripts/distill_world_model.py`
   utility to train smaller student models from the large world model.
   **Implemented in `src/world_model_distiller.py` with the script

@@ -598,8 +598,13 @@ class HierarchicalMemory:
                 out_meta = [out_meta[i] for i in order]
                 scores = [scores[i] for i in order]
         for m in out_meta:
-            if m in self._usage:
-                self._usage[m] += 1
+            try:
+                if m in self._usage:
+                    self._usage[m] += 1
+                else:
+                    self._usage[m] = 1
+            except TypeError:
+                pass
         self.hit_count += 1
         self.query_count += 1
         if (
@@ -726,8 +731,13 @@ class HierarchicalMemory:
                 out_meta = [out_meta[i] for i in order]
                 scores = [scores[i] for i in order]
         for m in out_meta:
-            if m in self._usage:
-                self._usage[m] += 1
+            try:
+                if m in self._usage:
+                    self._usage[m] += 1
+                else:
+                    self._usage[m] = 1
+            except TypeError:
+                pass
         self.hit_count += 1
         self.query_count += 1
         if (

@@ -17,10 +17,20 @@ class ReasoningHistoryLogger:
     entries: List[Tuple[str, Any]] = field(default_factory=list)
     translator: CrossLingualTranslator | None = None
 
-    def log(self, summary: str | Dict[str, Any]) -> None:
+    def log(
+        self,
+        summary: str | Dict[str, Any],
+        *,
+        nodes: Sequence[int] | None = None,
+        location: Any | None = None,
+    ) -> None:
         ts = datetime.utcnow().isoformat()
         if isinstance(summary, dict):
             entry = dict(summary)
+            if nodes is not None:
+                entry["nodes"] = list(nodes)
+            if location is not None:
+                entry["location"] = location
             if self.translator is not None and "translations" not in entry and "summary" in entry:
                 entry["translations"] = self.translator.translate_all(entry["summary"])
             if "image_vec" in entry and hasattr(entry["image_vec"], "tolist"):
@@ -34,6 +44,10 @@ class ReasoningHistoryLogger:
                     "summary": summary,
                     "translations": self.translator.translate_all(summary),
                 }
+                if nodes is not None:
+                    entry["nodes"] = list(nodes)
+                if location is not None:
+                    entry["location"] = location
                 self.entries.append((ts, entry))
             else:
                 self.entries.append((ts, summary))
