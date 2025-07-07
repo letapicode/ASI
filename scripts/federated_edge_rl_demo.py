@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import torch
 
+import argparse
+
 from asi.federated_edge_rl import FederatedEdgeRLTrainer, FederatedEdgeConfig
 from asi.compute_budget_tracker import ComputeBudgetTracker
 from asi.differential_privacy_optimizer import DifferentialPrivacyConfig
@@ -20,12 +22,16 @@ class ToyModel(torch.nn.Module):
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Federated edge RL demo")
+    parser.add_argument("--dp", action="store_true", help="apply differential privacy")
+    args = parser.parse_args()
+
     data1 = [(torch.randn(1, 2), torch.randn(1, 2)) for _ in range(4)]
     data2 = [(torch.randn(1, 2), torch.randn(1, 2)) for _ in range(4)]
 
     model = ToyModel()
     cfg = FederatedEdgeConfig(rounds=2, local_steps=2, lr=0.1)
-    dp_cfg = DifferentialPrivacyConfig(lr=cfg.lr, clip_norm=1.0, noise_std=0.01)
+    dp_cfg = DifferentialPrivacyConfig(lr=cfg.lr, clip_norm=1.0, noise_std=0.01) if args.dp else None
     budget = ComputeBudgetTracker(1.0)
     budget.start("edge")
     trainer = FederatedEdgeRLTrainer(model, cfg, dp_cfg=dp_cfg, budget=budget)
