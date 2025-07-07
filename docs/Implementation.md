@@ -784,8 +784,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Introduce an `ARDebugger` that streams robot state via WebSockets so predicted
   and actual trajectories from `world_model_rl` can be overlaid in an AR client.
   See `scripts/ar_robot_demo.py` for a minimal demo.
-- Add `research_ingest.py` which fetches new papers and outputs daily summaries
-  under `research_logs/`.
+- `research_ingest.py` fetches arXiv titles and abstracts, translates them via
+  `CrossLingualTranslator` and stores language-tagged summaries under
+  `research_logs/`.
 - Expand `GenerativeDataAugmentor` with `synthesize_3d()` for basic 3D asset
   synthesis.
 - Extend `world_model_rl.train_world_model()` to accept 3D data from this
