@@ -14,10 +14,25 @@ torch_stub = types.SimpleNamespace(
         get_device_properties=lambda _: types.SimpleNamespace(total_memory=1),
     )
 )
+torch_stub.nn = types.SimpleNamespace(Module=type('M', (), {}))
 sys.modules['torch'] = torch_stub
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+sys.modules['asi.fpga_backend'] = types.SimpleNamespace(_HAS_FPGA=False, cl=None)
+sys.modules['asi.analog_backend'] = types.SimpleNamespace(_HAS_ANALOG=False)
+sys.modules['asi.loihi_backend'] = types.SimpleNamespace(_HAS_LOIHI=False)
+med_stub = types.ModuleType('asi.memory_event_detector')
+class _MED:
+    def __init__(self, *a, **k):
+        self.events = []
+    def update(self, snapshot):
+        return []
+med_stub.MemoryEventDetector = _MED
+sys.modules['asi.memory_event_detector'] = med_stub
+cas_stub = types.ModuleType('asi.cost_aware_scheduler')
+cas_stub.get_current_price = lambda *a, **k: 0.0
+sys.modules['asi.cost_aware_scheduler'] = cas_stub
 
 
 def _load(name, path):
@@ -30,9 +45,15 @@ def _load(name, path):
     return mod
 
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
+hardware_detect = _load('asi.hardware_detect', 'src/hardware_detect.py')
+hardware_detect.list_cpus = lambda: ['cpu0']
+hardware_detect.list_gpus = lambda: ['gpu0']
+hardware_detect.list_fpgas = lambda: []
+hardware_detect.list_loihi = lambda: []
+hardware_detect.list_analog = lambda: []
 ComputeBudgetTracker = _load('asi.compute_budget_tracker', 'src/compute_budget_tracker.py').ComputeBudgetTracker
-EnergyAwareScheduler = _load('asi.energy_aware_scheduler', 'src/energy_aware_scheduler.py').EnergyAwareScheduler
 AdaptiveScheduler = _load('asi.adaptive_scheduler', 'src/adaptive_scheduler.py').AdaptiveScheduler
+EnergyAwareScheduler = _load('asi.energy_aware_scheduler', 'src/energy_aware_scheduler.py').EnergyAwareScheduler
 
 
 class TestEnergyAwareScheduler(unittest.TestCase):

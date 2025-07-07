@@ -49,36 +49,42 @@ class EnergyAwareScheduler(AdaptiveScheduler):
             min_improvement=min_improvement,
         )
         self.intensity_threshold = intensity_threshold
-        self.queue: list[tuple[Callable[[], None], float, str | None]] = []
+        self.queues = {k: [] for k in self.queues}
 
     # --------------------------------------------------------------
-    def add(self, job: Callable[[], None], region: str | None = None) -> None:
+    def add(
+        self,
+        job: Callable[[], None],
+        *,
+        device: str = "gpu",
+        region: str | None = None,
+    ) -> None:
         cost = self.telemetry.get_carbon_intensity(region)
-        self.queue.append((job, cost, region))
+        self.queues.setdefault(device, []).append((job, cost, region))
 
     # --------------------------------------------------------------
     def _loop(self) -> None:
         while not self._stop.is_set():
-            if not self.queue:
+            if not any(self.queues.values()):
                 time.sleep(self.check_interval)
                 continue
             if self._should_pause():
                 time.sleep(self.check_interval)
                 continue
-            mem = (
-                torch.cuda.memory_allocated() / torch.cuda.get_device_properties(0).total_memory
-                if torch.cuda.is_available()
-                else 0.0
-            )
-            if mem < self.max_mem:
-                idx = min(range(len(self.queue)), key=lambda i: self.queue[i][1])
-                job, _, region = self.queue.pop(idx)
+            candidates: list[tuple[float, str, int, Callable[[], None], str | None]] = []
+            for dev, queue in self.queues.items():
+                if queue and self._device_utilization(dev) < self.max_mem:
+                    for i, (job, cost, region) in enumerate(queue):
+                        candidates.append((cost, dev, i, job, region))
+            if candidates:
+                _, dev, idx, job, region = min(candidates, key=lambda x: x[0])
+                self.queues[dev].pop(idx)
                 intensity = self.telemetry.get_carbon_intensity(region)
                 if intensity > self.intensity_threshold:
                     data = self.telemetry.carbon_data or {"default": intensity}
                     best = min(data, key=lambda r: self.telemetry.get_carbon_intensity(r))
                     best_cost = self.telemetry.get_carbon_intensity(best)
-                    self.queue.append((job, best_cost, best))
+                    self.queues[dev].append((job, best_cost, best))
                     time.sleep(self.check_interval)
                     continue
                 res = job()
@@ -90,3 +96,4 @@ class EnergyAwareScheduler(AdaptiveScheduler):
 
 
 __all__ = ["EnergyAwareScheduler"]
+
