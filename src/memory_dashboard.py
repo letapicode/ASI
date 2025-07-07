@@ -11,6 +11,7 @@ import torch
 from .retrieval_explainer import RetrievalExplainer
 from .retrieval_visualizer import RetrievalVisualizer
 from .memory_timeline_viewer import MemoryTimelineViewer
+from .kg_visualizer import KGVisualizer
 
 from .hierarchical_memory import MemoryServer
 
@@ -109,7 +110,8 @@ class MemoryDashboard:
         )
         return (
             "<html><body><h1>Memory Dashboard</h1>"
-            "<p><a href='http://localhost:8070/graph'>Graph UI</a></p>"
+            "<p><a href='http://localhost:8070/graph'>Graph UI</a> | "
+            "<a href='/kg'>KG Visualizer</a></p>"
             "<table border='1'>"
             "<tr><th>Server</th><th>GPU Util (%)</th><th>Hits</th><th>Misses</th><th>Avg Score</th></tr>"
             f"{table}</table><p>GPU/Score correlation: {corr:.3f}</p>"
@@ -170,6 +172,24 @@ class MemoryDashboard:
                     if dashboard.servers and dashboard.servers[0].telemetry is not None:
                         viewer = MemoryTimelineViewer(dashboard.servers[0].telemetry)
                     data = viewer.to_json().encode() if viewer else b"{}"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(data)
+                elif self.path == "/kg" or self.path == "/kg/":
+                    kg = None
+                    if dashboard.servers and getattr(dashboard.servers[0].memory, "kg", None) is not None:
+                        kg = dashboard.servers[0].memory.kg
+                    html = KGVisualizer(kg).to_html().encode() if kg else b"<html><body>No knowledge graph</body></html>"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html")
+                    self.end_headers()
+                    self.wfile.write(html)
+                elif self.path == "/kg/graph":
+                    kg = None
+                    if dashboard.servers and getattr(dashboard.servers[0].memory, "kg", None) is not None:
+                        kg = dashboard.servers[0].memory.kg
+                    data = json.dumps(KGVisualizer(kg).graph_json()).encode() if kg else b"{}"
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
