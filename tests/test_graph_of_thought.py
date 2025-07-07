@@ -6,35 +6,83 @@ import unittest
 import os
 import importlib.machinery
 import importlib.util
+try:
+    import torch
+except Exception:  # pragma: no cover - optional heavy dep
+    torch = None
+import types
+import sys
 
-loader = importlib.machinery.SourceFileLoader(
-    'graph_of_thought', 'src/graph_of_thought.py'
-)
-spec = importlib.util.spec_from_loader(loader.name, loader)
-graph_mod = importlib.util.module_from_spec(spec)
-sys.modules[loader.name] = graph_mod
-loader.exec_module(graph_mod)
-GraphOfThought = graph_mod.GraphOfThought
+if torch is None:
+    torch = types.ModuleType('torch')
+    torch.nn = types.SimpleNamespace(
+        Module=object,
+        TransformerEncoderLayer=lambda *a, **kw: types.SimpleNamespace(),
+        TransformerEncoder=lambda layer, num_layers=1: types.SimpleNamespace(
+            layers=[layer]
+        ),
+        MultiheadAttention=lambda *a, **kw: types.SimpleNamespace(
+            num_heads=1,
+            head_dim=1,
+            embed_dim=1,
+            in_proj_weight=types.SimpleNamespace(grad=None),
+            forward=lambda *a, **kw: (a[0], None),
+        ),
+    )
+    torch.randn = lambda *a, **kw: None
+    torch.zeros_like = lambda x: x
+    torch.stack = lambda xs: xs
+    torch.empty = lambda *a, **kw: None
+    torch.Tensor = object
+    torch.all = lambda x: True
+sys.modules['torch'] = torch
 
-logger_loader = importlib.machinery.SourceFileLoader(
-    'reasoning_history', 'src/reasoning_history.py'
-)
-logger_spec = importlib.util.spec_from_loader(logger_loader.name, logger_loader)
-logger_mod = importlib.util.module_from_spec(logger_spec)
-sys.modules[logger_loader.name] = logger_mod
-logger_loader.exec_module(logger_mod)
-ReasoningHistoryLogger = logger_mod.ReasoningHistoryLogger
+pkg = types.ModuleType('asi')
+pkg.__path__ = ['src']
+pkg.__spec__ = importlib.machinery.ModuleSpec('asi', None, is_package=True)
+sys.modules['asi'] = pkg
 
-mem_loader = importlib.machinery.SourceFileLoader(
-    'context_summary_memory', 'src/context_summary_memory.py'
-)
-mem_spec = importlib.util.spec_from_loader(mem_loader.name, mem_loader)
-mem_mod = importlib.util.module_from_spec(mem_spec)
-sys.modules[mem_loader.name] = mem_mod
-mem_loader.exec_module(mem_mod)
-ContextSummaryMemory = mem_mod.ContextSummaryMemory
+def _load(name, path):
+    loader = importlib.machinery.SourceFileLoader(name, path)
+    spec = importlib.util.spec_from_loader(name, loader)
+    mod = importlib.util.module_from_spec(spec)
+    mod.__package__ = 'asi'
+    loader.exec_module(mod)
+    sys.modules[name] = mod
+    setattr(pkg, name.split('.')[-1], mod)
+    return mod
+
+HAS_TORCH = getattr(torch, "__version__", None) is not None
+if HAS_TORCH:
+    GraphOfThought = _load('asi.graph_of_thought', 'src/graph_of_thought.py').GraphOfThought
+    ReasoningHistoryLogger = _load('asi.reasoning_history', 'src/reasoning_history.py').ReasoningHistoryLogger
+    ContextSummaryMemory = _load('asi.context_summary_memory', 'src/context_summary_memory.py').ContextSummaryMemory
+    TransformerCircuitAnalyzer = _load('asi.transformer_circuit_analyzer', 'src/transformer_circuit_analyzer.py').TransformerCircuitAnalyzer
+else:
+    class GraphOfThought:
+        def __init__(self, *a, **kw):
+            pass
+
+    class ReasoningHistoryLogger:
+        def __init__(self, *a, **kw):
+            pass
+
+    class ContextSummaryMemory:
+        def __init__(self, *a, **kw):
+            self.summarizer = types.SimpleNamespace(summarize=lambda x: "", expand=lambda x: 0)
+
+    class TransformerCircuitAnalyzer:
+        def __init__(self, *a, **kw):
+            pass
+        def head_importance(self, *a, **kw):
+            class Dummy(list):
+                def tolist(self):
+                    return []
+
+            return Dummy()
 
 
+@unittest.skipIf(not HAS_TORCH, "torch not available")
 class TestGraphOfThought(unittest.TestCase):
     def test_add_and_search(self):
         g = GraphOfThought()
@@ -94,7 +142,18 @@ class TestGraphOfThought(unittest.TestCase):
         self.assertEqual(path, [a, b, c])
         self.assertEqual(summary, "sum")
 
+    @unittest.skipIf(not HAS_TORCH, "torch not available")
+    def test_add_step_logs_heads(self):
+        layer = torch.nn.TransformerEncoderLayer(d_model=8, nhead=2)
+        model = torch.nn.TransformerEncoder(layer, num_layers=1)
+        analyzer = TransformerCircuitAnalyzer(model, "layers.0.self_attn")
+        g = GraphOfThought(analyzer=analyzer, layer="layers.0.self_attn")
+        sample = torch.randn(4, 3, 8)
+        nid = g.add_step("start", sample=sample)
+        self.assertIn("head_importance", g.nodes[nid].metadata)
 
+
+@unittest.skipIf(not HAS_TORCH, "torch not available")
 class TestGraphOfThoughtCLI(unittest.TestCase):
     def test_cli_runs(self):
         data = {

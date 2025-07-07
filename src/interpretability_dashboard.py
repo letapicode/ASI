@@ -8,7 +8,12 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Iterable, Any, Dict
 
-import torch
+from .graph_of_thought import GraphOfThought
+
+try:  # pragma: no cover - optional heavy dep
+    import torch
+except Exception:  # pragma: no cover - fallback when torch is missing
+    torch = None  # type: ignore
 
 from .memory_dashboard import MemoryDashboard
 from .transformer_circuits import AttentionVisualizer
@@ -45,21 +50,28 @@ class InterpretabilityDashboard:
 
     def __init__(
         self,
-        model: torch.nn.Module,
+        model: "torch.nn.Module | Any",
         servers: Iterable[Any],
-        sample: torch.Tensor,
+        sample: "torch.Tensor | Any",
+        graph: GraphOfThought | None = None,
     ) -> None:
         self.model = model
         self.mem_dash = MemoryDashboard(servers)
+        self.graph = graph
         self.tmpdir = Path(tempfile.mkdtemp(prefix="attn_vis_"))
-        self.vis = AttentionVisualizer(model, out_dir=str(self.tmpdir))
-        self.vis.run(sample)
+        if torch is not None:
+            self.vis = AttentionVisualizer(model, out_dir=str(self.tmpdir))
+            self.vis.run(sample)
+        else:  # pragma: no cover - torch optional
+            self.vis = None
         self.httpd: HTTPServer | None = None
         self.thread: threading.Thread | None = None
         self.port: int | None = None
 
     # --------------------------------------------------------------
     def _heatmaps(self) -> Dict[str, Any]:
+        if self.vis is None:
+            return {"images": []}
         imgs = []
         for p in self.vis.out_dir.glob("*.png"):
             with open(p, "rb") as fh:
@@ -76,7 +88,16 @@ class InterpretabilityDashboard:
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:  # noqa: D401
                 if self.path == "/stats":
-                    data = json.dumps(dashboard.mem_dash.aggregate()).encode()
+                    stats = dashboard.mem_dash.aggregate()
+                    if dashboard.graph is not None:
+                        contribs = {
+                            str(nid): node.metadata.get("head_importance")
+                            for nid, node in dashboard.graph.nodes.items()
+                            if node.metadata and "head_importance" in node.metadata
+                        }
+                        if contribs:
+                            stats["head_contributions"] = contribs
+                    data = json.dumps(stats).encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()

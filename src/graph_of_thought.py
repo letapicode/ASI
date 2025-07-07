@@ -4,9 +4,15 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Sequence, TYPE_CHECKING
 
+try:  # pragma: no cover - optional heavy dep
+    import torch
+except Exception:  # pragma: no cover - fallback when torch is missing
+    torch = None  # type: ignore
+
 from .context_summary_memory import ContextSummaryMemory
 from .analogical_retrieval import analogy_search
 from .reasoning_history import ReasoningHistoryLogger
+from .transformer_circuit_analyzer import TransformerCircuitAnalyzer
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .hierarchical_memory import HierarchicalMemory
@@ -25,17 +31,40 @@ class ThoughtNode:
 class GraphOfThought:
     """Simple searchable reasoning graph."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        analyzer: "TransformerCircuitAnalyzer | None" = None,
+        layer: str | None = None,
+    ) -> None:
         self.nodes: Dict[int, ThoughtNode] = {}
         self.edges: Dict[int, List[int]] = {}
+        self.analyzer = analyzer
+        self.layer = layer
 
     def add_step(
-        self, text: str, metadata: Dict[str, Any] | None = None, node_id: int | None = None
+        self,
+        text: str,
+        metadata: Dict[str, Any] | None = None,
+        node_id: int | None = None,
+        sample: "torch.Tensor | None" = None,
+        method: str = "gradient",
     ) -> int:
         """Add a reasoning step and return its node id."""
         if node_id is None:
             node_id = max(self.nodes.keys(), default=-1) + 1
-        self.nodes[node_id] = ThoughtNode(node_id, text, metadata or {})
+        meta = dict(metadata or {})
+        if (
+            self.analyzer is not None
+            and sample is not None
+            and self.layer
+            and torch is not None
+        ):
+            try:
+                imps = self.analyzer.head_importance(sample, method=method)
+                meta["head_importance"] = imps.tolist()
+            except Exception:
+                pass
+        self.nodes[node_id] = ThoughtNode(node_id, text, meta)
         self.edges.setdefault(node_id, [])
         return node_id
 
