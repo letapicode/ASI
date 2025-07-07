@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, List
+from typing import Iterable, List, Callable
 
 import torch
 from torch.utils.data import DataLoader, Dataset
@@ -25,12 +25,31 @@ class FederatedWorldModelTrainer:
         datasets: Iterable[Dataset],
         learner: SecureFederatedLearner | None = None,
         trainer_cfg: FederatedTrainerConfig | None = None,
+        reward_sync_hook: Callable[[], Iterable[Iterable[float]]] | None = None,
     ) -> None:
+        """Initialize the trainer.
+
+        Parameters
+        ----------
+        cfg:
+            Base configuration for the world model.
+        datasets:
+            Training data for each participating node.
+        learner:
+            Encryption helper for federated averaging.
+        trainer_cfg:
+            Hyper-parameters controlling the number of rounds and optimizer.
+        reward_sync_hook:
+            Optional callable returning updated rewards for each dataset at the
+            start of every round.
+        """
+
         self.cfg = cfg
         self.datasets = list(datasets)
         self.learner = learner or SecureFederatedLearner()
         self.tcfg = trainer_cfg or FederatedTrainerConfig()
         self.model = WorldModel(cfg)
+        self.reward_sync_hook = reward_sync_hook
 
     # --------------------------------------------------
     def _local_gradients(self, dataset: Dataset) -> List[torch.Tensor]:
@@ -53,15 +72,27 @@ class FederatedWorldModelTrainer:
     def train(self) -> WorldModel:
         params = [p for p in self.model.parameters() if p.requires_grad]
         for _ in range(self.tcfg.rounds):
-            enc_grads: List[Tuple[torch.Tensor, ZKGradientProof]] = []
+            if self.reward_sync_hook is not None:
+                rewards = self.reward_sync_hook()
+                for ds, rs in zip(self.datasets, rewards, strict=True):
+                    if isinstance(ds, TransitionDataset):
+                        ds.data = [
+                            (s, a, ns, float(r))
+                            for (s, a, ns, _), r in zip(ds.data, rs, strict=True)
+                        ]
+            enc_grads: List[Tuple[torch.Tensor, ZKGradientProof | None]] = []
             for ds in self.datasets:
                 grads = self._local_gradients(ds)
                 flat = torch.cat([g.view(-1) for g in grads])
-                enc, proof = self.learner.encrypt(flat, with_proof=True)
+                if self.learner.require_proof:
+                    enc, proof = self.learner.encrypt(flat, with_proof=True)
+                else:
+                    enc = self.learner.encrypt(flat)
+                    proof = None
                 enc_grads.append((enc, proof))
             agg = self.learner.aggregate(
                 [self.learner.decrypt(g, p) for g, p in enc_grads],
-                proofs=[pr.digest for _, pr in enc_grads] if self.learner.require_proof else None,
+                proofs=[pr.digest for _, pr in enc_grads if pr is not None] if self.learner.require_proof else None,
             )
             start = 0
             for p in params:

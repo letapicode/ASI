@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 from .compute_budget_tracker import ComputeBudgetTracker
+from .secure_federated_learner import SecureFederatedLearner
 
 from .world_model_rl import (
     RLBridgeConfig,
@@ -51,19 +52,53 @@ class BCIFeedbackTrainer:
             power = spectrum.mean()
         else:
             power = spectrum[mask].mean()
-        return float(power * self.cfg.reward_scale)
+        return float(np.float32(power * self.cfg.reward_scale))
+
+    def aggregate_signal_rewards(
+        self,
+        signals: Iterable[np.ndarray | torch.Tensor],
+        learner: SecureFederatedLearner,
+    ) -> float:
+        """Average rewards from multiple EEG signals securely.
+
+        Each signal is converted into a reward, encrypted and aggregated via
+        ``SecureFederatedLearner`` to mimic federated processing.
+        """
+
+        rewards = [self.signal_to_reward(sig) for sig in signals]
+        enc = [learner.encrypt(torch.tensor([r], dtype=torch.float32)) for r in rewards]
+        dec = [learner.decrypt(e) for e in enc]
+        agg = learner.aggregate(dec)
+        return float(agg.squeeze().item())
 
     def build_dataset(
         self,
         states: Iterable[torch.Tensor],
         actions: Iterable[int],
         next_states: Iterable[torch.Tensor],
-        signals: Iterable[np.ndarray | torch.Tensor],
+        signals: Iterable[np.ndarray | torch.Tensor] | None,
+        *,
+        signals_nodes: Sequence[Iterable[np.ndarray | torch.Tensor]] | None = None,
+        learner: SecureFederatedLearner | None = None,
     ) -> TransitionDataset:
+        """Convert transition tuples into a training dataset.
+
+        When ``signals_nodes`` is provided, rewards are derived by securely
+        aggregating signals from each node. Otherwise ``signals`` supplies the
+        EEG data for each transition.
+        """
+
         transitions = []
-        for s, a, ns, sig in zip(states, actions, next_states, signals):
-            r = self.signal_to_reward(sig)
-            transitions.append((s, int(a), ns, r))
+        if signals_nodes is not None:
+            learner = learner or SecureFederatedLearner()
+            for s, a, ns, node_sigs in zip(states, actions, next_states, zip(*signals_nodes), strict=True):
+                r = self.aggregate_signal_rewards(node_sigs, learner)
+                transitions.append((s, int(a), ns, torch.tensor(r, dtype=torch.float32)))
+        else:
+            assert signals is not None
+            for s, a, ns, sig in zip(states, actions, next_states, signals, strict=True):
+                r = self.signal_to_reward(sig)
+                transitions.append((s, int(a), ns, torch.tensor(r, dtype=torch.float32)))
         return TransitionDataset(transitions)
 
     def train(
@@ -71,14 +106,23 @@ class BCIFeedbackTrainer:
         states: Sequence[torch.Tensor],
         actions: Sequence[int],
         next_states: Sequence[torch.Tensor],
-        signals: Sequence[np.ndarray | torch.Tensor],
+        signals: Sequence[np.ndarray | torch.Tensor] | None,
         *,
         run_id: str | None = None,
         budget: "ComputeBudgetTracker | None" = None,
+        signals_nodes: Sequence[Sequence[np.ndarray | torch.Tensor]] | None = None,
+        learner: SecureFederatedLearner | None = None,
     ) -> Any:
         """Build a dataset from transitions and train a world model."""
 
-        dataset = self.build_dataset(states, actions, next_states, signals)
+        dataset = self.build_dataset(
+            states,
+            actions,
+            next_states,
+            signals,
+            signals_nodes=signals_nodes,
+            learner=learner,
+        )
         return train_world_model(
             self.rl_cfg,
             dataset,
