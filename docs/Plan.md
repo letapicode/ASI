@@ -631,6 +631,9 @@ merged, issues = consensus_reasoner.compute_consensus(coord)
 print(consensus_reasoner.report_disagreements(issues))
 ```
 
+88. **Multi-agent self-play**: `run_multi_agent_self_play()` launches multiple `MetaRLRefactorAgent` instances inside `self_play_env`. `MultiAgentCoordinator` assigns each episode and aggregates rewards while `MultiAgentDashboard` logs the overall metrics to study cooperation vs. competition effects.
+
+
 
 
 
