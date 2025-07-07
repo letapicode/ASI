@@ -541,6 +541,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 82. **Graph-of-thought visualizer**: Use `src/got_visualizer.py` and the CLI
     `scripts/got_visualizer.py trace.json --out graph.html` to render reasoning
     traces for collaborative editing sessions.
+82a. **3D graph viewer**: `got_3d_visualizer.py` renders nodes with pythreejs.
+     Launch `scripts/got_3d_viewer.py trace.json` and push updates over
+     WebSockets from `ARDebugger` or `GraphUI` for real-time exploration.
 83. **Graph UI**: `GraphUI` serves interactive D3 graphs via FastAPI. When
     cognitive load exceeds a threshold the UI throttles update frequency and
     shortens node text. Visit `http://localhost:8070/graph` while the server is
