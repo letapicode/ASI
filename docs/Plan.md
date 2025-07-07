@@ -52,6 +52,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **A-8** | **Integrated Self-Play & Skill Transfer** | Alternate self-play rollouts with real-world fine-tuning | >30 % improvement over running either loop alone |
 | **A-9** | **Automated PR Conflict Checks** | Summarize merge conflicts for all open pull requests | Detection completes in <2 min per repo |
 | **A-10** | **Goal-Oriented Evaluation Harness** | Benchmark each algorithm against its success criteria | Single command prints pass/fail scoreboard |
+| **A-11** | **Neuroevolution Architecture Search** | Evolve model layouts via mutation and crossover | >5 % higher validation accuracy than random search on CIFAR‑10 after 10 generations |
 
 `SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
 - **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
@@ -310,7 +311,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `energy_weight` option to trade off accuracy against consumption.
     *Implemented in `src/neural_arch_search.py`.*
 25a. **Neuroevolution search**: `src/neuroevolution_search.py` mutates and
-    crosses over configs in a population. Each generation benchmarks
+    crosses over configs in a population. The interface plugs into
+    `neural_arch_search.DistributedArchSearch` via ``method="evolution"`` so
+    the evaluation harness can switch strategies. Each generation benchmarks
     candidates via `eval_harness`. The CLI script
     `scripts/neuroevolution_search.py` runs experiments.
 25. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to

@@ -47,8 +47,20 @@ class NeuroevolutionSearch:
         }
 
     # ------------------------------------------------------------------
-    def evolve(self, generations: int = 5) -> Tuple[Dict[str, Any], float]:
-        """Run ``generations`` of evolution and return the best config."""
+    def evolve(
+        self, generations: int = 5, *, return_history: bool = False
+    ) -> Tuple[Dict[str, Any], float] | Tuple[Dict[str, Any], float, List[float]]:
+        """Run ``generations`` of evolution and return the best config.
+
+        Args:
+            generations: Number of evolutionary cycles to run.
+            return_history: If ``True`` also return best scores per generation.
+
+        Returns:
+            ``(best_cfg, best_score)`` by default or ``(best_cfg, best_score,
+            history)`` when ``return_history=True`` where ``history`` contains
+            the running best score after each generation including generation 0.
+        """
         if generations <= 0:
             raise ValueError("generations must be positive")
         population = [self._random_cfg() for _ in range(self.population_size)]
@@ -56,6 +68,7 @@ class NeuroevolutionSearch:
         best_idx = max(range(self.population_size), key=lambda i: scores[i])
         best_cfg = population[best_idx]
         best_score = scores[best_idx]
+        history = [best_score]
 
         for _ in range(generations):
             ranked = sorted(zip(population, scores), key=lambda x: x[1], reverse=True)
@@ -75,7 +88,8 @@ class NeuroevolutionSearch:
             if scores[idx] > best_score:
                 best_score = scores[idx]
                 best_cfg = population[idx]
-        return best_cfg, best_score
+            history.append(best_score)
+        return (best_cfg, best_score, history) if return_history else (best_cfg, best_score)
 
 
 __all__ = ["NeuroevolutionSearch"]
