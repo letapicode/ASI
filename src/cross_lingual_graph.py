@@ -9,7 +9,10 @@ except Exception:  # pragma: no cover - torch optional
 
 from .graph_of_thought import GraphOfThought
 from .data_ingest import CrossLingualTranslator
-from .context_summary_memory import ContextSummaryMemory
+try:  # pragma: no cover - optional dependency
+    from .context_summary_memory import ContextSummaryMemory
+except Exception:  # pragma: no cover - missing torch or other deps
+    from typing import Any as ContextSummaryMemory  # type: ignore
 from .reasoning_history import ReasoningHistoryLogger
 
 
@@ -82,9 +85,17 @@ class CrossLingualReasoningGraph(GraphOfThought):
         node = self.nodes[node_id]
         if target_lang == node.metadata.get("lang"):
             return node.text
+        translations = node.metadata.get("translations")
+        if isinstance(translations, dict) and target_lang in translations:
+            return translations[target_lang]
         if self.translator is None:
             return node.text
-        return self.translator.translate(node.text, target_lang)
+        text = self.translator.translate(node.text, target_lang)
+        if isinstance(translations, dict):
+            translations[target_lang] = text
+        else:
+            node.metadata["translations"] = {target_lang: text}
+        return text
 
     def get_translations(self, node_id: int) -> Dict[str, str]:
         if node_id not in self.nodes:

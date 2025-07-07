@@ -9,10 +9,27 @@ try:  # pragma: no cover - optional heavy dep
 except Exception:  # pragma: no cover - fallback when torch is missing
     torch = None  # type: ignore
 
-from .context_summary_memory import ContextSummaryMemory
-from .analogical_retrieval import analogy_search
-from .reasoning_history import ReasoningHistoryLogger
-from .transformer_circuit_analyzer import TransformerCircuitAnalyzer
+try:  # pragma: no cover - optional dependency
+    from .context_summary_memory import ContextSummaryMemory
+except Exception:  # pragma: no cover - missing torch or other deps
+    ContextSummaryMemory = None  # type: ignore[misc]
+
+try:  # pragma: no cover - optional dependency
+    from .analogical_retrieval import analogy_search
+except Exception:  # pragma: no cover - fallback if optional modules missing
+    def analogy_search(*_args, **_kwargs):  # type: ignore[misc]
+        return []
+try:  # pragma: no cover - optional dependency
+    from .reasoning_history import ReasoningHistoryLogger
+except Exception:  # pragma: no cover - fallback for tests
+    class ReasoningHistoryLogger:  # type: ignore[dead-code]
+        def log(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - stub
+            pass
+
+try:  # pragma: no cover - optional dependency
+    from .transformer_circuit_analyzer import TransformerCircuitAnalyzer
+except Exception:  # pragma: no cover - fallback for tests
+    TransformerCircuitAnalyzer = None  # type: ignore[misc]
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .hierarchical_memory import HierarchicalMemory

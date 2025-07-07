@@ -5,16 +5,53 @@ import socket
 import time
 from typing import Any
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-import uvicorn
+try:  # pragma: no cover - optional dependencies
+    from fastapi import FastAPI, Request
+    from fastapi.responses import HTMLResponse, JSONResponse
+    import uvicorn
+except Exception:  # pragma: no cover - stub if fastapi is missing
+    FastAPI = None  # type: ignore[misc]
+    Request = object  # type: ignore[misc]
+    HTMLResponse = JSONResponse = object  # type: ignore[misc]
+    uvicorn = None  # type: ignore[misc]
 
 from .graph_of_thought import GraphOfThought
 from .reasoning_history import ReasoningHistoryLogger
 from .nl_graph_editor import NLGraphEditor
-from .voice_graph_controller import VoiceGraphController
-from .cognitive_load_monitor import CognitiveLoadMonitor
-from .telemetry import TelemetryLogger
+try:  # pragma: no cover - optional dependency
+    from .voice_graph_controller import VoiceGraphController
+except Exception:  # pragma: no cover - fallback when missing deps
+    class VoiceGraphController:  # type: ignore[dead-code]
+        def __init__(self, *_args: Any, **_kw: Any) -> None:
+            pass
+
+        def apply(self, _audio: Any) -> Any:
+            raise NotImplementedError
+try:  # pragma: no cover - optional dependency
+    from .cognitive_load_monitor import CognitiveLoadMonitor
+except Exception:  # pragma: no cover - fallback
+    class CognitiveLoadMonitor:  # type: ignore[dead-code]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+        def add_callback(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
+
+        def log_input(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
+
+try:  # pragma: no cover - optional dependency
+    from .telemetry import TelemetryLogger
+except Exception:  # pragma: no cover - fallback
+    class TelemetryLogger:  # type: ignore[dead-code]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            self.events = []
+
+        def start(self) -> None:  # pragma: no cover - stub
+            pass
+
+        def stop(self) -> None:  # pragma: no cover - stub
+            pass
 
 
 _HTML = """
@@ -33,12 +70,31 @@ _HTML = """
   <button onclick='sendCmd()'>Apply</button>
 </div>
 
-<p>Languages: {languages}</p>
+<div>
+  <label for='lang'>Language:</label>
+  <select id='lang'></select>
+</div>
 
 <svg width="600" height="400"></svg>
 <script>
+let currentLang = 'en';
+
+async function loadLanguages() {
+  const langs = await fetch('/languages').then(r => r.json());
+  const sel = document.getElementById('lang');
+  sel.innerHTML = '';
+  langs.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l;
+    opt.text = l;
+    sel.appendChild(opt);
+  });
+  sel.value = currentLang;
+  sel.onchange = () => { currentLang = sel.value; load(); };
+}
+
 async function load() {
-  const data = await fetch('/graph/data').then(r => r.json());
+  const data = await fetch('/graph/data?lang=' + currentLang).then(r => r.json());
   const nodes = data.nodes.map(n => ({id: n.id, text: n.text}));
   const links = data.edges.map(e => ({source: e[0], target: e[1]}));
   const svg = d3.select('svg');
@@ -74,10 +130,11 @@ async function sendCmd() {
   await fetch('/graph/nl_edit', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({command: text})
+    body: JSON.stringify({command: text, lang: currentLang})
   });
   await load();
 }
+loadLanguages();
 load();
 </script>
 </body>
@@ -127,12 +184,18 @@ class GraphUI:
         if self._high_load and not prev and self.telemetry is not None:
             self.telemetry.events.append({"event": "ui_throttle", "load": load})
 
-    def _get_graph_json(self) -> dict:
+    def _get_graph_json(self, lang: str | None = None) -> dict:
         now = time.time()
         if self._high_load and self._cached_data is not None:
             if now - self._last_update < self.update_interval:
                 return self._cached_data
         data = self.graph.to_json()
+        if lang and hasattr(self.graph, 'translate_node'):
+            for node in data.get("nodes", []):
+                try:
+                    node["text"] = self.graph.translate_node(node["id"], lang)
+                except Exception:
+                    pass
         if self._high_load:
             for node in data.get("nodes", []):
                 text = node.get("text", "")
@@ -156,8 +219,8 @@ class GraphUI:
             self.logger.log(summary)
 
         @self.app.get('/graph/data')
-        async def graph_data() -> Any:
-            return JSONResponse(self._get_graph_json())
+        async def graph_data(lang: str | None = None) -> Any:
+            return JSONResponse(self._get_graph_json(lang))
 
         @self.app.get('/history')
         async def history() -> Any:
@@ -171,7 +234,11 @@ class GraphUI:
         @self.app.post('/graph/node')
         async def add_node(req: Request) -> Any:
             data = await req.json()
-            node_id = self.graph.add_step(data.get('text', ''), data.get('metadata'))
+            lang = data.get('lang')
+            if lang and hasattr(self.graph, 'translate_node'):
+                node_id = self.graph.add_step(data.get('text', ''), lang=lang, metadata=data.get('metadata'))
+            else:
+                node_id = self.graph.add_step(data.get('text', ''), data.get('metadata'))
             await _record()
             return JSONResponse({'id': node_id})
 
@@ -207,10 +274,17 @@ class GraphUI:
         async def nl_edit(req: Request) -> Any:
             data = await req.json()
             cmd = data.get('command', '')
+            lang = data.get('lang')
+            before = set(self.graph.nodes)
             try:
                 result = self.editor.apply(cmd)
             except Exception as e:
                 return JSONResponse({'status': 'error', 'error': str(e)}, status_code=400)
+            if lang and hasattr(self.graph, 'translate_node'):
+                new_ids = set(self.graph.nodes) - before
+                for nid in new_ids:
+                    self.graph.nodes[nid].metadata = dict(self.graph.nodes[nid].metadata or {})
+                    self.graph.nodes[nid].metadata.setdefault('lang', lang)
             await _record()
             return JSONResponse(result)
 

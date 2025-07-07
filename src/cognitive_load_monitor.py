@@ -39,7 +39,7 @@ class CognitiveLoadMonitor:
     # --------------------------------------------------------------
     def log_input(self, text: str = "", timestamp: Optional[float] = None) -> None:
         """Record a new user input and update pause duration."""
-        now = timestamp or time.time()
+        now = time.time() if timestamp is None else timestamp
         if self._last_time is not None:
             self.pauses.append(now - self._last_time)
         self._last_time = now
