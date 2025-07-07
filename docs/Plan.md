@@ -33,8 +33,10 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-9** | **Hopfield Associative Memory** | Store binary patterns as attractors and recall them from noisy cues | Recall accuracy >95 % on 32-bit vectors with up to 20 % noise |
 | **C-10** | **RL-guided retrieval** | Learn a policy to rank memory vectors by hit rate and latency | Recall improves after online training from query logs |
 | **C-11** | **Emotion-conditioned retrieval** | Re-rank memory hits by matching sentiment | Positive/negative queries return ≥1 matching-tone item first |
+| **C-12** | **Differentiable Neural Computer memory** | Addressable memory matrix with learnable read/write heads | Store and recall 1 k vectors with <1 % error |
 
 **Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.  Privacy-preserving retrieval is now possible via `EncryptedVectorStore`, which stores AES-encrypted embeddings and manages keys through `HierarchicalMemory`. FHEMemoryServer goes a step further, allowing remote encrypted queries via TenSEAL.
+Experiments with a `DNCMemory` backend add learnable read/write heads on top of the vector store. The module now exposes device and dtype options and supports memory resets.
 
 ---
 
