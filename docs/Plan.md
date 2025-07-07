@@ -220,42 +220,44 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    *Implemented in `src/hybrid_retention.py` with unit tests.*
 2. **Cross-modal retrieval memory**: Store embeddings from
    `cross_modal_fusion.encode_all()` inside `HierarchicalMemory` and evaluate
-   retrieval accuracy on 1&nbsp;M-token streams. *Implemented via
-   `add_multimodal()` in `cross_modal_fusion.py` and related unit tests.*
-3. **LoRA-quantized world model**: *Implemented* via a `use_lora` option in
+ retrieval accuracy on 1&nbsp;M-token streams. *Implemented via
+  `add_multimodal()` in `cross_modal_fusion.py` and related unit tests.*
+3. **Sign-language ingestion**: `download_triples()` accepts sign-video URLs and
+   `encode_all()` stores the recognized embeddings for retrieval.
+4. **LoRA-quantized world model**: *Implemented* via a `use_lora` option in
    `multimodal_world_model.py` which wraps the transformer layers with
    quantized adapters.
-4. **QAE-guided refactoring**: Employ `QAEHyperparamSearch` to tune exploration
+5. **QAE-guided refactoring**: Employ `QAEHyperparamSearch` to tune exploration
    parameters in `MetaRLRefactorAgent` and track benchmark uplift.
-5. **Scalability metrics**: *(done)* `eval_harness.py` now records GPU memory
+6. **Scalability metrics**: *(done)* `eval_harness.py` now records GPU memory
    usage via `log_memory_usage()` and prints it alongside pass/fail results.
-6. **Compute budget tracking**: Use `ComputeBudgetTracker` to log GPU hours and
+7. **Compute budget tracking**: Use `ComputeBudgetTracker` to log GPU hours and
    energy cost for each run and stop training when the budget is exhausted.
-7. **Budget-aware scheduler**: Automatically lower batch size and learning rate
+8. **Budget-aware scheduler**: Automatically lower batch size and learning rate
    via `BudgetAwareScheduler` when `remaining()` falls below a threshold.
 7a. **Battery-aware scheduler**: Delay jobs when system battery level falls
     below a configurable threshold. `BatteryAwareScheduler` queries the OS for
     the current percentage and logs it via `TelemetryLogger` so runs on laptops
     can conserve power.
-8. **Distributed memory benchmark**: Run `DistributedMemory` with four
+9. **Distributed memory benchmark**: Run `DistributedMemory` with four
    `MemoryServer` nodes using `distributed_memory_benchmark.py` and measure
    query latency and throughput versus the single-node baseline.
-9. **MemoryServer streaming API**: Benchmark the new batched push/query
+10. **MemoryServer streaming API**: Benchmark the new batched push/query
    endpoints and report latency savings over single-vector calls.
-10. **Checkpointed world model**: *(done)* the multimodal world model now
+11. **Checkpointed world model**: *(done)* the multimodal world model now
    supports a `checkpoint_blocks` flag which reduces memory usage during
    training.
-11. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
+12. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
    trajectories from `self_play_skill_loop.run_loop` and feeds them into
    `train_world_model` for mixed-modality experiments.
-12. **Opponent strategy evolution**: `opponent_generator.OpponentGenerator`
+13. **Opponent strategy evolution**: `opponent_generator.OpponentGenerator`
     maintains a pool of past policies and samples them by reward.
     Success criterion: ≥10 % performance gain on held-out tasks after
     five self-play cycles.
-12. **Attention trace analysis**: Use the new `AttentionVisualizer` to
+14. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
     `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard.
-13. **Graph-of-thought planning**: Implement `GraphOfThought` (see
+15. **Graph-of-thought planning**: Implement `GraphOfThought` (see
     `src/graph_of_thought.py`) and measure refactor quality gains over the
     baseline meta-RL agent. The `ReasoningDebugger` now aggregates loops and
     contradictions across multiple agents.

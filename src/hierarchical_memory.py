@@ -350,12 +350,15 @@ class HierarchicalMemory:
         images: torch.Tensor,
         audio: torch.Tensor,
         bci: torch.Tensor | None = None,
+        sign: torch.Tensor | None = None,
         metadata: Iterable[Any] | None = None,
     ) -> None:
         """Store averaged multimodal embeddings."""
         vecs_list = [text, images, audio]
         if bci is not None and bci.numel():
             vecs_list.append(bci)
+        if sign is not None and sign.numel():
+            vecs_list.append(sign)
         vecs = sum(vecs_list) / len(vecs_list)
         self.add(vecs, metadata)
 
@@ -439,12 +442,15 @@ class HierarchicalMemory:
         images: torch.Tensor,
         audio: torch.Tensor,
         bci: torch.Tensor | None = None,
+        sign: torch.Tensor | None = None,
         metadata: Iterable[Any] | None = None,
     ) -> None:
         """Asynchronously store averaged multimodal embeddings."""
         vecs_list = [text, images, audio]
         if bci is not None and bci.numel():
             vecs_list.append(bci)
+        if sign is not None and sign.numel():
+            vecs_list.append(sign)
         vecs = sum(vecs_list) / len(vecs_list)
         await self.aadd(vecs, metadata)
 
