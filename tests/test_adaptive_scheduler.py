@@ -8,6 +8,30 @@ import sys
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
 
+ct_stub = types.ModuleType('asi.carbon_tracker')
+class _CT:
+    def __init__(self, *a, **k):
+        pass
+    def start(self):
+        pass
+    def stop(self):
+        pass
+    def get_stats(self):
+        return {}
+ct_stub.CarbonFootprintTracker = _CT
+sys.modules['asi.carbon_tracker'] = ct_stub
+med_stub = types.ModuleType('asi.memory_event_detector')
+class _MED:
+    def __init__(self, *a, **k):
+        self.events = []
+    def update(self, snapshot):
+        return []
+med_stub.MemoryEventDetector = _MED
+sys.modules['asi.memory_event_detector'] = med_stub
+cas_stub = types.ModuleType('asi.cost_aware_scheduler')
+cas_stub.get_current_price = lambda *a, **k: 0.0
+sys.modules['asi.cost_aware_scheduler'] = cas_stub
+
 
 def _load(name, path):
     loader = importlib.machinery.SourceFileLoader(name, path)
@@ -19,6 +43,7 @@ def _load(name, path):
     return mod
 
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
+sys.modules['asi.telemetry']._HAS_PROM = False
 ComputeBudgetTracker = _load('asi.compute_budget_tracker', 'src/compute_budget_tracker.py').ComputeBudgetTracker
 AdaptiveScheduler = _load('asi.adaptive_scheduler', 'src/adaptive_scheduler.py').AdaptiveScheduler
 
@@ -60,6 +85,7 @@ class TestAdaptiveScheduler(unittest.TestCase):
         logger = TelemetryLogger(interval=0.05)
         tracker = ComputeBudgetTracker(1.0, telemetry=logger)
         sched = AdaptiveScheduler(tracker, 'run', check_interval=0.05)
+        time.sleep(0.1)
         load = sched.report_load()
         self.assertIsInstance(load, dict)
         self.assertIn('cpu', load)

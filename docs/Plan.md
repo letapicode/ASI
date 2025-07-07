@@ -230,6 +230,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    energy cost for each run and stop training when the budget is exhausted.
 7. **Budget-aware scheduler**: Automatically lower batch size and learning rate
    via `BudgetAwareScheduler` when `remaining()` falls below a threshold.
+7a. **Battery-aware scheduler**: Delay jobs when system battery level falls
+    below a configurable threshold. `BatteryAwareScheduler` queries the OS for
+    the current percentage and logs it via `TelemetryLogger` so runs on laptops
+    can conserve power.
 8. **Distributed memory benchmark**: Run `DistributedMemory` with four
    `MemoryServer` nodes using `distributed_memory_benchmark.py` and measure
    query latency and throughput versus the single-node baseline.

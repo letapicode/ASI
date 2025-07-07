@@ -47,6 +47,8 @@ class AdaptiveScheduler:
         *,
         energy_scheduler: bool = False,
         intensity_threshold: float = 0.5,
+        battery_scheduler: bool = False,
+        battery_threshold: float = 0.2,
         region_config: str | None = None,
     ) -> None:
         if energy_scheduler and type(self) is AdaptiveScheduler:
@@ -61,6 +63,20 @@ class AdaptiveScheduler:
                 window=window,
                 min_improvement=min_improvement,
                 intensity_threshold=intensity_threshold,
+            )
+            return
+        if battery_scheduler and type(self) is AdaptiveScheduler:
+            from .battery_aware_scheduler import BatteryAwareScheduler
+            self.__class__ = BatteryAwareScheduler
+            BatteryAwareScheduler.__init__(
+                self,
+                budget,
+                run_id,
+                max_mem=max_mem,
+                check_interval=check_interval,
+                window=window,
+                min_improvement=min_improvement,
+                battery_threshold=battery_threshold,
             )
             return
         self.budget = budget
