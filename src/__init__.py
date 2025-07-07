@@ -198,6 +198,7 @@ from .cross_lingual_memory import CrossLingualMemory
 from .cross_lingual_kg_memory import CrossLingualKGMemory
 from .cross_lingual_graph import CrossLingualReasoningGraph
 from .context_summary_memory import ContextSummaryMemory
+from .multimodal_summary_memory import MultiModalSummaryMemory
 from .sensorimotor_pretrainer import (
     SensorimotorPretrainConfig,
     SensorimotorLogDataset,
