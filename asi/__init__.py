@@ -42,8 +42,12 @@ for _m in [
     "quantum_memory_server",
     "quantum_memory_client",
     "enclave_runner",
+    "zero_trust_memory_server",
 ]:
-    _import(_m)
+    try:  # pragma: no cover - optional deps
+        _import(_m)
+    except Exception:
+        pass
 
 
 def __getattr__(name: str):
