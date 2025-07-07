@@ -13,6 +13,10 @@ import requests
 from .carbon_tracker import CarbonFootprintTracker
 from .privacy_guard import PrivacyGuard
 try:
+    from .advanced_ingest import LLMIngestParser
+except Exception:  # pragma: no cover - optional
+    LLMIngestParser = None  # type: ignore
+try:
     import aiohttp  # type: ignore
     _HAS_AIOHTTP = True
 except Exception:  # pragma: no cover - optional
@@ -353,6 +357,7 @@ def _download_triples_impl(
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
     privacy_guard: PrivacyGuard | None = None,
+    use_llm_parser: bool = False,
 ) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Implementation for :func:`download_triples`."""
 
@@ -373,6 +378,7 @@ def _download_triples_impl(
             carbon_tracker=carbon_tracker,
             auditor=auditor,
             privacy_guard=privacy_guard,
+            use_llm_parser=use_llm_parser,
         )
 
     try:
@@ -400,6 +406,7 @@ def download_triples(
     auditor: Optional[PrivacyAuditor] = None,
     privacy_guard: PrivacyGuard | None = None,
     runner: EnclaveRunner | None = None,
+    use_llm_parser: bool = False,
 ) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Download text, image and audio triples into ``out_dir`` concurrently."""
 
@@ -421,6 +428,7 @@ def download_triples(
         carbon_tracker=carbon_tracker,
         auditor=auditor,
         privacy_guard=privacy_guard,
+        use_llm_parser=use_llm_parser,
     )
 
 
@@ -440,6 +448,7 @@ async def download_triples_async(
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
     privacy_guard: PrivacyGuard | None = None,
+    use_llm_parser: bool = False,
 ) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Asynchronously download text, image and audio triples.
 
@@ -534,6 +543,15 @@ async def download_triples_async(
                     anonymizer.scrub_image_file(s_path)
                 except Exception:
                     pass
+
+    if use_llm_parser and LLMIngestParser is not None:
+        parser = LLMIngestParser()
+        for tri in triples:
+            t_path = tri[0]
+            try:
+                parser.parse_file_to_json(t_path)
+            except Exception:  # pragma: no cover - ignore parser errors
+                pass
 
     # Add multilingual copies
     if translator is not None:
@@ -1101,4 +1119,5 @@ __all__ = [
     "CrossLingualTranslator",
     "CrossLingualSpeechTranslator",
     "DataPoisonDetector",
+    "LLMIngestParser",
 ]
