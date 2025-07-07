@@ -36,7 +36,7 @@ from .ephemeral_vector_store import EphemeralVectorStore
 from .iter_align import IterativeAligner
 from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 from .chunkwise_retrainer import ChunkWiseRetrainer
-from .secure_dataset_exchange import SecureDatasetExchange
+from .secure_dataset_exchange import SecureDatasetExchange, DatasetIntegrityProof
 from .p2p_dataset_exchange import P2PDatasetExchange
 from .self_healing_trainer import SelfHealingTrainer
 from .scaling_law import BreakpointScalingLaw

@@ -4,6 +4,9 @@ import io
 import os
 import struct
 import tarfile
+import hashlib
+import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
@@ -18,6 +21,52 @@ from cryptography.hazmat.primitives.serialization import (
 from cryptography.exceptions import InvalidSignature
 
 
+@dataclass
+class DatasetIntegrityProof:
+    """Hash-based proof of dataset integrity optionally signed."""
+
+    digest: str
+    signature: bytes | None = None
+
+    @classmethod
+    def generate(
+        cls, data: bytes, *, signing_key: bytes | None = None
+    ) -> "DatasetIntegrityProof":
+        digest = hashlib.sha256(data).hexdigest()
+        sig = None
+        if signing_key is not None:
+            priv = ed25519.Ed25519PrivateKey.from_private_bytes(signing_key)
+            sig = priv.sign(bytes.fromhex(digest))
+        return cls(digest, sig)
+
+    def verify(self, data: bytes, *, verify_key: bytes | None = None) -> bool:
+        if hashlib.sha256(data).hexdigest() != self.digest:
+            return False
+        if verify_key is not None:
+            if self.signature is None:
+                return False
+            pub = ed25519.Ed25519PublicKey.from_public_bytes(verify_key)
+            try:
+                pub.verify(self.signature, bytes.fromhex(self.digest))
+            except InvalidSignature:
+                return False
+        return True
+
+    def to_json(self) -> str:
+        return json.dumps(
+            {
+                "digest": self.digest,
+                "signature": self.signature.hex() if self.signature else None,
+            }
+        )
+
+    @classmethod
+    def from_json(cls, text: str) -> "DatasetIntegrityProof":
+        obj = json.loads(text)
+        sig = bytes.fromhex(obj["signature"]) if obj.get("signature") else None
+        return cls(obj["digest"], sig)
+
+
 class SecureDatasetExchange:
     """Encrypt and sign datasets for transfer between nodes."""
 
@@ -26,12 +75,15 @@ class SecureDatasetExchange:
         key: bytes,
         signing_key: bytes | None = None,
         verify_key: bytes | None = None,
+        *,
+        require_proof: bool = False,
     ) -> None:
         if len(key) not in (16, 24, 32):
             raise ValueError("key must be 16, 24, or 32 bytes")
         self.key = key
         self._signing_key = signing_key
         self._verify_key = verify_key
+        self.require_proof = require_proof
 
     # ------------------------------------------------------------------
     def _encrypt(self, data: bytes) -> bytes:
@@ -61,7 +113,9 @@ class SecureDatasetExchange:
             raise ValueError("invalid signature") from e
 
     # ------------------------------------------------------------------
-    def push(self, directory: str | Path, out_file: str | Path) -> Path:
+    def push(
+        self, directory: str | Path, out_file: str | Path, *, with_proof: bool = False
+    ) -> Path | tuple[Path, DatasetIntegrityProof]:
         """Package ``directory`` into ``out_file`` with encryption and signature."""
         root = Path(directory)
         buf = io.BytesIO()
@@ -69,6 +123,7 @@ class SecureDatasetExchange:
             for p in root.rglob("*"):
                 tar.add(p, arcname=str(p.relative_to(root)))
         data = buf.getvalue()
+        proof = DatasetIntegrityProof.generate(data, signing_key=self._signing_key)
         enc = self._encrypt(data)
         sig = self._sign(enc) if self._signing_key is not None else b""
         with open(out_file, "wb") as fh:
@@ -76,9 +131,16 @@ class SecureDatasetExchange:
             if sig:
                 fh.write(sig)
             fh.write(enc)
-        return Path(out_file)
+        path = Path(out_file)
+        return (path, proof) if with_proof else path
 
-    def pull(self, package: str | Path, dest_dir: str | Path) -> None:
+    def pull(
+        self,
+        package: str | Path,
+        dest_dir: str | Path,
+        *,
+        proof: DatasetIntegrityProof | None = None,
+    ) -> None:
         """Extract ``package`` into ``dest_dir`` after decryption and verification."""
         dest = Path(dest_dir)
         with open(package, "rb") as fh:
@@ -88,6 +150,9 @@ class SecureDatasetExchange:
         if sig_len and self._verify_key is not None:
             self._verify(enc, sig)
         data = self._decrypt(enc)
+        if self.require_proof:
+            if proof is None or not proof.verify(data, verify_key=self._verify_key):
+                raise ValueError("invalid dataset proof")
         buf = io.BytesIO(data)
         with tarfile.open(fileobj=buf, mode="r:gz") as tar:
             tar.extractall(dest)
@@ -107,4 +172,4 @@ class SecureDatasetExchange:
         )
 
 
-__all__ = ["SecureDatasetExchange"]
+__all__ = ["SecureDatasetExchange", "DatasetIntegrityProof"]
