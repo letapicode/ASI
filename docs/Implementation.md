@@ -891,3 +891,22 @@ examples rather than large‑scale training.
 `MultiAgentCoordinator` accepts a `ComputeBudgetTracker` instance which tracks GPU hours per agent. `RLNegotiator` considers `tracker.remaining()` when assigning tasks and each action logs usage via `tracker.consume()`. This ensures repositories are processed by agents with sufficient budget.
 
 - `src/nerf_world_model.py` implements a tiny NeRF renderer with multi-view dataset helpers. Training on the synthetic cube sequence reaches around **25 dB PSNR** after 50 epochs.
+
+## Graph Neural Memory
+
+`src/gnn_memory.py` implements a tiny GraphSAGE encoder over a `GraphOfThought`. Each node text is hashed into an initial vector and message passing averages neighbour features before a linear projection. The resulting embeddings are used for context-aware search across reasoning steps.
+
+**Message passing steps**
+
+1. Embed all node texts deterministically with `_embed_text`.
+2. For every node, compute the mean embedding of its outgoing neighbours.
+3. Combine self and neighbour representations with two linear layers and a ReLU.
+
+**Training objective**
+
+Edges are reconstructed via a simple link prediction loss. For each observed edge the dot product of connected nodes is maximised while the score for a random negative node is minimised.
+
+**Integration**
+
+`encode_nodes()` returns the learned node embeddings. `query(context)` fetches the embeddings of neighbours of a given node or set of nodes so existing memory modules can condition retrieval on the current reasoning context.
+

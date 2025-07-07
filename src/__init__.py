@@ -248,6 +248,7 @@ from .cross_lingual_fairness import CrossLingualFairnessEvaluator
 from .risk_dashboard import RiskDashboard
 from .alignment_dashboard import AlignmentDashboard
 from .graph_neural_reasoner import GraphNeuralReasoner
+from .gnn_memory import GNNMemory
 from .temporal_reasoner import TemporalReasoner
 from .lora_merger import merge_adapters
 from .edge_rl_trainer import EdgeRLTrainer
