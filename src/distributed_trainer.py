@@ -21,6 +21,7 @@ from .enclave_runner import EnclaveRunner, EnclaveConfig
 
 
 from .distributed_memory import DistributedMemory
+import numpy as np
 
 
 @dataclass
@@ -40,8 +41,10 @@ def _worker_process(
     step: int,
     comp_cfg: Dict[str, Any] | None,
     enclave_cfg: Dict[str, Any] | None,
+    worker_id: int = 0,
+    steps: int = 1,
 ) -> None:
-    """Entry point for each worker process."""
+    """Run ``train_fn`` for ``steps`` iterations and save checkpoints."""
     try:
         prev = Path(ckpt_dir) / f"step{step}"
         if prev.exists():
@@ -55,18 +58,66 @@ def _worker_process(
             compressor = GradientCompressor(cfg)
         fn = compressor.compress if compressor is not None else None
         runner = EnclaveRunner(EnclaveConfig(**enclave_cfg)) if enclave_cfg else None
-        if runner is not None:
-            runner.run(train_fn, mem, step, fn)
-        else:
-            train_fn(mem, step, fn)
-        out = Path(ckpt_dir) / f"step{step + 1}"
-        mem.save(out / "memory")
+        for s in range(step, step + steps):
+            if runner is not None:
+                runner.run(train_fn, mem, s, fn)
+            else:
+                train_fn(mem, s, fn)
+            out = Path(ckpt_dir) / f"step{s + 1}"
+            if worker_id:
+                out = out.with_name(out.name + f"_w{worker_id}")
+            mem.save(out / "memory")
     except Exception:
         # Print traceback for visibility and exit with failure
         import traceback
 
         traceback.print_exc()
         raise
+
+
+def _average_memories(mems: list[DistributedMemory]) -> DistributedMemory:
+    """Average compressor parameters and merge buffers."""
+    if len(mems) == 1:
+        return mems[0]
+    base = mems[0]
+    n = float(len(mems))
+    # average encoder and decoder weights
+    enc_keys = base.compressor.encoder.state_dict().keys()
+    enc_avg = {}
+    for k in enc_keys:
+        enc_avg[k] = sum(m.compressor.encoder.state_dict()[k] for m in mems) / n
+    dec_keys = base.compressor.decoder.state_dict().keys()
+    dec_avg = {}
+    for k in dec_keys:
+        dec_avg[k] = sum(m.compressor.decoder.state_dict()[k] for m in mems) / n
+    base.compressor.encoder.load_state_dict(enc_avg)
+    base.compressor.decoder.load_state_dict(dec_avg)
+    # merge buffers
+    data = []
+    for m in mems:
+        data.extend([t.clone() for t in m.compressor.buffer.data])
+    cap = base.compressor.buffer.capacity
+    data = data[-cap:]
+    base.compressor.buffer.data = data
+    base.compressor.buffer.count = len(data)
+    # merge vector stores when possible
+    try:
+        from .vector_store import VectorStore
+
+        if isinstance(base.store, VectorStore):
+            vecs = []
+            metas = []
+            for m in mems:
+                if isinstance(m.store, VectorStore):
+                    if m.store._vectors:
+                        vecs.append(np.concatenate(m.store._vectors, axis=0))
+                    metas.extend(m.store._meta)
+            if vecs:
+                base.store = VectorStore(base.store.dim)
+                base.store.add(np.concatenate(vecs, axis=0), metas)
+    except Exception:
+        pass
+    return base
 
 
 class DistributedTrainer:
@@ -88,6 +139,9 @@ class DistributedTrainer:
         replay_interval: float | None = None,
         consolidation_hook: Callable[[], None] | None = None,
         consolidation_interval: float | None = None,
+        async_mode: bool = False,
+        async_workers: int = 2,
+        sync_steps: int = 1,
 
     ) -> None:
         self.train_fn = train_fn
@@ -108,7 +162,9 @@ class DistributedTrainer:
         self.consolidation_hook = consolidation_hook
         self.consolidation_interval = consolidation_interval
         self._last_consolidation = time.time()
-
+        self.async_mode = async_mode
+        self.async_workers = max(1, int(async_workers))
+        self.sync_steps = max(1, int(sync_steps))
 
     def run(self, steps: int) -> None:
         """Execute ``train_fn`` for ``steps`` iterations with restart logic."""
@@ -141,37 +197,80 @@ class DistributedTrainer:
                 self.step += 1
                 continue
 
-            proc = mp.Process(
-                target=_worker_process,
-                args=(
-                    self.train_fn,
-                    self.mem_cfg,
-                    str(self.checkpoint_dir),
-                    self.step,
-                    self.grad_compression,
-                    self.enclave_cfg,
-                ),
-            )
-            if self.scheduler is not None:
-                started = mp.Event()
-
-                def _start() -> None:
-                    proc.start()
-                    started.set()
-
-                self.scheduler.add(_start)
-                while not started.is_set():
-                    time.sleep(self.scheduler.check_interval)
+            if self.async_mode:
+                start = self.step
+                procs = []
+                for wid in range(self.async_workers):
+                    p = mp.Process(
+                        target=_worker_process,
+                        args=(
+                            self.train_fn,
+                            self.mem_cfg,
+                            str(self.checkpoint_dir),
+                            start,
+                            self.grad_compression,
+                            self.enclave_cfg,
+                            wid,
+                            self.sync_steps,
+                        ),
+                    )
+                    p.start()
+                    procs.append(p)
+                for p in procs:
+                    p.join()
+                if any(p.exitcode != 0 for p in procs):
+                    restarts += 1
+                    if restarts > self.max_restarts:
+                        raise RuntimeError("Maximum restarts exceeded")
+                    continue
+                paths = [
+                    self.checkpoint_dir
+                    / f"step{start + self.sync_steps}_w{wid}"
+                    / "memory"
+                    for wid in range(self.async_workers)
+                ]
+                mems = [DistributedMemory.load(p) for p in paths]
+                merged = _average_memories(mems)
+                out = self.checkpoint_dir / f"step{start + self.sync_steps}"
+                merged.save(out / "memory")
+                restarts = 0
+                self.step += self.sync_steps
             else:
-                proc.start()
-            proc.join()
-            if proc.exitcode != 0:
-                restarts += 1
-                if restarts > self.max_restarts:
-                    raise RuntimeError("Maximum restarts exceeded")
-                continue
-            restarts = 0
-            self.step += 1
+                proc = mp.Process(
+                    target=_worker_process,
+                    args=(
+                        self.train_fn,
+                        self.mem_cfg,
+                        str(self.checkpoint_dir),
+                        self.step,
+                        self.grad_compression,
+                        self.enclave_cfg,
+                    ),
+                )
+                if self.scheduler is not None:
+                    started = mp.Event()
+
+                    def _start() -> None:
+                        proc.start()
+                        started.set()
+
+                    self.scheduler.add(_start)
+                    while not started.is_set():
+                        time.sleep(self.scheduler.check_interval)
+                else:
+                    proc.start()
+                proc.join()
+                if proc.exitcode != 0:
+                    restarts += 1
+                    if restarts > self.max_restarts:
+                        raise RuntimeError("Maximum restarts exceeded")
+                    continue
+                restarts = 0
+                out = self.checkpoint_dir / f"step{self.step + 1}"
+                # memory already saved by worker
+
+            if not self.async_mode:
+                self.step += 1
             if self.telemetry:
                 stats = self.telemetry.get_stats()
                 stats["step"] = self.step
@@ -205,7 +304,10 @@ if __name__ == "__main__":  # pragma: no cover - CLI helper
     parser.add_argument("--mem-cfg", required=True)
     parser.add_argument("--ckpt-dir", required=True)
     parser.add_argument("--step", type=int, required=True)
+    parser.add_argument("--steps", type=int, default=1)
     parser.add_argument("--comp-cfg", default=None)
+    parser.add_argument("--enclave-cfg", default=None)
+    parser.add_argument("--worker-id", type=int, default=0)
     args = parser.parse_args()
 
     mod_name, fn_name = args.train_fn.rsplit(":", 1)
@@ -213,7 +315,17 @@ if __name__ == "__main__":  # pragma: no cover - CLI helper
     fn = getattr(module, fn_name)
     mem_cfg = json.loads(args.mem_cfg)
     comp = json.loads(args.comp_cfg) if args.comp_cfg else None
-    _worker_process(fn, mem_cfg, args.ckpt_dir, args.step, comp)
+    encl = json.loads(args.enclave_cfg) if args.enclave_cfg else None
+    _worker_process(
+        fn,
+        mem_cfg,
+        args.ckpt_dir,
+        args.step,
+        comp,
+        encl,
+        args.worker_id,
+        args.steps,
+    )
 
 __all__ = [
     "DistributedTrainer",
@@ -221,4 +333,3 @@ __all__ = [
     "GradientCompressionConfig",
     "EnclaveConfig",
 ]
-

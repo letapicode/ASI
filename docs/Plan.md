@@ -451,6 +451,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 55. **Gradient compression for distributed training**: Implement a `GradientCompressor`
     with top-k sparsification or quantized gradients and integrate it with
     `DistributedTrainer`.
+55a. **Asynchronous parameter averaging**: Enable `DistributedTrainer.async_mode`
+     so multiple workers apply gradients locally and periodically merge via
+     parameter averaging.
 56. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
 56a. **WASM export**: Add `export_to_wasm()` to turn the ONNX graphs into WebAssembly bundles for `onnxruntime-web`.
 57. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
