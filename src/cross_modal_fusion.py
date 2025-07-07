@@ -301,6 +301,31 @@ def encode_all(
     return all_t, all_i, all_a, None
 
 
+def embed_modalities(
+    model: CrossModalFusion,
+    tokenizer,
+    text: str | None = None,
+    image: torch.Tensor | None = None,
+    audio: torch.Tensor | None = None,
+) -> Tuple[np.ndarray | None, np.ndarray | None, np.ndarray | None]:
+    """Return text, image and audio embeddings for the given inputs."""
+    device = next(model.parameters()).device
+    model.eval()
+    with torch.no_grad():
+        tokens = (
+            torch.tensor(tokenizer(text), dtype=torch.long, device=device).unsqueeze(0)
+            if text is not None
+            else None
+        )
+        image_t = image.to(device).unsqueeze(0) if image is not None else None
+        audio_t = audio.to(device).unsqueeze(0) if audio is not None else None
+        t_vec, i_vec, a_vec, _ = model(tokens, image_t, audio_t)
+        def _to_np(x: torch.Tensor | None) -> np.ndarray | None:
+            return x[0].cpu().numpy() if x is not None else None
+
+    return _to_np(t_vec), _to_np(i_vec), _to_np(a_vec)
+
+
 def retrieval_accuracy(
     model: CrossModalFusion,
     dataset: Dataset,
@@ -353,6 +378,7 @@ __all__ = [
     "BCIEncoder",
     "MultiModalDataset",
     "train_fusion_model",
+    "embed_modalities",
     "encode_all",
     "retrieval_accuracy",
 ]
