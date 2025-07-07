@@ -53,6 +53,9 @@ Citations point to the most recent public work so you can drill straight into th
 | **A-9** | **Automated PR Conflict Checks** | Summarize merge conflicts for all open pull requests | Detection completes in <2 min per repo |
 | **A-10** | **Goal-Oriented Evaluation Harness** | Benchmark each algorithm against its success criteria | Single command prints pass/fail scoreboard |
 | **A-11** | **Neuroevolution Architecture Search** | Evolve model layouts via mutation and crossover | >5 % higher validation accuracy than random search on CIFAR‑10 after 10 generations |
+| **A-12** | **Meta-Optimizer (MAML)** | Continuously adapt models across tasks | Adaptation loss after 10 tasks < baseline by 20 % |
+
+See `docs/Implementation.md` for the optimisation workflow.
 
 `SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
 - **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
@@ -163,6 +166,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   outputs.
 - `src/meta_rl_refactor.py` implements a small Q-learning agent for **A-3**.
 - `src/quantum_hpo.py` provides a quantum amplitude-estimation search for **A-4**. It now accepts architecture parameters to evaluate candidate transformer components.
+- `src/meta_optimizer.py` wraps training loops in a simple MAML cycle and integrates with `AdaptivePlanner` for continuous tuning.
 - `src/rwkv_loop.py` demonstrates the infinite-context loop for **C-6**.
 - `src/chunkwise_retrainer.py` implements chunk-wise retraining on long transcripts.
 - `src/collective_constitution.py` aggregates crowd-sourced rules for **L-1**.

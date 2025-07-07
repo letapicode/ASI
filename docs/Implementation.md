@@ -427,6 +427,17 @@ python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
 - Running `python -m src.eval_harness` prints a pass/fail table for the whole project.
 - For larger experiments run `scripts/distributed_eval.py --workers 4` (or pass `--hosts`) to split the evaluations across processes or nodes.
 
+## A-11 Meta Optimizer
+
+- `src/meta_optimizer.py` implements a lightweight first-order MAML loop. Specify
+  `adapt_lr`, `meta_lr` and `adapt_steps` to control the inner and outer updates.
+  ``meta_step(model, tasks)`` clones the model for each task, optimises it with
+  SGD on the task data and accumulates the resulting gradients before applying a
+  meta update.
+- `adaptive_planner.AdaptivePlanner` optionally accepts a ``meta_optimizer`` and
+  a model. When provided, ``rank_strategies()`` calls ``meta_step`` using the
+  latest strategy scores to continually tune the model.
+
 ## L-5 Formal Verification Harness
 
 - `src/formal_verifier.py` provides a small property checker that loads model snapshots and symbolically executes critical routines.

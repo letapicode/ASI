@@ -2,6 +2,7 @@
 
 from .autobench import run_autobench, BenchResult
 from .meta_rl_refactor import MetaRLRefactorAgent
+from .meta_optimizer import MetaOptimizer
 from .rl_decision_narrator import RLDecisionNarrator
 from .quantum_hpo import (
     QAEHyperparamSearch,
