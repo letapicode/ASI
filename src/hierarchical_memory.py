@@ -18,6 +18,7 @@ from .encrypted_vector_store import EncryptedVectorStore
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .hopfield_memory import HopfieldMemory
+from .dnc_memory import DNCMemory
 from .ephemeral_vector_store import EphemeralVectorStore
 from .data_ingest import CrossLingualTranslator
 from .retrieval_rl import RetrievalPolicy
@@ -113,6 +114,11 @@ class HierarchicalMemory:
         db_path: str | Path | None = None,
         use_async: bool = False,
         use_hopfield: bool = False,
+        use_dnc: bool = False,
+        dnc_size: int = 128,
+        dnc_reads: int = 1,
+        dnc_writes: int = 1,
+        dnc_device: str | None = None,
         use_lsh: bool = False,
         use_pq: bool = False,
         lsh_planes: int = 16,
@@ -144,6 +150,14 @@ class HierarchicalMemory:
             self.store = EphemeralVectorStore(dim=compressed_dim, ttl=ephemeral_ttl)
         elif use_hopfield:
             self.store = HopfieldStore(dim=compressed_dim)
+        elif use_dnc:
+            self.store = DNCMemory(
+                memory_size=dnc_size,
+                word_size=compressed_dim,
+                num_reads=dnc_reads,
+                num_writes=dnc_writes,
+                device=dnc_device,
+            )
         elif use_async:
             self.store = AsyncFaissVectorStore(dim=compressed_dim, path=db_path)
         elif use_lsh:
