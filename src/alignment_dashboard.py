@@ -14,6 +14,7 @@ class AlignmentDashboard:
         self.passed = 0
         self.flagged: list[str] = []
         self.normative: list[str] = []
+        self.bci_events = 0
         self.httpd: HTTPServer | None = None
         self.thread: threading.Thread | None = None
         self.port: int | None = None
@@ -24,6 +25,7 @@ class AlignmentDashboard:
         passed: bool,
         flagged: Iterable[str] | None = None,
         normative: Iterable[str] | None = None,
+        bci_events: int = 0,
     ) -> None:
         """Record a single alignment check result."""
         self.total += 1
@@ -33,6 +35,8 @@ class AlignmentDashboard:
             self.flagged.extend([str(f) for f in flagged])
         if normative:
             self.normative.extend([str(n) for n in normative])
+        if bci_events:
+            self.bci_events += int(bci_events)
 
     # --------------------------------------------------------------
     def aggregate(self) -> Dict[str, Any]:
@@ -43,6 +47,7 @@ class AlignmentDashboard:
             "pass_rate": float(rate),
             "flagged_examples": list(self.flagged[-10:]),
             "normative_violations": list(self.normative[-10:]),
+            "bci_events": float(self.bci_events),
         }
 
     # --------------------------------------------------------------

@@ -31,7 +31,10 @@ class SecureFederatedLearner:
         noise = torch.randn_like(grad)
         self._last_noise = noise
 
-        enc = grad + noise
+        try:
+            enc = grad + noise
+        except Exception:
+            enc = [g + n for g, n in zip(grad, noise)]
         if with_proof:
             return enc, ZKGradientProof.generate(grad)
         return enc
@@ -40,7 +43,11 @@ class SecureFederatedLearner:
         self, grad: torch.Tensor, proof: ZKGradientProof | None = None
     ) -> torch.Tensor:
         """Decrypt a gradient and verify it if a proof is supplied."""
-        dec = grad - getattr(self, "_last_noise", torch.zeros_like(grad))
+        try:
+            dec = grad - getattr(self, "_last_noise", torch.zeros_like(grad))
+        except Exception:
+            noise = getattr(self, "_last_noise", torch.zeros_like(grad))
+            dec = [g - n for g, n in zip(grad, noise)]
         if proof and not proof.verify(dec):
             raise ValueError("invalid gradient proof")
         return dec
@@ -60,7 +67,11 @@ class SecureFederatedLearner:
             for g, p in zip(grads, proofs):
                 if not self.zk.verify_proof(g, p):
                     raise ValueError("invalid proof")
-        agg = torch.stack(grads).mean(dim=0)
+        try:
+            agg = torch.stack(grads).mean(dim=0)
+        except Exception:
+            arrs = list(grads)
+            agg = [sum(values) / len(values) for values in zip(*arrs)]
         return agg
 
 __all__ = ["SecureFederatedLearner"]
