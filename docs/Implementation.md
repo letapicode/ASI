@@ -890,4 +890,18 @@ examples rather than large‑scale training.
 
 `MultiAgentCoordinator` accepts a `ComputeBudgetTracker` instance which tracks GPU hours per agent. `RLNegotiator` considers `tracker.remaining()` when assigning tasks and each action logs usage via `tracker.consume()`. This ensures repositories are processed by agents with sufficient budget.
 
+### RL Multi-Cluster Scheduler
+
+`src/rl_multi_cluster_scheduler.py` extends the heuristic `MultiClusterScheduler`
+with a tiny Q-learning policy.  The table is keyed by `(cluster, hour)` and is
+updated from historical queue time, spot price and carbon intensity logs using
+`update_policy()`.  At runtime `submit_best_rl()` chooses the cluster with the
+highest expected reward, falling back to random exploration with a small
+`epsilon`.
+
+Compared to the ARIMA‑based heuristic scheduler, the RL variant adapts to
+recurring patterns in queue delays and energy prices.  Over time it tends to
+migrate jobs toward the cheaper and greener cluster even when short‑term
+forecasts fluctuate.
+
 - `src/nerf_world_model.py` implements a tiny NeRF renderer with multi-view dataset helpers. Training on the synthetic cube sequence reaches around **25 dB PSNR** after 50 epochs.
