@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, Dataset
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     from .hierarchical_memory import HierarchicalMemory
+    from .sign_language import SignLanguageRecognizer
 
 
 class TextEncoder(nn.Module):
@@ -120,19 +121,23 @@ class CrossModalFusion(nn.Module):
 
 
 class MultiModalDataset(Dataset):
-    """Dataset of paired text, image and audio."""
+    """Dataset of paired text, image, audio and optional sign video."""
 
-    def __init__(self, triples: Iterable[Tuple[Any, Any, Any]], tokenizer) -> None:
+    def __init__(self, triples: Iterable[Tuple[Any, Any, Any, Any | None]], tokenizer) -> None:
         self.items = list(triples)
         self.tokenizer = tokenizer
 
     def __len__(self) -> int:
         return len(self.items)
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        text, img, aud = self.items[idx]
+    def __getitem__(self, idx: int):
+        item = self.items[idx]
+        text, img, aud = item[:3]
+        sign = item[3] if len(item) > 3 else None
         tokens = torch.tensor(self.tokenizer(text), dtype=torch.long)
-        return tokens, img, aud
+        if sign is None:
+            return tokens, img, aud
+        return tokens, img, aud, sign
 
 
 def train_fusion_model(
@@ -168,7 +173,8 @@ def encode_all(
     *,
     quantum: bool = False,
     k: int = 5,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    sign_recognizer: "SignLanguageRecognizer | None" = None,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor] | Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Return all modality embeddings and optionally store them.
 
     When ``quantum`` is ``True`` and ``memory`` is provided, each fused
@@ -179,25 +185,39 @@ def encode_all(
     loader = DataLoader(dataset, batch_size=batch_size)
     device = next(model.parameters()).device
     model.eval()
-    text_vecs, img_vecs, aud_vecs = [], [], []
+    text_vecs, img_vecs, aud_vecs, sign_vecs = [], [], [], []
     with torch.no_grad():
-        for idx, (tokens, imgs, aud) in enumerate(loader):
+        for idx, batch in enumerate(loader):
+            if len(batch) == 4:
+                tokens, imgs, aud, sign = batch
+            else:
+                tokens, imgs, aud = batch
+                sign = None
             tokens, imgs, aud = tokens.to(device), imgs.to(device), aud.to(device)
             t_emb, i_emb, a_emb = model(tokens, imgs, aud)
             text_vecs.append(t_emb.cpu())
             img_vecs.append(i_emb.cpu())
             aud_vecs.append(a_emb.cpu())
+            s_emb = None
+            if sign is not None and sign_recognizer is not None:
+                s_list = [torch.from_numpy(sign_recognizer.encode(v)) for v in sign]
+                s_emb = torch.stack(s_list)
+                sign_vecs.append(s_emb)
             if memory is not None:
                 start = idx * batch_size
                 metas = [start + i for i in range(tokens.size(0))]
-                memory.add_multimodal(t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), metas)
+                memory.add_modalities(t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), s_emb.cpu() if s_emb is not None else None, metas)
+                memory.add_multimodal(t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), s_emb.cpu() if s_emb is not None else None, metas)
                 if quantum:
-                    fused = (t_emb + i_emb + a_emb) / 3.0
+                    fused = (t_emb + i_emb + a_emb + (s_emb if s_emb is not None else 0)) / (4.0 if s_emb is not None else 3.0)
                     for q in fused:
                         quantum_crossmodal_search(q, memory, k=k)
     all_t = torch.cat(text_vecs, dim=0)
     all_i = torch.cat(img_vecs, dim=0)
     all_a = torch.cat(aud_vecs, dim=0)
+    if sign_vecs:
+        all_s = torch.cat(sign_vecs, dim=0)
+        return all_t, all_i, all_a, all_s
     return all_t, all_i, all_a
 
 

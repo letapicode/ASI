@@ -193,11 +193,12 @@ class HierarchicalMemory:
         text: torch.Tensor | None = None,
         images: torch.Tensor | None = None,
         audio: torch.Tensor | None = None,
+        sign: torch.Tensor | None = None,
         metadata: Iterable[Any] | None = None,
     ) -> None:
-        """Add text/image/audio embeddings with modality metadata."""
+        """Add text/image/audio/sign embeddings with modality metadata."""
         n = None
-        for t in (text, images, audio):
+        for t in (text, images, audio, sign):
             if t is not None:
                 n = t.shape[0]
                 break
@@ -216,6 +217,8 @@ class HierarchicalMemory:
             self.add(images, [{"id": m, "modality": "image"} for m in metas])
         if audio is not None:
             self.add(audio, [{"id": m, "modality": "audio"} for m in metas])
+        if sign is not None:
+            self.add(sign, [{"id": m, "modality": "sign"} for m in metas])
 
     def add_from_fusion(
         self,
@@ -349,10 +352,14 @@ class HierarchicalMemory:
         text: torch.Tensor,
         images: torch.Tensor,
         audio: torch.Tensor,
+        sign: torch.Tensor | None = None,
         metadata: Iterable[Any] | None = None,
     ) -> None:
         """Store averaged multimodal embeddings."""
-        vecs = (text + images + audio) / 3.0
+        if sign is None:
+            vecs = (text + images + audio) / 3.0
+        else:
+            vecs = (text + images + audio + sign) / 4.0
         self.add(vecs, metadata)
 
     def _evict_if_needed(self) -> None:
@@ -434,10 +441,14 @@ class HierarchicalMemory:
         text: torch.Tensor,
         images: torch.Tensor,
         audio: torch.Tensor,
+        sign: torch.Tensor | None = None,
         metadata: Iterable[Any] | None = None,
     ) -> None:
         """Asynchronously store averaged multimodal embeddings."""
-        vecs = (text + images + audio) / 3.0
+        if sign is None:
+            vecs = (text + images + audio) / 3.0
+        else:
+            vecs = (text + images + audio + sign) / 4.0
         await self.aadd(vecs, metadata)
 
     async def adelete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:

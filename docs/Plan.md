@@ -238,6 +238,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 10. **Checkpointed world model**: *(done)* the multimodal world model now
    supports a `checkpoint_blocks` flag which reduces memory usage during
    training.
+11. **Sign-language retrieval**: `download_triples()` ingests sign videos and
+    `SignLanguageRecognizer` stores their embeddings for cross-modal search.
 11. **Self-play dataset fusion**: *(implemented)* `train_with_self_play` records
    trajectories from `self_play_skill_loop.run_loop` and feeds them into
    `train_world_model` for mixed-modality experiments.

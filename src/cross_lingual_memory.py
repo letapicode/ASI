@@ -27,6 +27,7 @@ except Exception:  # pragma: no cover - allow running without torch
 
 from .hierarchical_memory import HierarchicalMemory
 from .data_ingest import CrossLingualTranslator, CrossLingualSpeechTranslator
+from .sign_language import SignLanguageRecognizer
 from .quantum_retrieval import amplify_search
 
 
@@ -46,10 +47,12 @@ class CrossLingualMemory(HierarchicalMemory):
         *args: Any,
         translator: CrossLingualTranslator | None = None,
         speech_translator: CrossLingualSpeechTranslator | None = None,
+        sign_recognizer: SignLanguageRecognizer | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, translator=translator, **kwargs)
         self.speech_translator = speech_translator
+        self.sign_recognizer = sign_recognizer
         self.text_dim = self.compressor.encoder.in_features
 
     def add_texts(
@@ -76,11 +79,12 @@ class CrossLingualMemory(HierarchicalMemory):
         text: torch.Tensor | None = None,
         images: torch.Tensor | None = None,
         audio: torch.Tensor | None = None,
+        sign: torch.Tensor | None = None,
         metadata: Iterable[Any] | None = None,
     ) -> None:  # type: ignore[override]
-        """Add modality embeddings and store audio transcripts."""
+        """Add modality embeddings and store audio/sign transcripts."""
         n = None
-        for t in (text, images, audio):
+        for t in (text, images, audio, sign):
             if t is not None:
                 n = t.shape[0]
                 break
@@ -102,6 +106,11 @@ class CrossLingualMemory(HierarchicalMemory):
             if self.speech_translator is not None:
                 transcripts = [self.speech_translator.transcribe(a) for a in audio]
                 self.add_texts(transcripts, metas)
+        if sign is not None:
+            super().add(sign, [{"id": m, "modality": "sign"} for m in metas])
+            if self.sign_recognizer is not None:
+                labels = [self.sign_recognizer.recognize(s) for s in sign]
+                self.add_texts(labels, metas)
 
     # ------------------------------------------------------------------
     # Convenience wrappers

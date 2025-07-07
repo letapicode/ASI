@@ -471,6 +471,11 @@ img = random_crop(Image.open(pairs[0][1]), (32, 32))
 txt = generate_transcript(pairs[0][2])
 ```
 
+`download_triples()` also accepts `sign_urls` to ingest sign-language videos.
+`src/sign_language.py` implements `SignLanguageRecognizer` using MediaPipe hand
+landmarks. When passed to `cross_modal_fusion.encode_all()` the recognizer
+stores sign embeddings and transcripts in `CrossLingualMemory` for retrieval.
+
 `offline_synthesizer()` rolls out the multimodal world model to generate
 simplified synthetic triples offline:
 
