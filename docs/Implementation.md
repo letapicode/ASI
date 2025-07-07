@@ -520,6 +520,17 @@ paraphrase_multilingual([Path("./data/text/0.txt")], translator, None, inspector
 Run `scripts/lineage_viewer.py ./data` to browse the recorded steps.
 ```
 
+To inject noise for differential privacy, create a `PrivacyGuard` and pass it to
+`download_triples()`. After ingestion, inspect the remaining budget:
+
+```python
+from asi.privacy_guard import PrivacyGuard
+
+guard = PrivacyGuard(budget=1.0)
+download_triples(text_urls, img_urls, aud_urls, "./data", privacy_guard=guard)
+print("epsilon left", guard.remaining_budget())
+```
+
 ## L-6 Mechanistic Interpretability Tools
 
 - `src/transformer_circuits.py` provides utilities to record attention weights
@@ -667,6 +678,7 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`. **Implemented in `src/pq_vector_store.py` and integrated with `HierarchicalMemory`.**
 - Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`. **Implemented in `src/duplicate_detector.py` and integrated with `filter_text_files()`.**
 - Add a `DataPoisonDetector` that clusters word statistics and flags poisoned samples during ingestion. `download_triples()` now drops flagged triples. **Implemented in `src/data_poison_detector.py` and wired through `data_ingest`.**
+- Add a `PrivacyGuard` that injects noise into downloaded triples and tracks epsilon usage. `download_triples()` records the budget per sample. **Implemented in `src/privacy_guard.py` and integrated with `data_ingest.download_triples`.**
 - Implement a `TemporalVectorCompressor` in `streaming_compression.py` with a
   decay factor so `HierarchicalMemory` can prioritize recent context. Benchmark
   retrieval accuracy against the existing compressor. **Implemented in
