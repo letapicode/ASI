@@ -26,6 +26,7 @@ class ThoughtNode:
     id: int
     text: str
     metadata: Dict[str, Any] | None = None
+    timestamp: float | None = None
 
 
 class GraphOfThought:
@@ -38,6 +39,7 @@ class GraphOfThought:
     ) -> None:
         self.nodes: Dict[int, ThoughtNode] = {}
         self.edges: Dict[int, List[int]] = {}
+        self.edge_timestamps: Dict[tuple[int, int], float | None] = {}
         self.analyzer = analyzer
         self.layer = layer
 
@@ -48,8 +50,12 @@ class GraphOfThought:
         node_id: int | None = None,
         sample: "torch.Tensor | None" = None,
         method: str = "gradient",
+        timestamp: float | None = None,
     ) -> int:
-        """Add a reasoning step and return its node id."""
+        """Add a reasoning step and return its node id.
+
+        ``timestamp`` optionally stores when the step occurred.
+        """
         if node_id is None:
             node_id = max(self.nodes.keys(), default=-1) + 1
         meta = dict(metadata or {})
@@ -64,15 +70,19 @@ class GraphOfThought:
                 meta["head_importance"] = imps.tolist()
             except Exception:
                 pass
-        self.nodes[node_id] = ThoughtNode(node_id, text, meta)
+        self.nodes[node_id] = ThoughtNode(node_id, text, meta, timestamp)
         self.edges.setdefault(node_id, [])
         return node_id
 
-    def connect(self, src: int, dst: int) -> None:
-        """Create a directed edge from ``src`` to ``dst``."""
+    def connect(self, src: int, dst: int, timestamp: float | None = None) -> None:
+        """Create a directed edge from ``src`` to ``dst``.
+
+        ``timestamp`` optionally records when the edge was created.
+        """
         if src not in self.nodes or dst not in self.nodes:
             raise KeyError("unknown node id")
         self.edges.setdefault(src, []).append(dst)
+        self.edge_timestamps[(src, dst)] = timestamp
 
     def summarize_trace(self, trace: Sequence[int]) -> str:
         """Return a natural-language summary of ``trace``."""
@@ -156,20 +166,33 @@ class GraphOfThought:
                 node.get("text", ""),
                 metadata=node.get("metadata"),
                 node_id=int(node["id"]),
+                timestamp=node.get("timestamp"),
             )
-        for src, dst in data.get("edges", []):
-            graph.connect(int(src), int(dst))
+        for edge in data.get("edges", []):
+            if len(edge) == 2:
+                src, dst = edge
+                ts = None
+            else:
+                src, dst, ts = edge
+            graph.connect(int(src), int(dst), timestamp=ts)
         return graph
 
     # --------------------------------------------------------------
     def to_json(self) -> dict:
         """Return a JSON-serializable representation of the graph."""
         nodes = [
-            {"id": n.id, "text": n.text, "metadata": n.metadata}
+            {
+                "id": n.id,
+                "text": n.text,
+                "metadata": n.metadata,
+                "timestamp": n.timestamp,
+            }
             for n in self.nodes.values()
         ]
         edges = [
-            [src, dst] for src, dsts in self.edges.items() for dst in dsts
+            [src, dst] + ([] if (ts := self.edge_timestamps.get((src, dst))) is None else [ts])
+            for src, dsts in self.edges.items()
+            for dst in dsts
         ]
         return {"nodes": nodes, "edges": edges}
 
