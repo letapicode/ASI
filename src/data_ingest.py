@@ -79,6 +79,22 @@ except Exception:  # pragma: no cover - for tests
             def summary(self) -> Dict[str, int]:
                 return {}
 
+try:  # pragma: no cover - optional
+    from .ner_anonymizer import NERAnonymizer
+except Exception:  # pragma: no cover - for tests
+    try:
+        from ner_anonymizer import NERAnonymizer  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        class NERAnonymizer:  # type: ignore
+            def __init__(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def scrub_text_file(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def summary(self) -> Dict[str, int]:
+                return {}
+
 try:
     from .dataset_lineage_manager import DatasetLineageManager
 except Exception:  # pragma: no cover - for tests
@@ -353,6 +369,7 @@ def _download_triples_impl(
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
     privacy_guard: PrivacyGuard | None = None,
+    ner_anonymizer: Optional[NERAnonymizer] = None,
 ) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Implementation for :func:`download_triples`."""
 
@@ -373,6 +390,7 @@ def _download_triples_impl(
             carbon_tracker=carbon_tracker,
             auditor=auditor,
             privacy_guard=privacy_guard,
+            ner_anonymizer=ner_anonymizer,
         )
 
     try:
@@ -399,6 +417,7 @@ def download_triples(
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
     privacy_guard: PrivacyGuard | None = None,
+    ner_anonymizer: Optional[NERAnonymizer] = None,
     runner: EnclaveRunner | None = None,
 ) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Download text, image and audio triples into ``out_dir`` concurrently."""
@@ -421,6 +440,7 @@ def download_triples(
         carbon_tracker=carbon_tracker,
         auditor=auditor,
         privacy_guard=privacy_guard,
+        ner_anonymizer=ner_anonymizer,
     )
 
 
@@ -440,6 +460,7 @@ async def download_triples_async(
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
     privacy_guard: PrivacyGuard | None = None,
+    ner_anonymizer: Optional[NERAnonymizer] = None,
 ) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Asynchronously download text, image and audio triples.
 
@@ -534,6 +555,20 @@ async def download_triples_async(
                     anonymizer.scrub_image_file(s_path)
                 except Exception:
                     pass
+
+    if ner_anonymizer is not None:
+        for tri in triples:
+            t_path, i_path, a_path = tri[:3]
+            cap = i_path.with_suffix(".caption.txt")
+            trans = a_path.with_suffix(".transcript.txt")
+            for p in [t_path, cap, trans]:
+                if p is None:
+                    continue
+                if isinstance(p, Path) and p.exists():
+                    try:
+                        ner_anonymizer.scrub_text_file(p)
+                    except Exception:
+                        pass
 
     # Add multilingual copies
     if translator is not None:
