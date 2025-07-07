@@ -258,7 +258,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     five self-play cycles.
 14. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
-    `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard.
+    `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard. `summarize_multimodal()` now formats text snippets and media paths for richer summaries.
 15. **Graph-of-thought planning**: Implement `GraphOfThought` (see
     `src/graph_of_thought.py`) and measure refactor quality gains over the
     baseline meta-RL agent. The `ReasoningDebugger` now aggregates loops and
@@ -534,7 +534,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      trigger `dataset_summarizer.summarize_dataset` on the referenced folder.
      Run `python -m asi.streaming_dataset_watcher db.sqlite <rss-url>` to start
      watching feeds.
- 
+
 83. **Analogy-based retrieval evaluation**: Use `analogical_retrieval.analogy_search()`
     on a small word-analogy dataset. For each tuple `(A, B, Q)` compute the
     offset `B - A` and query `HierarchicalMemory.search(mode="analogy")`. Report
@@ -549,7 +549,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     reasoning steps with expected analogies by calling
     `analogical_retrieval.analogy_search()` and logs mismatches via
     `ReasoningHistoryLogger`.
-    
+
 
 84. **Privacy-preserving federated RL**: Wrap `EdgeRLTrainer` with encrypted gradient
     aggregation. Gradients are clipped and noised before averaging so reward
