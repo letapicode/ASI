@@ -1,0 +1,24 @@
+syntax = "proto3";
+package asi;
+
+service ReasoningGraphService {
+  rpc Push (NodeEntry) returns (PushReply);
+  rpc PushBatch (NodeBatch) returns (PushReply);
+  rpc Sync (NodeBatch) returns (PushReply);
+}
+
+message NodeEntry {
+  string id = 1;
+  string text = 2;
+  repeated string edges = 3;
+  string metadata = 4;
+  int64 timestamp = 5;
+}
+
+message NodeBatch {
+  repeated NodeEntry items = 1;
+}
+
+message PushReply {
+  bool ok = 1;
+}
