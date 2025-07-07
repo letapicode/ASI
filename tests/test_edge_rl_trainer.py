@@ -85,6 +85,31 @@ class TestEdgeRLTrainer(unittest.TestCase):
         trainer.train(data)
         self.assertGreater(trainer.power_usage["loihi"], 0)
 
+    def test_analog_logging(self):
+        class DummyLogger(TelemetryLogger):
+            def __init__(self):
+                super().__init__(interval=0.01)
+                self.vals = [0.0, 0.1]
+
+            def start(self):
+                pass
+
+            def stop(self):
+                pass
+
+            def get_stats(self):
+                v = self.vals.pop(0) if self.vals else 0.1
+                return {"energy_kwh": v}
+
+        logger = DummyLogger()
+        budget = ComputeBudgetTracker(float("inf"), telemetry=logger)
+        model = Toy()
+        opt = torch.optim.SGD(model.parameters(), lr=0.1)
+        trainer = EdgeRLTrainer(model, opt, budget, use_analog=True)
+        data = [(torch.zeros(1, 2), torch.zeros(1, 2))]
+        trainer.train(data)
+        self.assertGreater(trainer.power_usage["analog"], 0)
+
     def test_interactive_session(self):
         rl_cfg = mod.RLBridgeConfig(state_dim=2, action_dim=2, epochs=1, batch_size=2)
         bci = BCIFeedbackTrainer(rl_cfg)

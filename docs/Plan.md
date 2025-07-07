@@ -200,6 +200,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   consumption for CPU vs. Loihi execution through `TelemetryLogger`.
 - `src/fpga_backend.py` adds an `FPGAAccelerator` and optional `use_fpga`
   flag in `MultiModalWorldModelConfig` and `EdgeRLTrainer` for FPGA offload.
+- `src/analog_backend.py` adds an `AnalogAccelerator` context manager for
+  analog matrix multiplies. Enable `use_analog=True` in
+  `MultiModalWorldModelConfig` or `EdgeRLTrainer` to patch `torch.matmul`
+  during training.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
