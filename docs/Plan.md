@@ -366,6 +366,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 29. **Structured knowledge graph memory**: Store facts as triples in a `KnowledgeGraphMemory` and retrieve them through `HierarchicalMemory` for better planning context.
     The new `GraphNeuralReasoner` loads these triples and predicts missing relations so `HierarchicalPlanner.query_relation()` can infer edges not explicitly stored.
     `KnowledgeGraphMemory` now records optional timestamps per triple and supports temporal range queries for time-sensitive reasoning.
+29b. **Timestamped reasoning graph**: `GraphOfThought` nodes and edges may include timestamps. `TemporalReasoner.order_nodes_by_time(compress=True)` reorders or collapses past steps so `HierarchicalPlanner.compose_plan()` follows their chronological order.
 29a. **Cross-lingual knowledge graph memory**: `CrossLingualKGMemory` wraps
     `KnowledgeGraphMemory` with a `CrossLingualTranslator`. `add_triples_multilingual()`
     stores translated triples and `query_translated()` returns results in the

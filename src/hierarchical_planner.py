@@ -38,7 +38,9 @@ class HierarchicalPlanner:
         """Return graph path, visited states and rewards."""
         path = self.graph.search(start, goal_pred)
         if use_temporal and self.temporal_reasoner is not None:
-            path = self.temporal_reasoner.order_nodes_by_time(self.graph, path)
+            path = self.temporal_reasoner.order_nodes_by_time(
+                self.graph, path, compress=True
+            )
         state = init_state
         states = [state]
         rewards: List[List[float]] = []

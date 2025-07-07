@@ -48,26 +48,60 @@ class TemporalReasoner:
         return events
 
     # ------------------------------------------------------------
-    def order_nodes_by_time(self, graph: GraphOfThought, nodes: Iterable[int]) -> List[int]:
-        """Return ``nodes`` sorted by the timestamps of their ``'triple'`` metadata."""
+    def order_nodes_by_time(
+        self,
+        graph: GraphOfThought,
+        nodes: Iterable[int],
+        *,
+        compress: bool = False,
+    ) -> List[int]:
+        """Return ``nodes`` ordered by timestamp.
+
+        If ``compress`` is ``True`` consecutive nodes sharing the same timestamp
+        are collapsed to a single node (keeping the first occurrence).
+        """
+
         nodes = list(nodes)
         if len(nodes) <= 2:
             return nodes
         start, end = nodes[0], nodes[-1]
         middle = nodes[1:-1]
         pairs: List[Tuple[int, float | None]] = []
+        prev = start
         for n in middle:
             node = graph.nodes.get(n)
-            triple = node.metadata.get("triple") if node is not None else None
-            ts: float | None = None
-            if triple is not None and len(triple) >= 3:
-                res = self.kg.query_triples(*triple[:3])
-                if res:
-                    ts = res[0].timestamp
+            ts = None
+            if node is not None and node.timestamp is not None:
+                ts = node.timestamp
+            elif node is not None:
+                triple = node.metadata.get("triple")
+                if triple is not None and len(triple) >= 3:
+                    res = self.kg.query_triples(*triple[:3])
+                    if res:
+                        ts = res[0].timestamp
+            if ts is None:
+                ts = graph.edge_timestamps.get((prev, n))
             pairs.append((n, ts))
+            prev = n
+
         pairs.sort(key=lambda x: float("inf") if x[1] is None else x[1])
+
+        if compress:
+            pairs = self._compress_pairs(pairs)
+
         ordered = [start] + [n for n, _ in pairs] + [end]
         return ordered
+
+    @staticmethod
+    def _compress_pairs(pairs: List[Tuple[int, float | None]]) -> List[Tuple[int, float | None]]:
+        compressed: List[Tuple[int, float | None]] = []
+        last_ts = object()
+        for n, ts in pairs:
+            if ts == last_ts:
+                continue
+            compressed.append((n, ts))
+            last_ts = ts
+        return compressed
 
 
 __all__ = ["TemporalReasoner"]
