@@ -561,6 +561,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 86a. **ODE-based world model**: `torchdiffeq` now drives continuous-time
      dynamics in `ode_world_model`. `scripts/train_ode_world_model.py` shows the
      model converging on a toy dataset with smooth rollouts.
+86b. **BCI-driven reinforcement**: EEG signals are filtered in the alpha/beta
+    band by `BCIFeedbackTrainer` to produce rewards. `EdgeRLTrainer.interactive_session`
+    feeds these rewards back into `train_world_model` so online updates can
+    refine the world model in real time.
 
 87. **RL decision narrator**: `RLDecisionNarrator` intercepts action choices
     in `world_model_rl` and `MetaRLRefactorAgent`. Each decision logs a brief
