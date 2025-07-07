@@ -20,6 +20,13 @@ pynvml_stub = types.SimpleNamespace(
 )
 sys.modules['psutil'] = psutil_stub
 sys.modules['pynvml'] = pynvml_stub
+sys.modules['numpy'] = types.SimpleNamespace(asarray=lambda x, dtype=None: x)
+sys.modules['statsmodels'] = types.ModuleType('statsmodels')
+sys.modules['statsmodels.tsa'] = types.ModuleType('statsmodels.tsa')
+sys.modules['statsmodels.tsa.arima'] = types.ModuleType('statsmodels.tsa.arima')
+sm_arima = types.ModuleType('statsmodels.tsa.arima.model')
+sm_arima.ARIMA = object
+sys.modules['statsmodels.tsa.arima.model'] = sm_arima
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg

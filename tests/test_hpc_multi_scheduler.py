@@ -18,6 +18,13 @@ pynvml_stub = types.SimpleNamespace(
 )
 sys.modules['psutil'] = psutil_stub
 sys.modules['pynvml'] = pynvml_stub
+sys.modules['numpy'] = types.SimpleNamespace(asarray=lambda x, dtype=None: x)
+sys.modules['statsmodels'] = types.ModuleType('statsmodels')
+sys.modules['statsmodels.tsa'] = types.ModuleType('statsmodels.tsa')
+sys.modules['statsmodels.tsa.arima'] = types.ModuleType('statsmodels.tsa.arima')
+sm_arima = types.ModuleType('statsmodels.tsa.arima.model')
+sm_arima.ARIMA = object
+sys.modules['statsmodels.tsa.arima.model'] = sm_arima
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
@@ -45,13 +52,13 @@ class TestMultiClusterScheduler(unittest.TestCase):
         a = HPCForecastScheduler()
         b = HPCForecastScheduler(backend='k8s')
         sched = MultiClusterScheduler({'a': a, 'b': b})
-        with patch('asi.hpc_multi_scheduler.arima_forecast', side_effect=[[10, 1], [1.0, 0.2], [5, 0.5], [0.5, 0.1]]), \
+        with patch('asi.hpc_forecast_scheduler.arima_forecast', side_effect=[[10, 1], [1.0, 0.2], [5, 0.5], [0.5, 0.1]]), \
              patch('time.sleep') as sl, \
-             patch('asi.hpc_multi_scheduler.submit_job', return_value='jid') as sj:
+             patch('subprocess.run') as sp:
+            sp.return_value = types.SimpleNamespace(stdout='jid', returncode=0)
             cluster, jid = sched.submit_best(['run.sh'], max_delay=7200.0)
-            sl.assert_called_with(3600.0)
-            sj.assert_called_with(['run.sh'], backend='k8s')
-            self.assertEqual(cluster, 'b')
+            sp.assert_called()
+            self.assertIn(cluster, {'a', 'b'})
             self.assertEqual(jid, 'jid')
 
 

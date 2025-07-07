@@ -41,22 +41,30 @@ class HPCForecastScheduler:
     backend: str = "slurm"
 
     # --------------------------------------------------
-    def submit_at_optimal_time(self, command: Union[str, List[str]], max_delay: float = 21600.0) -> str:
+    def forecast_scores(self, max_delay: float, clusters=None) -> List[float]:
+        """Return combined carbon/cost forecasts for each hour."""
         steps = max(int(max_delay // 3600) + 1, 1)
         carbon_pred = arima_forecast(self.carbon_history, steps=steps)
         cost_pred = arima_forecast(self.cost_history, steps=steps)
         n = min(len(carbon_pred), len(cost_pred))
+        scores = [
+            self.carbon_weight * carbon_pred[i] + self.cost_weight * cost_pred[i]
+            for i in range(n)
+        ]
+        return scores
+
+    # --------------------------------------------------
+    def submit_at_optimal_time(
+        self, command: Union[str, List[str]], max_delay: float = 21600.0
+    ) -> str:
+        scores = self.forecast_scores(max_delay)
         delay = 0.0
-        if n:
-            scores = [
-                self.carbon_weight * carbon_pred[i] + self.cost_weight * cost_pred[i]
-                for i in range(n)
-            ]
-            min_idx = int(min(range(n), key=lambda i: scores[i]))
-            delay = min_idx * 3600.0
+        if scores:
+            idx = int(min(range(len(scores)), key=lambda i: scores[i]))
+            delay = idx * 3600.0
         if delay and delay <= max_delay:
             time.sleep(delay)
-        return submit_job(command, backend=self.backend)
+        return globals()["submit_job"](command, backend=self.backend)
 
 
 __all__ = ["arima_forecast", "HPCForecastScheduler"]
