@@ -36,6 +36,9 @@ class TestDatasetLineageManager(unittest.TestCase):
             self.assertEqual(data[0]["note"], "step1")
             self.assertEqual(data[0]["inputs"], [str(inp)])
             self.assertIn(str(outp), data[0]["outputs"])
+            entry = data[0]["outputs"][str(outp)]
+            self.assertIn("hash", entry)
+            self.assertIn("watermark_id", entry)
             steps = mgr.load()
             self.assertEqual(len(steps), 1)
             self.assertEqual(steps[0].note, "step1")
