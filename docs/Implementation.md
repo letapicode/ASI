@@ -866,6 +866,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Provide a `DatasetLineageDashboard` exposing `/graph` and `/steps` endpoints for searching lineage records. Run `python scripts/lineage_dashboard.py <root>` to launch it.
   **Implemented in `src/dataset_lineage_dashboard.py` with tests.**
 - Introduce a `BlockchainProvenanceLedger` that links each record to the previous hash. Ingestion helpers append their lineage to this ledger and `scripts/check_blockchain_provenance.py` verifies the chain.
+- Expose a `DatasetLineageService` gRPC API. `dataset_lineage_server.py` signs
+  each record with an ed25519 key and writes it to the `BlockchainProvenanceLedger`.
+  The companion `dataset_lineage_client.py` provides `add_entry()` and
+  `get_entries()` helpers.
 - Implement a `ContextWindowProfiler` that measures memory footprint and wall-clock time at various sequence lengths. **Implemented as `src/context_profiler.py` and integrated with `eval_harness.py`.**
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.
   **Implemented** via `adaptive_evict` in `HierarchicalMemory` with `get_stats()` to report usage metrics.
