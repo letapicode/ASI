@@ -340,6 +340,7 @@ def _download_triples_impl(
     text_urls: Iterable[str],
     img_urls: Iterable[str],
     audio_urls: Iterable[str],
+    sign_urls: Iterable[str] | None,
     out_dir: str,
     versioner: Optional[DatasetVersioner] = None,
     translator: Optional[CrossLingualTranslator] = None,
@@ -350,14 +351,15 @@ def _download_triples_impl(
     poison_detector: Optional["DataPoisonDetector"] = None,
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
-) -> List[Tuple[Path, Path, Path]]:
+) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Implementation for :func:`download_triples`."""
 
-    async def run() -> List[Tuple[Path, Path, Path]]:
+    async def run() -> List[Tuple[Path, Path, Path, Path | None]]:
         return await download_triples_async(
             text_urls,
             img_urls,
             audio_urls,
+            sign_urls,
             out_dir,
             versioner,
             translator,
@@ -382,6 +384,7 @@ def download_triples(
     text_urls: Iterable[str],
     img_urls: Iterable[str],
     audio_urls: Iterable[str],
+    sign_urls: Iterable[str] | None = None,
     out_dir: str,
     versioner: Optional[DatasetVersioner] = None,
     translator: Optional[CrossLingualTranslator] = None,
@@ -393,7 +396,7 @@ def download_triples(
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
     runner: EnclaveRunner | None = None,
-) -> List[Tuple[Path, Path, Path]]:
+) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Download text, image and audio triples into ``out_dir`` concurrently."""
 
     return _run_in_enclave(
@@ -402,6 +405,7 @@ def download_triples(
         text_urls,
         img_urls,
         audio_urls,
+        sign_urls,
         out_dir,
         versioner,
         translator,
@@ -419,6 +423,7 @@ async def download_triples_async(
     text_urls: Iterable[str],
     img_urls: Iterable[str],
     audio_urls: Iterable[str],
+    sign_urls: Iterable[str] | None,
     out_dir: str,
     versioner: Optional[DatasetVersioner] = None,
     translator: Optional[CrossLingualTranslator] = None,
@@ -429,7 +434,7 @@ async def download_triples_async(
     poison_detector: Optional["DataPoisonDetector"] = None,
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
-) -> List[Tuple[Path, Path, Path]]:
+) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Asynchronously download text, image and audio triples.
 
     The optional ``bias_mitigator`` allows biased samples to be removed before
@@ -438,23 +443,30 @@ async def download_triples_async(
     if not _HAS_AIOHTTP:
         raise ImportError("aiohttp is required for async downloads")
     out = Path(out_dir)
-    triples: List[Tuple[Path, Path, Path]] = []
+    triples: List[Tuple[Path, Path, Path, Path | None]] = []
     if carbon_tracker is not None:
         carbon_tracker.start()
     async with aiohttp.ClientSession() as session:
         tasks = []
-        for i, (t, iurl, a) in enumerate(zip(text_urls, img_urls, audio_urls)):
+        texts = list(text_urls)
+        imgs = list(img_urls)
+        auds = list(audio_urls)
+        signs = list(sign_urls) if sign_urls is not None else [None] * len(texts)
+        for i, (t, iurl, a, s) in enumerate(zip(texts, imgs, auds, signs)):
             t_path = out / "text" / f"{i}.txt"
             i_path = out / "images" / f"{i}.png"
             a_path = out / "audio" / f"{i}.wav"
-            triples.append((t_path, i_path, a_path))
+            s_path = out / "sign" / f"{i}.mp4" if s is not None else None
+            triples.append((t_path, i_path, a_path, s_path))
             tasks.append(_download_file_async(session, t, t_path))
             tasks.append(_download_file_async(session, iurl, i_path))
             tasks.append(_download_file_async(session, a, a_path))
+            if s is not None:
+                tasks.append(_download_file_async(session, s, s_path))
         await asyncio.gather(*tasks)
 
     if poison_detector is not None:
-        filtered: List[Tuple[Path, Path, Path]] = []
+        filtered: List[Tuple[Path, Path, Path, Path | None]] = []
         for tri in triples:
             try:
                 if not poison_detector.record_file(tri[0]):
@@ -464,7 +476,7 @@ async def download_triples_async(
         triples = filtered
 
     if anonymizer is not None:
-        for t_path, i_path, a_path in triples:
+        for t_path, i_path, a_path, s_path in triples:
             try:
                 anonymizer.scrub_text_file(t_path)
             except Exception:
@@ -477,12 +489,17 @@ async def download_triples_async(
                 anonymizer.scrub_audio_file(a_path)
             except Exception:
                 pass
+            if s_path is not None:
+                try:
+                    anonymizer.scrub_image_file(s_path)
+                except Exception:
+                    pass
 
     # Add multilingual copies
     if translator is not None:
-        augmented: List[Tuple[Path, Path, Path]] = []
-        for t_path, i_path, a_path in list(triples):
-            augmented.append((t_path, i_path, a_path))
+        augmented: List[Tuple[Path, Path, Path, Path | None]] = []
+        for t_path, i_path, a_path, s_path in list(triples):
+            augmented.append((t_path, i_path, a_path, s_path))
             try:
                 txt = t_path.read_text()
             except Exception:
@@ -490,27 +507,27 @@ async def download_triples_async(
             for lang, trans in translator.translate_all(txt).items():
                 t_new = t_path.with_name(f"{t_path.stem}_{lang}{t_path.suffix}")
                 t_new.write_text(trans)
-                augmented.append((t_new, i_path, a_path))
+                augmented.append((t_new, i_path, a_path, s_path))
         triples = augmented
     if bias_mitigator is not None:
         triples = bias_mitigator.apply_to_triples(triples)
     if lineage is not None and anonymizer is not None:
-        flat = [p for tri in triples for p in tri]
+        flat = [p for tri in triples for p in tri if p is not None]
         lineage.record(flat, flat, note=f"anonymized {anonymizer.summary()}")
     if versioner is not None:
-        flat = [p for tri in triples for p in tri]
+        flat = [p for tri in triples for p in tri if p is not None]
         versioner.record(flat, note="download_triples")
 
     if carbon_tracker is not None:
         carbon_tracker.stop()
 
     if provenance is not None:
-        flat = [str(p) for tri in triples for p in tri]
+        flat = [str(p) for tri in triples for p in tri if p is not None]
         rec = json.dumps({"note": "download_triples", "outputs": flat}, sort_keys=True)
         provenance.append(rec)
 
     if auditor is not None:
-        for t_path, i_path, a_path in triples:
+        for t_path, i_path, a_path, _ in triples:
             meta = t_path.with_suffix(".json")
             try:
                 auditor.audit_triple((t_path, i_path, a_path), meta, run_id="download_triples")

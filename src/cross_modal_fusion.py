@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Iterable, Tuple, Any, TYPE_CHECKING
+import numpy as np
 
 import torch
 from torch import nn
@@ -216,6 +217,7 @@ def train_fusion_model(
 
 
 from .quantum_multimodal_retrieval import quantum_crossmodal_search
+from .sign_language import SignLanguageRecognizer
 
 
 def encode_all(
@@ -227,6 +229,9 @@ def encode_all(
     quantum: bool = False,
     k: int = 5,
     include_bci: bool = False,
+    sign_videos: Iterable[Any] | None = None,
+    include_sign: bool = False,
+    recognizer: SignLanguageRecognizer | None = None,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor | None]:
     """Return all modality embeddings and optionally store them.
 
@@ -238,7 +243,8 @@ def encode_all(
     loader = DataLoader(dataset, batch_size=batch_size)
     device = next(model.parameters()).device
     model.eval()
-    text_vecs, img_vecs, aud_vecs, bci_vecs = [], [], [], []
+    text_vecs, img_vecs, aud_vecs, bci_vecs, sign_vecs = [], [], [], [], []
+    recognizer = recognizer or SignLanguageRecognizer()
     with torch.no_grad():
         for idx, (tokens, imgs, aud, bci) in enumerate(loader):
             tokens, imgs, aud, bci = (
@@ -248,6 +254,18 @@ def encode_all(
                 bci.to(device),
             )
             t_emb, i_emb, a_emb, b_emb = model(tokens, imgs, aud, bci)
+            sign_batch = None
+            if include_sign and sign_videos is not None:
+                start = idx * batch_size
+                vids = sign_videos[start : start + tokens.size(0)]
+                embeds = []
+                for v in vids:
+                    txt = recognizer.recognize(np.asarray(v))
+                    tok = torch.tensor(dataset.tokenizer(txt), dtype=torch.long, device=device)
+                    emb = model.text_proj(model.text_enc(tok.unsqueeze(0)))[0]
+                    embeds.append(emb)
+                sign_batch = torch.stack(embeds)
+                sign_vecs.append(sign_batch.cpu())
             text_vecs.append(t_emb.cpu())
             img_vecs.append(i_emb.cpu())
             aud_vecs.append(a_emb.cpu())
@@ -256,18 +274,30 @@ def encode_all(
                 start = idx * batch_size
                 metas = [start + i for i in range(tokens.size(0))]
                 memory.add_multimodal(
-                    t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), b_emb.cpu(), metas
+                    t_emb.cpu(), i_emb.cpu(), a_emb.cpu(), b_emb.cpu(), sign_batch.cpu() if sign_batch is not None else None, metas
                 )
                 if quantum:
-                    fused = (t_emb + i_emb + a_emb + b_emb) / 4.0
+                    vec_list = [t_emb, i_emb, a_emb]
+                    if b_emb is not None:
+                        vec_list.append(b_emb)
+                    if sign_batch is not None:
+                        vec_list.append(sign_batch)
+                    fused = sum(vec_list) / len(vec_list)
                     for q in fused:
                         quantum_crossmodal_search(q, memory, k=k)
     all_t = torch.cat(text_vecs, dim=0)
     all_i = torch.cat(img_vecs, dim=0)
     all_a = torch.cat(aud_vecs, dim=0)
+    if include_bci and include_sign:
+        all_b = torch.cat(bci_vecs, dim=0)
+        all_s = torch.cat(sign_vecs, dim=0)
+        return all_t, all_i, all_a, all_b, all_s
     if include_bci:
         all_b = torch.cat(bci_vecs, dim=0)
         return all_t, all_i, all_a, all_b
+    if include_sign:
+        all_s = torch.cat(sign_vecs, dim=0)
+        return all_t, all_i, all_a, all_s
     return all_t, all_i, all_a, None
 
 
@@ -278,6 +308,7 @@ def retrieval_accuracy(
     batch_size: int = 8,
     k: int = 1,
     include_bci: bool = False,
+    include_sign: bool = False,
 ) -> float:
     """Return retrieval accuracy after encoding ``dataset`` into ``memory``."""
 
@@ -287,15 +318,27 @@ def retrieval_accuracy(
         batch_size=batch_size,
         memory=memory,
         include_bci=include_bci,
+        include_sign=include_sign,
     )
-    if include_bci:
+    if include_bci and include_sign:
+        t_vecs, i_vecs, a_vecs, b_vecs, s_vecs = out
+    elif include_bci:
         t_vecs, i_vecs, a_vecs, b_vecs = out
+        s_vecs = None
+    elif include_sign:
+        t_vecs, i_vecs, a_vecs, s_vecs = out
+        b_vecs = None
     else:
         t_vecs, i_vecs, a_vecs, _ = out
+        b_vecs = s_vecs = None
     correct = 0
     for idx in range(len(dataset)):
-        if include_bci:
+        if include_bci and include_sign:
+            query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + b_vecs[idx] + s_vecs[idx]) / 5.0
+        elif include_bci:
             query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + b_vecs[idx]) / 4.0
+        elif include_sign:
+            query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + s_vecs[idx]) / 4.0
         else:
             query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx]) / 3.0
         out, meta = memory.search(query, k=k)
