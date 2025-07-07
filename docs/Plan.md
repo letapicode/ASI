@@ -508,7 +508,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 74b. **Privacy auditor**: `PrivacyAuditor` combines `PrivacyBudgetManager`, `LicenseInspector` and `DatasetLineageManager`. `download_triples()` logs each triple through the auditor and periodic reports are written to `docs/privacy_reports/`.
 75. **Dataset summarization**: `scripts/dataset_summary.py --content` clusters text samples with `dataset_summarizer.summarize_dataset()` and writes the result to `docs/datasets/`.
 
-75a. **Secure dataset exchange**: `SecureDatasetExchange` encrypts datasets and verifies signatures so collaborators can share data without exposing proprietary content. Use `scripts/secure_dataset_exchange.py` to push and pull archives between nodes.
+75a. **Secure dataset exchange**: `SecureDatasetExchange` encrypts datasets and verifies signatures so collaborators can share data without exposing proprietary content. The protocol now emits a signed integrity proof of the archive hash; peers must present this proof before extraction. Use `scripts/secure_dataset_exchange.py` with `--proof-out` and `--proof-in` to push and pull archives between nodes.
 75b. **P2P dataset exchange**: `P2PDatasetExchange` breaks encrypted archives into chunks stored in a DHT. Metadata is signed via `BlockchainProvenanceLedger`. Run `scripts/p2p_exchange.py push|pull` to sync datasets or `seed` to serve chunks.
 75c. **Retrieval summaries**: `HierarchicalMemory.search(return_summary=True)`
      writes text explanations to `last_trace['summary']`. `MemoryDashboard`

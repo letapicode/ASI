@@ -40,7 +40,7 @@ from .iter_align import IterativeAligner
 from .critic_rlhf import CriticScorer, CriticRLHFTrainer
 from .rlaif_trainer import RLAIFTrainer, SyntheticCritic
 from .chunkwise_retrainer import ChunkWiseRetrainer
-from .secure_dataset_exchange import SecureDatasetExchange
+from .secure_dataset_exchange import SecureDatasetExchange, DatasetIntegrityProof
 from .p2p_dataset_exchange import P2PDatasetExchange
 from .code_refine import CodeRefinePipeline
 from .self_healing_trainer import SelfHealingTrainer
