@@ -2,9 +2,14 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Sequence, TYPE_CHECKING
 
 from .context_summary_memory import ContextSummaryMemory
+from .analogical_retrieval import analogy_search
+from .reasoning_history import ReasoningHistoryLogger
+
+if TYPE_CHECKING:  # pragma: no cover - for type hints
+    from .hierarchical_memory import HierarchicalMemory
 import json
 
 
@@ -233,6 +238,44 @@ class ReasoningDebugger:
             for a1, n1, a2, n2 in contrad:
                 lines.append(f"{a1}:{n1} contradicts {a2}:{n2}")
         return "\n".join(lines) if lines else "No issues detected"
+
+
+class AnalogicalReasoningDebugger:
+    """Check reasoning steps against analogy retrieval results."""
+
+    def __init__(
+        self,
+        graph: GraphOfThought,
+        memory: "HierarchicalMemory",
+        logger: ReasoningHistoryLogger | None = None,
+    ) -> None:
+        self.graph = graph
+        self.memory = memory
+        self.logger = logger or ReasoningHistoryLogger()
+
+    def check_steps(self, k: int = 1) -> List[int]:
+        """Return node ids whose expected analogies do not match."""
+        mismatches: List[int] = []
+        for nid, node in self.graph.nodes.items():
+            meta = node.metadata or {}
+            if "analogy" not in meta:
+                continue
+            try:
+                query, a, b, expected = meta["analogy"]
+            except Exception:
+                continue
+            _vecs, metas = analogy_search(self.memory, query, a, b, k=k)
+            if expected not in metas:
+                mismatches.append(nid)
+                got = metas[0] if metas else None
+                self.logger.log(
+                    f"analogy mismatch node {nid}: expected {expected}, got {got}"
+                )
+        return mismatches
+
+    def report(self, k: int = 1) -> str:
+        mism = self.check_steps(k=k)
+        return "No analogy mismatches" if not mism else f"Mismatched nodes: {mism}"
 
 
 def main(argv: Sequence[str] | None = None) -> None:
