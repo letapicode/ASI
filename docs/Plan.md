@@ -167,6 +167,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/chunkwise_retrainer.py` implements chunk-wise retraining on long transcripts.
 - `src/collective_constitution.py` aggregates crowd-sourced rules for **L-1**.
 - `src/deliberative_alignment.py` checks chain-of-thought steps for **L-2**.
+- `src/normative_reasoner.py` enforces configurable ethics rules for **L-2**. It
+  supports regular-expression rules and optional fuzzy matching to catch
+  near-miss violations.
 - `src/iter_align.py` runs a simple iterative alignment loop for **L-3**.
 - `src/critic_rlhf.py` provides a minimal critic-driven RLHF loop for **L-4**.
   See `docs/Implementation.md` and `docs/load_balance.md` for details.

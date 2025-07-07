@@ -10,6 +10,7 @@ from .quantum_hpo import (
 )
 from .collective_constitution import CollectiveConstitution
 from .deliberative_alignment import DeliberativeAligner
+from .normative_reasoner import NormativeReasoner
 from .streaming_compression import ReservoirBuffer, StreamingCompressor
 from .hierarchical_memory import (
     HierarchicalMemory,

@@ -25,7 +25,7 @@ AlignmentDashboard = _load('asi.alignment_dashboard', 'src/alignment_dashboard.p
 class TestAlignmentDashboard(unittest.TestCase):
     def test_server_and_record(self):
         dash = AlignmentDashboard()
-        dash.record(True, ["ok"])
+        dash.record(True, ["ok"], ["bad"])
         dash.start(port=0)
         port = dash.port
         conn = http.client.HTTPConnection("localhost", port)
@@ -33,6 +33,7 @@ class TestAlignmentDashboard(unittest.TestCase):
         data = json.loads(conn.getresponse().read())
         self.assertIn("pass_rate", data)
         self.assertEqual(data["flagged_examples"], ["ok"])
+        self.assertEqual(data["normative_violations"], ["bad"])
         dash.stop()
 
 
