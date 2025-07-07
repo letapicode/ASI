@@ -358,6 +358,7 @@ To reproduce the toy run step by step:
 - `src/hierarchical_memory.py` and `src/link_slot_attention.py` provide a two-tier memory backed by FAISS.
 - The store compresses vectors before writing them to disk and loads the nearest neighbours on demand.
 - `RetrievalExplainer.summarize()` distills query results into a brief text used by `MemoryDashboard` to show context for each retrieval.
+- `RetrievalExplainer.summarize_multimodal()` collapses text snippets and lists referenced images or audio so multimodal queries render clearly in the dashboard.
 
 ## C-8 Distributed Hierarchical Memory Backend
 

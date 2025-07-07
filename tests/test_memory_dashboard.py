@@ -49,6 +49,23 @@ class _RE:
     @staticmethod
     def summarize(*a, **k):
         return ''
+    @staticmethod
+    def summarize_multimodal(q, r, scores, provenance):
+        parts = []
+        for i, (score, prov) in enumerate(zip(scores, provenance), start=1):
+            if isinstance(prov, dict):
+                fields = []
+                if 'text' in prov:
+                    fields.append(str(prov['text']))
+                if 'image' in prov:
+                    fields.append(prov['image'])
+                if 'audio' in prov:
+                    fields.append(prov['audio'])
+                src = ', '.join(fields)
+            else:
+                src = str(prov)
+            parts.append(f"{i}. {src} (score={score:.3f})")
+        return ' | '.join(parts)
 retrieval_explainer_stub.RetrievalExplainer = _RE
 sys.modules['asi.retrieval_explainer'] = retrieval_explainer_stub
 retrieval_visualizer_stub = types.ModuleType('asi.retrieval_visualizer')
@@ -250,6 +267,25 @@ class TestMemoryDashboard(unittest.TestCase):
         conn.getresponse().read()
         self.assertEqual(len(mem), 0)
         dash.stop()
+
+    def test_trace_summary_multimodal(self):
+        mem = HierarchicalMemory(dim=2, compressed_dim=1, capacity=10, encryption_key=b'0'*16)
+        mem.last_trace = {
+            "query": [0, 0],
+            "results": [[1, 1]],
+            "scores": [0.5],
+            "provenance": [{"text": "hello", "image": "img.png", "audio": "a.wav"}],
+        }
+        server = type("Stub", (), {"memory": mem, "telemetry": None})()
+        dash = MemoryDashboard([server])
+        dash.start(port=0)
+        port = dash.port
+        conn = http.client.HTTPConnection("localhost", port)
+        conn.request("GET", "/trace")
+        resp = conn.getresponse()
+        data = json.loads(resp.read())
+        dash.stop()
+        self.assertIn("img.png", data["summary"])
 
 
 if __name__ == "__main__":

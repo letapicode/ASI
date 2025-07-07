@@ -137,7 +137,15 @@ class MemoryDashboard:
                         meta = trace.get("provenance", [])
                         scores = trace.get("scores", [])
                         items = RetrievalExplainer.format(q, r, scores, meta)
-                        summary = RetrievalExplainer.summarize(q, r, scores, meta)
+                        is_multi = any(
+                            isinstance(m, dict)
+                            and any(k in m for k in ("text", "image", "audio"))
+                            for m in meta
+                        ) if meta else False
+                        if is_multi and hasattr(RetrievalExplainer, "summarize_multimodal"):
+                            summary = RetrievalExplainer.summarize_multimodal(q, r, scores, meta)
+                        else:
+                            summary = RetrievalExplainer.summarize(q, r, scores, meta)
                         data = json.dumps({"items": items, "summary": summary}).encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
