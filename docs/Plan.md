@@ -61,6 +61,7 @@ See `docs/Implementation.md` for the optimisation workflow.
 
 `SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
 - **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
+- **Code refinement pipeline**: run `scripts/code_refine.py <file>` to clean up LLM-generated Python before committing. The tool adds `Any` type hints, fixes `None`/`bool` comparisons and ensures future annotations.
 
 - **Reasoning graph merger**: `reasoning_merger.merge_graphs()` deduplicates nodes across agents and aligns timestamps. The `MultiAgentDashboard` now displays the merged trace.
 

@@ -42,6 +42,7 @@ from .rlaif_trainer import RLAIFTrainer, SyntheticCritic
 from .chunkwise_retrainer import ChunkWiseRetrainer
 from .secure_dataset_exchange import SecureDatasetExchange
 from .p2p_dataset_exchange import P2PDatasetExchange
+from .code_refine import CodeRefinePipeline
 from .self_healing_trainer import SelfHealingTrainer
 from .scaling_law import BreakpointScalingLaw
 from .link_slot_attention import LinkSlotAttention
