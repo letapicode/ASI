@@ -249,6 +249,21 @@ def _eval_neural_arch_search() -> Tuple[bool, str]:
     return ok, f"score={val:.2f}"
 
 
+def _eval_neuroevolution_search() -> Tuple[bool, str]:
+    """Run a tiny population-based search to verify the module."""
+    from asi.neuroevolution_search import NeuroevolutionSearch
+
+    space = {"layers": [1, 2], "hidden": [8, 16]}
+
+    def score(cfg: Dict[str, int]) -> float:
+        return cfg["layers"] * cfg["hidden"]
+
+    evo = NeuroevolutionSearch(space, score, population_size=4, mutation_rate=0.5)
+    best, val = evo.evolve(generations=2)
+    ok = "layers" in best and "hidden" in best
+    return ok, f"score={val:.2f}"
+
+
 def _eval_self_alignment() -> Tuple[bool, str]:
     """Check simple alignment using :class:`DeliberativeAligner`."""
     from asi.deliberative_alignment import DeliberativeAligner
@@ -395,6 +410,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "paper_to_code": _eval_paper_to_code,
     "autobench": _eval_autobench,
     "neural_arch_search": _eval_neural_arch_search,
+    "neuroevolution_search": _eval_neuroevolution_search,
     "self_alignment": _eval_self_alignment,
     "adversarial_robustness": _eval_adversarial_robustness,
     "fairness_evaluator": _eval_fairness_evaluator,

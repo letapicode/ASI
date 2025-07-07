@@ -302,6 +302,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     The search now logs energy usage via `TelemetryLogger` and supports an
     `energy_weight` option to trade off accuracy against consumption.
     *Implemented in `src/neural_arch_search.py`.*
+25a. **Neuroevolution search**: `src/neuroevolution_search.py` mutates and
+    crosses over configs in a population. Each generation benchmarks
+    candidates via `eval_harness`. The CLI script
+    `scripts/neuroevolution_search.py` runs experiments.
 25. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
     restart failed jobs automatically and track overall utilization.
     *Implemented in `src/self_healing_trainer.py`.*
