@@ -69,6 +69,18 @@ logger = TelemetryLogger(port=8000)
 server = serve(mem, "localhost:50070", telemetry=logger)
 ```
 
+If a `BlockchainProvenanceLedger` is supplied, `serve()` launches a
+`ZeroTrustMemoryServer` that checks signed access tokens before allowing
+operations:
+
+```python
+from asi.blockchain_provenance_ledger import BlockchainProvenanceLedger
+
+ledger = BlockchainProvenanceLedger("/tmp/ledger")
+ledger.append("valid-token", signature="sig")
+server = serve(mem, "localhost:50070", ledger=ledger)
+```
+
 To search across languages, wrap the memory with `CrossLingualMemory` and
 provide a `CrossLingualTranslator`:
 
