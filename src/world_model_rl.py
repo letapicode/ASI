@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterable, Any, Dict
+from typing import Callable, Iterable, Any, Dict, TYPE_CHECKING
 
 try:
     from .self_play_env import SimpleEnv
@@ -53,6 +53,9 @@ try:
     from .budget_aware_scheduler import BudgetAwareScheduler
 except Exception:  # pragma: no cover - for tests
     BudgetAwareScheduler = None
+
+if TYPE_CHECKING:  # pragma: no cover - avoid heavy import at runtime
+    from .nerf_world_model import TinyNeRF
 
 
 @dataclass
@@ -189,11 +192,17 @@ def rollout_policy(
     init_state: torch.Tensor,
     steps: int = 50,
     narrator: RLDecisionNarrator | None = None,
-) -> tuple[list[torch.Tensor], list[float]]:
+    *,
+    nerf: "TinyNeRF" | None = None,
+    nerf_views: Iterable[torch.Tensor] | None = None,
+    img_hw: tuple[int, int] = (8, 8),
+) -> tuple[list[torch.Tensor], list[float]] | tuple[list[torch.Tensor], list[float], list[torch.Tensor]]:
     device = next(model.parameters()).device
     state = init_state.to(device)
-    states = []
-    rewards = []
+    states: list[torch.Tensor] = []
+    rewards: list[float] = []
+    frames: list[torch.Tensor] = []
+    view_iter = iter(nerf_views) if nerf_views is not None else None
     with torch.no_grad():
         for _ in range(steps):
             action = policy(state)
@@ -203,7 +212,17 @@ def rollout_policy(
             next_state, reward = model(state, action)
             states.append(next_state.cpu())
             rewards.append(float(reward.item()))
+            if nerf is not None:
+                if view_iter is not None:
+                    pose = next(view_iter, torch.eye(4, device=state.device))
+                else:
+                    pose = torch.eye(4, device=state.device)
+                    if next_state.numel() >= 3:
+                        pose[:3, 3] = next_state[:3]
+                frames.append(nerf.render(pose, img_hw).cpu())
             state = next_state
+    if nerf is not None:
+        return states, rewards, frames
     return states, rewards
 
 
