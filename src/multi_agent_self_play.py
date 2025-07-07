@@ -10,7 +10,7 @@ import torch
 
 from .self_play_env import SimpleEnv
 from .meta_rl_refactor import MetaRLRefactorAgent
-from .multi_agent_coordinator import MultiAgentCoordinator
+from .multi_agent_coordinator import MultiAgentCoordinator, RLNegotiator
 from .multi_agent_dashboard import MultiAgentDashboard
 
 
@@ -34,7 +34,8 @@ class MultiAgentSelfPlay:
         self.envs: Dict[str, SimpleEnv] = {
             name: SimpleEnv(cfg.env_state_dim) for name in self.agents
         }
-        self.coordinator = MultiAgentCoordinator(self.agents)
+        self.negotiator = RLNegotiator()
+        self.coordinator = MultiAgentCoordinator(self.agents, self.negotiator)
         self.dashboard = MultiAgentDashboard(self.coordinator)
         actions = list(next(iter(self.agents.values())).actions)
         self.action_map = {
@@ -54,6 +55,10 @@ class MultiAgentSelfPlay:
     async def run(self) -> None:
         self.dashboard.start(port=0)
         tasks = list(self.envs.keys())
+        for env in self.envs.values():
+            env.reset()
+        for env in self.envs.values():
+            env.reset()
         for _ in range(self.cfg.steps):
             await self.coordinator.schedule_round(tasks, self._apply, self._reward)
         self.coordinator.train_agents()

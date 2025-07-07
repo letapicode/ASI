@@ -11,6 +11,40 @@ class TemporalReasoner:
 
     def __init__(self, kg: KnowledgeGraphMemory) -> None:
         self.kg = kg
+        self._time_cache: dict[tuple[str, str, str], float | None] = {}
+
+    # ------------------------------------------------------------
+    def _timestamp(self, triple: tuple[str, str, str]) -> float | None:
+        """Return cached timestamp for ``triple``."""
+        key = triple[:3]
+        if key in self._time_cache:
+            return self._time_cache[key]
+        res = self.kg.query_triples(*key)
+        if res:
+            ts = min(
+                (t.timestamp for t in res if t.timestamp is not None),
+                default=None,
+            )
+        else:
+            ts = None
+        self._time_cache[key] = ts
+        return ts
+
+    def _timestamp_of_node(
+        self, graph: GraphOfThought, prev: int, node_id: int
+    ) -> float | None:
+        node = graph.nodes.get(node_id)
+        ts = None
+        if node is not None:
+            if node.timestamp is not None:
+                ts = node.timestamp
+            else:
+                triple = node.metadata.get("triple") if node.metadata else None
+                if triple is not None and len(triple) >= 3:
+                    ts = self._timestamp(tuple(triple[:3]))
+        if ts is None:
+            ts = graph.edge_timestamps.get((prev, node_id))
+        return ts
 
     # ------------------------------------------------------------
     def query(
@@ -35,14 +69,11 @@ class TemporalReasoner:
         """Return triples sorted by timestamp, ignoring missing entries."""
         events: List[TimedTriple] = []
         for s, p, o in triples:
-            matches = self.kg.query_triples(s, p, o)
-            if not matches:
+            ts = self._timestamp((s, p, o))
+            if ts is None:
                 continue
-            # choose earliest timestamp if multiple
-            best = min(
-                matches,
-                key=lambda t: float("inf") if t.timestamp is None else t.timestamp,
-            )
+            matches = [TimedTriple(s, p, o, ts)]
+            best = matches[0]
             events.append(best)
         events.sort(key=lambda t: float("inf") if t.timestamp is None else t.timestamp)
         return events
@@ -69,18 +100,7 @@ class TemporalReasoner:
         pairs: List[Tuple[int, float | None]] = []
         prev = start
         for n in middle:
-            node = graph.nodes.get(n)
-            ts = None
-            if node is not None and node.timestamp is not None:
-                ts = node.timestamp
-            elif node is not None:
-                triple = node.metadata.get("triple")
-                if triple is not None and len(triple) >= 3:
-                    res = self.kg.query_triples(*triple[:3])
-                    if res:
-                        ts = res[0].timestamp
-            if ts is None:
-                ts = graph.edge_timestamps.get((prev, n))
+            ts = self._timestamp_of_node(graph, prev, n)
             pairs.append((n, ts))
             prev = n
 

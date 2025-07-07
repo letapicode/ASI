@@ -5,6 +5,8 @@ from typing import Iterable, Sequence, Any
 
 import numpy as np
 import torch
+import types
+import math
 
 from .compute_budget_tracker import ComputeBudgetTracker
 from .secure_federated_learner import SecureFederatedLearner
@@ -35,26 +37,91 @@ class BCIFeedbackTrainer:
         self.feedback_history: list[list[str]] = []
 
     # --------------------------------------------------
+    def _array_from_signal(self, signal: np.ndarray | torch.Tensor) -> list[float]:
+        """Return ``signal`` as a flat list of floats."""
+        if hasattr(signal, "detach"):
+            try:
+                signal = signal.detach()
+            except Exception:
+                pass
+        if hasattr(signal, "cpu") and hasattr(signal, "numpy"):
+            try:
+                arr = signal.cpu().numpy().ravel().tolist()
+                return [float(x) for x in arr]
+            except Exception:
+                pass
+        try:
+            flat: list[float] = []
+            stack = list(signal)
+            while stack:
+                x = stack.pop()
+                if isinstance(x, (list, tuple)):
+                    stack.extend(x)
+                else:
+                    try:
+                        flat.append(float(x))
+                    except Exception:
+                        pass
+            if flat:
+                return flat[::-1]
+        except Exception:
+            pass
+        try:
+            return [float(signal)]
+        except Exception:
+            return []
+
     def signal_to_reward(self, signal: np.ndarray | torch.Tensor) -> float:
         """Return a scalar reward derived from ``signal``.
 
-        Signals are first transformed to the frequency domain. The average
-        power in ``cfg.freq_band`` is scaled into a reward value.
+        Uses ``numpy.fft`` when available; otherwise falls back to a mean-square
+        energy heuristic.
         """
 
-        arr = signal.detach().cpu().numpy() if isinstance(signal, torch.Tensor) else signal
-        arr = np.asarray(arr).ravel()
-        if arr.size == 0:
+        arr = self._array_from_signal(signal)
+        if not arr:
             return 0.0
-        freqs = np.fft.rfftfreq(arr.size, d=1.0 / self.cfg.sample_rate)
-        spectrum = np.abs(np.fft.rfft(arr))
-        low, high = self.cfg.freq_band
-        mask = (freqs >= low) & (freqs <= high)
-        if not np.any(mask):
-            power = spectrum.mean()
+        if hasattr(np, "fft") and hasattr(np.fft, "rfft"):
+            freqs = np.fft.rfftfreq(len(arr), d=1.0 / self.cfg.sample_rate)
+            spectrum = np.abs(np.fft.rfft(arr))
+            low, high = self.cfg.freq_band
+            mask = (freqs >= low) & (freqs <= high)
+            if not np.any(mask):
+                power = float(spectrum.mean())
+            else:
+                power = float(spectrum[mask].mean())
         else:
-            power = spectrum[mask].mean()
-        return float(np.float32(power * self.cfg.reward_scale))
+            power = sum(x * x for x in arr) / len(arr)
+        return float(power * self.cfg.reward_scale)
+
+    def detect_feedback(self, signal: np.ndarray | torch.Tensor) -> list[str]:
+        """Return event labels derived from ``signal``."""
+        arr = self._array_from_signal(signal)
+        if not arr:
+            return []
+
+        events: list[str] = []
+        if hasattr(np, "fft") and hasattr(np.fft, "rfft"):
+            freqs = np.fft.rfftfreq(len(arr), d=1.0 / self.cfg.sample_rate)
+            spectrum = np.abs(np.fft.rfft(arr))
+            alpha = (freqs >= 8.0) & (freqs <= 12.0)
+            gamma = (freqs >= 30.0) & (freqs <= 80.0)
+            alpha_p = spectrum[alpha].mean() if np.any(alpha) else 0.0
+            gamma_p = spectrum[gamma].mean() if np.any(gamma) else 0.0
+            if gamma_p > alpha_p * 1.5:
+                events.append("discomfort")
+        else:
+            peak = max(abs(x) for x in arr)
+            mean = sum(arr) / len(arr)
+            if peak > 2.0 * abs(mean):
+                events.append("discomfort")
+
+        mean = sum(arr) / len(arr)
+        variance = sum((x - mean) ** 2 for x in arr) / len(arr)
+        std = math.sqrt(variance)
+        if mean < -0.5 * std:
+            events.append("disagreement")
+        return events
 
     def detect_feedback(self, signal: np.ndarray | torch.Tensor) -> list[str]:
         """Return event labels derived from ``signal``."""
@@ -87,10 +154,18 @@ class BCIFeedbackTrainer:
         """
 
         rewards = [self.signal_to_reward(sig) for sig in signals]
-        enc = [learner.encrypt(torch.tensor([r], dtype=torch.float32)) for r in rewards]
+        dtype = getattr(torch, "float32", float)
+        enc = [learner.encrypt(torch.tensor([r], dtype=dtype)) for r in rewards]
         dec = [learner.decrypt(e) for e in enc]
         agg = learner.aggregate(dec)
-        return float(agg.squeeze().item())
+        try:
+            val = float(agg.squeeze().item())
+        except Exception:
+            if isinstance(agg, list):
+                val = float(sum(agg) / len(agg))
+            else:
+                val = float(agg)
+        return val
 
     def build_dataset(
         self,
@@ -120,7 +195,8 @@ class BCIFeedbackTrainer:
                 self.feedback_history.append(events)
                 if not check_alignment(events):
                     r = -abs(r)
-                transitions.append((s, int(a), ns, torch.tensor(r, dtype=torch.float32)))
+                dtype = getattr(torch, "float32", float)
+                transitions.append((s, int(a), ns, torch.tensor(r, dtype=dtype)))
         else:
             assert signals is not None
             for s, a, ns, sig in zip(states, actions, next_states, signals, strict=True):
@@ -129,7 +205,8 @@ class BCIFeedbackTrainer:
                 self.feedback_history.append(events)
                 if not check_alignment(events):
                     r = -abs(r)
-                transitions.append((s, int(a), ns, torch.tensor(r, dtype=torch.float32)))
+                dtype = getattr(torch, "float32", float)
+                transitions.append((s, int(a), ns, torch.tensor(r, dtype=dtype)))
         return TransitionDataset(transitions)
 
     def train(

@@ -339,3 +339,5 @@ from .reasoning_kb_bridge import (
 
 from .multi_agent_self_play import MultiAgentSelfPlayConfig, run_multi_agent_self_play, MultiAgentSelfPlay
 
+from .multi_agent_self_play import MultiAgentSelfPlayConfig, run_multi_agent_self_play, MultiAgentSelfPlay
+

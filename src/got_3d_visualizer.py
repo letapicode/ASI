@@ -9,6 +9,7 @@ import threading
 from typing import Any, Dict, Iterable, List, Tuple
 
 import numpy as np
+import time
 from aiohttp import web
 from ipywidgets import embed
 from pythreejs import (
@@ -36,6 +37,9 @@ class GOT3DVisualizer:
     def __init__(self, nodes: Iterable[Dict[str, Any]], edges: Iterable[Tuple[str, str]]) -> None:
         self.nodes = list(nodes)
         self.edges = list(edges)
+        self._pos: Dict[str, Tuple[float, float, float]] | None = None
+        self._edge_arr: np.ndarray | None = None
+        self._html: str | None = None
 
     @classmethod
     def from_json(cls, path: str) -> "GOT3DVisualizer":
@@ -50,19 +54,40 @@ class GOT3DVisualizer:
         return cls(nodes, edges)
 
     # --------------------------------------------------------------
-    def _layout(self) -> Dict[str, Tuple[float, float, float]]:
+    def _compute_layout(self) -> Dict[str, Tuple[float, float, float]]:
         n = max(len(self.nodes), 1)
-        pos: Dict[str, Tuple[float, float, float]] = {}
-        for i, node in enumerate(self.nodes):
-            phi = math.acos(1 - 2 * (i + 0.5) / n)
-            theta = math.pi * (1 + 5 ** 0.5) * (i + 0.5)
-            r = 3.0
-            pos[str(node["id"])] = (
-                r * math.sin(phi) * math.cos(theta),
-                r * math.sin(phi) * math.sin(theta),
-                r * math.cos(phi),
-            )
+        idx = np.arange(len(self.nodes)) + 0.5
+        phi = np.arccos(1 - 2 * idx / n)
+        theta = np.pi * (1 + math.sqrt(5.0)) * idx
+        r = 3.0
+        arr = np.stack(
+            [
+                r * np.sin(phi) * np.cos(theta),
+                r * np.sin(phi) * np.sin(theta),
+                r * np.cos(phi),
+            ],
+            axis=1,
+        )
+        pos = {str(node["id"]): tuple(p) for node, p in zip(self.nodes, arr)}
+        if self.edges:
+            pts = []
+            for src, dst in self.edges:
+                pts.extend(pos.get(str(src), (0.0, 0.0, 0.0)))
+                pts.extend(pos.get(str(dst), (0.0, 0.0, 0.0)))
+            self._edge_arr = np.array(pts, dtype="float32").reshape(-1, 3)
+        else:
+            self._edge_arr = np.zeros((0, 3), dtype="float32")
         return pos
+
+    def _layout(self) -> Dict[str, Tuple[float, float, float]]:
+        if self._pos is None:
+            self._pos = self._compute_layout()
+        return self._pos
+
+    def invalidate(self) -> None:
+        self._pos = None
+        self._edge_arr = None
+        self._html = None
 
     # --------------------------------------------------------------
     def to_widget(self) -> Renderer:
@@ -82,12 +107,10 @@ class GOT3DVisualizer:
             scene.add(sphere)
             scene.add(sprite)
         if self.edges:
-            points: List[float] = []
-            for src, dst in self.edges:
-                points.extend(pos.get(str(src), (0, 0, 0)))
-                points.extend(pos.get(str(dst), (0, 0, 0)))
-            arr = np.array(points, dtype="float32").reshape(-1, 3)
-            geom = BufferGeometry(attributes={"position": BufferAttribute(arr)})
+            if self._edge_arr is None:
+                self._compute_layout()
+            assert self._edge_arr is not None
+            geom = BufferGeometry(attributes={"position": BufferAttribute(self._edge_arr)})
             line = Line(geometry=geom, material=LineBasicMaterial(color="black"))
             scene.add(line)
         camera = PerspectiveCamera(position=[4, 4, 4], up=[0, 0, 1])
@@ -97,10 +120,12 @@ class GOT3DVisualizer:
 
     # --------------------------------------------------------------
     def to_html(self) -> str:
-        widget = self.to_widget()
-        buf = io.StringIO()
-        embed.embed_minimal_html(buf, views=[widget])
-        return buf.getvalue()
+        if self._html is None:
+            widget = self.to_widget()
+            buf = io.StringIO()
+            embed.embed_minimal_html(buf, views=[widget])
+            self._html = buf.getvalue()
+        return self._html
 
 
 class GOT3DViewer:
@@ -139,11 +164,15 @@ class GOT3DViewer:
         return ws
 
     async def _broadcast(self, html: str) -> None:
-        for ws in list(self.clients):
-            try:
-                await ws.send_str(html)
-            except Exception:
-                self.clients.remove(ws)
+        if not self.clients:
+            return
+        results = await asyncio.gather(
+            *(ws.send_str(html) for ws in self.clients),
+            return_exceptions=True,
+        )
+        self.clients = [
+            ws for ws, res in zip(self.clients, results) if not isinstance(res, Exception)
+        ]
 
     def send_graph(self) -> None:
         if self.loop is None:
@@ -173,8 +202,8 @@ class GOT3DViewer:
         self.runner = web.AppRunner(self.app)
         self.thread = threading.Thread(target=self._run, args=(host, port), daemon=True)
         self.thread.start()
-        import time
-        time.sleep(0.1)
+        while self.port is None:
+            time.sleep(0.01)
 
     def stop(self) -> None:
         if self.thread is None or self.loop is None:
