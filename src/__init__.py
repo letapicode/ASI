@@ -164,6 +164,7 @@ from .cognitive_load_monitor import CognitiveLoadMonitor
 from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner
 from .dataset_lineage_manager import DatasetLineageManager
+from .dataset_lineage_dashboard import DatasetLineageDashboard
 from .dataset_anonymizer import DatasetAnonymizer
 from .dataset_discovery import (
     DiscoveredDataset,
