@@ -27,6 +27,12 @@ except Exception:  # pragma: no cover - fallback for tests
         spec.loader.exec_module(module)  # type: ignore
         from lora_quant import apply_quant_lora  # type: ignore
 
+try:
+    from .fpga_backend import FPGAAccelerator, _HAS_FPGA
+except Exception:  # pragma: no cover - fallback for tests
+    FPGAAccelerator = None  # type: ignore
+    _HAS_FPGA = False
+
 
 def _replace_mlps(mod: nn.Module, *, use_loihi: bool = False) -> None:
     """Recursively swap MLP ``Linear`` layers with ``SpikingLinear``."""
@@ -111,6 +117,7 @@ class MultiModalWorldModelConfig:
     use_lora: bool = False
     use_spiking: bool = False
     use_loihi: bool = False
+    use_fpga: bool = False
 
 
 class MultiModalWorldModel(nn.Module):
@@ -142,6 +149,10 @@ class MultiModalWorldModel(nn.Module):
         if cfg.use_spiking:
             _replace_mlps(self.obs_enc, use_loihi=cfg.use_loihi)
             _replace_mlps(self.dyn, use_loihi=cfg.use_loihi)
+        self.fpga: FPGAAccelerator | None = None
+        if cfg.use_fpga and FPGAAccelerator is not None and _HAS_FPGA:
+            self.fpga = FPGAAccelerator(self, forward_fn=self._forward_impl)
+            self.fpga.compile()
 
     def encode_obs(self, text: torch.Tensor, image: torch.Tensor) -> torch.Tensor:
         if self.cfg.checkpoint_blocks:
@@ -155,14 +166,21 @@ class MultiModalWorldModel(nn.Module):
             return checkpoint(self.dyn, state, action)
         return self.dyn(state, action)
 
+    def _forward_impl(
+        self, text: torch.Tensor, image: torch.Tensor, action: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        state = self.encode_obs(text, image)
+        return self.predict_dynamics(state, action)
+
     def forward(
         self,
         text: torch.Tensor,
         image: torch.Tensor,
         action: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        state = self.encode_obs(text, image)
-        return self.predict_dynamics(state, action)
+        if self.fpga is not None:
+            return self.fpga.run(text, image, action)
+        return self._forward_impl(text, image, action)
 
 
 class TrajectoryDataset(Dataset):
