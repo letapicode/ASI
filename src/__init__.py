@@ -161,7 +161,9 @@ from .differential_privacy_optimizer import DifferentialPrivacyOptimizer, Differ
 from .embedding_visualizer import EmbeddingVisualizer
 from .got_visualizer import GOTVisualizer
 from .duplicate_detector import DuplicateDetector
-from .telemetry import TelemetryLogger, FineGrainedProfiler, MemoryEventDetector
+from .telemetry import TelemetryLogger, MemoryEventDetector
+from .fine_grained_profiler import FineGrainedProfiler
+from .telemetry_aggregator import TelemetryAggregator
 from .cognitive_load_monitor import CognitiveLoadMonitor
 from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner

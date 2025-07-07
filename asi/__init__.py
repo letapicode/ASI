@@ -6,6 +6,7 @@ import importlib.util
 _src = Path(__file__).resolve().parent.parent / "src"
 if _src.exists() and str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
+    __path__.append(str(_src))
 
 
 def _import(name: str) -> None:
@@ -17,7 +18,12 @@ def _import(name: str) -> None:
         mod = importlib.util.module_from_spec(spec)
         sys.modules[f"asi.{name}"] = mod
         globals()[name] = mod
-        spec.loader.exec_module(mod)
+        try:
+            spec.loader.exec_module(mod)
+        except Exception:
+            # Skip modules with missing optional dependencies
+            globals().pop(name, None)
+            sys.modules.pop(f"asi.{name}", None)
 
 
 for _m in [
@@ -38,7 +44,10 @@ for _m in [
 
 
 def __getattr__(name: str):
-    _import(name)
+    try:
+        _import(name)
+    except Exception:
+        pass
     if name in globals():
         return globals()[name]
     raise AttributeError(name)

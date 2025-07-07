@@ -841,6 +841,25 @@ sched.stop()
 `TelemetryLogger` publishes energy stats to a running
 `ClusterCarbonDashboard` so operators can monitor cluster-wide impact.
 
+### Telemetry Aggregation
+
+`TelemetryAggregator` collects JSON metrics from multiple `TelemetryLogger`
+instances and exposes the summed statistics via a `/metrics` endpoint. Start the
+service and point each logger at it using `publish_url`:
+
+```python
+from asi.telemetry_aggregator import TelemetryAggregator
+from asi.telemetry import TelemetryLogger
+
+agg = TelemetryAggregator()
+agg.start(port=9000)
+logger = TelemetryLogger(publish_url=f"http://localhost:{agg.port}", node_id="n1")
+logger.start()
+```
+
+Running additional nodes with their own `TelemetryLogger` instances will update
+the aggregator which can then be scraped by Prometheus.
+
 - Introduce an `EnergyAwareScheduler` that queries `TelemetryLogger.get_carbon_intensity()`
   and delays or migrates jobs when the value exceeds a threshold. Enable it by
   passing `energy_scheduler=True` to `AdaptiveScheduler`. It complements the
