@@ -328,3 +328,5 @@ from .bio_memory_replay import run_nightly_replay
 from .sign_language import SignLanguageRecognizer
 from .reasoning_summary_translator import ReasoningSummaryTranslator
 
+from .multi_agent_self_play import MultiAgentSelfPlayConfig, run_multi_agent_self_play, MultiAgentSelfPlay
+

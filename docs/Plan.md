@@ -631,6 +631,13 @@ merged, issues = consensus_reasoner.compute_consensus(coord)
 print(consensus_reasoner.report_disagreements(issues))
 ```
 
+88. **Multi-agent self-play**: `run_multi_agent_self_play()` launches multiple
+    `MetaRLRefactorAgent` instances inside `self_play_env`. A Q-learning based
+    `RLNegotiator` in `MultiAgentCoordinator` assigns each episode to one agent
+    and updates task values from the rewards.  `MultiAgentDashboard` aggregates
+    metrics to compare cooperation versus competition efficiency.
+
+
 
 
 
