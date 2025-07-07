@@ -144,6 +144,7 @@ from .transformer_circuits import (
     AttentionVisualizer,
 )
 from .neural_arch_search import DistributedArchSearch
+from .neuroevolution_search import NeuroevolutionSearch
 from .onnx_utils import export_to_onnx
 from .hierarchical_planner import HierarchicalPlanner
 try:
