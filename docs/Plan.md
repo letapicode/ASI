@@ -483,6 +483,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 85. **Temporal telemetry monitoring**: `MemoryEventDetector` parses logged hardware metrics and flags change points. `TelemetryLogger` stores these events so the memory dashboard exposes them via `/events`.
 86. **Introspection dashboard**: `IntrospectionDashboard` merges reasoning history with telemetry metrics. Run `scripts/introspection_dashboard.py` and open `http://localhost:8060` to inspect graph evolution alongside hardware usage.
+86b. **Alignment dashboard**: `alignment_dashboard.AlignmentDashboard` collects
+     results from `DeliberativeAligner`, `IterativeAligner` and `CriticRLHF`
+     during evaluations. `eval_harness.py` pushes pass rates and any flagged
+     examples so operators can monitor alignment in real time.
 82. **Dataset discovery pipeline**: `dataset_discovery.py` scans RSS feeds from
     HuggingFace and Kaggle, storing dataset names, URLs and license text in a
     lightweight SQLite database. `license_inspector.py` loads the database to

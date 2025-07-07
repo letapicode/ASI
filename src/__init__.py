@@ -242,6 +242,7 @@ from .blockchain_provenance_ledger import BlockchainProvenanceLedger
 from .fairness_evaluator import FairnessEvaluator
 from .cross_lingual_fairness import CrossLingualFairnessEvaluator
 from .risk_dashboard import RiskDashboard
+from .alignment_dashboard import AlignmentDashboard
 from .graph_neural_reasoner import GraphNeuralReasoner
 from .temporal_reasoner import TemporalReasoner
 from .lora_merger import merge_adapters
