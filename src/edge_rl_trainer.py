@@ -19,6 +19,7 @@ class EdgeRLTrainer:
         micro_batcher: AdaptiveMicroBatcher | None = None,
         *,
         use_loihi: bool = False,
+        use_fpga: bool = False,
     ) -> None:
         self.model = model
         self.opt = optimizer
@@ -26,7 +27,8 @@ class EdgeRLTrainer:
         self.run_id = run_id
         self.micro_batcher = micro_batcher
         self.use_loihi = use_loihi
-        self.power_usage: dict[str, float] = {"cpu": 0.0, "loihi": 0.0}
+        self.use_fpga = use_fpga
+        self.power_usage: dict[str, float] = {"cpu": 0.0, "loihi": 0.0, "fpga": 0.0}
 
     def train(
         self,
@@ -62,7 +64,12 @@ class EdgeRLTrainer:
             micro.stop()
         end_energy = telemetry.get_stats().get("energy_kwh", start_energy)
         delta = end_energy - start_energy
-        key = "loihi" if self.use_loihi else "cpu"
+        if self.use_loihi:
+            key = "loihi"
+        elif self.use_fpga:
+            key = "fpga"
+        else:
+            key = "cpu"
         self.power_usage[key] += max(delta, 0.0)
         return steps
 

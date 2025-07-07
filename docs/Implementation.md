@@ -99,6 +99,15 @@ specify the number of active cores and spike precision. Adjusting these
 options lets inference run fully on Loihi and typically reduces energy
 consumption by around 10\times compared to the CPU fallback.
 
+## FPGA Acceleration
+
+`src/fpga_backend.py` exposes an `FPGAAccelerator` helper that compiles a
+PyTorch module and executes it on an attached FPGA when the optional
+`pyopencl` dependency is installed. Pass `use_fpga=True` in
+`MultiModalWorldModelConfig` or `EdgeRLTrainer` to offload computations.
+`configure_fpga()` accepts an `FPGAConfig` with the target device index and
+optimisation flag.
+
 ## S-3 Scaling-law Breakpoint Model
 
 `src/scaling_law.py` defines ``BreakpointScalingLaw`` which fits a piecewise

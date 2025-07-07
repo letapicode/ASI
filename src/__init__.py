@@ -285,6 +285,13 @@ from .spiking_layers import LIFNeuron, SpikingLinear
 
 
 from .fhe_runner import run_fhe
+from .fpga_backend import (
+    FPGAAccelerator,
+    FPGAConfig,
+    configure_fpga,
+    get_fpga_config,
+    _HAS_FPGA,
+)
 
 from .emotion_detector import detect_emotion
 from .bio_memory_replay import run_nightly_replay

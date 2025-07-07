@@ -180,6 +180,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   `src/loihi_backend.py`.
 - `src/edge_rl_trainer.py` now takes a `use_loihi` flag and logs power
   consumption for CPU vs. Loihi execution through `TelemetryLogger`.
+- `src/fpga_backend.py` adds an `FPGAAccelerator` and optional `use_fpga`
+  flag in `MultiModalWorldModelConfig` and `EdgeRLTrainer` for FPGA offload.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
