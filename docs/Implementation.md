@@ -573,6 +573,12 @@ print("epsilon left", guard.remaining_budget())
   videos = [np.zeros((1, 1, 3), dtype=np.float32) for _ in range(len(dataset))]
   t, i, a, s = encode_all(model, dataset, sign_videos=videos, include_sign=True)
   ```
+- **Sign-language graph controller**: ``SignLanguageGraphController`` interprets
+  webcam gestures with ``SignLanguageRecognizer`` and translates the resulting
+  command using ``CrossLingualTranslator`` so ``NLGraphEditor`` can edit a
+  ``CrossLingualReasoningGraph`` in any supported language. A ``mapping`` dict
+  converts gestures like ``hello`` into graph commands such as ``add node hello``.
+  Run ``python scripts/sign_language_webcam.py`` to try the live demo.
 - **Multimodal reasoning graph**: `CrossLingualReasoningGraph.add_step()`
   now accepts `image_embed` and `audio_embed`. Use
   `cross_modal_fusion.embed_modalities()` to obtain vectors from raw data and

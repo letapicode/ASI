@@ -278,7 +278,7 @@ from .interpretability_dashboard import InterpretabilityDashboard
 from .introspection_dashboard import IntrospectionDashboard
 from .graph_ui import GraphUI
 from .nl_graph_editor import NLGraphEditor
-from .voice_graph_controller import VoiceGraphController
+from .voice_graph_controller import VoiceGraphController, SignLanguageGraphController
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
