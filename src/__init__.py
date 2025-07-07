@@ -144,6 +144,10 @@ from .transformer_circuits import (
     head_importance,
     AttentionVisualizer,
 )
+from .transformer_circuit_analyzer import (
+    TransformerCircuitAnalyzer,
+    gradient_head_importance,
+)
 from .neural_arch_search import DistributedArchSearch
 from .neuroevolution_search import NeuroevolutionSearch
 from .onnx_utils import export_to_onnx
