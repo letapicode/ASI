@@ -434,6 +434,12 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     computes demographic parity and equal opportunity for image and audio
     datasets. `ingest_translated_triples()` now records per-modality statistics
     so these metrics reflect dataset composition.
+40d. **LLM-based ingestion parser**: `LLMIngestParser` extracts structured
+     triples from raw text using a lightweight spaCy model with a
+     heuristic fallback. The parser caches the loaded model and honors the
+     ``LLM_PARSER_MODEL`` environment variable to customize loading. Calling
+     `download_triples(use_llm_parser=True)` saves triples to
+     ``*.triples.json`` files for downstream RAG pipelines ([arxiv.org][15]).
 41a. **Cross-lingual summarization memory**: `ContextSummaryMemory` stores summaries
      in the source language and translated forms. Results are translated back
      to the query language. See `docs/Implementation.md` for details.

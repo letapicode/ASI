@@ -131,6 +131,7 @@ from .data_ingest import (
     CrossLingualTranslator,
 )
 from .adaptive_translator import AdaptiveTranslator
+from .advanced_ingest import LLMIngestParser
 from .generative_data_augmentor import GenerativeDataAugmentor
 from .diffusion_world_model import DiffusionWorldModel
 from .ode_world_model import (
