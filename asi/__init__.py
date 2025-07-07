@@ -22,6 +22,9 @@ def _import(name: str) -> None:
             spec.loader.exec_module(mod)
         except Exception:
             # Skip modules with missing optional dependencies
+
+            # Optional dependencies may be missing in minimal test env
+
             globals().pop(name, None)
             sys.modules.pop(f"asi.{name}", None)
 

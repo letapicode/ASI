@@ -34,7 +34,7 @@ Citations point to the most recent public work so you can drill straight into th
 | **C-10** | **RL-guided retrieval** | Learn a policy to rank memory vectors by hit rate and latency | Recall improves after online training from query logs |
 | **C-11** | **Emotion-conditioned retrieval** | Re-rank memory hits by matching sentiment | Positive/negative queries return ≥1 matching-tone item first |
 
-**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.  Privacy-preserving retrieval is now possible via `EncryptedVectorStore`, which stores AES-encrypted embeddings and manages keys through `HierarchicalMemory`.
+**Path to “trillion-token” context:** combine *C-1/2/3* for linear-or-sub-linear scaling, add **hierarchical retrieval** (store distant tokens in an external vector DB and re-inject on-demand).  Recurrence handles the whole stream; retrieval gives random access—context length becomes limited only by storage, not RAM.  Privacy-preserving retrieval is now possible via `EncryptedVectorStore`, which stores AES-encrypted embeddings and manages keys through `HierarchicalMemory`. FHEMemoryServer goes a step further, allowing remote encrypted queries via TenSEAL.
 
 ---
 
@@ -258,7 +258,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     five self-play cycles.
 14. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
-    `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard.
+    `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard. `summarize_multimodal()` now formats text snippets and media paths for richer summaries.
 15. **Graph-of-thought planning**: Implement `GraphOfThought` (see
     `src/graph_of_thought.py`) and measure refactor quality gains over the
     baseline meta-RL agent. The `ReasoningDebugger` now aggregates loops and
@@ -424,6 +424,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      steps with language tags. `GraphOfThoughtPlanner` can record ranked plans so
      they are retrievable in multiple languages. Evaluate by confirming the same
      plan is found in at least two languages.
+41c. **Multimodal reasoning graph**: `CrossLingualReasoningGraph.add_step()`
+     accepts `image_embed` and `audio_embed`. Use `embed_modalities()` from
+     `CrossModalFusion` to generate vectors. `ReasoningHistoryLogger` preserves
+     `image_vec` and `audio_vec` when saving histories.
 42. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
@@ -439,6 +443,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 49a. **Distributed anomaly monitoring**: `DistributedAnomalyMonitor` collects per-node anomaly metrics and flags cross-run spikes through `RiskDashboard`.
 50. **Parameter-efficient adaptation**: Explore low-rank fine-tuning across tasks; success is matching baseline accuracy with ≤10% extra parameters.
 51. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
+51a. **Multi-modal summarization memory**: Compress image and audio features into short summaries stored with text embeddings; retrieval using fused summaries must reach ≥90% accuracy. *Implemented in `src/multimodal_summary_memory.py` with tests.*
 52. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines. *Implemented in `src/dataset_lineage_manager.py`.*
     Use `DataProvenanceLedger` to append a signed hash of each lineage record. Run `scripts/check_provenance.py <root>` to verify the ledger.
 53. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
@@ -446,6 +451,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 55. **Gradient compression for distributed training**: Implement a `GradientCompressor`
     with top-k sparsification or quantized gradients and integrate it with
     `DistributedTrainer`.
+55a. **Asynchronous parameter averaging**: Enable `DistributedTrainer.async_mode`
+     so multiple workers apply gradients locally and periodically merge via
+     parameter averaging.
 56. **ONNX export**: Provide `export_to_onnx()` and a script to save `MultiModalWorldModel` and `CrossModalFusion` as ONNX graphs.
 56a. **WASM export**: Add `export_to_wasm()` to turn the ONNX graphs into WebAssembly bundles for `onnxruntime-web`.
 57. **Memory profiling**: Instrument `HierarchicalMemory` with a lightweight profiler that records query counts, hit/miss ratios and latency.
@@ -526,7 +534,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      trigger `dataset_summarizer.summarize_dataset` on the referenced folder.
      Run `python -m asi.streaming_dataset_watcher db.sqlite <rss-url>` to start
      watching feeds.
- 
+
 83. **Analogy-based retrieval evaluation**: Use `analogical_retrieval.analogy_search()`
     on a small word-analogy dataset. For each tuple `(A, B, Q)` compute the
     offset `B - A` and query `HierarchicalMemory.search(mode="analogy")`. Report
@@ -541,7 +549,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     reasoning steps with expected analogies by calling
     `analogical_retrieval.analogy_search()` and logs mismatches via
     `ReasoningHistoryLogger`.
-    
+
 
 84. **Privacy-preserving federated RL**: Wrap `EdgeRLTrainer` with encrypted gradient
     aggregation. Gradients are clipped and noised before averaging so reward
@@ -561,6 +569,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 86a. **ODE-based world model**: `torchdiffeq` now drives continuous-time
      dynamics in `ode_world_model`. `scripts/train_ode_world_model.py` shows the
      model converging on a toy dataset with smooth rollouts.
+86b. **BCI-driven reinforcement**: EEG signals are filtered in the alpha/beta
+    band by `BCIFeedbackTrainer` to produce rewards. `EdgeRLTrainer.interactive_session`
+    feeds these rewards back into `train_world_model` so online updates can
+    refine the world model in real time.
 
 87. **RL decision narrator**: `RLDecisionNarrator` intercepts action choices
     in `world_model_rl` and `MetaRLRefactorAgent`. Each decision logs a brief
@@ -618,6 +630,14 @@ multiple clusters.  Its `submit_best()` helper returns the chosen cluster and jo
 ID, waiting for the optimal delay if necessary.  See the
 `scripts/hpc_multi_schedule.py` CLI for a minimal example that prints which
 cluster was selected.
+
+`adaptive_cost_scheduler.AdaptiveCostScheduler` builds on this multi-cluster
+approach by training a simple Q-learning policy from the stored carbon and price
+histories.  The policy decides whether to wait for a cheaper, greener slot or
+submit immediately.  Tune `bins`, `epsilon`, `alpha`, `gamma` and
+`check_interval` to control exploration and learning rate.  A demonstration is
+available via `scripts/adaptive_cost_schedule.py`.  Set `qtable_path` to persist
+the learned Q-table between runs.
 
 
 

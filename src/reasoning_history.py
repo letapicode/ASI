@@ -17,16 +17,26 @@ class ReasoningHistoryLogger:
     entries: List[Tuple[str, Any]] = field(default_factory=list)
     translator: CrossLingualTranslator | None = None
 
-    def log(self, summary: str) -> None:
+    def log(self, summary: str | Dict[str, Any]) -> None:
         ts = datetime.utcnow().isoformat()
-        if self.translator is not None:
-            entry = {
-                "summary": summary,
-                "translations": self.translator.translate_all(summary),
-            }
+        if isinstance(summary, dict):
+            entry = dict(summary)
+            if self.translator is not None and "translations" not in entry and "summary" in entry:
+                entry["translations"] = self.translator.translate_all(entry["summary"])
+            if "image_vec" in entry and hasattr(entry["image_vec"], "tolist"):
+                entry["image_vec"] = list(entry["image_vec"])
+            if "audio_vec" in entry and hasattr(entry["audio_vec"], "tolist"):
+                entry["audio_vec"] = list(entry["audio_vec"])
             self.entries.append((ts, entry))
         else:
-            self.entries.append((ts, summary))
+            if self.translator is not None:
+                entry = {
+                    "summary": summary,
+                    "translations": self.translator.translate_all(summary),
+                }
+                self.entries.append((ts, entry))
+            else:
+                self.entries.append((ts, summary))
 
     def get_history(self) -> List[Tuple[str, Any]]:
         return list(self.entries)
@@ -43,6 +53,11 @@ class ReasoningHistoryLogger:
             data = json.load(fh)
         logger = cls()
         for ts, summary in data:
+            if isinstance(summary, dict):
+                if "image_vec" in summary:
+                    summary["image_vec"] = list(summary["image_vec"])
+                if "audio_vec" in summary:
+                    summary["audio_vec"] = list(summary["audio_vec"])
             logger.entries.append((ts, summary))
         return logger
 

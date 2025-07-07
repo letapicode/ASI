@@ -4,6 +4,7 @@ import importlib.util
 import types
 import sys
 import torch
+import numpy as np
 
 src_pkg = types.ModuleType('src')
 src_pkg.__path__ = ['src']
@@ -17,6 +18,14 @@ sys.modules['src.edge_rl_trainer'] = mod
 loader.exec_module(mod)
 EdgeRLTrainer = mod.EdgeRLTrainer
 EdgeRLTrainer = mod.EdgeRLTrainer
+
+loader_bci = importlib.machinery.SourceFileLoader('src.bci_feedback_trainer', 'src/bci_feedback_trainer.py')
+spec_bci = importlib.util.spec_from_loader(loader_bci.name, loader_bci)
+bci_mod = importlib.util.module_from_spec(spec_bci)
+bci_mod.__package__ = 'src'
+sys.modules['src.bci_feedback_trainer'] = bci_mod
+loader_bci.exec_module(bci_mod)
+BCIFeedbackTrainer = bci_mod.BCIFeedbackTrainer
 
 cb_loader = importlib.machinery.SourceFileLoader('src.compute_budget_tracker', 'src/compute_budget_tracker.py')
 cb_spec = importlib.util.spec_from_loader(cb_loader.name, cb_loader)
@@ -75,6 +84,20 @@ class TestEdgeRLTrainer(unittest.TestCase):
         data = [(torch.zeros(1, 2), torch.zeros(1, 2))]
         trainer.train(data)
         self.assertGreater(trainer.power_usage["loihi"], 0)
+
+    def test_interactive_session(self):
+        rl_cfg = mod.RLBridgeConfig(state_dim=2, action_dim=2, epochs=1, batch_size=2)
+        bci = BCIFeedbackTrainer(rl_cfg)
+        model = Toy()
+        opt = torch.optim.SGD(model.parameters(), lr=0.1)
+        budget = ComputeBudgetTracker(float("inf"))
+        trainer = EdgeRLTrainer(model, opt, budget, bci_trainer=bci)
+        states = [torch.zeros(2), torch.zeros(2)]
+        actions = [0, 1]
+        next_states = [torch.ones(2), torch.ones(2)]
+        signals = [np.ones(4), np.zeros(4)]
+        result = trainer.interactive_session(states, actions, next_states, signals)
+        self.assertIs(trainer.model, result)
 
 if __name__ == '__main__':
     unittest.main()

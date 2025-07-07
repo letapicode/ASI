@@ -196,10 +196,12 @@ from .auto_labeler import AutoLabeler
 from .graphql_memory_gateway import GraphQLMemoryGateway
 from .world_model_distiller import DistillConfig, distill_world_model
 from .summarizing_memory import SummarizingMemory
+from .memory_pruning_manager import MemoryPruningManager
 from .cross_lingual_memory import CrossLingualMemory
 from .cross_lingual_kg_memory import CrossLingualKGMemory
 from .cross_lingual_graph import CrossLingualReasoningGraph
 from .context_summary_memory import ContextSummaryMemory
+from .multimodal_summary_memory import MultiModalSummaryMemory
 from .sensorimotor_pretrainer import (
     SensorimotorPretrainConfig,
     SensorimotorLogDataset,
@@ -250,6 +252,7 @@ from .cross_lingual_fairness import CrossLingualFairnessEvaluator
 from .risk_dashboard import RiskDashboard
 from .alignment_dashboard import AlignmentDashboard
 from .graph_neural_reasoner import GraphNeuralReasoner
+from .gnn_memory import GNNMemory
 from .temporal_reasoner import TemporalReasoner
 from .lora_merger import merge_adapters
 from .edge_rl_trainer import EdgeRLTrainer
@@ -265,6 +268,7 @@ from .federated_rl_trainer import (
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .retrieval_explainer import RetrievalExplainer
 from .retrieval_rl import RetrievalPolicy, train_policy
+from .retrieval_policy_updater import RetrievalPolicyUpdater
 from .interpretability_dashboard import InterpretabilityDashboard
 from .introspection_dashboard import IntrospectionDashboard
 from .graph_ui import GraphUI
