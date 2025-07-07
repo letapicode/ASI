@@ -3,10 +3,22 @@ from __future__ import annotations
 import threading
 import time
 from collections import deque
-from typing import Callable, Deque, Any
+from typing import Callable, Deque, Any, Dict, List
 import yaml
 
 from .cost_aware_scheduler import get_current_price
+from .hardware_detect import (
+    list_cpus,
+    list_gpus,
+    list_fpgas,
+    list_loihi,
+    list_analog,
+)
+
+try:  # pragma: no cover - optional dependency
+    import psutil
+except Exception:
+    psutil = None  # type: ignore
 
 try:  # pragma: no cover - optional torch dependency
     import torch  # type: ignore
@@ -86,7 +98,16 @@ class AdaptiveScheduler:
         self.min_improvement = min_improvement
         self.max_mem = max_mem
         self.check_interval = check_interval
-        self.queue: list[tuple[Callable[[], None], str | None]] = []
+        self.devices: Dict[str, List[str]] = {
+            "cpu": list_cpus(),
+            "gpu": list_gpus(),
+            "fpga": list_fpgas(),
+            "loihi": list_loihi(),
+            "analog": list_analog(),
+        }
+        self.queues: Dict[str, list[tuple[Callable[[], None], str | None]]] = {
+            k: [] for k, v in self.devices.items() if v
+        }
         self.region_providers: dict[str, str] = {}
         if region_config:
             try:
@@ -100,9 +121,17 @@ class AdaptiveScheduler:
         self.thread.start()
 
     # --------------------------------------------------------------
-    def add(self, job: Callable[[], None], region: str | None = None) -> None:
-        """Queue a job with an optional region hint."""
-        self.queue.append((job, region))
+    def add(
+        self,
+        job: Callable[[], None],
+        *,
+        device: str = "gpu",
+        region: str | None = None,
+    ) -> None:
+        """Queue a job for a specific device with an optional region hint."""
+        if device not in self.queues:
+            self.queues[device] = []
+        self.queues[device].append((job, region))
 
     # --------------------------------------------------------------
     def record_improvement(self, val: float) -> None:
@@ -129,25 +158,40 @@ class AdaptiveScheduler:
         return self.telemetry.get_cost_index(region)
 
     # --------------------------------------------------------------
+    def _device_utilization(self, device: str) -> float:
+        if device == "gpu" and torch.cuda.is_available():
+            try:
+                return (
+                    torch.cuda.memory_allocated()
+                    / torch.cuda.get_device_properties(0).total_memory
+                )
+            except Exception:
+                return 0.0
+        if device == "cpu" and psutil is not None:
+            try:
+                return psutil.cpu_percent(interval=None) / 100.0
+            except Exception:
+                return 0.0
+        return 0.0
+
+    # --------------------------------------------------------------
     def _loop(self) -> None:
         while not self._stop.is_set():
-            if not self.queue:
+            if not any(self.queues.values()):
                 time.sleep(self.check_interval)
                 continue
             if self._should_pause():
                 time.sleep(self.check_interval)
                 continue
-            mem = (
-                torch.cuda.memory_allocated() / torch.cuda.get_device_properties(0).total_memory
-                if torch.cuda.is_available()
-                else 0.0
-            )
-            if mem < self.max_mem:
-                idx = min(
-                    range(len(self.queue)),
-                    key=lambda i: self._get_cost_index(self.queue[i][1]),
-                )
-                job, _ = self.queue.pop(idx)
+            candidates: list[tuple[float, str, int, Callable[[], None]]] = []
+            for dev, queue in self.queues.items():
+                if queue and self._device_utilization(dev) < self.max_mem:
+                    for i, (job, region) in enumerate(queue):
+                        cost = self._get_cost_index(region)
+                        candidates.append((cost, dev, i, job))
+            if candidates:
+                cost, dev, idx, job = min(candidates, key=lambda x: x[0])
+                self.queues[dev].pop(idx)
                 res = job()
                 if isinstance(res, (int, float)):
                     self.record_improvement(float(res))
@@ -164,7 +208,10 @@ class AdaptiveScheduler:
 
     # --------------------------------------------------------------
     def report_load(self) -> dict[str, float]:
-        return self.telemetry.get_stats()
+        stats = self.telemetry.get_stats()
+        stats["available_devices"] = {k: len(v) for k, v in self.devices.items()}
+        return stats
 
 
 __all__ = ["AdaptiveScheduler"]
+
