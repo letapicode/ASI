@@ -493,6 +493,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 75a. **Secure dataset exchange**: `SecureDatasetExchange` encrypts datasets and verifies signatures so collaborators can share data without exposing proprietary content. Use `scripts/secure_dataset_exchange.py` to push and pull archives between nodes.
 75b. **P2P dataset exchange**: `P2PDatasetExchange` breaks encrypted archives into chunks stored in a DHT. Metadata is signed via `BlockchainProvenanceLedger`. Run `scripts/p2p_exchange.py push|pull` to sync datasets or `seed` to serve chunks.
+75c. **Retrieval summaries**: `HierarchicalMemory.search(return_summary=True)`
+     writes text explanations to `last_trace['summary']`. `MemoryDashboard`
+     shows the last summary and `/trace` generates one if missing.
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging. When initialised with a `CrossLingualTranslator` the logger records translated summaries for multilingual inspection.
 

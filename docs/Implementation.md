@@ -359,6 +359,23 @@ To reproduce the toy run step by step:
 - The store compresses vectors before writing them to disk and loads the nearest neighbours on demand.
 - `RetrievalExplainer.summarize()` distills query results into a brief text used by `MemoryDashboard` to show context for each retrieval.
 - `RetrievalExplainer.summarize_multimodal()` collapses text snippets and lists referenced images or audio so multimodal queries render clearly in the dashboard.
+- `HierarchicalMemory.search(return_summary=True)` calls these helpers and stores
+  the resulting text in ``last_trace['summary']`` so UIs can display the context
+  directly.
+- `MemoryDashboard` shows the latest summary on its stats page and computes one
+  for `/trace` when none was stored.
+
+Example:
+
+```python
+mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+data = torch.randn(1, 4)
+mem.add(data, metadata=["hello world"])
+vec, meta, scores, prov, summary = mem.search(
+    data[0], k=1, return_scores=True, return_provenance=True, return_summary=True
+)
+print(summary)
+```
 
 ## C-8 Distributed Hierarchical Memory Backend
 

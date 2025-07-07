@@ -456,6 +456,24 @@ class HierarchicalMemory:
         if tag in self._usage:
             self._usage.pop(tag, None)
 
+    def _summarize(
+        self,
+        query: torch.Tensor,
+        results: torch.Tensor,
+        scores: list[float],
+        provenance: list[Any],
+    ) -> str:
+        """Return a short summary for ``query`` and ``results``."""
+        from .retrieval_explainer import RetrievalExplainer
+
+        is_multi = any(
+            isinstance(m, dict) and any(k in m for k in ("text", "image", "audio"))
+            for m in provenance
+        ) if provenance else False
+        if is_multi and hasattr(RetrievalExplainer, "summarize_multimodal"):
+            return RetrievalExplainer.summarize_multimodal(query, results, scores, provenance)
+        return RetrievalExplainer.summarize(query, results, scores, provenance)
+
     async def aadd_multimodal(
         self,
         text: torch.Tensor,
@@ -492,12 +510,17 @@ class HierarchicalMemory:
         k: int = 5,
         return_scores: bool = False,
         return_provenance: bool = False,
+        return_summary: bool = False,
         *,
         mode: str = "standard",
         offset: torch.Tensor | None = None,
         language: str | None = None,
         preferences: "UserPreferences | None" = None,
-    ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
+    ) -> (
+        Tuple[torch.Tensor, List[Any]]
+        | Tuple[torch.Tensor, List[Any], List[float], List[Any]]
+        | Tuple[torch.Tensor, List[Any], List[float], List[Any], str]
+    ):
         """Retrieve top-k decoded vectors and their metadata.
 
         When ``return_scores`` or ``return_provenance`` is ``True`` additional
@@ -581,20 +604,28 @@ class HierarchicalMemory:
             and self.query_count % self.evict_check_interval == 0
         ):
             self._update_eviction()
+        summary = ""
+        if return_summary:
+            summary = self._summarize(query, vec, scores, out_meta)
+
         self.last_trace = {
             "query": query.detach().cpu().tolist(),
             "results": vec.detach().cpu().tolist(),
             "scores": scores,
             "provenance": list(out_meta),
         }
+        if summary:
+            self.last_trace["summary"] = summary
         if self.pruner is not None:
             self.pruner.prune()
-        if return_scores or return_provenance:
+        if return_scores or return_provenance or return_summary:
             extras: list = []
             if return_scores:
                 extras.append(scores)
             if return_provenance:
                 extras.append(list(out_meta))
+            if return_summary:
+                extras.append(summary)
             return (vec, out_meta, *extras)
         return vec, out_meta
 
@@ -615,10 +646,15 @@ class HierarchicalMemory:
         k: int = 5,
         return_scores: bool = False,
         return_provenance: bool = False,
+        return_summary: bool = False,
         *,
         language: str | None = None,
         preferences: "UserPreferences | None" = None,
-    ) -> Tuple[torch.Tensor, List[Any]] | Tuple[torch.Tensor, List[Any], List[float], List[Any]]:
+    ) -> (
+        Tuple[torch.Tensor, List[Any]]
+        | Tuple[torch.Tensor, List[Any], List[float], List[Any]]
+        | Tuple[torch.Tensor, List[Any], List[float], List[Any], str]
+    ):
         """Asynchronously retrieve vectors and metadata."""
         if self.cache is not None:
             c_vecs, c_meta = self.cache.search(query.detach().cpu().numpy(), k)
@@ -687,20 +723,28 @@ class HierarchicalMemory:
             and self.query_count % self.evict_check_interval == 0
         ):
             self._update_eviction()
+        summary = ""
+        if return_summary:
+            summary = self._summarize(query, vec, scores, out_meta)
+
         self.last_trace = {
             "query": query.detach().cpu().tolist(),
             "results": vec.detach().cpu().tolist(),
             "scores": scores,
             "provenance": list(out_meta),
         }
+        if summary:
+            self.last_trace["summary"] = summary
         if self.pruner is not None:
             self.pruner.prune()
-        if return_scores or return_provenance:
+        if return_scores or return_provenance or return_summary:
             extras = []
             if return_scores:
                 extras.append(scores)
             if return_provenance:
                 extras.append(list(out_meta))
+            if return_summary:
+                extras.append(summary)
             return (vec, out_meta, *extras)
         return vec, out_meta
 
