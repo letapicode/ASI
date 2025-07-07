@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 import numpy as np
 
 
 class UserPreferences:
     """Maintain per-user preference vectors and feedback stats."""
 
-    def __init__(self, dim: int = 16) -> None:
+    def __init__(self, dim: int = 16, history_size: int = 10) -> None:
         self.dim = dim
         self.vectors: Dict[str, np.ndarray] = {}
         self.stats: Dict[str, Dict[str, int]] = {}
         self.languages: Dict[str, str] = {}
         self.emotions: Dict[str, str] = {}
+        self.emotion_history: Dict[str, list[str]] = {}
+        self.history_size = history_size
 
     # --------------------------------------------------------------
     def embed_text(self, text: str) -> np.ndarray:
@@ -44,11 +46,18 @@ class UserPreferences:
 
     # --------------------------------------------------------------
     def set_emotion(self, user_id: str, emotion: str) -> None:
-        """Store the detected ``emotion`` for ``user_id``."""
+        """Store the detected ``emotion`` for ``user_id`` and update history."""
         self.emotions[user_id] = emotion
+        hist = self.emotion_history.setdefault(user_id, [])
+        hist.append(emotion)
+        if len(hist) > self.history_size:
+            del hist[0]
 
     def get_emotion(self, user_id: str) -> str | None:
         return self.emotions.get(user_id)
+
+    def get_emotion_history(self, user_id: str) -> List[str]:
+        return list(self.emotion_history.get(user_id, []))
 
     # --------------------------------------------------------------
     def update(self, user_id: str, vector: np.ndarray, feedback: float = 1.0) -> None:

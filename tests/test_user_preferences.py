@@ -1,5 +1,18 @@
 import unittest
 import numpy as np
+import importlib.machinery
+import importlib.util
+import types
+import sys
+
+
+class CrossLingualTranslator:
+    pass
+
+dummy = types.ModuleType('asi.data_ingest')
+dummy.CrossLingualTranslator = CrossLingualTranslator
+sys.modules['asi.data_ingest'] = dummy
+
 from asi.user_preferences import UserPreferences
 from asi.prompt_optimizer import PromptOptimizer
 
@@ -26,6 +39,14 @@ class TestUserPreferences(unittest.TestCase):
         s1 = opt._score("hello")
         s2 = opt._score("bye")
         self.assertGreater(s1, s2)
+
+    def test_emotion_history(self):
+        prefs = UserPreferences(dim=4, history_size=3)
+        for e in ["positive", "negative", "negative", "positive"]:
+            prefs.set_emotion("u", e)
+        hist = prefs.get_emotion_history("u")
+        self.assertEqual(len(hist), 3)
+        self.assertEqual(hist[-1], "positive")
 
 
 if __name__ == "__main__":
