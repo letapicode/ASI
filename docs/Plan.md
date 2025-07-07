@@ -465,6 +465,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 75. **Dataset summarization**: `scripts/dataset_summary.py --content` clusters text samples with `dataset_summarizer.summarize_dataset()` and writes the result to `docs/datasets/`.
 
 75a. **Secure dataset exchange**: `SecureDatasetExchange` encrypts datasets and verifies signatures so collaborators can share data without exposing proprietary content. Use `scripts/secure_dataset_exchange.py` to push and pull archives between nodes.
+75b. **P2P dataset exchange**: `P2PDatasetExchange` breaks encrypted archives into chunks stored in a DHT. Metadata is signed via `BlockchainProvenanceLedger`. Run `scripts/p2p_exchange.py push|pull` to sync datasets or `seed` to serve chunks.
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging. When initialised with a `CrossLingualTranslator` the logger records translated summaries for multilingual inspection.
 
