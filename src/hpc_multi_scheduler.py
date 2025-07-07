@@ -7,6 +7,7 @@ import time
 from typing import Dict, List, Union, Tuple
 
 from .hpc_forecast_scheduler import arima_forecast, HPCForecastScheduler
+from .hpc_gnn_scheduler import GNNForecastScheduler
 from .hpc_scheduler import submit_job
 
 
@@ -28,18 +29,21 @@ class MultiClusterScheduler:
         best_delay = 0.0
 
         for name, sched in self.clusters.items():
-            steps = max(int(max_delay // 3600) + 1, 1)
-            carbon_pred = arima_forecast(sched.carbon_history, steps=steps)
-            cost_pred = arima_forecast(sched.cost_history, steps=steps)
-            n = min(len(carbon_pred), len(cost_pred))
-            if not n:
+            if hasattr(sched, "forecast_scores"):
+                scores = sched.forecast_scores(max_delay, self.clusters)
+            else:
+                steps = max(int(max_delay // 3600) + 1, 1)
+                carbon_pred = arima_forecast(sched.carbon_history, steps=steps)
+                cost_pred = arima_forecast(sched.cost_history, steps=steps)
+                n = min(len(carbon_pred), len(cost_pred))
+                scores = [
+                    sched.carbon_weight * carbon_pred[i]
+                    + sched.cost_weight * cost_pred[i]
+                    for i in range(n)
+                ]
+            if not scores:
                 continue
-            scores = [
-                sched.carbon_weight * carbon_pred[i]
-                + sched.cost_weight * cost_pred[i]
-                for i in range(n)
-            ]
-            idx = int(min(range(n), key=lambda i: scores[i]))
+            idx = int(min(range(len(scores)), key=lambda i: scores[i]))
             if scores[idx] < best_score:
                 best_score = scores[idx]
                 best_delay = idx * 3600.0
@@ -50,7 +54,7 @@ class MultiClusterScheduler:
             raise ValueError("No forecasts available to choose a cluster")
         if best_delay and best_delay <= max_delay:
             time.sleep(best_delay)
-        job_id = submit_job(command, backend=best_backend)
+        job_id = globals()["submit_job"](command, backend=best_backend)
         return best_cluster, job_id
 
 
