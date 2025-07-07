@@ -103,6 +103,8 @@ def main(argv: list[str] | None = None) -> None:
             out_file = out_dir / f"{Path(args.root).stem}_fairness.png"
             out_file.write_bytes(base64.b64decode(img.split(",", 1)[1]))
             print(f"Wrote {out_file}")
+        else:
+            print(f"Fairness stats not found: {stats_path}")
     print(out)
 
 

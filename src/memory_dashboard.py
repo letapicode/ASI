@@ -5,6 +5,8 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 from typing import Iterable, Dict, Any
+from pathlib import Path
+import base64
 import numpy as np
 import torch
 
@@ -29,6 +31,21 @@ class MemoryDashboard:
         self.httpd: HTTPServer | None = None
         self.thread: threading.Thread | None = None
         self.port: int | None = None
+        self._fairness_img: str | None = None
+
+    # ----------------------------------------------------------
+    def _load_fairness(self) -> None:
+        if self._fairness_img is not None:
+            return
+        root = Path(getattr(self.servers[0].memory, "dataset_root", "")) if self.servers else None
+        if root and root.name:
+            fname = f"{root.name}_fairness.png"
+            path = Path("docs/datasets") / fname
+            if path.exists():
+                b64 = base64.b64encode(path.read_bytes()).decode()
+                self._fairness_img = f"data:image/png;base64,{b64}"
+                return
+        self._fairness_img = ""
 
     # ----------------------------------------------------------
     def aggregate(self) -> Dict[str, float]:
@@ -89,6 +106,7 @@ class MemoryDashboard:
 
     # ----------------------------------------------------------
     def to_html(self) -> str:
+        self._load_fairness()
         rows = []
         for idx, srv in enumerate(self.servers):
             tstats = srv.telemetry.get_stats() if srv.telemetry else {}
@@ -113,8 +131,9 @@ class MemoryDashboard:
             trace = getattr(self.servers[0].memory, "last_trace", None)
             if trace is not None:
                 summary = trace.get("summary", "")
+        img = f"<img src='{self._fairness_img}'>" if self._fairness_img else ""
         return (
-            "<html><body><h1>Memory Dashboard</h1>"
+            f"<html><body><h1>Memory Dashboard</h1>{img}"
             "<p><a href='http://localhost:8070/graph'>Graph UI</a> | "
             "<a href='/kg'>KG Visualizer</a></p>"
             "<table border='1'>"

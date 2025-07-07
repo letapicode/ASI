@@ -30,18 +30,61 @@ class DummyAgent:
     def train(self, entries):
         pass
 
+class DummyNegotiator:
+    async def assign(self, agents, tasks, tracker=None):
+        names = list(agents.keys())
+        return {t: names[0] for t in tasks}
+
+    def update(self, rewards):
+        pass
+
+
 class DummyCoordinator:
-    def __init__(self, agents):
+    def __init__(self, agents, negotiator=None):
         self.agents = agents
+        self.negotiator = negotiator
         self.log = []
+
     async def schedule_round(self, tasks, apply_fn=None, reward_fn=None):
-        for t in tasks:
-            for name in self.agents:
-                if apply_fn:
-                    await apply_fn(name, 'a')
-                if reward_fn:
-                    reward_fn(name, 'a')
-                self.log.append((name, t, 'a', 0.0))
+        if self.negotiator is None:
+            assign = {t: name for t in tasks for name in self.agents}
+        else:
+            assign = await self.negotiator.assign(self.agents, tasks)
+        for task, name in assign.items():
+            if apply_fn:
+                await apply_fn(task, 'a')
+            if reward_fn:
+                reward_fn(task, 'a')
+            self.log.append((name, task, 'a', 0.0))
+=======
+class DummyNegotiator:
+    async def assign(self, agents, tasks, tracker=None):
+        names = list(agents.keys())
+        return {t: names[0] for t in tasks}
+
+    def update(self, rewards):
+        pass
+
+
+class DummyCoordinator:
+    def __init__(self, agents, negotiator=None):
+        self.agents = agents
+        self.negotiator = negotiator
+        self.log = []
+
+    async def schedule_round(self, tasks, apply_fn=None, reward_fn=None):
+        if self.negotiator is None:
+            assign = {t: name for t in tasks for name in self.agents}
+        else:
+            assign = await self.negotiator.assign(self.agents, tasks)
+        for task, name in assign.items():
+            if apply_fn:
+                await apply_fn(task, 'a')
+            if reward_fn:
+                reward_fn(task, 'a')
+            self.log.append((name, task, 'a', 0.0))
+
+>>>>>>> b72bbf0 (Improve multi-agent self-play with negotiator)
     def train_agents(self):
         pass
 
@@ -57,7 +100,10 @@ class DummyDashboard:
 
 sys.modules['asi.meta_rl_refactor'] = types.SimpleNamespace(MetaRLRefactorAgent=DummyAgent)
 sys.modules['asi.self_play_env'] = types.SimpleNamespace(SimpleEnv=DummyEnv)
-sys.modules['asi.multi_agent_coordinator'] = types.SimpleNamespace(MultiAgentCoordinator=DummyCoordinator)
+sys.modules['asi.multi_agent_coordinator'] = types.SimpleNamespace(
+    MultiAgentCoordinator=DummyCoordinator,
+    RLNegotiator=DummyNegotiator,
+)
 sys.modules['asi.multi_agent_dashboard'] = types.SimpleNamespace(MultiAgentDashboard=DummyDashboard)
 
 def _load(name, path):

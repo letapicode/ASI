@@ -12,7 +12,12 @@ except Exception:  # pragma: no cover - fallback stub
         tensor=lambda data, dtype=None: data,
         zeros=lambda s: [0.0] * (s[0] if isinstance(s, tuple) else s),
         ones=lambda *s: [1.0] * (s[0] if isinstance(s, tuple) else s),
+        manual_seed=lambda x: None,
+        randn_like=lambda t: [0.0 for _ in t],
+        zeros_like=lambda t: [0.0 for _ in t],
+        stack=lambda seq, dim=0: list(seq),
         Tensor=list,
+        float32=float,
         nn=types.SimpleNamespace(Module=object, Linear=lambda *a, **k: object()),
     )
     sys.modules['torch'] = torch
@@ -102,7 +107,12 @@ class TestBCIFeedbackTrainer(unittest.TestCase):
         actions = [0]
         next_states = [torch.ones(2)]
         t = np.linspace(0, 1, 32, dtype=np.float32)
-        sig = np.sin(2 * np.pi * 40 * t)  # high-frequency to trigger discomfort
+        try:
+            import numpy as _np  # type: ignore
+            sig = _np.sin(2 * _np.pi * 40 * t)
+        except Exception:
+            import math
+            sig = [math.sin(2 * 3.1415926 * 40 * x) for x in t]
         trainer.train(states, actions, next_states, [sig])
         self.assertTrue(trainer.feedback_history[0])
 

@@ -379,7 +379,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 29. **Temporal reasoner**: `TemporalReasoner` queries these timestamped triples
     to infer before/after relationships. `HierarchicalPlanner.compose_plan()`
     can optionally reorder intermediate steps using the reasoner for time-aware
-    planning.
+    planning. The reasoner now caches triple timestamps for faster
+    reordering.
 29. **Self-alignment evaluator**: Integrate
     `deliberative_alignment.check_alignment()` into `eval_harness` and track
     alignment metrics alongside existing benchmarks. *Implemented in
@@ -513,7 +514,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 60. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
 61. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
 61a. **Dataset bias mitigation**: `DataBiasMitigator` reweights or filters entries based on these scores. `download_triples()` now applies the mitigator before storing new files.
-61b. **Fairness gap visualizer**: `fairness_visualizer.FairnessVisualizer` plots demographic parity and opportunity gaps. `dataset_summary.py --fairness-report` saves the charts under `docs/datasets/` for quick inspection.
+<<<<<<< HEAD
+61b. **Fairness gap visualizer**: `fairness_visualizer.FairnessVisualizer` plots demographic parity and opportunity gaps. `dataset_summary.py --fairness-report` saves the charts under `docs/datasets/`; they appear in the lineage and memory dashboards for quick inspection.
 62. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
 63. **Parameter-efficient model editing**: Implement `GradientPatchEditor` to fix wrong outputs with minimal updates; >90% targeted fix rate with <1% perplexity change.
 64. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
@@ -654,7 +656,11 @@ merged, issues = consensus_reasoner.compute_consensus(coord)
 print(consensus_reasoner.report_disagreements(issues))
 ```
 
-88. **Multi-agent self-play**: `run_multi_agent_self_play()` launches multiple `MetaRLRefactorAgent` instances inside `self_play_env`. `MultiAgentCoordinator` assigns each episode and aggregates rewards while `MultiAgentDashboard` logs the overall metrics to study cooperation vs. competition effects.
+88. **Multi-agent self-play**: `run_multi_agent_self_play()` launches multiple
+    `MetaRLRefactorAgent` instances inside `self_play_env`. A Q-learning based
+    `RLNegotiator` in `MultiAgentCoordinator` assigns each episode to one agent
+    and updates task values from the rewards. `MultiAgentDashboard` aggregates
+    metrics to compare cooperation versus competition efficiency.
 
 
 
