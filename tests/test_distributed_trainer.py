@@ -81,6 +81,22 @@ class TestDistributedTrainer(unittest.TestCase):
             mem = DistributedMemory.load(Path(tmpdir) / "step1" / "memory")
             self.assertGreaterEqual(len(mem), 1)
 
+    def test_async_mode(self):
+        cfg = MemoryConfig(dim=4, compressed_dim=2, capacity=10)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            trainer = DistributedTrainer(
+                flaky_train,
+                cfg,
+                tmpdir,
+                max_restarts=1,
+                async_mode=True,
+                async_workers=2,
+                sync_steps=2,
+            )
+            trainer.run(steps=2)
+            mem = DistributedMemory.load(Path(tmpdir) / "step2" / "memory")
+            self.assertGreaterEqual(mem.compressor.buffer.count, 4)
+
 
 
 if __name__ == "__main__":

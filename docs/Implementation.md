@@ -644,6 +644,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   compression. `DistributedTrainer` uses it when ``grad_compression`` is
   provided. **Implemented in `src/gradient_compression.py` and wired through
   `distributed_trainer.py`.**
+- **Added** an asynchronous training mode in `DistributedTrainer`. Workers apply
+  gradients locally and periodically synchronize via parameter averaging.
 - Add a `LocalitySensitiveHashIndex` option in `vector_store.py` so `HierarchicalMemory` can perform approximate nearest neighbor search with sub-linear query time. **Implemented in `vector_store.LocalitySensitiveHashIndex` and wired through `HierarchicalMemory`.**
 - Create an `EmbeddingVisualizer` module that runs UMAP/t-SNE on cross-modal embeddings and serves interactive plots through a minimal web interface.
 **Implemented in `src/embedding_visualizer.py`.**
