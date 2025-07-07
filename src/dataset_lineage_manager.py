@@ -6,6 +6,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Iterable, List, Dict
 
+from .dataset_watermarker import detect_watermark
+
 from .data_provenance_ledger import DataProvenanceLedger
 
 
@@ -21,7 +23,7 @@ def _hash_file(path: Path) -> str:
 class LineageStep:
     note: str
     inputs: List[str]
-    outputs: Dict[str, str]
+    outputs: Dict[str, Dict[str, str | None]]
 
 
 class DatasetLineageManager:
@@ -44,7 +46,13 @@ class DatasetLineageManager:
         outputs: Iterable[str | Path],
         note: str = "",
     ) -> None:
-        out_hashes = {str(p): _hash_file(Path(p)) for p in outputs}
+        out_hashes: Dict[str, Dict[str, str | None]] = {}
+        for p in outputs:
+            path = Path(p)
+            out_hashes[str(path)] = {
+                "hash": _hash_file(path),
+                "watermark_id": detect_watermark(path),
+            }
         step = LineageStep(note, [str(p) for p in inputs], out_hashes)
         self.steps.append(step)
         self.log_path.write_text(

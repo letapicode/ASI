@@ -10,7 +10,18 @@ import numpy as np
 import asyncio
 import torch
 import requests
-from .carbon_tracker import CarbonFootprintTracker
+try:
+    from .carbon_tracker import CarbonFootprintTracker
+except Exception:  # pragma: no cover - optional
+    class CarbonFootprintTracker:  # type: ignore
+        def __init__(self, *a: Any, **kw: Any) -> None:
+            pass
+
+        def start(self) -> None:
+            pass
+
+        def stop(self) -> None:
+            pass
 from .privacy_guard import PrivacyGuard
 try:
     import aiohttp  # type: ignore
@@ -329,12 +340,21 @@ def download_file(url: str, dest: Path) -> None:
     dest.write_bytes(r.content)
 
 
-async def _download_file_async(session: aiohttp.ClientSession, url: str, dest: Path) -> None:
+async def _download_file_async(
+    session: aiohttp.ClientSession,
+    url: str,
+    dest: Path,
+    watermark_id: str | None = None,
+) -> None:
     """Asynchronously download ``url`` to ``dest``."""
     dest.parent.mkdir(parents=True, exist_ok=True)
     async with session.get(url, timeout=30) as resp:
         resp.raise_for_status()
         dest.write_bytes(await resp.read())
+    if watermark_id is not None:
+        from .dataset_watermarker import add_watermark
+
+        add_watermark(dest, watermark_id)
 
 
 def _download_triples_impl(
@@ -353,6 +373,7 @@ def _download_triples_impl(
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
     privacy_guard: PrivacyGuard | None = None,
+    watermark_id: str | None = None,
 ) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Implementation for :func:`download_triples`."""
 
@@ -373,6 +394,7 @@ def _download_triples_impl(
             carbon_tracker=carbon_tracker,
             auditor=auditor,
             privacy_guard=privacy_guard,
+            watermark_id=watermark_id,
         )
 
     try:
@@ -399,6 +421,7 @@ def download_triples(
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
     privacy_guard: PrivacyGuard | None = None,
+    watermark_id: str | None = None,
     runner: EnclaveRunner | None = None,
 ) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Download text, image and audio triples into ``out_dir`` concurrently."""
@@ -421,6 +444,7 @@ def download_triples(
         carbon_tracker=carbon_tracker,
         auditor=auditor,
         privacy_guard=privacy_guard,
+        watermark_id=watermark_id,
     )
 
 
@@ -440,6 +464,7 @@ async def download_triples_async(
     carbon_tracker: "CarbonFootprintTracker | None" = None,
     auditor: Optional[PrivacyAuditor] = None,
     privacy_guard: PrivacyGuard | None = None,
+    watermark_id: str | None = None,
 ) -> List[Tuple[Path, Path, Path, Path | None]]:
     """Asynchronously download text, image and audio triples.
 
@@ -467,11 +492,11 @@ async def download_triples_async(
                 triples.append((t_path, i_path, a_path))
             else:
                 triples.append((t_path, i_path, a_path, s_path))
-            tasks.append(_download_file_async(session, t, t_path))
-            tasks.append(_download_file_async(session, iurl, i_path))
-            tasks.append(_download_file_async(session, a, a_path))
+            tasks.append(_download_file_async(session, t, t_path, watermark_id))
+            tasks.append(_download_file_async(session, iurl, i_path, watermark_id))
+            tasks.append(_download_file_async(session, a, a_path, watermark_id))
             if s is not None:
-                tasks.append(_download_file_async(session, s, s_path))
+                tasks.append(_download_file_async(session, s, s_path, watermark_id))
         await asyncio.gather(*tasks)
 
     if privacy_guard is not None:
@@ -551,6 +576,12 @@ async def download_triples_async(
                 t_new.write_text(trans)
                 augmented.append((t_new, i_path, a_path, s_path))
         triples = augmented
+    if watermark_id is not None:
+        from .dataset_watermarker import add_watermark
+        for tri in triples:
+            for p in tri:
+                if p is not None:
+                    add_watermark(p, watermark_id)
     if bias_mitigator is not None:
         triples = bias_mitigator.apply_to_triples(triples)
     if lineage is not None and anonymizer is not None:

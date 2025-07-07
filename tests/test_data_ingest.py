@@ -75,6 +75,13 @@ pa_mod.__package__ = 'src'
 sys.modules['src.privacy_auditor'] = pa_mod
 loader_pa.exec_module(pa_mod)
 
+loader_wm = importlib.machinery.SourceFileLoader('src.dataset_watermarker', 'src/dataset_watermarker.py')
+spec_wm = importlib.util.spec_from_loader(loader_wm.name, loader_wm)
+wm_mod = importlib.util.module_from_spec(spec_wm)
+wm_mod.__package__ = 'src'
+sys.modules['src.dataset_watermarker'] = wm_mod
+loader_wm.exec_module(wm_mod)
+
 pair_modalities = di.pair_modalities
 random_crop_image = di.random_crop_image
 add_gaussian_noise = di.add_gaussian_noise
@@ -127,7 +134,7 @@ class TestDataIngest(unittest.TestCase):
         self.assertTrue(out)
 
     def test_download_triples(self):
-        async def fake_download(session, url, dest):
+        async def fake_download(session, url, dest, watermark_id=None):
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(url)
 
@@ -141,7 +148,7 @@ class TestDataIngest(unittest.TestCase):
             self.assertEqual(t.read_text(), 'u1')
 
     def test_download_triples_version(self):
-        async def fake_download(session, url, dest):
+        async def fake_download(session, url, dest, watermark_id=None):
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(url)
 
@@ -153,10 +160,24 @@ class TestDataIngest(unittest.TestCase):
             vf = Path(root) / 'dataset_version.json'
             self.assertTrue(vf.exists())
             data = json.loads(vf.read_text())
-            self.assertEqual(len(data['files']), 3)
+        self.assertEqual(len(data['files']), 3)
+
+    def test_download_triples_watermark(self):
+        async def fake_download(session, url, dest, watermark_id=None):
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(url)
+            if watermark_id:
+                wm_mod.add_watermark(dest, watermark_id)
+
+        with tempfile.TemporaryDirectory() as root:
+            urls = ['u1']
+            with patch.object(di, '_download_file_async', fake_download):
+                di.download_triples(urls, urls, urls, root, watermark_id='wm1')
+            t = Path(root) / 'text/0.txt'
+            self.assertEqual(wm_mod.detect_watermark(t), 'wm1')
 
     def test_download_triples_anonymizer(self):
-        async def fake_download(session, url, dest):
+        async def fake_download(session, url, dest, watermark_id=None):
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text('call 123-456-7890 or mail foo@bar.com')
 
@@ -179,7 +200,7 @@ class TestDataIngest(unittest.TestCase):
             self.assertIn('anonymized', log[-1]['note'])
 
     def test_download_triples_event_loop(self):
-        async def fake_download(session, url, dest):
+        async def fake_download(session, url, dest, watermark_id=None):
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(url)
 
@@ -195,7 +216,7 @@ class TestDataIngest(unittest.TestCase):
         asyncio.run(run())
 
     def test_download_triples_poison(self):
-        async def fake_download(session, url, dest):
+        async def fake_download(session, url, dest, watermark_id=None):
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(url)
 
@@ -207,7 +228,7 @@ class TestDataIngest(unittest.TestCase):
             self.assertEqual(len(triples), 0)
 
     def test_download_triples_audit(self):
-        async def fake_download(session, url, dest):
+        async def fake_download(session, url, dest, watermark_id=None):
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text('x')
 
