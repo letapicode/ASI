@@ -4,10 +4,49 @@ import importlib.machinery
 import importlib.util
 import types
 import sys
-import numpy as np
+try:
+    import numpy as np
+except Exception:  # pragma: no cover - fallback stub
+    np = types.SimpleNamespace(
+        random=types.SimpleNamespace(
+            randn=lambda *s: [0.0 for _ in range(int(__import__('functools').reduce(lambda a,b:a*b,s,1)))] if s else [0.0],
+            randint=lambda low, high, size=None: 0,
+        ),
+        array=lambda x, dtype=None: x,
+        ndarray=list,
+        zeros=lambda s: [0.0] * (s[0] if isinstance(s, tuple) else s),
+        ones_like=lambda x: [1.0 for _ in range(len(x))],
+        exp=lambda x: 1.0,
+        log=lambda x: 0.0,
+        float32=float,
+    )
+    sys.modules['numpy'] = np
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+# minimal stubs for modules imported by eval_harness
+class _Dash:
+    def __init__(self):
+        self.records = []
+
+    def start(self, port=0):
+        pass
+
+    def record(self, *args):
+        self.records.append(args)
+
+    def aggregate(self):
+        return {"pass_rate": 1.0, "flagged_examples": len(self.records)}
+
+sys.modules['asi.alignment_dashboard'] = types.ModuleType('alignment_dashboard')
+sys.modules['asi.alignment_dashboard'].AlignmentDashboard = _Dash
+sys.modules['asi.deliberative_alignment'] = types.ModuleType('deliberative_alignment')
+sys.modules['asi.deliberative_alignment'].DeliberativeAligner = lambda *_: None
+sys.modules['asi.iter_align'] = types.ModuleType('iter_align')
+sys.modules['asi.iter_align'].IterativeAligner = lambda *_: None
+sys.modules['asi.critic_rlhf'] = types.ModuleType('critic_rlhf')
+sys.modules['asi.critic_rlhf'].CriticScorer = lambda *a, **k: types.SimpleNamespace(score=lambda t: 0)
+sys.modules['asi.critic_rlhf'].CriticRLHFTrainer = lambda *a, **k: None
 sys.modules['requests'] = types.ModuleType('requests')
 sys.modules['aiohttp'] = types.ModuleType('aiohttp')
 data_ingest_stub = types.ModuleType('asi.data_ingest')

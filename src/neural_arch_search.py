@@ -8,6 +8,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Any, Callable, Dict, Iterable, Tuple, List
 
 from .telemetry import TelemetryLogger
+from .neuroevolution_search import NeuroevolutionSearch
 
 
 class DistributedArchSearch:
@@ -39,10 +40,34 @@ class DistributedArchSearch:
         combos = product(*(self.search_space[k] for k in keys))
         return [dict(zip(keys, vals)) for vals in combos]
 
-    def search(self, num_samples: int = 10) -> Tuple[Dict[str, Any], float]:
-        """Evaluate up to ``num_samples`` configs and return the best one."""
+    def search(
+        self,
+        num_samples: int = 10,
+        *,
+        method: str = "gradient",
+        generations: int | None = None,
+        population_size: int = 4,
+        mutation_rate: float = 0.3,
+        crossover_rate: float = 0.5,
+    ) -> Tuple[Dict[str, Any], float]:
+        """Evaluate configs and return the best one.
+
+        ``method`` can be ``"gradient"`` (default random search) or
+        ``"evolution"`` to delegate to :class:`NeuroevolutionSearch`.
+        """
         if num_samples <= 0:
             raise ValueError("num_samples must be positive")
+
+        if method == "evolution":
+            gens = generations if generations is not None else num_samples
+            evo = NeuroevolutionSearch(
+                self.search_space,
+                self.eval_func,
+                population_size=population_size,
+                mutation_rate=mutation_rate,
+                crossover_rate=crossover_rate,
+            )
+            return evo.evolve(generations=gens)
 
         all_cfgs = self._all_configs()
         candidates = random.sample(all_cfgs, min(num_samples, len(all_cfgs)))

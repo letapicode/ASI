@@ -7,6 +7,7 @@ import importlib
 import asyncio
 import re
 import json
+import os
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Tuple
 
@@ -243,7 +244,7 @@ class MultiModalEval:
 
 
 def _eval_neural_arch_search() -> Tuple[bool, str]:
-    """Run a tiny distributed search to verify the module."""
+    """Run a tiny architecture search using the requested strategy."""
     from asi.neural_arch_search import DistributedArchSearch
 
     space = {"layers": [1, 2], "hidden": [8, 16]}
@@ -252,25 +253,20 @@ def _eval_neural_arch_search() -> Tuple[bool, str]:
         # Simple additive score favouring more layers and hidden units
         return cfg["layers"] + cfg["hidden"] / 16
 
+    method = os.environ.get("NAS_METHOD", "gradient")
     search = DistributedArchSearch(space, score, max_workers=1)
-    best, val = search.search(num_samples=4)
+    if method == "evolution":
+        best, val = search.search(num_samples=2, method="evolution", generations=2)
+    else:
+        best, val = search.search(num_samples=4, method="gradient")
     ok = "layers" in best and "hidden" in best
     return ok, f"score={val:.2f}"
 
 
 def _eval_neuroevolution_search() -> Tuple[bool, str]:
-    """Run a tiny population-based search to verify the module."""
-    from asi.neuroevolution_search import NeuroevolutionSearch
-
-    space = {"layers": [1, 2], "hidden": [8, 16]}
-
-    def score(cfg: Dict[str, int]) -> float:
-        return cfg["layers"] * cfg["hidden"]
-
-    evo = NeuroevolutionSearch(space, score, population_size=4, mutation_rate=0.5)
-    best, val = evo.evolve(generations=2)
-    ok = "layers" in best and "hidden" in best
-    return ok, f"score={val:.2f}"
+    """Backward-compatible wrapper calling :func:`_eval_neural_arch_search`."""
+    os.environ["NAS_METHOD"] = "evolution"
+    return _eval_neural_arch_search()
 
 
 def _eval_self_alignment() -> Tuple[bool, str]:
