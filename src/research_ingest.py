@@ -7,9 +7,11 @@ import urllib.request
 from pathlib import Path
 from typing import List, Dict
 
+from .data_ingest import CrossLingualTranslator
+
 
 def fetch_recent_papers(max_results: int = 5) -> List[Dict[str, str]]:
-    """Fetch recent arXiv paper titles (best effort)."""
+    """Fetch recent arXiv paper titles and abstracts (best effort)."""
     url = (
         "https://export.arxiv.org/api/query?search_query=all&start=0&max_results="
         f"{max_results}"
@@ -19,8 +21,18 @@ def fetch_recent_papers(max_results: int = 5) -> List[Dict[str, str]]:
             text = resp.read().decode("utf-8")
     except Exception:
         return []
-    titles = re.findall(r"<title>([^<]+)</title>", text)[1:]
-    return [{"title": t} for t in titles[:max_results]]
+
+    entries = re.findall(r"<entry>(.*?)</entry>", text, re.S)
+    papers: List[Dict[str, str]] = []
+    for ent in entries[:max_results]:
+        title_match = re.search(r"<title>([^<]+)</title>", ent)
+        summary_match = re.search(r"<summary>([^<]+)</summary>", ent, re.S)
+        title = title_match.group(1).replace("\n", " ").strip() if title_match else ""
+        summary = (
+            summary_match.group(1).replace("\n", " ").strip() if summary_match else ""
+        )
+        papers.append({"title": title, "summary": summary})
+    return papers
 
 
 def suggest_modules(papers: List[Dict[str, str]]) -> List[str]:
@@ -34,8 +46,19 @@ def suggest_modules(papers: List[Dict[str, str]]) -> List[str]:
     return modules
 
 
-def run_ingestion(out_dir: str, max_results: int = 5) -> Path:
+def run_ingestion(
+    out_dir: str = "research_logs",
+    max_results: int = 5,
+    translator: CrossLingualTranslator | None = None,
+) -> Path:
+    """Fetch papers, optionally translate them and write a daily summary."""
     papers = fetch_recent_papers(max_results)
+
+    if translator is not None:
+        for p in papers:
+            p["title_translations"] = translator.translate_all(p["title"])
+            p["summary_translations"] = translator.translate_all(p.get("summary", ""))
+
     summary = {
         "date": str(datetime.date.today()),
         "papers": papers,
