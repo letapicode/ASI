@@ -859,3 +859,5 @@ examples rather than large‑scale training.
 ### Resource-aware scheduling
 
 `MultiAgentCoordinator` accepts a `ComputeBudgetTracker` instance which tracks GPU hours per agent. `RLNegotiator` considers `tracker.remaining()` when assigning tasks and each action logs usage via `tracker.consume()`. This ensures repositories are processed by agents with sufficient budget.
+
+- `src/nerf_world_model.py` implements a tiny NeRF renderer with multi-view dataset helpers. Training on the synthetic cube sequence reaches around **25 dB PSNR** after 50 epochs.

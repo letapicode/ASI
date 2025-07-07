@@ -189,6 +189,11 @@ def rollout_policy(
     init_state: torch.Tensor,
     steps: int = 50,
     narrator: RLDecisionNarrator | None = None,
+    *,
+    nerf: "TinyNeRF" | None = None,
+    views: Iterable[torch.Tensor] | None = None,
+    intrinsics: torch.Tensor | None = None,
+    image_size: tuple[int, int] | None = None,
 ) -> tuple[list[torch.Tensor], list[float]]:
     device = next(model.parameters()).device
     state = init_state.to(device)
@@ -201,7 +206,13 @@ def rollout_policy(
                 act_val = int(action.item()) if isinstance(action, torch.Tensor) else action
                 narrator.record_decision(state.cpu().tolist(), act_val)
             next_state, reward = model(state, action)
-            states.append(next_state.cpu())
+            if nerf is not None and views is not None and intrinsics is not None and image_size is not None:
+                from .nerf_world_model import render_views
+
+                frames = render_views(nerf, views, intrinsics, image_size)
+                states.append(frames[0] if len(frames) == 1 else frames)
+            else:
+                states.append(next_state.cpu())
             rewards.append(float(reward.item()))
             state = next_state
     return states, rewards
