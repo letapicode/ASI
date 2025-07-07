@@ -160,6 +160,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   hierarchical context. With a database path it hooks into FAISS so far-past
   tokens reload from disk automatically. Search results remain on the
   same device as the query.
+- `VectorStore.hyde_search()` blends a hypothetical document embedding with the
+  query before nearest-neighbour lookup. Use `HierarchicalMemory.search(mode="hyde")`
+  or its async counterpart to enable this HyDE-style retrieval.
+- `src/async_vector_store.py` exposes `ahyde_search()` for background HyDE retrieval
+  when using FAISS asynchronously.
 - `src/link_slot_attention.py` implements retrieval-augmented attention that
   fetches top-k vectors from the hierarchical memory for each token.
 - `src/megabyte_patching.py` adds a hierarchical byte patcher for **C-4**.
