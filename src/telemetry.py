@@ -14,10 +14,24 @@ import subprocess
 import urllib.request
 
 
-import psutil
-from .carbon_tracker import CarbonFootprintTracker
-from .memory_event_detector import MemoryEventDetector
-from .fine_grained_profiler import FineGrainedProfiler
+try:  # pragma: no cover - optional dependency
+    import psutil
+except Exception:  # pragma: no cover - fallback when missing
+    psutil = None  # type: ignore[misc]
+try:  # pragma: no cover - optional dependency
+    from .carbon_tracker import CarbonFootprintTracker
+except Exception:
+    CarbonFootprintTracker = None  # type: ignore[misc]
+try:
+    from .memory_event_detector import MemoryEventDetector
+except Exception:
+    class MemoryEventDetector:  # type: ignore[dead-code]
+        pass
+try:
+    from .fine_grained_profiler import FineGrainedProfiler
+except Exception:
+    class FineGrainedProfiler:  # type: ignore[dead-code]
+        pass
 try:  # pragma: no cover - optional torch dependency
     import torch  # type: ignore
 except Exception:  # pragma: no cover - allow running without torch
