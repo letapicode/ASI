@@ -1,10 +1,13 @@
 from __future__ import annotations
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Tuple, Sequence
+
+import numpy as np
 
 import torch
 
 from .compute_budget_tracker import ComputeBudgetTracker
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
+from .bci_feedback_trainer import BCIFeedbackTrainer
 
 
 class EdgeRLTrainer:
@@ -17,6 +20,7 @@ class EdgeRLTrainer:
         budget: ComputeBudgetTracker,
         run_id: str = "edge",
         micro_batcher: AdaptiveMicroBatcher | None = None,
+        bci_trainer: BCIFeedbackTrainer | None = None,
         *,
         use_loihi: bool = False,
         use_fpga: bool = False,
@@ -26,6 +30,7 @@ class EdgeRLTrainer:
         self.budget = budget
         self.run_id = run_id
         self.micro_batcher = micro_batcher
+        self.bci_trainer = bci_trainer
         self.use_loihi = use_loihi
         self.use_fpga = use_fpga
         self.power_usage: dict[str, float] = {"cpu": 0.0, "loihi": 0.0, "fpga": 0.0}
@@ -72,5 +77,28 @@ class EdgeRLTrainer:
             key = "cpu"
         self.power_usage[key] += max(delta, 0.0)
         return steps
+
+    # --------------------------------------------------
+    def interactive_session(
+        self,
+        states: Sequence[torch.Tensor],
+        actions: Sequence[int],
+        next_states: Sequence[torch.Tensor],
+        signals: Sequence[torch.Tensor | np.ndarray],
+    ):
+        """Train a world model from BCI feedback during interactive sessions."""
+
+        if self.bci_trainer is None:
+            raise ValueError("bci_trainer not provided")
+        model = self.bci_trainer.train(
+            states,
+            actions,
+            next_states,
+            signals,
+            run_id=f"{self.run_id}_bci",
+            budget=self.budget,
+        )
+        self.model = model
+        return model
 
 __all__ = ["EdgeRLTrainer"]
