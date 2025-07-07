@@ -37,17 +37,19 @@ class TestCrossModalFusion(unittest.TestCase):
         tokens = torch.randint(0, 50, (2, 5))
         images = torch.randn(2, 3, 16, 16)
         audio = torch.randn(2, 1, 32)
-        t, i, a = self.model(tokens, images, audio)
+        t, i, a, b = self.model(tokens, images, audio)
         self.assertEqual(t.shape, (2, 4))
         self.assertEqual(i.shape, (2, 4))
         self.assertEqual(a.shape, (2, 4))
+        self.assertIsNone(b)
 
     def test_forward_missing_modalities(self):
         tokens = torch.randint(0, 50, (1, 5))
-        t, i, a = self.model(text=tokens)
+        t, i, a, b = self.model(text=tokens)
         self.assertIsNotNone(t)
         self.assertIsNone(i)
         self.assertIsNone(a)
+        self.assertIsNone(b)
 
     def test_encode_and_store(self):
         triples = [
@@ -56,7 +58,7 @@ class TestCrossModalFusion(unittest.TestCase):
         ]
         ds = MultiModalDataset(triples, simple_tokenizer)
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
-        t, i, a = encode_all(self.model, ds, batch_size=1, memory=mem)
+        t, i, a, _ = encode_all(self.model, ds, batch_size=1, memory=mem)
         self.assertEqual(t.shape[0], len(ds))
         q = (t[0] + i[0] + a[0]) / 3.0
         out, meta = mem.search(q, k=1)
@@ -70,7 +72,7 @@ class TestCrossModalFusion(unittest.TestCase):
         ]
         ds = MultiModalDataset(triples, simple_tokenizer)
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
-        t, i, a = encode_all(self.model, ds, batch_size=1, memory=mem)
+        t, i, a, _ = encode_all(self.model, ds, batch_size=1, memory=mem)
 
         q0 = (t[0] + i[0] + a[0]) / 3.0
         out, meta = mem.search(q0, k=1)
@@ -79,6 +81,28 @@ class TestCrossModalFusion(unittest.TestCase):
         q1 = (t[1] + i[1] + a[1]) / 3.0
         out, meta = mem.search(q1, k=1)
         self.assertEqual(meta[0], 1)
+
+    def test_bci_encoding_retrieval(self):
+        cfg = CrossModalFusionConfig(
+            vocab_size=50,
+            text_dim=8,
+            img_channels=3,
+            audio_channels=1,
+            bci_channels=2,
+            latent_dim=4,
+        )
+        model = CrossModalFusion(cfg)
+        triples = [
+            ("aa", torch.randn(3, 16, 16), torch.randn(1, 32), torch.randn(2, 32)),
+            ("bb", torch.randn(3, 16, 16), torch.randn(1, 32), torch.randn(2, 32)),
+        ]
+        ds = MultiModalDataset(triples, simple_tokenizer, bci_shape=(2, 32))
+        mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+        t, i, a, b = encode_all(model, ds, batch_size=1, memory=mem, include_bci=True)
+        self.assertEqual(b.shape, (2, 4))
+        q = (t[0] + i[0] + a[0] + b[0]) / 4.0
+        out, meta = mem.search(q, k=1)
+        self.assertEqual(meta[0], 0)
 
 if __name__ == "__main__":
     unittest.main()

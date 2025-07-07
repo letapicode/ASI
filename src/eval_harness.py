@@ -215,8 +215,11 @@ class MultiModalEval:
             compressed_dim=max(1, self.model.cfg.latent_dim // 2),
             capacity=len(self.dataset) * 2,
         )
-        t_vecs, i_vecs, a_vecs = encode_all(
-            self.model, self.dataset, batch_size=self.batch_size, memory=mem
+        t_vecs, i_vecs, a_vecs, _ = encode_all(
+            self.model,
+            self.dataset,
+            batch_size=self.batch_size,
+            memory=mem,
         )
         recalls: Dict[str, float] = {}
         for name, vecs in {

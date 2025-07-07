@@ -538,6 +538,9 @@ Run `scripts/lineage_viewer.py ./data` to browse the recorded steps.
   retrieve averaged multimodal embeddings via `add_multimodal`. **Implemented**:
   `encode_all()` now calls `memory.add_multimodal()` when a memory instance is
   passed, enabling lookup on the fused embedding.
+- BCI embeddings can now be fused and stored the same way. `CrossModalFusion`
+  encodes EEG/ECoG signals and `HierarchicalMemory.add_multimodal()` averages
+  them with text, image and audio vectors for world-model training.
 - Add a `log_memory_usage()` helper to `eval_harness.py` and print GPU memory usage alongside accuracy metrics. **Implemented**
 - Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the exploration rate during refactoring. **Implemented**
 - Rewrite `download_triples()` with asyncio to fetch dataset files
