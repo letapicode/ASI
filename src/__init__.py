@@ -265,6 +265,7 @@ from .federated_rl_trainer import (
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .retrieval_explainer import RetrievalExplainer
 from .retrieval_rl import RetrievalPolicy, train_policy
+from .retrieval_policy_updater import RetrievalPolicyUpdater
 from .interpretability_dashboard import InterpretabilityDashboard
 from .introspection_dashboard import IntrospectionDashboard
 from .graph_ui import GraphUI
