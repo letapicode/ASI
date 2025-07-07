@@ -98,6 +98,7 @@ class TelemetryLogger:
             gpu = (
                 torch.cuda.utilization() if torch.cuda.is_available() else 0.0
             )
+            battery = self.get_battery_level()
             net = psutil.net_io_counters()
             sent = net.bytes_sent - last_net.bytes_sent
             last_net = net
@@ -117,6 +118,8 @@ class TelemetryLogger:
                 self.metrics["gpu"].set(gpu)
                 self.metrics["mem"].set(mem)
                 self.metrics["net"].set(sent)
+                self.metrics.setdefault("battery", Gauge("battery", "Battery level"))
+                self.metrics["battery"].set(battery)
                 if self.carbon_tracker is not None:
                     self.metrics.setdefault("energy_kwh", Gauge("energy_kwh", "Energy consumed"))
                     self.metrics.setdefault("carbon_g", Gauge("carbon_g", "Carbon emitted"))
@@ -132,6 +135,7 @@ class TelemetryLogger:
                     "gpu": gpu,
                     "mem": mem,
                     "net": sent,
+                    "battery": battery,
                 }
                 self.metrics.update(cf_stats)
 
@@ -141,6 +145,7 @@ class TelemetryLogger:
                 "gpu": gpu,
                 "mem": mem,
                 "net": sent,
+                "battery": battery,
             }
             snapshot.update(cf_stats)
             self.history.append(snapshot)
@@ -249,6 +254,17 @@ class TelemetryLogger:
             return float(temp)
         except Exception:
             return 0.0
+
+    # --------------------------------------------------------------
+    def get_battery_level(self) -> float:
+        """Return current battery level percentage."""
+        try:
+            info = psutil.sensors_battery()
+            if info is not None and info.percent is not None:
+                return float(info.percent)
+        except Exception:
+            pass
+        return 100.0
 
     # --------------------------------------------------------------
     def _post(self, data: Dict[str, Any]) -> None:
