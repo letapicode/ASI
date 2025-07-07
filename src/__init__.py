@@ -180,6 +180,7 @@ from .dataset_versioner import DatasetVersioner
 from .dataset_lineage_manager import DatasetLineageManager
 from .dataset_lineage_dashboard import DatasetLineageDashboard
 from .dataset_anonymizer import DatasetAnonymizer
+from .ner_anonymizer import NERAnonymizer
 from .dataset_discovery import (
     DiscoveredDataset,
     discover_huggingface,

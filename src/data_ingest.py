@@ -94,6 +94,22 @@ except Exception:  # pragma: no cover - for tests
             def summary(self) -> Dict[str, int]:
                 return {}
 
+try:  # pragma: no cover - optional
+    from .ner_anonymizer import NERAnonymizer
+except Exception:  # pragma: no cover - for tests
+    try:
+        from ner_anonymizer import NERAnonymizer  # type: ignore
+    except Exception:  # pragma: no cover - stub
+        class NERAnonymizer:  # type: ignore
+            def __init__(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def scrub_text_file(self, *a: Any, **kw: Any) -> None:
+                pass
+
+            def summary(self) -> Dict[str, int]:
+                return {}
+
 try:
     from .dataset_lineage_manager import DatasetLineageManager
 except Exception:  # pragma: no cover - for tests
@@ -370,6 +386,7 @@ def _download_triples_impl(
     versioner: Optional[DatasetVersioner] = None,
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
+    ner_anonymizer: Optional[NERAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
     provenance: Optional[BlockchainProvenanceLedger] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
@@ -392,6 +409,7 @@ def _download_triples_impl(
             versioner=versioner,
             translator=translator,
             anonymizer=anonymizer,
+            ner_anonymizer=ner_anonymizer,
             lineage=lineage,
             provenance=provenance,
             bias_mitigator=bias_mitigator,
@@ -420,6 +438,7 @@ def download_triples(
     versioner: Optional[DatasetVersioner] = None,
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
+    ner_anonymizer: Optional[NERAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
     provenance: Optional[BlockchainProvenanceLedger] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
@@ -444,6 +463,7 @@ def download_triples(
         versioner=versioner,
         translator=translator,
         anonymizer=anonymizer,
+        ner_anonymizer=ner_anonymizer,
         lineage=lineage,
         provenance=provenance,
         bias_mitigator=bias_mitigator,
@@ -465,6 +485,7 @@ async def download_triples_async(
     versioner: Optional[DatasetVersioner] = None,
     translator: Optional[CrossLingualTranslator] = None,
     anonymizer: Optional[DatasetAnonymizer] = None,
+    ner_anonymizer: Optional[NERAnonymizer] = None,
     lineage: Optional[DatasetLineageManager] = None,
     provenance: Optional[BlockchainProvenanceLedger] = None,
     bias_mitigator: Optional["DataBiasMitigator"] = None,
@@ -569,6 +590,20 @@ async def download_triples_async(
                 except Exception:
                     pass
 
+    if ner_anonymizer is not None:
+        for tri in triples:
+            t_path, i_path, a_path = tri[:3]
+            cap = i_path.with_suffix(".caption.txt")
+            trans = a_path.with_suffix(".transcript.txt")
+            for p in [t_path, cap, trans]:
+                if p is None:
+                    continue
+                if isinstance(p, Path) and p.exists():
+                    try:
+                        ner_anonymizer.scrub_text_file(p)
+                    except Exception:
+                        pass
+
     if use_llm_parser and LLMIngestParser is not None:
         parser = LLMIngestParser()
         for tri in triples:
@@ -602,9 +637,14 @@ async def download_triples_async(
                     add_watermark(p, watermark_id)
     if bias_mitigator is not None:
         triples = bias_mitigator.apply_to_triples(triples)
-    if lineage is not None and anonymizer is not None:
+    if lineage is not None and (anonymizer is not None or ner_anonymizer is not None):
         flat = [p for tri in triples for p in tri if p is not None]
-        lineage.record(flat, flat, note=f"anonymized {anonymizer.summary()}")
+        note_parts = []
+        if anonymizer is not None:
+            note_parts.append(f"anonymized {anonymizer.summary()}")
+        if ner_anonymizer is not None:
+            note_parts.append(f"ner {ner_anonymizer.summary()}")
+        lineage.record(flat, flat, note=", ".join(note_parts))
     if versioner is not None:
         flat = [p for tri in triples for p in tri if p is not None]
         versioner.record(flat, note="download_triples")
