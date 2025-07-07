@@ -13,6 +13,7 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 - `scripts/dataset_summary.py` prints lineage and license info. Use `--content` to cluster dataset samples and store summaries under `docs/datasets/`.
 - `scripts/lineage_viewer.py <root>` serves an interactive graph of the dataset lineage.
 - `scripts/ar_robot_demo.py` streams predicted and actual robot trajectories to a WebSocket server for lightweight AR visualization. Pass `--show-graph` to also broadcast `GraphOfThought` nodes.
+- `scripts/got_3d_viewer.py <trace.json>` launches a pythreejs viewer for reasoning graphs. Connect to `ws://localhost:8090/ws` to stream updates.
 
 Example:
 
