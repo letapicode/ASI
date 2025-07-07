@@ -531,6 +531,36 @@ download_triples(text_urls, img_urls, aud_urls, "./data", privacy_guard=guard)
 print("epsilon left", guard.remaining_budget())
 ```
 
+## Event Sensor Fusion
+
+`EventSensorDataset` reads either in-memory arrays or ``.npy`` files containing
+neuromorphic event streams. Enable fusion by setting
+``use_event_streams=True`` when constructing ``MultiModalWorldModel`` and
+provide ``event_channels`` matching the input shape. ``train_world_model()``
+accepts an ``event_dataset`` and logs the average loss with
+``TelemetryLogger`` under the ``world_model_loss`` metric.
+
+Example usage:
+
+```python
+from src.event_sensor_dataset import load_synthetic_events
+from src.multimodal_world_model import (
+    MultiModalWorldModel, MultiModalWorldModelConfig, train_world_model,
+)
+
+events = load_synthetic_events(channels=2, length=32)
+cfg = MultiModalWorldModelConfig(
+    vocab_size=100,
+    img_channels=3,
+    action_dim=4,
+    use_event_streams=True,
+    event_channels=2,
+)
+model = MultiModalWorldModel(cfg)
+train_world_model(model, trajectory_ds, event_dataset=events,
+                  telemetry=TelemetryLogger(interval=1.0))
+```
+
 ## L-6 Mechanistic Interpretability Tools
 
 - `src/transformer_circuits.py` provides utilities to record attention weights

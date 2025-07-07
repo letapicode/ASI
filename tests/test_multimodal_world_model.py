@@ -6,6 +6,13 @@ import sys
 import types
 import torch
 
+tl_loader = importlib.machinery.SourceFileLoader('asi.telemetry', 'src/telemetry.py')
+tl_spec = importlib.util.spec_from_loader(tl_loader.name, tl_loader)
+tl_mod = importlib.util.module_from_spec(tl_spec)
+sys.modules['asi.telemetry'] = tl_mod
+tl_loader.exec_module(tl_mod)
+TelemetryLogger = tl_mod.TelemetryLogger
+
 loader = importlib.machinery.SourceFileLoader('mmwm', 'src/multimodal_world_model.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mmwm = importlib.util.module_from_spec(spec)
@@ -29,6 +36,8 @@ loader_lq.exec_module(lq)
 loader.exec_module(mmwm)
 MultiModalWorldModelConfig = mmwm.MultiModalWorldModelConfig
 MultiModalWorldModel = mmwm.MultiModalWorldModel
+EventSensorDataset = importlib.import_module('src.event_sensor_dataset').EventSensorDataset
+load_events = importlib.import_module('src.event_sensor_dataset').load_synthetic_events
 
 
 class TestCheckpointedWorldModel(unittest.TestCase):
@@ -77,6 +86,60 @@ class TestCheckpointedWorldModel(unittest.TestCase):
         state, reward = model(self.text, self.img, self.action)
         self.assertEqual(state.shape, (1, cfg.embed_dim))
         self.assertEqual(reward.shape, (1,))
+
+    def test_event_stream_forward(self):
+        cfg = MultiModalWorldModelConfig(
+            vocab_size=10,
+            img_channels=3,
+            action_dim=4,
+            use_event_streams=True,
+            event_channels=2,
+        )
+        model = MultiModalWorldModel(cfg)
+        events = torch.randn(1, 2, 8)
+        state, reward = model(self.text, self.img, self.action, events=events)
+        self.assertEqual(state.shape, (1, cfg.embed_dim))
+        self.assertEqual(reward.shape, (1,))
+
+    def test_fpga_receives_events(self):
+        cfg = MultiModalWorldModelConfig(
+            vocab_size=10,
+            img_channels=3,
+            action_dim=4,
+            use_event_streams=True,
+            event_channels=2,
+            use_fpga=True,
+        )
+        with patch.object(mmwm, "FPGAAccelerator") as Fake:
+            inst = Fake.return_value
+            inst.compile.return_value = None
+            model = MultiModalWorldModel(cfg)
+            model.fpga = inst
+            events = torch.randn(1, 2, 8)
+            model(self.text, self.img, self.action, events=events)
+            inst.run.assert_called_with(self.text, self.img, self.action, events)
+
+
+class TestTrainWorldModelTelemetry(unittest.TestCase):
+    def test_training_logs_metrics(self):
+        cfg = MultiModalWorldModelConfig(vocab_size=10, img_channels=3, action_dim=4)
+        model = MultiModalWorldModel(cfg)
+        texts = ["a", "b"]
+        imgs = [torch.zeros(3, 4, 4) for _ in texts]
+        acts = [0, 1]
+        dataset = mmwm.TrajectoryDataset([(t, i, a, t, i, 0.0) for t, i, a in zip(texts, imgs, acts)], list)
+        events = load_events(num_samples=2, channels=2, length=8)
+
+        class DummyLogger(TelemetryLogger):
+            def start(self):
+                pass
+
+            def stop(self):
+                pass
+
+        tel = DummyLogger(interval=0.01)
+        mmwm.train_world_model(model, dataset, event_dataset=events, telemetry=tel, epochs=1, batch_size=1)
+        self.assertIn("world_model_loss", tel.metrics)
 
 
 if __name__ == '__main__':

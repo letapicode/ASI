@@ -227,6 +227,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    `encode_all()` stores the recognized embeddings for retrieval. The
    `SignLanguageRecognizer` now classifies a couple of common gestures so signs
    like *hello* and *thanks* can be queried across languages.
+3a. **Event sensor fusion**: `EventSensorDataset` ingests arrays or ``.npy`` files
+    containing DVS or neuromorphic microphone events. `train_world_model()` can
+    fuse them when `use_event_streams=True`. The average loss is reported via
+    `TelemetryLogger.world_model_loss` for monitoring.
 4. **LoRA-quantized world model**: *Implemented* via a `use_lora` option in
    `multimodal_world_model.py` which wraps the transformer layers with
    quantized adapters.
