@@ -934,7 +934,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   accelerator types.
 - Introduce an `ARDebugger` that streams robot state via WebSockets so predicted
   and actual trajectories from `world_model_rl` can be overlaid in an AR client.
-  See `scripts/ar_robot_demo.py` for a minimal demo.
+  A WebXR viewer (`scripts/webxr_viewer.js`) renders the streamed graph in the
+  browser. See `scripts/ar_robot_demo.py` for a minimal demo.
 - `research_ingest.py` fetches arXiv titles and abstracts, translates them via
   `CrossLingualTranslator` and stores language-tagged summaries under
   `research_logs/`.

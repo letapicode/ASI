@@ -12,8 +12,9 @@ This repository experiments with algorithms needed for self-improving AI. The bi
 - `meta-rl-refactor` parses action/reward logs and suggests the next refactoring step.
 - `scripts/dataset_summary.py` prints lineage and license info. Use `--content` to cluster dataset samples and store summaries under `docs/datasets/`.
 - `scripts/lineage_viewer.py <root>` serves an interactive graph of the dataset lineage.
-- `scripts/ar_robot_demo.py` streams predicted and actual robot trajectories to a WebSocket server for lightweight AR visualization. Pass `--show-graph` to also broadcast `GraphOfThought` nodes.
+- `scripts/ar_robot_demo.py` streams predicted and actual robot trajectories to a WebSocket server for lightweight AR visualization. Pass `--show-graph` to also broadcast `GraphOfThought` nodes. Open `scripts/webxr_viewer.js` in a WebXR-capable browser to see the graph.
 - `scripts/got_3d_viewer.py <trace.json>` launches a pythreejs viewer for reasoning graphs. Connect to `ws://localhost:8090/ws` to stream updates.
+- `scripts/webxr_viewer.js` displays streamed reasoning graphs in WebXR.
 
 Example:
 
@@ -30,7 +31,7 @@ meta-rl-refactor sample_log.csv
 4. Optional: `pip install faiss-cpu` to enable disk-backed vector storage in `src/vector_store.py`.
 5. Run `pip install -e .` to enable imports from the `asi` package.
 6. The project runs without these optional packages, but FlashAttention-3 and persistent storage will be disabled.
-7. Launch the AR demo with `python scripts/ar_robot_demo.py` (add `--show-graph` to stream the reasoning graph) and connect your AR client to `ws://localhost:8765/ws`.
+7. Launch the AR demo with `python scripts/ar_robot_demo.py` (add `--show-graph` to stream the reasoning graph) and connect your AR client to `ws://localhost:8765/ws`. Serve `scripts/webxr_viewer.js` from any web server and open it with `?ws=ws://localhost:8766/ws` to view the graph in WebXR.
 
 Run the scripts directly with `python` to see parameter and FLOP estimates.
 
