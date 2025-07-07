@@ -4,6 +4,11 @@ import types
 import sys
 import unittest
 
+try:
+    import torch
+except Exception:  # pragma: no cover - torch optional
+    raise unittest.SkipTest("torch not available")
+
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
 
@@ -19,9 +24,10 @@ def load(name, path):
     return mod
 
 
-cg = load('asi.cross_lingual_graph', 'src/cross_lingual_graph.py')
 cs = load('asi.context_summary_memory', 'src/context_summary_memory.py')
 di = load('asi.data_ingest', 'src/data_ingest.py')
+goth = load('asi.graph_of_thought', 'src/graph_of_thought.py')
+cg = load('asi.cross_lingual_graph', 'src/cross_lingual_graph.py')
 
 CrossLingualReasoningGraph = cg.CrossLingualReasoningGraph
 ContextSummaryMemory = cs.ContextSummaryMemory

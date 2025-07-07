@@ -20,9 +20,15 @@ class CrossLingualReasoningGraph(GraphOfThought):
         lang: str = "en",
         metadata: Dict[str, Any] | None = None,
         node_id: int | None = None,
+        image_embed: Sequence[float] | None = None,
+        audio_embed: Sequence[float] | None = None,
     ) -> int:
         meta = dict(metadata or {})
         meta["lang"] = lang
+        if image_embed is not None:
+            meta["image_vec"] = list(image_embed)
+        if audio_embed is not None:
+            meta["audio_vec"] = list(audio_embed)
         return super().add_step(text, meta, node_id)
 
     def summarize_old_steps(

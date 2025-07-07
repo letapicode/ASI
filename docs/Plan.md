@@ -424,6 +424,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      steps with language tags. `GraphOfThoughtPlanner` can record ranked plans so
      they are retrievable in multiple languages. Evaluate by confirming the same
      plan is found in at least two languages.
+41c. **Multimodal reasoning graph**: `CrossLingualReasoningGraph.add_step()`
+     accepts `image_embed` and `audio_embed`. Use `embed_modalities()` from
+     `CrossModalFusion` to generate vectors. `ReasoningHistoryLogger` preserves
+     `image_vec` and `audio_vec` when saving histories.
 42. **World-model distillation**: Implement a `WorldModelDistiller` that
     compresses the large world model into a smaller student network. Target
     <5% reward loss on the embodied RL benchmarks while reducing model size by
