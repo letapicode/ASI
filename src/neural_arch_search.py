@@ -7,6 +7,8 @@ from itertools import product
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Any, Callable, Dict, Iterable, Tuple, List
 
+from .neuroevolution_search import NeuroevolutionSearch
+
 from .telemetry import TelemetryLogger
 
 
@@ -91,4 +93,43 @@ class DistributedArchSearch:
         return best_cfg, best_score
 
 
-__all__ = ["DistributedArchSearch"]
+def search_architecture(
+    search_space: Dict[str, Iterable[Any]],
+    eval_func: Callable[[Dict[str, Any]], float],
+    *,
+    method: str = "gradient",
+    max_workers: int = 2,
+    generations: int = 5,
+    num_samples: int = 10,
+    population_size: int = 8,
+    mutation_rate: float = 0.1,
+    crossover_rate: float = 0.5,
+    telemetry: TelemetryLogger | None = None,
+    energy_weight: float = 0.0,
+) -> Tuple[Dict[str, Any], float]:
+    """Unified API for gradient or evolutionary architecture search."""
+    if method == "evolution":
+        search = NeuroevolutionSearch(
+            search_space,
+            eval_func,
+            population_size=population_size,
+            mutation_rate=mutation_rate,
+            crossover_rate=crossover_rate,
+            telemetry=telemetry,
+            energy_weight=energy_weight,
+        )
+        return search.search(generations=generations)
+    if method == "gradient":
+        search = DistributedArchSearch(
+            search_space,
+            eval_func,
+            max_workers=max_workers,
+            telemetry=telemetry,
+            energy_weight=energy_weight,
+        )
+        return search.search(num_samples=num_samples)
+    raise ValueError(f"Unknown method: {method}")
+
+
+__all__ = ["DistributedArchSearch", "search_architecture", "NeuroevolutionSearch"]
+

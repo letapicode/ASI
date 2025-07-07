@@ -234,17 +234,26 @@ class MultiModalEval:
 
 
 def _eval_neural_arch_search() -> Tuple[bool, str]:
-    """Run a tiny distributed search to verify the module."""
-    from asi.neural_arch_search import DistributedArchSearch
+    """Run a tiny architecture search to verify the module."""
+    import os
+    from asi.neural_arch_search import search_architecture
 
-    space = {"layers": [1, 2], "hidden": [8, 16]}
+    space = {"layers": [1, 2, 3], "hidden": [8, 16]}
 
     def score(cfg: Dict[str, int]) -> float:
         # Simple additive score favouring more layers and hidden units
         return cfg["layers"] + cfg["hidden"] / 16
 
-    search = DistributedArchSearch(space, score, max_workers=1)
-    best, val = search.search(num_samples=4)
+    method = os.environ.get("ARCH_SEARCH_ALGO", "gradient")
+    best, val = search_architecture(
+        space,
+        score,
+        method=method,
+        max_workers=1,
+        generations=2,
+        num_samples=4,
+        population_size=4,
+    )
     ok = "layers" in best and "hidden" in best
     return ok, f"score={val:.2f}"
 

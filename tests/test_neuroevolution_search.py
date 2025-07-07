@@ -55,54 +55,33 @@ def _load(name, path):
     return mod
 
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
-_load('asi.neuroevolution_search', 'src/neuroevolution_search.py')
-DistributedArchSearch = _load('asi.neural_arch_search', 'src/neural_arch_search.py').DistributedArchSearch
+NeuroevolutionSearch = _load('asi.neuroevolution_search', 'src/neuroevolution_search.py').NeuroevolutionSearch
 
 
-class TestNeuralArchSearch(unittest.TestCase):
-    def test_search_selects_best(self):
-        space = {"layers": [1, 2], "hidden": [8, 16]}
-        random.seed(0)
-
-        def score(cfg):
-            return cfg["layers"] * cfg["hidden"]
-
-        search = DistributedArchSearch(space, score, max_workers=1)
-        best, val = search.search(num_samples=4)
-        self.assertEqual(best["layers"], 2)
-        self.assertEqual(best["hidden"], 16)
-        self.assertEqual(val, 32)
-
-    def test_energy_weight_affects_ranking(self):
-        space = {"layers": [1, 2]}
-        random.seed(0)
-        energies = [0.0, 0.0, 3.0, 3.0, 3.1]
-
-        class DummyLogger(TelemetryLogger):
-            def __init__(self, vals):
-                super().__init__(interval=0.01)
-                self.vals = vals
-                self.idx = 0
-
-            def start(self):
-                pass
-
-            def stop(self):
-                pass
-
-            def get_stats(self):
-                val = self.vals[self.idx]
-                if self.idx < len(self.vals) - 1:
-                    self.idx += 1
-                return {"energy_kwh": val}
+class TestNeuroevolutionSearch(unittest.TestCase):
+    def test_evolution_improves_loss(self):
+        space = {"layers": [1, 2, 3, 4], "hidden": [4, 8, 12, 16]}
+        random.seed(2)
 
         def score(cfg):
-            return float(cfg["layers"]) * 10
+            loss = (cfg["layers"] - 4) ** 2 + (cfg["hidden"] - 12) ** 2
+            return -float(loss)
 
-        tel = DummyLogger(energies)
-        search = DistributedArchSearch(space, score, max_workers=1, telemetry=tel, energy_weight=5.0)
-        best, _ = search.search(num_samples=2)
-        self.assertEqual(best["layers"], 1)
+        search = NeuroevolutionSearch(
+            space,
+            score,
+            population_size=4,
+            mutation_rate=0.5,
+            crossover_rate=0.5,
+            telemetry=TelemetryLogger(interval=0.01),
+        )
+        best, best_score = search.search(generations=5)
+        first_loss = -search.history[0]
+        final_loss = -search.history[-1]
+        self.assertLess(final_loss, first_loss)
+        self.assertEqual(best["layers"], 4)
+        self.assertEqual(best["hidden"], 12)
+        self.assertGreater(best_score, -0.1)
 
 
 if __name__ == "__main__":

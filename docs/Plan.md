@@ -300,8 +300,13 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 25. **Neural architecture search**: Evaluate `src/neural_arch_search.py` across
     candidate module configurations and report accuracy vs. compute costs.
     The search now logs energy usage via `TelemetryLogger` and supports an
-    `energy_weight` option to trade off accuracy against consumption.
-    *Implemented in `src/neural_arch_search.py`.*
+    `energy_weight` option to trade off accuracy against consumption. The
+    evaluation harness can now pick a **gradient** or **evolutionary** strategy
+    via `ARCH_SEARCH_ALGO`. The evolutionary variant in
+    `src/neuroevolution_search.py` mutates and crossovers candidates and is
+    deemed successful when validation loss drops ≥5 % after five generations on
+    a toy benchmark.
+    *Implemented in `src/neural_arch_search.py` and `src/neuroevolution_search.py`.*
 25. **Self-healing distributed training**: Deploy `SelfHealingTrainer` to
     restart failed jobs automatically and track overall utilization.
     *Implemented in `src/self_healing_trainer.py`.*
