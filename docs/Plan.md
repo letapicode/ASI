@@ -619,6 +619,14 @@ ID, waiting for the optimal delay if necessary.  See the
 `scripts/hpc_multi_schedule.py` CLI for a minimal example that prints which
 cluster was selected.
 
+`adaptive_cost_scheduler.AdaptiveCostScheduler` builds on this multi-cluster
+approach by training a simple Q-learning policy from the stored carbon and price
+histories.  The policy decides whether to wait for a cheaper, greener slot or
+submit immediately.  Tune `bins`, `epsilon`, `alpha`, `gamma` and
+`check_interval` to control exploration and learning rate.  A demonstration is
+available via `scripts/adaptive_cost_schedule.py`.  Set `qtable_path` to persist
+the learned Q-table between runs.
+
 
 
 
