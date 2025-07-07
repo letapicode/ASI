@@ -458,6 +458,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     `ContextSummaryMemory` with translations so `query_summary()` can return the
     compressed trace in any language. Evaluate by confirming the same plan is
     found in at least two languages.
+41b1. **Multilingual Graph UI**: The HTML interface offers a language selector so
+      nodes are displayed and edited in the chosen language using
+      `CrossLingualReasoningGraph.translate_node()`.
 41c. **Multimodal reasoning graph**: `CrossLingualReasoningGraph.add_step()`
      accepts `image_embed` and `audio_embed`. Use `embed_modalities()` from
      `CrossModalFusion` to generate vectors. `ReasoningHistoryLogger` preserves
