@@ -194,6 +194,7 @@ from .auto_labeler import AutoLabeler
 from .graphql_memory_gateway import GraphQLMemoryGateway
 from .world_model_distiller import DistillConfig, distill_world_model
 from .summarizing_memory import SummarizingMemory
+from .memory_pruning_manager import MemoryPruningManager
 from .cross_lingual_memory import CrossLingualMemory
 from .cross_lingual_kg_memory import CrossLingualKGMemory
 from .cross_lingual_graph import CrossLingualReasoningGraph
