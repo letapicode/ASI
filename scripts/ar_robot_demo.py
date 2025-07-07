@@ -59,7 +59,10 @@ def main(argv: list[str] | None = None) -> None:
         last_node = graph.add_step("start")
         overlay = ARGOTOverlay(graph)
         overlay.start(port=8766)
-        print(f"Graph overlay running on ws://localhost:{overlay.port}/ws")
+        print(
+            f"Graph overlay running on ws://localhost:{overlay.port}/ws "
+            "(open webxr_viewer.js in a WebXR-capable browser)"
+        )
 
     obs = env.reset()
     for i in range(10):
