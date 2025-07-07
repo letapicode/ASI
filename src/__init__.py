@@ -308,6 +308,13 @@ from .fpga_backend import (
     get_fpga_config,
     _HAS_FPGA,
 )
+from .analog_backend import (
+    AnalogAccelerator,
+    AnalogConfig,
+    configure_analog,
+    get_analog_config,
+    _HAS_ANALOG,
+)
 
 from .emotion_detector import detect_emotion
 from .bio_memory_replay import run_nightly_replay

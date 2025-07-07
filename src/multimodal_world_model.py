@@ -118,6 +118,7 @@ class MultiModalWorldModelConfig:
     use_spiking: bool = False
     use_loihi: bool = False
     use_fpga: bool = False
+    use_analog: bool = False
 
 
 class MultiModalWorldModel(nn.Module):
