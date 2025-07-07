@@ -441,6 +441,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 51. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
 52. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines. *Implemented in `src/dataset_lineage_manager.py`.*
     Use `DataProvenanceLedger` to append a signed hash of each lineage record. Run `scripts/check_provenance.py <root>` to verify the ledger.
+52a. **Zero-trust memory server**: `ZeroTrustMemoryServer` validates signed access tokens against a `BlockchainProvenanceLedger` before serving requests. Unauthorized clients are rejected.
 53. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
 54. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
 55. **Gradient compression for distributed training**: Implement a `GradientCompressor`
