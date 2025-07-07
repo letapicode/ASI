@@ -17,15 +17,37 @@ class SignLanguageRecognizer:
         else:
             self._hands = None
 
+    def _fallback(self, video: np.ndarray) -> str:
+        mean = float(video.mean())
+        if mean > 0.66:
+            return "hello"
+        if mean > 0.33:
+            return "thanks"
+        return ""
+
     def recognize(self, video: np.ndarray) -> str:
         """Return a rough transcription of ``video`` or ``""`` on failure."""
         if self._hands is None:
-            return "hello" if video.mean() > 0 else ""
+            return self._fallback(video)
 
+        open_hand = 0
+        closed = 0
         for frame in video:
             res = self._hands.process(frame)
-            if getattr(res, "multi_hand_landmarks", None):
-                return "hello"
+            if not getattr(res, "multi_hand_landmarks", None):
+                continue
+            lm = res.multi_hand_landmarks[0].landmark
+            thumb = lm[4]
+            index = lm[8]
+            dist = ((thumb.x - index.x) ** 2 + (thumb.y - index.y) ** 2) ** 0.5
+            if dist > 0.1:
+                open_hand += 1
+            else:
+                closed += 1
+        if open_hand > closed:
+            return "hello"
+        if closed:
+            return "thanks"
         return ""
 
 

@@ -63,6 +63,16 @@ class TestSignLanguage(unittest.TestCase):
         vid = np.ones((2, 2, 2, 3), dtype=np.float32)
         self.assertEqual(rec.recognize(vid), "hello")
 
+    def test_recognizer_thanks(self):
+        rec = SignLanguageRecognizer()
+        vid = np.ones((2, 2, 2, 3), dtype=np.float32) * 0.5
+        self.assertEqual(rec.recognize(vid), "thanks")
+
+    def test_recognizer_unknown(self):
+        rec = SignLanguageRecognizer()
+        vid = np.zeros((2, 2, 2, 3), dtype=np.float32)
+        self.assertEqual(rec.recognize(vid), "")
+
     def test_retrieval_with_sign(self):
         cfg = CrossModalFusionConfig(vocab_size=50, text_dim=8, img_channels=3, audio_channels=1, latent_dim=4)
         model = CrossModalFusion(cfg)

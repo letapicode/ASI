@@ -223,7 +223,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
  retrieval accuracy on 1&nbsp;M-token streams. *Implemented via
   `add_multimodal()` in `cross_modal_fusion.py` and related unit tests.*
 3. **Sign-language ingestion**: `download_triples()` accepts sign-video URLs and
-   `encode_all()` stores the recognized embeddings for retrieval.
+   `encode_all()` stores the recognized embeddings for retrieval. The
+   `SignLanguageRecognizer` now classifies a couple of common gestures so signs
+   like *hello* and *thanks* can be queried across languages.
 4. **LoRA-quantized world model**: *Implemented* via a `use_lora` option in
    `multimodal_world_model.py` which wraps the transformer layers with
    quantized adapters.

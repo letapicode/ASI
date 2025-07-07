@@ -552,7 +552,9 @@ Run `scripts/lineage_viewer.py ./data` to browse the recorded steps.
   them with text, image and audio vectors for world-model training.
 - Sign-language videos can be processed with `SignLanguageRecognizer`. Pass
   `sign_videos` to `encode_all()` so the resulting embeddings are stored via
-  `add_multimodal()`.
+  `add_multimodal()`. The recognizer now distinguishes common signs like
+  **hello** and **thanks** using simple landmark heuristics so retrieval works
+  across a broader gesture set.
 - Add a `log_memory_usage()` helper to `eval_harness.py` and print GPU memory usage alongside accuracy metrics. **Implemented**
 - Integrate `QAEHyperparamSearch` into `MetaRLRefactorAgent` to tune the exploration rate during refactoring. **Implemented**
 - Rewrite `download_triples()` with asyncio to fetch dataset files
