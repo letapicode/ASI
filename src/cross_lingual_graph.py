@@ -2,17 +2,28 @@ from __future__ import annotations
 
 from typing import Any, Dict, Sequence
 
+try:  # pragma: no cover - optional heavy dep
+    import torch
+except Exception:  # pragma: no cover - torch optional
+    torch = None  # type: ignore
+
 from .graph_of_thought import GraphOfThought
 from .data_ingest import CrossLingualTranslator
 from .context_summary_memory import ContextSummaryMemory
+from .reasoning_history import ReasoningHistoryLogger
 
 
 class CrossLingualReasoningGraph(GraphOfThought):
     """Graph-of-thought variant that stores language tags."""
 
-    def __init__(self, translator: CrossLingualTranslator | None = None) -> None:
+    def __init__(
+        self,
+        translator: CrossLingualTranslator | None = None,
+        logger: ReasoningHistoryLogger | None = None,
+    ) -> None:
         super().__init__()
         self.translator = translator
+        self.logger = logger or ReasoningHistoryLogger()
 
     def add_step(
         self,
@@ -47,10 +58,23 @@ class CrossLingualReasoningGraph(GraphOfThought):
         translations: Dict[str, str] | None = None
         if translator is not None:
             translations = translator.translate_all(summary)
+        info: Dict[str, Any] = {"summary": summary}
+        if translations is not None:
+            info["translations"] = translations
+        # store summary vector with metadata
+        vec = memory.summarizer.expand(summary)
+        if torch is not None:
+            with torch.no_grad():
+                comp = memory.compressor.encoder(vec.unsqueeze(0))
+        else:
+            comp = memory.compressor.encoder(vec.unsqueeze(0))
+        memory.add_compressed(comp, [{"ctxsum": info}])
         meta: Dict[str, Any] = {"summary": True}
         if translations is not None:
             meta["translations"] = translations
         nid = self.add_step(summary, metadata=meta)
+        if self.logger is not None:
+            self.logger.log(info, nodes=list(prefix), location={"ctxsum": info})
         return [nid] + list(trace[-threshold:])
 
     def translate_node(self, node_id: int, target_lang: str) -> str:
@@ -76,6 +100,28 @@ class CrossLingualReasoningGraph(GraphOfThought):
             return super().summarize_trace(trace)
         texts = [self.translate_node(n, lang) for n in trace if n in self.nodes]
         return " -> ".join(texts)
+
+    def query_summary(
+        self,
+        trace: Sequence[int],
+        memory: ContextSummaryMemory,
+        lang: str = "en",
+    ) -> str:
+        """Return the stored summary for ``trace`` in ``lang``."""
+        text = self.summarize_trace(trace)
+        vec = memory.summarizer.expand(text)
+        _vecs, meta = memory.search(vec, k=1, language=lang)
+        if meta:
+            m = meta[0]
+            if isinstance(m, str):
+                return m
+            if isinstance(m, dict) and "ctxsum" in m:
+                info = m["ctxsum"]
+                return info.get("translations", {}).get(lang, info["summary"])
+        translator = memory.translator or self.translator
+        if translator is not None and lang != "en":
+            return translator.translate(text, lang)
+        return text
 
 
 __all__ = ["CrossLingualReasoningGraph"]
