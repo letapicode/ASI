@@ -992,6 +992,11 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
   and actual trajectories from `world_model_rl` can be overlaid in an AR client.
   A WebXR viewer (`scripts/webxr_viewer.js`) renders the streamed graph in the
   browser. See `scripts/ar_robot_demo.py` for a minimal demo.
+  - `vr_graph_explorer.py` uses pythreejs to display a `GraphOfThought` in VR.
+    Layout and edge computation are vectorised with NumPy for faster updates.
+    Voice and sign-language commands are handled by `VoiceGraphController` so
+    graphs can be edited hands free. Launch it with
+    `scripts/vr_explorer.py trace.json` and open the reported URL.
 - `research_ingest.py` fetches arXiv titles and abstracts, translates them via
   `CrossLingualTranslator` and stores language-tagged summaries under
   `research_logs/`.
