@@ -25,6 +25,24 @@ GraphUI = _load('asi.graph_ui', 'src/graph_ui.py').GraphUI
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 CognitiveLoadMonitor = _load('asi.cognitive_load_monitor', 'src/cognitive_load_monitor.py').CognitiveLoadMonitor
 
+class CrossLingualTranslator:
+    def __init__(self, languages):
+        self.languages = list(languages)
+
+    def translate(self, text, lang):
+        if lang not in self.languages:
+            raise ValueError('unsupported language')
+        return f'[{lang}] {text}'
+
+    def translate_all(self, text):
+        return {l: self.translate(text, l) for l in self.languages}
+
+dummy_tr = types.ModuleType('asi.data_ingest')
+dummy_tr.CrossLingualTranslator = CrossLingualTranslator
+sys.modules['asi.data_ingest'] = dummy_tr
+
+CrossLingualReasoningGraph = _load('asi.cross_lingual_graph', 'src/cross_lingual_graph.py').CrossLingualReasoningGraph
+
 
 class DummyLogger(TelemetryLogger):
     def __init__(self):
@@ -86,6 +104,19 @@ class TestGraphUI(unittest.TestCase):
         conn.request('GET', '/graph/data')
         data = json.loads(conn.getresponse().read())
         self.assertTrue(data['nodes'][0]['text'].endswith('...'))
+        ui.stop()
+
+    def test_search(self):
+        tr = CrossLingualTranslator(['es'])
+        g = CrossLingualReasoningGraph(translator=tr)
+        g.add_step('hello', lang='en')
+        logger = ReasoningHistoryLogger()
+        ui = GraphUI(g, logger)
+        ui.start(port=0)
+        conn = http.client.HTTPConnection('localhost', ui.port)
+        conn.request('GET', '/graph/search?query=hello&lang=es')
+        res = json.loads(conn.getresponse().read())
+        self.assertEqual(res[0]['text'], '[es] hello')
         ui.stop()
 
 
