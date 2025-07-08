@@ -1,10 +1,37 @@
 import random
-from typing import List
+from typing import List, Any
 
 __all__ = ["ReservoirBuffer", "StreamingCompressor"]
 
-import torch
-from torch import nn
+try:  # optional torch dependency
+    import torch
+    from torch import nn
+except Exception:  # pragma: no cover - allow running without torch
+    import types
+    import numpy as np
+
+    class _DummyNN(types.SimpleNamespace):
+        class Module:  # type: ignore[override]
+            pass
+
+        class Linear:
+            def __init__(self, in_f: int, out_f: int):
+                self.in_features = in_f
+                self.out_features = out_f
+            def __call__(self, x):
+                return x
+
+    class _DummyTorch(types.SimpleNamespace):
+        Tensor = type("Tensor", (), {})
+
+        def empty(self, *args: Any):
+            return np.empty(*args)
+
+        def stack(self, seq):
+            return np.stack(list(seq))
+
+    torch = _DummyTorch()
+    nn = _DummyNN()
 
 
 class ReservoirBuffer:

@@ -2,7 +2,19 @@ from __future__ import annotations
 
 from typing import Any, List
 import numpy as np
-import torch
+try:  # optional torch dependency
+    import torch
+except Exception:  # pragma: no cover - allow running without torch
+    import types
+    import numpy as np
+
+    class _DummyTorch(types.SimpleNamespace):
+        Tensor = type("Tensor", (), {})
+
+        def stack(self, seq):
+            return np.stack(list(seq))
+
+    torch = _DummyTorch()
 
 from .telemetry import TelemetryLogger
 

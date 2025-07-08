@@ -573,6 +573,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 84. **Natural-language graph editor**: `nl_graph_editor.py` interprets commands like "merge nodes A and B" or "add edge from X to Y". `GraphUI` exposes `/graph/nl_edit` so the web UI accepts these instructions.
 
 84a. **Voice graph controller**: `voice_graph_controller.py` converts spoken commands to text using the `speech_recognition` package and forwards them to `NLGraphEditor`. `GraphUI` now exposes `/graph/voice` for audio inputs. Install `speech_recognition` to enable this feature.
+84b. **Cross-lingual voice chat**: `cross_lingual_voice_chat.py` maintains a short history and answers via text-to-speech. The JSON response includes base64 encoded audio when available. `GraphUI` exposes `/chat/voice` and `/chat/ws` for real-time conversations.
 
 85. **Temporal telemetry monitoring**: `MemoryEventDetector` parses logged hardware metrics and flags change points. `TelemetryLogger` stores these events so the memory dashboard exposes them via `/events`.
 86. **Introspection dashboard**: `IntrospectionDashboard` merges reasoning history with telemetry metrics. Run `scripts/introspection_dashboard.py` and open `http://localhost:8060` to inspect graph evolution alongside hardware usage.

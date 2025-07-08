@@ -9,6 +9,8 @@ except Exception:  # pragma: no cover - allow running without torch
     import types
 
     class _DummyTorch(types.SimpleNamespace):
+        Tensor = type("Tensor", (), {})
+
         def from_numpy(self, arr):
             return arr
 

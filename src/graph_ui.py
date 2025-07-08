@@ -28,6 +28,15 @@ except Exception:  # pragma: no cover - fallback when missing deps
         def apply(self, _audio: Any) -> Any:
             raise NotImplementedError
 try:  # pragma: no cover - optional dependency
+    from .cross_lingual_voice_chat import CrossLingualVoiceChat
+except Exception:  # pragma: no cover - fallback when missing deps
+    class CrossLingualVoiceChat:  # type: ignore[dead-code]
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            pass
+
+        def chat(self, *_args: Any, **_kwargs: Any) -> Any:
+            raise NotImplementedError
+try:  # pragma: no cover - optional dependency
     from .cognitive_load_monitor import CognitiveLoadMonitor
 except Exception:  # pragma: no cover - fallback
     class CognitiveLoadMonitor:  # type: ignore[dead-code]
@@ -154,11 +163,13 @@ class GraphUI:
         throttle_threshold: float = 0.7,
         update_interval: float = 1.0,
         telemetry: TelemetryLogger | None = None,
+        voice_chat: CrossLingualVoiceChat | None = None,
     ) -> None:
         self.graph = graph
         self.logger = logger
         self.editor = NLGraphEditor(graph)
         self.voice = VoiceGraphController(self.editor)
+        self.chat = voice_chat
         self.app = FastAPI()
         self.thread: threading.Thread | None = None
         self.server: uvicorn.Server | None = None
@@ -298,6 +309,35 @@ class GraphUI:
                 return JSONResponse({'status': 'error', 'error': str(e)}, status_code=400)
             await _record()
             return JSONResponse(result)
+
+        if self.chat is not None:
+            from fastapi import WebSocket, WebSocketDisconnect
+
+            @self.app.post('/chat/voice')
+            async def chat_voice(req: Request) -> Any:
+                data = await req.json()
+                audio = data.get('path') or data.get('audio')
+                try:
+                    result = self.chat.chat(audio)
+                except Exception as e:
+                    return JSONResponse({'status': 'error', 'error': str(e)}, status_code=400)
+                return JSONResponse(result)
+
+            @self.app.websocket('/chat/ws')
+            async def chat_ws(ws: WebSocket) -> None:
+                await ws.accept()
+                try:
+                    while True:
+                        data = await ws.receive()
+                        audio = data.get('bytes') or data.get('text')
+                        try:
+                            res = self.chat.chat(audio)
+                        except Exception as e:
+                            await ws.send_json({'status': 'error', 'error': str(e)})
+                            continue
+                        await ws.send_json(res)
+                except WebSocketDisconnect:
+                    pass
 
         @self.app.post('/graph/recompute')
         async def recompute() -> Any:

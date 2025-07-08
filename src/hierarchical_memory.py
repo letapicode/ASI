@@ -1,7 +1,23 @@
 import numpy as np
-import torch
-from pathlib import Path
 from typing import Iterable, Any, Tuple, List, Dict
+try:  # optional torch dependency
+    import torch
+except Exception:  # pragma: no cover - allow running without torch
+    import types
+
+    class _DummyTorch(types.SimpleNamespace):
+        Tensor = type("Tensor", (), {})
+
+        def empty(self, *args: Any, **kw: Any):
+            import numpy as np
+            return np.empty(*args)
+
+        def stack(self, seq: Iterable[Any]):
+            import numpy as np
+            return np.stack(list(seq))
+
+    torch = _DummyTorch()
+from pathlib import Path
 
 try:
     import grpc  # type: ignore

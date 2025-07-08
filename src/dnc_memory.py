@@ -3,7 +3,24 @@
 from __future__ import annotations
 
 import numpy as np
-import torch
+try:  # optional torch dependency
+    import torch
+except Exception:  # pragma: no cover - allow running without torch
+    import types
+    import numpy as np
+
+    class _DummyTorch(types.SimpleNamespace):
+        Tensor = type("Tensor", (), {})
+
+        float32 = 'float32'
+
+        def empty(self, *args: Any):
+            return np.empty(*args)
+
+        def stack(self, seq):
+            return np.stack(list(seq))
+
+    torch = _DummyTorch()
 from pathlib import Path
 from typing import Iterable, Any, List, Tuple
 
