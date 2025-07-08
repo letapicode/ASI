@@ -663,6 +663,31 @@ print(consensus_reasoner.report_disagreements(issues))
     and updates task values from the rewards. `MultiAgentDashboard` aggregates
     metrics to compare cooperation versus competition efficiency.
 
+89. **Unified provenance ledger**: `UnifiedProvenanceLedger` combines dataset
+    lineage, model checkpoints and reasoning summaries in a single blockchain
+    log. `DatasetLineageManager` and `ModelVersionManager` can now append to
+    this ledger so experiments become fully reproducible.
+
+90. **Multi-modal cognitive feedback loop**: `CognitiveFeedbackLoop` merges
+    emotion detection with EEG/eye‑tracking signals to adjust prompts at
+    runtime. Call `process(text, eeg=arr)` to receive the user-adjusted
+    response.
+
+91. **Adaptive multi-objective scheduler**: `AdaptiveMultiObjectiveScheduler`
+    trains a Q-learning policy that weighs carbon intensity, energy price,
+    battery level and GPU utilisation. `submit_job()` delays execution until the
+    combined score is favourable.
+
+92. **Collaborative graph-of-thought editor**: `CollaborativeGoTEditor` uses
+    WebSockets so multiple users can edit reasoning graphs concurrently. The
+    server merges updates with simple CRDT logic and broadcasts the resulting
+    version to all clients.
+
+93. **Explainable world-model distiller**: `distill_with_explanation()`
+    compresses a teacher `MultiModalWorldModel` into a lightweight student and
+    returns a ``DistillationReport`` with layer-wise mean‑squared errors so each
+    component remains interpretable.
+
 
 
 
