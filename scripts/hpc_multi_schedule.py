@@ -6,19 +6,37 @@ import argparse
 from asi.hpc_forecast_scheduler import HPCForecastScheduler
 from asi.hpc_multi_scheduler import MultiClusterScheduler
 from asi.rl_cost_scheduler import RLCostScheduler
+from asi.rl_carbon_scheduler import RLCarbonScheduler
+from asi.carbon_aware_scheduler import CarbonAwareScheduler
+from asi.meta_scheduler import MetaScheduler
 
 
 def main() -> None:  # pragma: no cover - CLI entry
     parser = argparse.ArgumentParser(description="Multi-cluster scheduling demo")
     parser.add_argument("command", nargs='+', help="Command to submit")
     parser.add_argument("--rl-cost", action="store_true", help="Use RL cost scheduler")
+    parser.add_argument("--meta", action="store_true", help="Use meta scheduler")
     args = parser.parse_args()
 
     clusters = {
         "east": HPCForecastScheduler(),
         "west": HPCForecastScheduler(backend="k8s"),
     }
-    if args.rl_cost:
+    if args.meta:
+        scheds = {
+            "carbon": CarbonAwareScheduler(0.5),
+            "rl": RLCarbonScheduler([], telemetry=None),
+            "forecast": HPCForecastScheduler(),
+        }
+        try:
+            from asi.transformer_forecast_scheduler import (
+                TransformerForecastScheduler,
+            )
+            scheds["transformer"] = TransformerForecastScheduler()
+        except Exception:
+            pass
+        sched = MetaScheduler(scheds)
+    elif args.rl_cost:
         sched = RLCostScheduler(clusters)
     else:
         sched = MultiClusterScheduler(clusters)

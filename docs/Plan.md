@@ -795,6 +795,12 @@ via the `--rl-cost` flag in `scripts/hpc_multi_schedule.py`. When plugged into
 `DistributedTrainer`, it achieved around 2 % lower cost and 3 % less emissions
 compared to `CarbonCostAwareScheduler` on the same traces.
 
+`meta_scheduler.MetaScheduler` chooses between `CarbonAwareScheduler`,
+`RLCarbonScheduler`, `HPCForecastScheduler` and `TransformerForecastScheduler`
+based on recent job success and rolling carbon/cost metrics reported by
+`TelemetryLogger`. Enable it via `--meta` in `scripts/hpc_multi_schedule.py` to
+automatically pick the best strategy.
+
 
 `coordinated_rl_cost_scheduler.CoordinatedRLCostScheduler` lets multiple
 schedulers share Q-tables through a lightweight aggregation group. This reduces
