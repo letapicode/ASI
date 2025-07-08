@@ -4,15 +4,27 @@ from __future__ import annotations
 
 import numpy as np
 from collections import Counter
+import concurrent.futures
 from pathlib import Path
 from typing import Iterable, Dict, Union
 
 
-def compute_word_freq(text_files: Iterable[str | Path]) -> Dict[str, int]:
+def compute_word_freq(
+    text_files: Iterable[str | Path], num_workers: int | None = None
+) -> Dict[str, int]:
+    """Return word frequencies aggregated across ``text_files``."""
+
+    def _load(p: str | Path) -> Counter[str]:
+        return Counter(Path(p).read_text().split())
+
     counter: Counter[str] = Counter()
-    for p in text_files:
-        words = Path(p).read_text().split()
-        counter.update(words)
+    if num_workers and num_workers > 1:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as ex:
+            for c in ex.map(_load, text_files):
+                counter.update(c)
+    else:
+        for p in text_files:
+            counter.update(_load(p))
     return dict(counter)
 
 
