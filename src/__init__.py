@@ -308,6 +308,7 @@ from .carbon_hpc_scheduler import CarbonAwareScheduler
 from .rl_carbon_scheduler import RLCarbonScheduler
 from .rl_cost_scheduler import RLCostScheduler
 from .coordinated_rl_cost_scheduler import CoordinatedRLCostScheduler
+from .meta_scheduler import MetaScheduler
 from .carbon_aware_dataset_ingest import CarbonAwareDatasetIngest
 
 from .collaboration_portal import CollaborationPortal
