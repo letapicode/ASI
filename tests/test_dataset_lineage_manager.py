@@ -43,6 +43,20 @@ class TestDatasetLineageManager(unittest.TestCase):
             self.assertEqual(len(steps), 1)
             self.assertEqual(steps[0].note, "step1")
 
+    def test_record_fairness(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            inp = root / "input.txt"
+            outp = root / "output.txt"
+            inp.write_text("in")
+            outp.write_text("out")
+            mgr = DatasetLineageManager(root)
+            mgr.record([inp], [outp], note="step1")
+            mgr.record([], [], note="fairness", fairness_before={"dp": 0.5}, fairness_after={"dp": 0.2})
+            data = json.loads((root / "dataset_lineage.json").read_text())
+            self.assertIn("fairness_before", data[1])
+            self.assertEqual(data[1]["fairness_before"]["dp"], 0.5)
+
 
 if __name__ == "__main__":
     unittest.main()

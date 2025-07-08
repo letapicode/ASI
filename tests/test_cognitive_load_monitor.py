@@ -3,9 +3,55 @@ import importlib.util
 import types
 import sys
 import unittest
-import torch
+try:
+    import torch
+except Exception:  # pragma: no cover - optional dependency
+    torch = types.ModuleType('torch')
+    class _T:
+        def detach(self):
+            return self
+        def clone(self):
+            return self
+        def to(self, *a, **kw):
+            return self
+        def view(self, *a):
+            return self
+        def norm(self):
+            return 0.0
+        def __getitem__(self, idx):
+            return _T()
+        @property
+        def dtype(self):
+            return 0
+        def item(self):
+            return 0.6
+        def __float__(self):
+            return 0.6
+    torch.randn = lambda *a, **kw: _T()
+    torch.zeros = lambda *a, **kw: _T()
+    torch.float32 = 0
+    torch.softmax = lambda tensor, dim=0: tensor
+    torch.tensor = lambda data, dtype=None: _T()
+    torch.nn = types.SimpleNamespace(Module=object)
+    utils_mod = types.ModuleType('torch.utils')
+    data_mod = types.ModuleType('torch.utils.data')
+    data_mod.Dataset = object
+    data_mod.DataLoader = object
+    utils_mod.data = data_mod
+    torch.utils = utils_mod
+    sys.modules['torch.utils'] = utils_mod
+    sys.modules['torch.utils.data'] = data_mod
+sys.modules['torch'] = torch
+sys.modules['asi.loihi_backend'] = types.SimpleNamespace(
+    LoihiConfig=object,
+    configure_loihi=lambda *a, **kw: None,
+    _HAS_LOIHI=False,
+)
+sys.modules['requests'] = types.SimpleNamespace(get=lambda *a, **kw: None)
+sys.modules['asi.privacy_guard'] = types.SimpleNamespace(PrivacyGuard=object)
 
 pkg = types.ModuleType('asi')
+pkg.__path__ = ['src']
 sys.modules['asi'] = pkg
 
 
@@ -75,6 +121,15 @@ class TestCognitiveLoadMonitor(unittest.TestCase):
         monitor.log_input('a', timestamp=0.0)
         monitor.log_input('b', timestamp=1.5)
         self.assertTrue(loads and isinstance(loads[-1], float))
+
+    def test_stream_metrics(self):
+        logger = DummyLogger()
+        monitor = CognitiveLoadMonitor(telemetry=logger, pause_threshold=1.0)
+        monitor.log_input('a', timestamp=0.0)
+        monitor.log_input('b', timestamp=1.0)
+        metrics = list(monitor.stream_metrics())
+        self.assertTrue(metrics)
+        self.assertAlmostEqual(metrics[-1]['avg_pause'], 1.0, delta=1e-6)
 
 
 if __name__ == '__main__':

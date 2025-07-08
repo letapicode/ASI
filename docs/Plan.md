@@ -515,8 +515,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 60. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
 61. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
 61a. **Dataset bias mitigation**: `DataBiasMitigator` reweights or filters entries based on these scores. `download_triples()` now applies the mitigator before storing new files.
-<<<<<<< HEAD
 61b. **Fairness gap visualizer**: `fairness_visualizer.FairnessVisualizer` plots demographic parity and opportunity gaps. `dataset_summary.py --fairness-report` saves the charts under `docs/datasets/`; they appear in the lineage and memory dashboards for quick inspection.
+61c. **Fairness adaptation pipeline**: `FairnessAdaptationPipeline` streams bias and cognitive load metrics during ingestion and adjusts `ActiveDataSelector` weights. Bias scores are cached and weight updates are vectorised for faster adaptation. `DatasetLineageManager` logs fairness before and after adaptation, showing improved demographic parity on toy datasets.
 62. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
 63. **Parameter-efficient model editing**: Implement `GradientPatchEditor` to fix wrong outputs with minimal updates; >90% targeted fix rate with <1% perplexity change.
 64. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
