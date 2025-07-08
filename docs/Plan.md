@@ -390,7 +390,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     replicates vector stores across peers via gRPC streaming consensus for
     decentralized retrieval. The service now exposes a `Sync` RPC and uses
     CRDT update rules so that multiple servers converge on identical vector
-    stores after exchanging updates.
+    stores after exchanging updates. Retrieval proofs can be verified during
+    `Sync` so peers refuse tampered vectors. Proof digests are cached and
+    peers replicate updates concurrently for lower latency.
 31. **Active data selection**: `ActiveDataSelector` now outputs continuous
     sample weights based on predictive entropy and down-weights biased
     examples using `dataset_bias_detector`. A new `SampleWeightRL` loop

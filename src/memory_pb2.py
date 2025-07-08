@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cmemory.proto\x12\x03\x61si\"3\n\x10PushBatchRequest\x12\x1f\n\x05items\x18\x01 \x03(\x0b\x32\x10.asi.PushRequest\"5\n\x11QueryBatchRequest\x12 \n\x05items\x18\x01 \x03(\x0b\x32\x11.asi.QueryRequest\"1\n\x0fQueryBatchReply\x12\x1e\n\x05items\x18\x01 \x03(\x0b\x32\x0f.asi.QueryReply\"/\n\x0bPushRequest\x12\x0e\n\x06vector\x18\x01 \x03(\x02\x12\x10\n\x08metadata\x18\x02 \x01(\t\"\x17\n\tPushReply\x12\n\n\x02ok\x18\x01 \x01(\x08\")\n\x0cQueryRequest\x12\x0e\n\x06vector\x18\x01 \x03(\x02\x12\t\n\x01k\x18\x02 \x01(\x05\"/\n\nQueryReply\x12\x0f\n\x07vectors\x18\x01 \x03(\x02\x12\x10\n\x08metadata\x18\x02 \x03(\t\"N\n\x0bVectorEntry\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06vector\x18\x02 \x03(\x02\x12\x10\n\x08metadata\x18\x03 \x01(\t\x12\x11\n\ttimestamp\x18\x04 \x01(\x03\".\n\x0bSyncRequest\x12\x1f\n\x05items\x18\x01 \x03(\x0b\x32\x10.asi.VectorEntry\"\x17\n\tSyncReply\x12\n\n\x02ok\x18\x01 \x01(\x08\x32\x80\x02\n\rMemoryService\x12(\n\x04Push\x12\x10.asi.PushRequest\x1a\x0e.asi.PushReply\x12+\n\x05Query\x12\x11.asi.QueryRequest\x1a\x0f.asi.QueryReply\x12\x32\n\tPushBatch\x12\x15.asi.PushBatchRequest\x1a\x0e.asi.PushReply\x12:\n\nQueryBatch\x12\x16.asi.QueryBatchRequest\x1a\x14.asi.QueryBatchReply\x12(\n\x04Sync\x12\x10.asi.SyncRequest\x1a\x0e.asi.SyncReplyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cmemory.proto\x12\x03\x61si\"3\n\x10PushBatchRequest\x12\x1f\n\x05items\x18\x01 \x03(\x0b\x32\x10.asi.PushRequest\"5\n\x11QueryBatchRequest\x12 \n\x05items\x18\x01 \x03(\x0b\x32\x11.asi.QueryRequest\"1\n\x0fQueryBatchReply\x12\x1e\n\x05items\x18\x01 \x03(\x0b\x32\x0f.asi.QueryReply\"/\n\x0bPushRequest\x12\x0e\n\x06vector\x18\x01 \x03(\x02\x12\x10\n\x08metadata\x18\x02 \x01(\t\"\x17\n\tPushReply\x12\n\n\x02ok\x18\x01 \x01(\x08\")\n\x0cQueryRequest\x12\x0e\n\x06vector\x18\x01 \x03(\x02\x12\t\n\x01k\x18\x02 \x01(\x05\"/\n\nQueryReply\x12\x0f\n\x07vectors\x18\x01 \x03(\x02\x12\x10\n\x08metadata\x18\x02 \x03(\t\"]\n\x0bVectorEntry\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06vector\x18\x02 \x03(\x02\x12\x10\n\x08metadata\x18\x03 \x01(\t\x12\x11\n\ttimestamp\x18\x04 \x01(\x03\x12\r\n\x05proof\x18\x05 \x01(\t\".\n\x0bSyncRequest\x12\x1f\n\x05items\x18\x01 \x03(\x0b\x32\x10.asi.VectorEntry\"\x17\n\tSyncReply\x12\n\n\x02ok\x18\x01 \x01(\x08\x32\x80\x02\n\rMemoryService\x12(\n\x04Push\x12\x10.asi.PushRequest\x1a\x0e.asi.PushReply\x12+\n\x05Query\x12\x11.asi.QueryRequest\x1a\x0f.asi.QueryReply\x12\x32\n\tPushBatch\x12\x15.asi.PushBatchRequest\x1a\x0e.asi.PushReply\x12:\n\nQueryBatch\x12\x16.asi.QueryBatchRequest\x1a\x14.asi.QueryBatchReply\x12(\n\x04Sync\x12\x10.asi.SyncRequest\x1a\x0e.asi.SyncReplyb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -46,11 +46,11 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_QUERYREPLY']._serialized_start=297
   _globals['_QUERYREPLY']._serialized_end=344
   _globals['_VECTORENTRY']._serialized_start=346
-  _globals['_VECTORENTRY']._serialized_end=424
-  _globals['_SYNCREQUEST']._serialized_start=426
-  _globals['_SYNCREQUEST']._serialized_end=472
-  _globals['_SYNCREPLY']._serialized_start=474
-  _globals['_SYNCREPLY']._serialized_end=497
-  _globals['_MEMORYSERVICE']._serialized_start=500
-  _globals['_MEMORYSERVICE']._serialized_end=756
+  _globals['_VECTORENTRY']._serialized_end=439
+  _globals['_SYNCREQUEST']._serialized_start=441
+  _globals['_SYNCREQUEST']._serialized_end=487
+  _globals['_SYNCREPLY']._serialized_start=489
+  _globals['_SYNCREPLY']._serialized_end=512
+  _globals['_MEMORYSERVICE']._serialized_start=515
+  _globals['_MEMORYSERVICE']._serialized_end=771
 # @@protoc_insertion_point(module_scope)
