@@ -987,7 +987,8 @@ sched.stop()
 ```
 
 `TelemetryLogger` publishes energy stats to a running
-`ClusterCarbonDashboard` so operators can monitor cluster-wide impact.
+`ClusterCarbonDashboard` so operators can monitor cluster-wide impact. The
+dashboard now lists negotiated schedules and the cumulative carbon saved.
 
 ### Telemetry Aggregation
 
@@ -1070,6 +1071,33 @@ Compared to the ARIMA‑based heuristic scheduler, the RL variant adapts to
 recurring patterns in queue delays and energy prices.  Over time it tends to
 migrate jobs toward the cheaper and greener cluster even when short‑term
 forecasts fluctuate.
+
+The scheduler now accepts a `telemetry` mapping so each cluster can register a
+`TelemetryLogger`. When jobs are dispatched the chosen cluster and estimated
+carbon saving are logged. Calling `cluster_stats()` returns the aggregated
+telemetry per cluster.
+
+````python
+from asi.telemetry import TelemetryLogger
+from asi.cluster_carbon_dashboard import ClusterCarbonDashboard
+from asi.rl_multi_cluster_scheduler import RLMultiClusterScheduler
+from asi.hpc_forecast_scheduler import HPCForecastScheduler
+
+dash = ClusterCarbonDashboard(); dash.start(port=0)
+tele = {
+    "us": TelemetryLogger(node_id="us", publish_url=f"http://localhost:{dash.port}/update"),
+    "eu": TelemetryLogger(node_id="eu", publish_url=f"http://localhost:{dash.port}/update"),
+}
+sched = RLMultiClusterScheduler({"us": HPCForecastScheduler(), "eu": HPCForecastScheduler()}, telemetry=tele, dashboard=dash)
+sched.submit_best_rl(["run.sh"], expected_duration=2.0)
+print(sched.cluster_stats())
+dash.stop()
+````
+`ClusterCarbonDashboard` now shows the negotiated schedules with their carbon
+savings in the web view.
+
+`HPCForecastScheduler.forecast_scores()` caches the ARIMA results keyed by the
+history lengths so repeated calls avoid refitting the model.
 
 - `src/nerf_world_model.py` implements a tiny NeRF renderer with multi-view dataset helpers. Training on the synthetic cube sequence reaches around **25 dB PSNR** after 50 epochs.
 
