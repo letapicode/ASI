@@ -154,6 +154,12 @@ merge nodes analysis and finish
 Each command triggers a recomputation of the concise summary stored in
 `ReasoningHistoryLogger`. See [docs/Plan.md](docs/Plan.md) for the roadmap.
 
+`GraphUI` also supports real-time voice chat when given a
+`CrossLingualVoiceChat` instance. POST audio to `/chat/voice` or connect to
+`/chat/ws` to converse. Responses are spoken using `pyttsx3` if installed and
+returned as base64 encoded audio in the JSON reply. Run
+`scripts/voice_chat_demo.py` to try the feature.
+
 ## Testing
 
 1. Install requirements: `pip install -r requirements.txt` (or run
