@@ -423,6 +423,17 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      the network.
 37c. **Ephemeral vector store**: `EphemeralVectorStore` keeps in-memory vectors
      with a TTL and integrates into `HierarchicalMemory` via `store_type="ephemeral"`.
+37d. **Proof-carrying queries**: pass `proof=True` to `MemoryServer.query()` or
+     `HierarchicalMemory.search()` to request verifiable results. The server
+     encrypts stored vectors under an AES key and computes a
+     `SuccinctVectorCommitment` root over the encrypted index. For each returned
+     embedding it supplies the encrypted vector and a membership proof so
+     clients can call ``SuccinctVectorCommitment.verify(root, enc_vec, proof)``
+     before trusting the hit.
+37e. **Incremental memory acceleration**: asynchronous batch search and GPU
+     kernels double query throughput. Adding an `EphemeralVectorStore` for
+     prefetching gives another 2× speed-up. Vectorized AES and pipelined queries
+     plateau at ~8× improvement when memory bandwidth becomes the bottleneck.
 38. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
