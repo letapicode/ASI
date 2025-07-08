@@ -3,6 +3,8 @@ today’s LLMs to a self-improving Artificial Super-Intelligence (ASI).  Each en
 *exact algorithm (or family)*, why it matters, and what new result would count as “solved”.
 Citations point to the most recent public work so you can drill straight into the details.
 
+For a full list of repository review tasks, see `parallel_tasks.md`.
+
 ---
 
 ## 1  Scaling-Efficiency Algorithms
