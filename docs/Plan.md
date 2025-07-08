@@ -539,6 +539,13 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 75c. **Retrieval summaries**: `HierarchicalMemory.search(return_summary=True)`
      writes text explanations to `last_trace['summary']`. `MemoryDashboard`
      shows the last summary and `/trace` generates one if missing.
+75d. **Retrieval trust scoring**: `RetrievalTrustScorer` looks up dataset lineage
+     records and blockchain proofs to rate each retrieved item. The dashboard
+     displays the average trust score and `TelemetryLogger` records it. Low-trust
+     results highlight data needing cleanup or re-ingestion.
+75e. **Indexed trust lookups**: `RetrievalTrustScorer` now caches output paths
+     and ledger hashes for constant-time scoring. This halves the cost of
+     evaluating provenance and scales to millions of records.
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging. When initialised with a `CrossLingualTranslator` the logger records translated summaries for multilingual inspection.
 
