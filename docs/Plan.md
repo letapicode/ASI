@@ -481,10 +481,17 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 41b1. **Multilingual Graph UI**: The HTML interface offers a language selector so
       nodes are displayed and edited in the chosen language using
       `CrossLingualReasoningGraph.translate_node()`.
-41b2. **Cross-lingual graph search**: `CrossLingualReasoningGraph.search()`
+
+41b2. **Graph UI search box**: Users can search reasoning nodes via the web
+      interface. Results are translated to the chosen language using
+      `CrossLingualTranslator` so cross-lingual queries match node text.
+41b3. **Cached translations**: `GraphUI` now caches graph JSON per language,
+      reducing repeated translation work during high-load periods.
+41b4. **Cross-lingual graph search**: `CrossLingualReasoningGraph.search()`
       translates the query language, embeds all nodes and returns IDs ordered by
       similarity. Embeddings are cached per language to speed up repeated
       queries.
+
 41c. **Multimodal reasoning graph**: `CrossLingualReasoningGraph.add_step()`
      accepts `image_embed` and `audio_embed`. Use `embed_modalities()` from
      `CrossModalFusion` to generate vectors. `ReasoningHistoryLogger` preserves
