@@ -781,6 +781,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   `query_summary()` retrieves these summaries in any supported language and
   `ReasoningHistoryLogger.log()` records which node ids were summarised along
   with the memory location for later inspection.
+- Extend `CrossLingualReasoningGraph` with `search(query, lang)` which
+  translates ``query`` to each node's language, embeds the texts using a
+  deterministic hash and returns node IDs ranked by cosine similarity.
+  Embeddings are cached per-language so subsequent searches reuse them.
 - Create a `WorldModelDistiller` module and a `scripts/distill_world_model.py`
   utility to train smaller student models from the large world model.
   **Implemented in `src/world_model_distiller.py` with the script
