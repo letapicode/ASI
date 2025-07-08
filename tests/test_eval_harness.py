@@ -24,6 +24,7 @@ except Exception:  # pragma: no cover - fallback stub
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+pkg.__path__ = ['src']
 # minimal stubs for modules imported by eval_harness
 class _Dash:
     def __init__(self):
