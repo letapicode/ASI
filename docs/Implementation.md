@@ -566,6 +566,23 @@ paraphrase_multilingual([Path("./data/text/0.txt")], translator, None, inspector
 Run `scripts/lineage_viewer.py ./data` to browse the recorded steps.
 ```
 
+After using `dataset_discovery.store_datasets()` the inspector can audit the
+resulting SQLite database and log a summary for each dataset:
+
+```python
+inspector = LicenseInspector(["mit"])  # allow only MIT
+lineage = DatasetLineageManager("./data")
+res = inspector.scan_discovered_db("./discovered.sqlite", lineage)
+print(res["hf:example"])  # True or False
+```
+
+`LicenseInspector` uses precompiled regex heuristics so scanning large discovery
+databases is quick even with thousands of entries.
+
+Each entry adds a note like ``inspect hf:example license=mit allowed=True`` to
+``dataset_lineage.json`` so compliance results are tracked alongside other
+ingestion steps.
+
 To inject noise for differential privacy, create a `PrivacyGuard` and pass it to
 `download_triples()`. After ingestion, inspect the remaining budget:
 
