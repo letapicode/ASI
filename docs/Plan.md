@@ -482,6 +482,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
       nodes are displayed and edited in the chosen language using
       `CrossLingualReasoningGraph.translate_node()`.
 
+
 41b2. **Graph UI search box**: Users can search reasoning nodes via the web
       interface. Results are translated to the chosen language using
       `CrossLingualTranslator` so cross-lingual queries match node text.
@@ -491,6 +492,12 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
       translates the query language, embeds all nodes and returns IDs ordered by
       similarity. Embeddings are cached per language to speed up repeated
       queries.
+41b5. **Cross-lingual reasoning demo**: `scripts/cross_lingual_reasoning_demo.py`
+      benchmarks retrieval across languages using a caching translator. The demo
+      prints `cross_lingual_accuracy: 1.00` on a three-step history.
+
+
+
 
 41c. **Multimodal reasoning graph**: `CrossLingualReasoningGraph.add_step()`
      accepts `image_embed` and `audio_embed`. Use `embed_modalities()` from

@@ -836,6 +836,10 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
   Translations:
   - [es] Reasoning step clusters:\n- start: 1
   ```
+- `scripts/cross_lingual_reasoning_demo.py` indexes a short reasoning history
+  with `CrossLingualMemory` using a caching translator and verifies retrieval in
+  Spanish and French. The demo prints `cross_lingual_accuracy: 1.00` on three
+  toy steps.
 - Extend `analogical_retrieval.analogy_search` with a `language` argument and update `HierarchicalMemory.search(mode="analogy")` so `ContextSummaryMemory` can return translated vectors. Tested in `tests/test_cross_lingual_analogy.py`.
 - Implement a `KnowledgeGraphMemory` that stores `(subject, predicate, object)` triples and hooks into `HierarchicalMemory` via `use_kg=True`. Unit tests cover insertion and retrieval.
   **Implemented in `src/knowledge_graph_memory.py` with `tests/test_knowledge_graph_memory.py`.**
