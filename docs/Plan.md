@@ -209,6 +209,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
    analog matrix multiplies. Enable `use_analog=True` in
    `MultiModalWorldModelConfig` or `EdgeRLTrainer` to patch `torch.matmul`
    during training.
+- `scripts/benchmark_gpu_vs_analog.py` compares GPU and analog inference on a
+  tiny two-layer MLP and now supports `--amp` and `--compile` flags. Compiling
+  the model and enabling autocast roughly halved GPU latency while analog energy
+  usage stayed ~30% lower but became ~3× slower per step.
 - `src/cross_modal_fusion.py` encodes text, images and audio in a shared space
   with a contrastive training helper.
 - `src/multimodal_world_model.py` unifies these embeddings with actions for
