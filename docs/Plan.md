@@ -472,7 +472,14 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      heuristic fallback. The parser caches the loaded model and honors the
      ``LLM_PARSER_MODEL`` environment variable to customize loading. Calling
      `download_triples(use_llm_parser=True)` saves triples to
-     ``*.triples.json`` files for downstream RAG pipelines ([arxiv.org][15]).
+    ``*.triples.json`` files for downstream RAG pipelines ([arxiv.org][15]).
+40e. **Fairness feedback loop**: `fairness_feedback.FairnessFeedback` monitors
+     cross-lingual demographic parity and equal opportunity. When the gap of
+     either metric exceeds a configurable threshold it adjusts
+     `ActiveDataSelector` or dataset weights through reinforcement learning and
+     logs the action via `DatasetLineageManager` for reproducibility. Thresholds
+     are clamped to a safe range and updated weights are persisted via
+     `DatasetWeightAgent.update_db()`.
 41a. **Cross-lingual summarization memory**: `ContextSummaryMemory` stores summaries
      in the source language and translated forms. Results are translated back
      to the query language. See `docs/Implementation.md` for details.
