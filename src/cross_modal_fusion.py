@@ -359,13 +359,20 @@ def retrieval_accuracy(
     correct = 0
     for idx in range(len(dataset)):
         if include_bci and include_sign:
-            query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + b_vecs[idx] + s_vecs[idx]) / 5.0
+            query_vec = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + b_vecs[idx] + s_vecs[idx]) / 5.0
         elif include_bci:
-            query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + b_vecs[idx]) / 4.0
+            query_vec = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + b_vecs[idx]) / 4.0
         elif include_sign:
-            query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + s_vecs[idx]) / 4.0
+            query_vec = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx] + s_vecs[idx]) / 4.0
         else:
-            query = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx]) / 3.0
+            query_vec = (t_vecs[idx] + i_vecs[idx] + a_vecs[idx]) / 3.0
+        if hasattr(memory.store, "encode"):
+            q_np = memory.store.encode(
+                t_vecs[idx].numpy(), i_vecs[idx].numpy(), a_vecs[idx].numpy()
+            )
+            query = torch.from_numpy(q_np)
+        else:
+            query = query_vec
         out, meta = memory.search(query, k=k)
         if meta and meta[0] == idx:
             correct += 1

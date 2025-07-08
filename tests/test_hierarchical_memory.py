@@ -142,6 +142,18 @@ class TestHierarchicalMemory(unittest.TestCase):
             out, meta = loaded.search(data[0], k=1)
             self.assertEqual(meta, ["z"])
 
+    def test_holographic_store(self):
+        torch.manual_seed(0)
+        mem = HierarchicalMemory(dim=8, compressed_dim=4, capacity=10, store_type="holographic")
+        text = torch.randn(1, 8)
+        imgs = torch.randn(1, 8)
+        aud = torch.randn(1, 8)
+        mem.add_multimodal(text, imgs, aud, metadata=["h"])
+        query_np = mem.store.encode(text[0].numpy(), imgs[0].numpy(), aud[0].numpy())
+        q = torch.from_numpy(query_np)
+        out, meta = mem.search(q, k=1)
+        self.assertEqual(meta, ["h"])
+
     def test_sync_methods_inside_event_loop(self):
         torch.manual_seed(0)
 
