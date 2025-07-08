@@ -7,9 +7,18 @@ import types
 import sys
 
 try:
-    import torch
-except Exception:  # pragma: no cover - torch optional
-    torch = None
+    import torch  # type: ignore
+except Exception:  # pragma: no cover - provide a minimal stub
+    import numpy as np
+    torch = types.SimpleNamespace(
+        eye=lambda n: np.eye(n),
+        randn=lambda *s: np.random.randn(*s),
+        matmul=lambda a, b: a @ b,
+        allclose=lambda a, b: np.allclose(a, b),
+        Tensor=np.ndarray,
+        nn=types.SimpleNamespace(Module=object),
+    )
+    sys.modules['torch'] = torch
 
 def load_backend():
     pkg = types.ModuleType('asi')
@@ -24,6 +33,10 @@ def load_backend():
 
 @unittest.skipIf(torch is None, "torch not available")
 class TestAnalogBackend(unittest.TestCase):
+    def tearDown(self):
+        import importlib
+        sys.modules['torch'] = importlib.import_module('torch')
+
     def test_matmul_offload(self):
         ab = load_backend()
         dummy = types.SimpleNamespace(matmul=lambda a, b, noise=0.0: a @ b + 1)

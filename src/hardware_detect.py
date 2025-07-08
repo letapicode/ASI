@@ -14,6 +14,9 @@ except Exception:  # pragma: no cover - allow running without torch
 
 from . import fpga_backend, analog_backend, loihi_backend
 
+# cache (devices, env_str, sim_id)
+_ANALOG_DEVICES_CACHE: tuple[list[str], str | None, int] | None = None
+
 
 def list_cpus() -> list[str]:
     """Return a list of available CPU identifiers."""
@@ -54,9 +57,43 @@ def list_loihi() -> list[str]:
 
 def list_analog() -> list[str]:
     """Return a list of available analog accelerator identifiers."""
-    if getattr(analog_backend, "_HAS_ANALOG", False):
-        return ["analog0"]
-    return []
+    global _ANALOG_DEVICES_CACHE
+    env = os.getenv("ASI_ANALOG_DEVICES")
+    sim = getattr(analog_backend, "analogsim", None)
+    key = (env, id(sim))
+    if _ANALOG_DEVICES_CACHE is not None and _ANALOG_DEVICES_CACHE[1:] == key:
+        return list(_ANALOG_DEVICES_CACHE[0])
+
+    if not getattr(analog_backend, "_HAS_ANALOG", False):
+        _ANALOG_DEVICES_CACHE = ([], env, id(sim))
+        return []
+
+    if env:
+        devices = [d.strip() for d in env.split(",") if d.strip()]
+        if devices:
+            _ANALOG_DEVICES_CACHE = (devices, env, id(sim))
+            return list(devices)
+    if sim is not None:
+        if hasattr(sim, "list_devices"):
+            try:
+                devs = sim.list_devices()
+                if devs:
+                    devices = [str(d) for d in devs]
+                    _ANALOG_DEVICES_CACHE = (devices, env, id(sim))
+                    return list(devices)
+            except Exception:
+                pass
+        if hasattr(sim, "device_count"):
+            try:
+                count = int(sim.device_count())
+                devices = [f"analog{i}" for i in range(count)]
+                _ANALOG_DEVICES_CACHE = (devices, env, id(sim))
+                return list(devices)
+            except Exception:
+                pass
+
+    _ANALOG_DEVICES_CACHE = (["analog0"], env, id(sim))
+    return ["analog0"]
 
 
 __all__ = [
