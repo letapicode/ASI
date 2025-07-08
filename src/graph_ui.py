@@ -17,6 +17,7 @@ except Exception:  # pragma: no cover - stub if fastapi is missing
 
 from .graph_of_thought import GraphOfThought
 from .reasoning_history import ReasoningHistoryLogger
+from .graph_pruning_manager import GraphPruningManager
 from .nl_graph_editor import NLGraphEditor
 try:  # pragma: no cover - optional dependency
     from .voice_graph_controller import VoiceGraphController
@@ -154,6 +155,8 @@ class GraphUI:
         throttle_threshold: float = 0.7,
         update_interval: float = 1.0,
         telemetry: TelemetryLogger | None = None,
+        pruner: "GraphPruningManager | None" = None,
+        prune_threshold: int = 0,
     ) -> None:
         self.graph = graph
         self.logger = logger
@@ -168,12 +171,16 @@ class GraphUI:
         self.throttle_threshold = throttle_threshold
         self.update_interval = update_interval
         self.telemetry = telemetry
+        self.pruner = pruner
+        self.prune_threshold = prune_threshold
         self._high_load = False
         self._last_update = 0.0
         self._cached_data: dict | None = None
 
         if self.load_monitor is not None:
             self.load_monitor.add_callback(self._on_load)
+        if self.pruner is not None:
+            self.pruner.attach(self.graph)
         self._setup_routes()
         # store initial summary
         self.logger.log(self.graph.self_reflect())
@@ -217,6 +224,9 @@ class GraphUI:
         async def _record() -> None:
             summary = self.graph.self_reflect()
             self.logger.log(summary)
+            if self.pruner is not None and len(self.graph.nodes) > self.prune_threshold:
+                self.pruner.prune_low_degree()
+                self.pruner.prune_old_nodes()
 
         @self.app.get('/graph/data')
         async def graph_data(lang: str | None = None) -> Any:

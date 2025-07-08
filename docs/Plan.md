@@ -542,6 +542,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging.
 76. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps to aid debugging. When initialised with a `CrossLingualTranslator` the logger records translated summaries for multilingual inspection.
 
+76a. **Graph pruning manager**: `GraphPruningManager` trims low-degree or
+    stale nodes and saves summaries of removed subgraphs to
+    `ContextSummaryMemory`. `GraphUI` and `ReasoningHistoryLogger` trigger
+    pruning automatically when graphs grow beyond a threshold.
+
 77. **User preference modeling**: `UserPreferences` maintains per-user vectors and feedback counts so `PromptOptimizer` can personalise prompts. Aggregate stats expose fairness gaps across demographics.
 78. **Emotion-adaptive prompting**: `PromptOptimizer.optimize()` consults `CrossLingualTranslator`
     to render prompts in each user's preferred language and calls

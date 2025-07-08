@@ -9,6 +9,7 @@ from collections import Counter
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from .data_ingest import CrossLingualTranslator
     from .graph_of_thought import GraphOfThought
+    from .graph_pruning_manager import GraphPruningManager
 
 
 @dataclass
@@ -17,6 +18,8 @@ class ReasoningHistoryLogger:
 
     entries: List[Tuple[str, Any]] = field(default_factory=list)
     translator: CrossLingualTranslator | None = None
+    pruner: "GraphPruningManager | None" = None
+    prune_threshold: int = 0
 
     def log(
         self,
@@ -52,6 +55,15 @@ class ReasoningHistoryLogger:
                 self.entries.append((ts, entry))
             else:
                 self.entries.append((ts, summary))
+
+        if (
+            self.pruner is not None
+            and self.pruner.graph is not None
+            and self.prune_threshold
+            and len(self.pruner.graph.nodes) > self.prune_threshold
+        ):
+            self.pruner.prune_low_degree()
+            self.pruner.prune_old_nodes()
 
     def get_history(self) -> List[Tuple[str, Any]]:
         return list(self.entries)
