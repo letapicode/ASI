@@ -703,6 +703,11 @@ ID, waiting for the optimal delay if necessary.  See the
 `scripts/hpc_multi_schedule.py` CLI for a minimal example that prints which
 cluster was selected.
 
+`transformer_forecast_scheduler.TransformerForecastScheduler` swaps the ARIMA
+model for a tiny two-layer Transformer trained on recent traces. The model
+predicts upcoming carbon intensity and price to rank hourly windows. Calling
+`predict_slot()` returns the index of the best time slot for a single cluster.
+
 `adaptive_cost_scheduler.AdaptiveCostScheduler` builds on this multi-cluster
 approach by training a simple Q-learning policy from the stored carbon and price
 histories.  The policy decides whether to wait for a cheaper, greener slot or
