@@ -5,7 +5,19 @@ import importlib.machinery
 import importlib.util
 import types
 import sys
-import torch
+try:
+    import torch  # type: ignore
+except Exception:  # pragma: no cover - provide a minimal stub
+    import numpy as np
+    torch = types.SimpleNamespace(
+        eye=lambda n: np.eye(n),
+        randn=lambda *s: np.random.randn(*s),
+        matmul=lambda a, b: a @ b,
+        allclose=lambda a, b: np.allclose(a, b),
+        Tensor=np.ndarray,
+        nn=types.SimpleNamespace(Module=object),
+    )
+    sys.modules['torch'] = torch
 
 pkg = types.ModuleType('asi')
 sys_modules_backup = dict()

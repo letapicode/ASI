@@ -3,6 +3,7 @@ import time
 import importlib.machinery
 import importlib.util
 import types
+import os
 import sys
 
 pkg = types.ModuleType('asi')
@@ -33,7 +34,10 @@ cas_stub.get_current_price = lambda *a, **k: 0.0
 sys.modules['asi.cost_aware_scheduler'] = cas_stub
 
 sys.modules['asi.fpga_backend'] = types.SimpleNamespace(_HAS_FPGA=False, cl=None)
-sys.modules['asi.analog_backend'] = types.SimpleNamespace(_HAS_ANALOG=False)
+sys.modules['asi.analog_backend'] = types.SimpleNamespace(
+    _HAS_ANALOG=True,
+    analogsim=types.SimpleNamespace(utilization=lambda: 0.0)
+)
 sys.modules['asi.loihi_backend'] = types.SimpleNamespace(_HAS_LOIHI=False)
 
 
@@ -53,7 +57,6 @@ hardware_detect.list_cpus = lambda: ['cpu0']
 hardware_detect.list_gpus = lambda: ['gpu0']
 hardware_detect.list_fpgas = lambda: ['fpga0']
 hardware_detect.list_loihi = lambda: []
-hardware_detect.list_analog = lambda: []
 ComputeBudgetTracker = _load('asi.compute_budget_tracker', 'src/compute_budget_tracker.py').ComputeBudgetTracker
 AdaptiveScheduler = _load('asi.adaptive_scheduler', 'src/adaptive_scheduler.py').AdaptiveScheduler
 
@@ -130,18 +133,24 @@ class TestAdaptiveScheduler(unittest.TestCase):
         if hasattr(mod, 'psutil'):
             mod.psutil = types.SimpleNamespace(cpu_percent=lambda interval=None: 0.0)
 
-        logger = TelemetryLogger(interval=0.05)
-        tracker = ComputeBudgetTracker(1.0, telemetry=logger)
-        sched = AdaptiveScheduler(tracker, 'run', check_interval=0.05)
-        ran: list[str] = []
+        import os
+        os.environ['ASI_ANALOG_DEVICES'] = 'analog0'
+        try:
+            logger = TelemetryLogger(interval=0.05)
+            tracker = ComputeBudgetTracker(1.0, telemetry=logger)
+            sched = AdaptiveScheduler(tracker, 'run', check_interval=0.05)
+            ran: list[str] = []
 
-        sched.add(lambda: ran.append('cpu'), device='cpu')
-        sched.add(lambda: ran.append('gpu'), device='gpu')
-        sched.add(lambda: ran.append('fpga'), device='fpga')
+            sched.add(lambda: ran.append('cpu'), device='cpu')
+            sched.add(lambda: ran.append('gpu'), device='gpu')
+            sched.add(lambda: ran.append('fpga'), device='fpga')
+            sched.add(lambda: ran.append('analog'), device='analog')
 
-        time.sleep(0.3)
-        sched.stop()
-        self.assertEqual(set(ran), {'cpu', 'gpu', 'fpga'})
+            time.sleep(0.3)
+            sched.stop()
+            self.assertEqual(set(ran), {'cpu', 'gpu', 'fpga', 'analog'})
+        finally:
+            os.environ.pop('ASI_ANALOG_DEVICES', None)
 
 
 if __name__ == '__main__':

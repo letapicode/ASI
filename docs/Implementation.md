@@ -126,6 +126,25 @@ with AnalogAccelerator():
 Enable the analog path by passing `use_analog=True` in
 `MultiModalWorldModelConfig` or `EdgeRLTrainer`.
 
+### Analog Device Detection
+
+`hardware_detect.list_analog()` checks several sources to enumerate available
+analog accelerators so the `AdaptiveScheduler` can queue jobs on them. Detection
+proceeds in the following order:
+
+1. If the environment variable `ASI_ANALOG_DEVICES` is set it is parsed as a
+   comma-separated list of device identifiers.
+2. When the optional `analogsim` package exposes `list_devices()` or
+   `device_count()` these helpers are called to query the simulator for attached
+   analog hardware.
+3. If detection fails but `analog_backend._HAS_ANALOG` is `True` the fallback
+   identifier `analog0` is returned.
+
+The detected list is cached so repeated calls avoid querying the backend again.
+
+The scheduler includes these identifiers under the `"analog"` device type which
+means analog hardware can be selected via `add(job, device="analog")`.
+
 ## S-3 Scaling-law Breakpoint Model
 
 `src/scaling_law.py` defines ``BreakpointScalingLaw`` which fits a piecewise
