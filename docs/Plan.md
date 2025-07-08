@@ -515,7 +515,6 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 60. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
 61. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
 61a. **Dataset bias mitigation**: `DataBiasMitigator` reweights or filters entries based on these scores. `download_triples()` now applies the mitigator before storing new files.
-<<<<<<< HEAD
 61b. **Fairness gap visualizer**: `fairness_visualizer.FairnessVisualizer` plots demographic parity and opportunity gaps. `dataset_summary.py --fairness-report` saves the charts under `docs/datasets/`; they appear in the lineage and memory dashboards for quick inspection.
 62. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
 63. **Parameter-efficient model editing**: Implement `GradientPatchEditor` to fix wrong outputs with minimal updates; >90% targeted fix rate with <1% perplexity change.
@@ -719,12 +718,57 @@ via the `--rl-cost` flag in `scripts/hpc_multi_schedule.py`. When plugged into
 `DistributedTrainer`, it achieved around 2 % lower cost and 3 % less emissions
 compared to `CarbonCostAwareScheduler` on the same traces.
 
+
 `coordinated_rl_cost_scheduler.CoordinatedRLCostScheduler` lets multiple
 schedulers share Q-tables through a lightweight aggregation group. This reduces
 coordination overhead from quadratic to linear in the number of agents while the
 averaged policy still steers runs toward cheap, green slots. Internal tests
 showed roughly **3 %** lower electricity costs and **2 %** less carbon compared
 with a single-agent `RLCostScheduler`.
+
+### RL scheduler coordination protocol
+
+All RL-based schedulers run locally. `RLCarbonScheduler`, `RLCostScheduler`,
+`RLMultiClusterScheduler` and `DeepRLScheduler` call `submit_job()` from
+`hpc_scheduler` to launch tasks via Slurm or Kubernetes. Carbon data is pulled
+through `TelemetryLogger` or simple HTTP requests, so no direct agent-to-agent
+messaging currently exists.
+
+For multi-agent cooperation a minimal gRPC service can expose two RPCs:
+
+```
+service ScheduleService {
+  rpc Propose (ScheduleProposal) returns (ScheduleReply);
+  rpc Accept  (ScheduleDecision) returns (Ack);
+}
+```
+
+`ScheduleProposal` bundles queued jobs and `CarbonForecast` entries, while
+`ScheduleReply` chooses the preferred slot. `Accept` finalises the reservation.
+The same schema could be passed over a message queue when gRPC is unavailable.
+
+Example protobuf messages:
+
+```
+message CarbonForecast { int64 ts = 1; float intensity = 2; float price = 3; }
+message JobItem { string id = 1; string cmd = 2; float duration = 3; int32 priority = 4; }
+message ScheduleProposal {
+  string agent = 1;
+  repeated JobItem queue = 2;
+  repeated CarbonForecast forecast = 3;
+}
+message ScheduleReply { bool accept = 1; int64 start_ts = 2; string cluster = 3; }
+message ScheduleDecision { string id = 1; bool accepted = 2; int64 start_ts = 3; }
+message Ack { bool ok = 1; }
+```
+
+Agents exchange these structures to negotiate low-carbon slots and record the
+outcome of each proposed schedule.  A reference implementation lives in
+`scheduler_service.py` which spins up a gRPC server using
+`scheduler.proto`.  The helper functions `propose_remote()` and
+`accept_remote()` let RL schedulers coordinate over the network or through a
+message queue when gRPC is not available.
+
 
 
 
