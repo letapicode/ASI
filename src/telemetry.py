@@ -335,6 +335,18 @@ class TelemetryLogger:
             self._published_carbon = carbon
 
     # --------------------------------------------------------------
+    def record_trust(self, score: float) -> None:
+        """Log the average trust score for the last retrieval."""
+        if _HAS_PROM:
+            self.metrics.setdefault(
+                "trust_score", Gauge("trust_score", "Retrieval trust score")
+            )
+            assert isinstance(self.metrics["trust_score"], Gauge)
+            self.metrics["trust_score"].set(float(score))
+        else:
+            self.metrics["trust_score"] = float(score)
+
+    # --------------------------------------------------------------
     def register_profiler(
         self, stats: Dict[str, float], node_id: Optional[str] = None
     ) -> None:
