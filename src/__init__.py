@@ -200,6 +200,7 @@ from .dataset_bias_detector import (
     bias_score,
     text_bias_score,
     file_bias_score,
+    DatasetBiasDetector,
 )
 from .dataset_weight_agent import DatasetWeightAgent
 from .data_bias_mitigator import DataBiasMitigator
@@ -264,6 +265,7 @@ from .semantic_drift_detector import SemanticDriftDetector
 from .data_provenance_ledger import DataProvenanceLedger
 from .blockchain_provenance_ledger import BlockchainProvenanceLedger
 from .fairness_evaluator import FairnessEvaluator
+from .fairness_adaptation import FairnessAdaptationPipeline
 from .fairness_visualizer import FairnessVisualizer
 from .cross_lingual_fairness import CrossLingualFairnessEvaluator
 from .risk_dashboard import RiskDashboard

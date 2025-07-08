@@ -245,17 +245,20 @@ class ActiveDataSelector:
         triples: Iterable[Tuple[Any, Any, Any]],
         probs: Iterable[np.ndarray],
         weight_agent: DatasetWeightAgent | None = None,
+        *,
+        compute_bias: bool = True,
     ) -> list[Tuple[Tuple[Any, Any, Any], float]]:
         """Return ``(triple, weight)`` pairs with bias-adjusted weights."""
         results: list[tuple[tuple[Any, Any, Any], float]] = []
         for t, p in zip(triples, probs):
             ent = self.score(np.asarray(p, dtype=float))
             w = min(ent / (self.threshold + 1e-8), 1.0)
-            try:
-                bias = max(0.0, float(file_bias_score(t[0])))
-                w *= bias
-            except Exception:
-                pass
+            if compute_bias:
+                try:
+                    bias = max(0.0, float(file_bias_score(t[0])))
+                    w *= bias
+                except Exception:
+                    pass
             if weight_agent is not None:
                 try:
                     name = Path(t[0]).parent.name

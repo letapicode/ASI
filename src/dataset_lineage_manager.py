@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Iterable, List, Dict
 
@@ -24,6 +24,8 @@ class LineageStep:
     note: str
     inputs: List[str]
     outputs: Dict[str, Dict[str, str | None]]
+    fairness_before: Dict[str, float] | None = None
+    fairness_after: Dict[str, float] | None = None
 
 
 class DatasetLineageManager:
@@ -45,6 +47,8 @@ class DatasetLineageManager:
         inputs: Iterable[str | Path],
         outputs: Iterable[str | Path],
         note: str = "",
+        fairness_before: Dict[str, float] | None = None,
+        fairness_after: Dict[str, float] | None = None,
     ) -> None:
         out_hashes: Dict[str, Dict[str, str | None]] = {}
         for p in outputs:
@@ -53,7 +57,13 @@ class DatasetLineageManager:
                 "hash": _hash_file(path),
                 "watermark_id": detect_watermark(path),
             }
-        step = LineageStep(note, [str(p) for p in inputs], out_hashes)
+        step = LineageStep(
+            note,
+            [str(p) for p in inputs],
+            out_hashes,
+            fairness_before,
+            fairness_after,
+        )
         self.steps.append(step)
         self.log_path.write_text(
             json.dumps([asdict(s) for s in self.steps], indent=2)

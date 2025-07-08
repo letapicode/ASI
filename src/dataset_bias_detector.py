@@ -6,7 +6,9 @@ import numpy as np
 from collections import Counter
 import concurrent.futures
 from pathlib import Path
-from typing import Iterable, Dict, Union
+from typing import Iterable, Dict, Union, Callable, List
+
+from .telemetry import TelemetryLogger
 
 
 def compute_word_freq(
@@ -48,9 +50,55 @@ def file_bias_score(path: Union[str, Path]) -> float:
     return text_bias_score(Path(path).read_text())
 
 
+class DatasetBiasDetector:
+    """Compute and stream bias metrics during ingestion."""
+
+    def __init__(self, telemetry: TelemetryLogger | None = None) -> None:
+        self.telemetry = telemetry or TelemetryLogger(interval=0.5)
+        self.scores: List[float] = []
+        self.callbacks: List[Callable[[float], None]] = []
+        self.cache: Dict[str, float] = {}
+
+    # --------------------------------------------------------------
+    def add_callback(self, cb: Callable[[float], None]) -> None:
+        self.callbacks.append(cb)
+
+    # --------------------------------------------------------------
+    def score_file(self, path: str | Path) -> float:
+        key = str(path)
+        if key in self.cache:
+            score = self.cache[key]
+        else:
+            score = file_bias_score(path)
+            self.cache[key] = score
+        self.scores.append(score)
+        self._update(score)
+        return score
+
+    # --------------------------------------------------------------
+    def _update(self, score: float) -> None:
+        avg = float(sum(self.scores) / len(self.scores))
+        self.telemetry.metrics["bias_score"] = score
+        self.telemetry.metrics["bias_avg"] = avg
+        for cb in list(self.callbacks):
+            try:
+                cb(score)
+            except Exception:
+                pass
+
+    # --------------------------------------------------------------
+    def stream_metrics(self) -> Iterable[Dict[str, float]]:
+        for i, s in enumerate(self.scores, start=1):
+            yield {
+                "bias_score": s,
+                "bias_avg": float(sum(self.scores[:i]) / i),
+            }
+
+
 __all__ = [
     "compute_word_freq",
     "bias_score",
     "text_bias_score",
     "file_bias_score",
+    "DatasetBiasDetector",
 ]

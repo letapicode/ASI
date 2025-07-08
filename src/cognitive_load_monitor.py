@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Callable
+from typing import List, Dict, Optional, Callable, Iterable
 
 try:
     from prometheus_client import Gauge  # pragma: no cover - optional
@@ -91,6 +91,12 @@ class CognitiveLoadMonitor:
             "correction_rate": self.corrections / self.total_inputs if self.total_inputs else 0.0,
             "cognitive_load": self.cognitive_load(),
         }
+
+    # --------------------------------------------------------------
+    def stream_metrics(self) -> Iterable[Dict[str, float]]:
+        """Yield metrics for each recorded interaction."""
+        for i in range(max(len(self.pauses), 1)):
+            yield self.get_metrics()
 
 
 __all__ = ["CognitiveLoadMonitor"]
