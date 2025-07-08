@@ -5,22 +5,27 @@ import importlib.machinery
 import importlib.util
 import types
 import sys
-import torch
 
-pkg = types.ModuleType('asi')
-sys_modules_backup = dict()
-for name in ['asi']:
-    sys_modules_backup[name] = __import__('sys').modules.get(name)
-__import__('sys').modules['asi'] = pkg
-loader = importlib.machinery.SourceFileLoader('asi.analog_backend', 'src/analog_backend.py')
-spec = importlib.util.spec_from_loader(loader.name, loader)
-ab = importlib.util.module_from_spec(spec)
-ab.__package__ = 'asi'
-__import__('sys').modules['asi.analog_backend'] = ab
-loader.exec_module(ab)
+try:
+    import torch
+except Exception:  # pragma: no cover - torch optional
+    torch = None
 
+def load_backend():
+    pkg = types.ModuleType('asi')
+    sys.modules['asi'] = pkg
+    loader = importlib.machinery.SourceFileLoader('asi.analog_backend', 'src/analog_backend.py')
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    mod = importlib.util.module_from_spec(spec)
+    mod.__package__ = 'asi'
+    sys.modules['asi.analog_backend'] = mod
+    loader.exec_module(mod)
+    return mod
+
+@unittest.skipIf(torch is None, "torch not available")
 class TestAnalogBackend(unittest.TestCase):
     def test_matmul_offload(self):
+        ab = load_backend()
         dummy = types.SimpleNamespace(matmul=lambda a, b, noise=0.0: a @ b + 1)
         with patch.object(ab, '_HAS_ANALOG', True), patch.object(ab, 'analogsim', dummy):
             accel = ab.AnalogAccelerator()
@@ -30,6 +35,7 @@ class TestAnalogBackend(unittest.TestCase):
             self.assertTrue(torch.allclose(out, dummy.matmul(x, y)))
 
     def test_fallback_cpu(self):
+        ab = load_backend()
         x = torch.randn(2, 3)
         y = torch.randn(3, 4)
         accel = ab.AnalogAccelerator()
@@ -37,6 +43,7 @@ class TestAnalogBackend(unittest.TestCase):
         self.assertTrue(torch.allclose(out, x @ y))
 
     def test_context_manager(self):
+        ab = load_backend()
         dummy = types.SimpleNamespace(matmul=lambda a, b, noise=0.0: a @ b + 1)
         with patch.object(ab, '_HAS_ANALOG', True), patch.object(ab, 'analogsim', dummy):
             accel = ab.AnalogAccelerator()
