@@ -409,6 +409,28 @@ def _eval_cross_modal_analogy() -> Tuple[bool, str]:
     return ok, f"shape={tuple(vec.shape)}"
 
 
+def _eval_socratic_debate() -> Tuple[bool, str]:
+    """Run a short Socratic debate and measure consensus."""
+    from asi.socratic_debate import DebateAgent, SocraticDebate
+    from asi.adaptive_planner import AdaptivePlanner
+    from asi.hierarchical_memory import HierarchicalMemory
+    from asi.reasoning_merger import merge_graphs
+
+    def score(text: str) -> float:
+        return float(len(text))
+
+    mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+    a = DebateAgent("A", AdaptivePlanner(score), mem)
+    b = DebateAgent("B", AdaptivePlanner(score), mem)
+    debate = SocraticDebate(a, b)
+    debate.run_debate("What is truth?", rounds=2)
+    merged, inconsist = merge_graphs(debate.graphs())
+    consensus = 1.0 - len(inconsist) / max(1, len(merged.nodes))
+    contradictions = len(debate.logger.analyze().inconsistencies)
+    ok = consensus >= 0.5
+    return ok, f"consensus={consensus:.2f} contradictions={contradictions}"
+
+
 EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "moe_router": _eval_moe_router,
     "flash_attention3": _eval_flash_attention3,
@@ -435,6 +457,7 @@ EVALUATORS: Dict[str, Callable[[], Tuple[bool, str]]] = {
     "voxel_rollout": _eval_voxel_rollout,
     "emotion_detector": _eval_emotion_detector,
     "cross_modal_analogy": _eval_cross_modal_analogy,
+    "socratic_debate": _eval_socratic_debate,
 }
 
 

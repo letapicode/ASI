@@ -35,6 +35,7 @@ from .encrypted_vector_store import EncryptedVectorStore
 from .pq_vector_store import PQVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .ephemeral_vector_store import EphemeralVectorStore
+from .holographic_vector_store import HolographicVectorStore
 from .dnc_memory import DNCMemory
 from .iter_align import IterativeAligner
 from .critic_rlhf import CriticScorer, CriticRLHFTrainer
@@ -209,6 +210,7 @@ from .graphql_memory_gateway import GraphQLMemoryGateway
 from .world_model_distiller import DistillConfig, distill_world_model
 from .summarizing_memory import SummarizingMemory
 from .memory_pruning_manager import MemoryPruningManager
+from .graph_pruning_manager import GraphPruningManager
 from .cross_lingual_memory import CrossLingualMemory
 from .cross_lingual_kg_memory import CrossLingualKGMemory
 from .cross_lingual_graph import CrossLingualReasoningGraph
@@ -226,6 +228,7 @@ from .gradient_patch_editor import GradientPatchEditor, PatchConfig
 from .secure_federated_learner import SecureFederatedLearner
 
 from .zk_gradient_proof import ZKGradientProof
+from .retrieval_proof import RetrievalProof
 
 
 from .zk_verifier import ZKVerifier
@@ -304,6 +307,7 @@ from .carbon_aware_scheduler import CarbonAwareScheduler
 from .carbon_hpc_scheduler import CarbonAwareScheduler
 from .rl_carbon_scheduler import RLCarbonScheduler
 from .rl_cost_scheduler import RLCostScheduler
+from .coordinated_rl_cost_scheduler import CoordinatedRLCostScheduler
 from .carbon_aware_dataset_ingest import CarbonAwareDatasetIngest
 
 from .collaboration_portal import CollaborationPortal
@@ -331,6 +335,7 @@ from .analog_backend import (
 from .emotion_detector import detect_emotion
 from .bio_memory_replay import run_nightly_replay
 from .sign_language import SignLanguageRecognizer
+from .vr_graph_explorer import VRGraphVisualizer, VRGraphExplorer
 from .reasoning_summary_translator import ReasoningSummaryTranslator
 from .reasoning_kb_bridge import (
     graph_to_triples,

@@ -12,6 +12,7 @@ import torch
 
 from .retrieval_explainer import RetrievalExplainer
 from .retrieval_visualizer import RetrievalVisualizer
+from .retrieval_trust_scorer import RetrievalTrustScorer
 from .memory_timeline_viewer import MemoryTimelineViewer
 from .kg_visualizer import KGVisualizer
 
@@ -25,9 +26,11 @@ class MemoryDashboard:
         self,
         servers: Iterable[MemoryServer],
         visualizer: RetrievalVisualizer | None = None,
+        trust_scorer: "RetrievalTrustScorer | None" = None,
     ) -> None:
         self.servers = list(servers)
         self.visualizer = visualizer
+        self.trust_scorer = trust_scorer
         self.httpd: HTTPServer | None = None
         self.thread: threading.Thread | None = None
         self.port: int | None = None
@@ -52,6 +55,7 @@ class MemoryDashboard:
         totals: Dict[str, float] = {}
         gpu_vals = []
         score_vals = []
+        trust_vals = []
         for srv in self.servers:
             stats = srv.memory.get_stats()
             for k, v in stats.items():
@@ -61,6 +65,12 @@ class MemoryDashboard:
                 avg_score = float(np.mean(trace["scores"]))
                 totals["model_score"] = totals.get("model_score", 0.0) + avg_score
                 score_vals.append(avg_score)
+                if self.trust_scorer is not None:
+                    ts = self.trust_scorer.score_results(trace.get("provenance", []))
+                    if ts:
+                        tavg = float(np.mean(ts))
+                        totals["trust_score"] = totals.get("trust_score", 0.0) + tavg
+                        trust_vals.append(tavg)
             if srv.telemetry is not None:
                 tstats = srv.telemetry.get_stats()
                 for k, v in tstats.items():
@@ -78,6 +88,8 @@ class MemoryDashboard:
             totals["gpu_score_corr"] = float(np.corrcoef(gpu_vals, score_vals)[0, 1])
         else:
             totals["gpu_score_corr"] = 0.0
+        if trust_vals:
+            totals["trust_score"] = float(np.mean(trust_vals))
         return totals
 
     # ----------------------------------------------------------
@@ -115,11 +127,18 @@ class MemoryDashboard:
             hits = int(mstats.get("hits", 0))
             misses = int(mstats.get("misses", 0))
             score = 0.0
+            trust = 0.0
             trace = getattr(srv.memory, "last_trace", None)
             if trace is not None and trace.get("scores"):
                 score = float(np.mean(trace["scores"]))
+                if self.trust_scorer is not None:
+                    ts = self.trust_scorer.score_results(trace.get("provenance", []))
+                    if ts:
+                        trust = float(np.mean(ts))
+                        if srv.telemetry is not None:
+                            srv.telemetry.record_trust(trust)
             rows.append(
-                f"<tr><td>{idx}</td><td>{gpu:.2f}</td><td>{hits}</td><td>{misses}</td><td>{score:.3f}</td></tr>"
+                f"<tr><td>{idx}</td><td>{gpu:.2f}</td><td>{hits}</td><td>{misses}</td><td>{score:.3f}</td><td>{trust:.3f}</td></tr>"
             )
         corr = self.aggregate().get("gpu_score_corr", 0.0)
         table = "\n".join(rows)
@@ -137,7 +156,7 @@ class MemoryDashboard:
             "<p><a href='http://localhost:8070/graph'>Graph UI</a> | "
             "<a href='/kg'>KG Visualizer</a></p>"
             "<table border='1'>"
-            "<tr><th>Server</th><th>GPU Util (%)</th><th>Hits</th><th>Misses</th><th>Avg Score</th></tr>"
+            "<tr><th>Server</th><th>GPU Util (%)</th><th>Hits</th><th>Misses</th><th>Avg Score</th><th>Avg Trust</th></tr>"
             f"{table}</table><p>GPU/Score correlation: {corr:.3f}</p>"
             + (f"<p>Last retrieval: {summary}</p>" if summary else "")
             + f"<h2>Events</h2><ul>{events}</ul></body></html>"
@@ -162,6 +181,11 @@ class MemoryDashboard:
                         meta = trace.get("provenance", [])
                         scores = trace.get("scores", [])
                         items = RetrievalExplainer.format(q, r, scores, meta)
+                        trust = []
+                        if dashboard.trust_scorer is not None:
+                            trust = dashboard.trust_scorer.score_results(meta)
+                            for it, t in zip(items, trust):
+                                it["trust"] = t
                         summary = trace.get("summary")
                         if summary is None:
                             is_multi = any(
@@ -173,7 +197,7 @@ class MemoryDashboard:
                                 summary = RetrievalExplainer.summarize_multimodal(q, r, scores, meta)
                             else:
                                 summary = RetrievalExplainer.summarize(q, r, scores, meta)
-                        data = json.dumps({"items": items, "summary": summary}).encode()
+                        data = json.dumps({"items": items, "summary": summary, "trust": trust}).encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()

@@ -34,6 +34,12 @@ except Exception:  # pragma: no cover - fallback for tests
     FPGAAccelerator = None  # type: ignore
     _HAS_FPGA = False
 
+try:
+    from .analog_backend import AnalogAccelerator, _HAS_ANALOG
+except Exception:  # pragma: no cover - fallback for tests
+    AnalogAccelerator = None  # type: ignore
+    _HAS_ANALOG = False
+
 
 def _replace_mlps(mod: nn.Module, *, use_loihi: bool = False) -> None:
     """Recursively swap MLP ``Linear`` layers with ``SpikingLinear``."""
@@ -192,6 +198,9 @@ class MultiModalWorldModel(nn.Module):
         if cfg.use_fpga and FPGAAccelerator is not None and _HAS_FPGA:
             self.fpga = FPGAAccelerator(self, forward_fn=self._forward_impl)
             self.fpga.compile()
+        self.analog: AnalogAccelerator | None = None
+        if cfg.use_analog and AnalogAccelerator is not None and _HAS_ANALOG:
+            self.analog = AnalogAccelerator()
 
     def encode_obs(
         self,
@@ -229,6 +238,9 @@ class MultiModalWorldModel(nn.Module):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         if self.fpga is not None:
             return self.fpga.run(text, image, action, events)
+        if self.analog is not None:
+            with self.analog:
+                return self._forward_impl(text, image, action, events)
         return self._forward_impl(text, image, action, events)
 
 

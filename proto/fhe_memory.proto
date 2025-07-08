@@ -21,4 +21,5 @@ message FHEQueryRequest {
 message FHEQueryReply {
   bytes vectors = 1;
   repeated string metadata = 2;
+  string proof = 3;
 }

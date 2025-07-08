@@ -16,6 +16,7 @@ from .knowledge_graph_memory import KnowledgeGraphMemory, TimedTriple
 from .vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
 from .encrypted_vector_store import EncryptedVectorStore
 from .pq_vector_store import PQVectorStore
+from .holographic_vector_store import HolographicVectorStore
 from .async_vector_store import AsyncFaissVectorStore
 from .hopfield_memory import HopfieldMemory
 from .dnc_memory import DNCMemory
@@ -148,6 +149,8 @@ class HierarchicalMemory:
         self._next_id = 0
         if store_type == "ephemeral":
             self.store = EphemeralVectorStore(dim=compressed_dim, ttl=ephemeral_ttl)
+        elif store_type == "holographic":
+            self.store = HolographicVectorStore(dim=compressed_dim)
         elif use_hopfield:
             self.store = HopfieldStore(dim=compressed_dim)
         elif use_dnc:
@@ -379,8 +382,16 @@ class HierarchicalMemory:
             vecs_list.append(bci)
         if sign is not None and sign.numel():
             vecs_list.append(sign)
-        vecs = sum(vecs_list) / len(vecs_list)
-        self.add(vecs, metadata)
+        if isinstance(self.store, HolographicVectorStore):
+            text_np = text.detach().cpu().numpy()
+            img_np = images.detach().cpu().numpy()
+            aud_np = audio.detach().cpu().numpy()
+            arr = self.store.encode_batch(text_np, img_np, aud_np)
+            vecs = torch.from_numpy(arr)
+            self.add(vecs, metadata)
+        else:
+            vecs = sum(vecs_list) / len(vecs_list)
+            self.add(vecs, metadata)
 
     def _evict_if_needed(self) -> None:
         if self.evict_limit is None:
@@ -489,8 +500,16 @@ class HierarchicalMemory:
             vecs_list.append(bci)
         if sign is not None and sign.numel():
             vecs_list.append(sign)
-        vecs = sum(vecs_list) / len(vecs_list)
-        await self.aadd(vecs, metadata)
+        if isinstance(self.store, HolographicVectorStore):
+            text_np = text.detach().cpu().numpy()
+            img_np = images.detach().cpu().numpy()
+            aud_np = audio.detach().cpu().numpy()
+            arr = self.store.encode_batch(text_np, img_np, aud_np)
+            vecs = torch.from_numpy(arr)
+            await self.aadd(vecs, metadata)
+        else:
+            vecs = sum(vecs_list) / len(vecs_list)
+            await self.aadd(vecs, metadata)
 
     async def adelete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
         """Asynchronously delete vectors from the store."""
@@ -801,6 +820,8 @@ class HierarchicalMemory:
             self.store.save(path / "store")
         elif isinstance(self.store, PQVectorStore):
             self.store.save(path / "pq_store")
+        elif isinstance(self.store, HolographicVectorStore):
+            self.store.save(path / "holo_store")
         elif isinstance(self.store, LocalitySensitiveHashIndex):
             self.store.save(path / "lsh_store")
         elif not isinstance(self.store, HopfieldStore):
@@ -834,6 +855,8 @@ class HierarchicalMemory:
             self.store.save(path / "store")
         elif isinstance(self.store, PQVectorStore):
             self.store.save(path / "pq_store")
+        elif isinstance(self.store, HolographicVectorStore):
+            self.store.save(path / "holo_store")
         elif isinstance(self.store, LocalitySensitiveHashIndex):
             self.store.save(path / "lsh_store")
         elif not isinstance(self.store, HopfieldStore):
@@ -874,10 +897,13 @@ class HierarchicalMemory:
         store_dir = path / "store"
         pq_dir = path / "pq_store"
         lsh_dir = path / "lsh_store"
+        holo_dir = path / "holo_store"
         if lsh_dir.exists():
             mem.store = LocalitySensitiveHashIndex.load(lsh_dir)
         elif pq_dir.exists():
             mem.store = PQVectorStore.load(pq_dir)
+        elif holo_dir.exists():
+            mem.store = HolographicVectorStore.load(holo_dir)
         elif store_dir.exists():
             mem.store = FaissVectorStore.load(store_dir)
         elif (path / "store.npz").exists():
@@ -911,10 +937,13 @@ class HierarchicalMemory:
         store_dir = path / "store"
         pq_dir = path / "pq_store"
         lsh_dir = path / "lsh_store"
+        holo_dir = path / "holo_store"
         if lsh_dir.exists():
             mem.store = LocalitySensitiveHashIndex.load(lsh_dir)
         elif pq_dir.exists():
             mem.store = PQVectorStore.load(pq_dir)
+        elif holo_dir.exists():
+            mem.store = HolographicVectorStore.load(holo_dir)
         elif store_dir.exists():
             if use_async:
                 mem.store = await AsyncFaissVectorStore.load_async(store_dir)

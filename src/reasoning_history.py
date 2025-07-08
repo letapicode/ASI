@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Tuple, TYPE_CHECKING, Sequence
 import json
 from collections import Counter
@@ -9,6 +9,7 @@ from collections import Counter
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from .data_ingest import CrossLingualTranslator
     from .graph_of_thought import GraphOfThought
+    from .graph_pruning_manager import GraphPruningManager
 
 
 @dataclass
@@ -17,6 +18,8 @@ class ReasoningHistoryLogger:
 
     entries: List[Tuple[str, Any]] = field(default_factory=list)
     translator: CrossLingualTranslator | None = None
+    pruner: "GraphPruningManager | None" = None
+    prune_threshold: int = 0
 
     def log(
         self,
@@ -25,7 +28,7 @@ class ReasoningHistoryLogger:
         nodes: Sequence[int] | None = None,
         location: Any | None = None,
     ) -> None:
-        ts = datetime.utcnow().isoformat()
+        ts = datetime.now(UTC).isoformat()
         if isinstance(summary, dict):
             entry = dict(summary)
             if nodes is not None:
@@ -53,6 +56,15 @@ class ReasoningHistoryLogger:
             else:
                 self.entries.append((ts, summary))
 
+        if (
+            self.pruner is not None
+            and self.pruner.graph is not None
+            and self.prune_threshold
+            and len(self.pruner.graph.nodes) > self.prune_threshold
+        ):
+            self.pruner.prune_low_degree()
+            self.pruner.prune_old_nodes()
+
     def get_history(self) -> List[Tuple[str, Any]]:
         return list(self.entries)
 
@@ -66,6 +78,14 @@ class ReasoningHistoryLogger:
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(graph.to_json(), fh)
         self.log({"graph_path": path})
+
+    def log_debate(
+        self, transcript: Sequence[Tuple[str, str]], verdict: str
+    ) -> None:
+        """Record a Socratic debate transcript and verdict."""
+        ts = datetime.now(UTC).isoformat()
+        entry = {"transcript": list(transcript), "verdict": verdict}
+        self.entries.append((ts, entry))
 
     @classmethod
     def load(cls, path: str) -> "ReasoningHistoryLogger":
