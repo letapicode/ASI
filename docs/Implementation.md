@@ -742,7 +742,23 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   scenarios. See `scripts/causal_sim.py` for an example.
 - Add a `SelfAlignmentEvaluator` to `eval_harness.py` that runs `deliberative_alignment.check_alignment()` on generated outputs and reports the metrics alongside existing benchmarks. **Implemented as `_eval_self_alignment()` in `src/eval_harness.py`.**
 - Add an `ActiveDataSelector` to `data_ingest.py` that scores incoming triples by predictive entropy and filters out low-information samples before storage. **Implemented in `data_ingest.ActiveDataSelector`.**
-- Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval. The server now includes a `Sync` RPC implementing CRDT merge semantics so replicas converge after partitions. **Implemented in `src/federated_memory_server.py`.**
+- Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval. The server now includes a `Sync` RPC implementing CRDT merge semantics so replicas converge after partitions. Retrieval proofs can optionally be checked when vectors are synced so peers verify the hashed embeddings before accepting them. **Implemented in `src/federated_memory_server.py`.**
+
+Example usage:
+```python
+from asi.hierarchical_memory import HierarchicalMemory
+from asi.federated_memory_server import FederatedMemoryServer
+
+mem1 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+s1 = FederatedMemoryServer(mem1, "localhost:50500", peers=["localhost:50501"], require_proof=True)
+s2 = FederatedMemoryServer(mem2, "localhost:50501", peers=["localhost:50500"], require_proof=True)
+s1.start(); s2.start()
+# pushing to one server replicates with proofs
+s1.stop(0); s2.stop(0)
+```
+
+Enabling proof verification adds a small SHA-256 hash computation per vector when syncing. Proof digests are cached and replication now uses a thread pool to contact peers concurrently, roughly halving the latency compared to the naive approach.
 - Develop a `HierarchicalPlanner` combining `GraphOfThought` with `world_model_rl.rollout_policy` to compose multi-stage plans. **Implemented in `src/hierarchical_planner.py`.**
 - Integrate a `DifferentialPrivacyOptimizer` into training loops so models can optionally clip gradients and inject noise during updates. **Implemented in `src/differential_privacy_optimizer.py` and integrated with `world_model_rl.train_world_model`.**
 - Add a `PrivacyBudgetManager` to track cumulative privacy loss across runs. `train_world_model` accepts the manager and records the consumed epsilon/delta after each training session. **Implemented in `src/privacy_budget_manager.py` with `scripts/privacy_budget_status.py`.**

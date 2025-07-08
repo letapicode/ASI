@@ -45,6 +45,7 @@ message VectorEntry {
   repeated float vector = 2;
   string metadata = 3;
   int64 timestamp = 4;
+  string proof = 5;
 }
 
 message SyncRequest {

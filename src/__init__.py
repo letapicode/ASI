@@ -225,6 +225,7 @@ from .gradient_patch_editor import GradientPatchEditor, PatchConfig
 from .secure_federated_learner import SecureFederatedLearner
 
 from .zk_gradient_proof import ZKGradientProof
+from .retrieval_proof import RetrievalProof
 
 
 from .zk_verifier import ZKVerifier
