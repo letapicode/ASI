@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 import memory_pb2 as memory__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10\x66he_memory.proto\x12\x03\x61si\x1a\x0cmemory.proto\"2\n\x0e\x46HEPushRequest\x12\x0e\n\x06vector\x18\x01 \x01(\x0c\x12\x10\n\x08metadata\x18\x02 \x01(\t\",\n\x0f\x46HEQueryRequest\x12\x0e\n\x06vector\x18\x01 \x01(\x0c\x12\t\n\x01k\x18\x02 \x01(\x05\"2\n\rFHEQueryReply\x12\x0f\n\x07vectors\x18\x01 \x01(\x0c\x12\x10\n\x08metadata\x18\x02 \x03(\t2r\n\x10\x46HEMemoryService\x12+\n\x04Push\x12\x13.asi.FHEPushRequest\x1a\x0e.asi.PushReply\x12\x31\n\x05Query\x12\x14.asi.FHEQueryRequest\x1a\x12.asi.FHEQueryReplyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10\x66he_memory.proto\x12\x03\x61si\x1a\x0cmemory.proto\"2\n\x0e\x46HEPushRequest\x12\x0e\n\x06vector\x18\x01 \x01(\x0c\x12\x10\n\x08metadata\x18\x02 \x01(\t\",\n\x0f\x46HEQueryRequest\x12\x0e\n\x06vector\x18\x01 \x01(\x0c\x12\t\n\x01k\x18\x02 \x01(\x05\"A\n\rFHEQueryReply\x12\x0f\n\x07vectors\x18\x01 \x01(\x0c\x12\x10\n\x08metadata\x18\x02 \x03(\t\x12\r\n\x05proof\x18\x03 \x01(\t2r\n\x10\x46HEMemoryService\x12+\n\x04Push\x12\x13.asi.FHEPushRequest\x1a\x0e.asi.PushReply\x12\x31\n\x05Query\x12\x14.asi.FHEQueryRequest\x1a\x12.asi.FHEQueryReplyb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -37,7 +37,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_FHEQUERYREQUEST']._serialized_start=91
   _globals['_FHEQUERYREQUEST']._serialized_end=135
   _globals['_FHEQUERYREPLY']._serialized_start=137
-  _globals['_FHEQUERYREPLY']._serialized_end=187
-  _globals['_FHEMEMORYSERVICE']._serialized_start=189
-  _globals['_FHEMEMORYSERVICE']._serialized_end=303
+  _globals['_FHEQUERYREPLY']._serialized_end=202
+  _globals['_FHEMEMORYSERVICE']._serialized_start=204
+  _globals['_FHEMEMORYSERVICE']._serialized_end=318
 # @@protoc_insertion_point(module_scope)

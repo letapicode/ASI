@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import time
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Union, Tuple, Optional
+
+from .telemetry import TelemetryLogger
+from .cluster_carbon_dashboard import ClusterCarbonDashboard
 
 from .hpc_forecast_scheduler import arima_forecast, HPCForecastScheduler
 from .hpc_gnn_scheduler import GNNForecastScheduler
@@ -16,10 +19,17 @@ class MultiClusterScheduler:
     """Compare forecasts from multiple clusters and submit to the best one."""
 
     clusters: Dict[str, HPCForecastScheduler] = field(default_factory=dict)
+    telemetry: Optional[Dict[str, TelemetryLogger]] = None
+    dashboard: Optional[ClusterCarbonDashboard] = None
+    schedule_log: list[tuple[str, float]] = field(default_factory=list)
 
     # --------------------------------------------------
     def submit_best(
-        self, command: Union[str, List[str]], max_delay: float = 21600.0
+        self,
+        command: Union[str, List[str]],
+        max_delay: float = 21600.0,
+        *,
+        expected_duration: float = 1.0,
     ) -> Tuple[str, str]:
         """Return chosen cluster name and job id after submission."""
 
@@ -54,8 +64,34 @@ class MultiClusterScheduler:
             raise ValueError("No forecasts available to choose a cluster")
         if best_delay and best_delay <= max_delay:
             time.sleep(best_delay)
-        job_id = globals()["submit_job"](command, backend=best_backend)
+        tel = (
+            self.telemetry.get(best_cluster) if self.telemetry else None
+        )
+        job_id = globals()["submit_job"](
+            command, backend=best_backend, telemetry=tel
+        )
+        if self.telemetry and tel is not None and len(self.telemetry) > 0:
+            baseline = sum(
+                t.get_live_carbon_intensity() for t in self.telemetry.values()
+            ) / len(self.telemetry)
+            chosen = tel.get_live_carbon_intensity()
+            saving = (baseline - chosen) * expected_duration
+            tel.metrics["carbon_saved"] = tel.metrics.get("carbon_saved", 0.0) + saving
+            self.schedule_log.append((best_cluster, saving))
+            if self.dashboard is not None:
+                self.dashboard.record_schedule(best_cluster, saving)
         return best_cluster, job_id
+
+    # --------------------------------------------------
+    def cluster_stats(self) -> Dict[str, Dict[str, float]]:
+        """Return metrics from attached telemetry loggers."""
+        out: Dict[str, Dict[str, float]] = {}
+        if self.telemetry:
+            for name, tel in self.telemetry.items():
+                out[name] = tel.get_stats()
+                if tel.metrics.get("carbon_saved") is not None:
+                    out[name]["carbon_saved"] = float(tel.metrics["carbon_saved"])
+        return out
 
 
 __all__ = ["MultiClusterScheduler"]

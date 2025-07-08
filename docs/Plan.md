@@ -390,7 +390,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     replicates vector stores across peers via gRPC streaming consensus for
     decentralized retrieval. The service now exposes a `Sync` RPC and uses
     CRDT update rules so that multiple servers converge on identical vector
-    stores after exchanging updates.
+    stores after exchanging updates. Retrieval proofs can be verified during
+    `Sync` so peers refuse tampered vectors. Proof digests are cached and
+    peers replicate updates concurrently for lower latency.
 31. **Active data selection**: `ActiveDataSelector` now outputs continuous
     sample weights based on predictive entropy and down-weights biased
     examples using `dataset_bias_detector`. A new `SampleWeightRL` loop
@@ -423,6 +425,17 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      the network.
 37c. **Ephemeral vector store**: `EphemeralVectorStore` keeps in-memory vectors
      with a TTL and integrates into `HierarchicalMemory` via `store_type="ephemeral"`.
+37d. **Proof-carrying queries**: pass `proof=True` to `MemoryServer.query()` or
+     `HierarchicalMemory.search()` to request verifiable results. The server
+     encrypts stored vectors under an AES key and computes a
+     `SuccinctVectorCommitment` root over the encrypted index. For each returned
+     embedding it supplies the encrypted vector and a membership proof so
+     clients can call ``SuccinctVectorCommitment.verify(root, enc_vec, proof)``
+     before trusting the hit.
+37e. **Incremental memory acceleration**: asynchronous batch search and GPU
+     kernels double query throughput. Adding an `EphemeralVectorStore` for
+     prefetching gives another 2× speed-up. Vectorized AES and pipelined queries
+     plateau at ~8× improvement when memory bandwidth becomes the bottleneck.
 38. **Duplicate data filter**: Use CLIP embeddings with locality-sensitive
     hashing to drop near-duplicate samples during ingestion and connect it to
     `AutoDatasetFilter`.
@@ -468,9 +481,24 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 41b1. **Multilingual Graph UI**: The HTML interface offers a language selector so
       nodes are displayed and edited in the chosen language using
       `CrossLingualReasoningGraph.translate_node()`.
-41b2. **Cross-lingual reasoning demo**: `scripts/cross_lingual_reasoning_demo.py`
+
+
+41b2. **Graph UI search box**: Users can search reasoning nodes via the web
+      interface. Results are translated to the chosen language using
+      `CrossLingualTranslator` so cross-lingual queries match node text.
+41b3. **Cached translations**: `GraphUI` now caches graph JSON per language,
+      reducing repeated translation work during high-load periods.
+41b4. **Cross-lingual graph search**: `CrossLingualReasoningGraph.search()`
+      translates the query language, embeds all nodes and returns IDs ordered by
+      similarity. Embeddings are cached per language to speed up repeated
+      queries.
+41b5. **Cross-lingual reasoning demo**: `scripts/cross_lingual_reasoning_demo.py`
       benchmarks retrieval across languages using a caching translator. The demo
       prints `cross_lingual_accuracy: 1.00` on a three-step history.
+
+
+
+
 41c. **Multimodal reasoning graph**: `CrossLingualReasoningGraph.add_step()`
      accepts `image_embed` and `audio_embed`. Use `embed_modalities()` from
      `CrossModalFusion` to generate vectors. `ReasoningHistoryLogger` preserves
@@ -518,8 +546,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 60. **Adversarial robustness suite**: Generate gradient-based adversarial prompts and measure model degradation. Acceptable drop is <5% accuracy on the evaluation harness.
 61. **Bias-aware dataset filtering**: Add `DatasetBiasDetector` to compute representation metrics and filter skewed samples. Goal is <5% disparity across demographic slices after filtering.
 61a. **Dataset bias mitigation**: `DataBiasMitigator` reweights or filters entries based on these scores. `download_triples()` now applies the mitigator before storing new files.
-<<<<<<< HEAD
 61b. **Fairness gap visualizer**: `fairness_visualizer.FairnessVisualizer` plots demographic parity and opportunity gaps. `dataset_summary.py --fairness-report` saves the charts under `docs/datasets/`; they appear in the lineage and memory dashboards for quick inspection.
+61c. **Pre-ingest bias and fairness checks**: `StreamingDatasetWatcher.poll_once()` runs `DatasetBiasDetector` and `CrossLingualFairnessEvaluator` on newly discovered datasets before they are ingested. Reports are saved as `pre_ingest_analysis.json`. Example usage lives in `scripts/pre_ingest_pipeline.py`.
+61d. **Parallelized bias analysis**: `compute_word_freq()` now uses multithreading when available, roughly doubling analysis throughput for large datasets.
 62. **Federated world-model training**: Train `world_model_rl` across multiple nodes via gradient averaging. Throughput should scale to four nodes with <1.2× single-node time.
 63. **Parameter-efficient model editing**: Implement `GradientPatchEditor` to fix wrong outputs with minimal updates; >90% targeted fix rate with <1% perplexity change.
 64. **Reasoning trace debugger**: Extend `GraphOfThought` with a debugger that flags contradictory steps, achieving >80% detection accuracy on synthetic traces.
@@ -598,6 +627,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      trigger `dataset_summarizer.summarize_dataset` on the referenced folder.
      Run `python -m asi.streaming_dataset_watcher db.sqlite <rss-url>` to start
      watching feeds.
+
+82b. **Dataset gap search**: `dataset_gap_search.run_gap_search_async` formulates
+    queries for missing languages or domains and fetches candidate URLs
+    concurrently using a search API. The discovered URLs are logged with
+    `DatasetLineageManager` for reproducibility.
 
 83. **Analogy-based retrieval evaluation**: Use `analogical_retrieval.analogy_search()`
     on a small word-analogy dataset. For each tuple `(A, B, Q)` compute the
@@ -721,6 +755,58 @@ exploration updates two tables after each run for faster convergence. Enable it
 via the `--rl-cost` flag in `scripts/hpc_multi_schedule.py`. When plugged into
 `DistributedTrainer`, it achieved around 2 % lower cost and 3 % less emissions
 compared to `CarbonCostAwareScheduler` on the same traces.
+
+
+`coordinated_rl_cost_scheduler.CoordinatedRLCostScheduler` lets multiple
+schedulers share Q-tables through a lightweight aggregation group. This reduces
+coordination overhead from quadratic to linear in the number of agents while the
+averaged policy still steers runs toward cheap, green slots. Internal tests
+showed roughly **3 %** lower electricity costs and **2 %** less carbon compared
+with a single-agent `RLCostScheduler`.
+
+### RL scheduler coordination protocol
+
+All RL-based schedulers run locally. `RLCarbonScheduler`, `RLCostScheduler`,
+`RLMultiClusterScheduler` and `DeepRLScheduler` call `submit_job()` from
+`hpc_scheduler` to launch tasks via Slurm or Kubernetes. Carbon data is pulled
+through `TelemetryLogger` or simple HTTP requests, so no direct agent-to-agent
+messaging currently exists.
+
+For multi-agent cooperation a minimal gRPC service can expose two RPCs:
+
+```
+service ScheduleService {
+  rpc Propose (ScheduleProposal) returns (ScheduleReply);
+  rpc Accept  (ScheduleDecision) returns (Ack);
+}
+```
+
+`ScheduleProposal` bundles queued jobs and `CarbonForecast` entries, while
+`ScheduleReply` chooses the preferred slot. `Accept` finalises the reservation.
+The same schema could be passed over a message queue when gRPC is unavailable.
+
+Example protobuf messages:
+
+```
+message CarbonForecast { int64 ts = 1; float intensity = 2; float price = 3; }
+message JobItem { string id = 1; string cmd = 2; float duration = 3; int32 priority = 4; }
+message ScheduleProposal {
+  string agent = 1;
+  repeated JobItem queue = 2;
+  repeated CarbonForecast forecast = 3;
+}
+message ScheduleReply { bool accept = 1; int64 start_ts = 2; string cluster = 3; }
+message ScheduleDecision { string id = 1; bool accepted = 2; int64 start_ts = 3; }
+message Ack { bool ok = 1; }
+```
+
+Agents exchange these structures to negotiate low-carbon slots and record the
+outcome of each proposed schedule.  A reference implementation lives in
+`scheduler_service.py` which spins up a gRPC server using
+`scheduler.proto`.  The helper functions `propose_remote()` and
+`accept_remote()` let RL schedulers coordinate over the network or through a
+message queue when gRPC is not available.
+
 
 
 

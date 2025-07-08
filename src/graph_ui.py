@@ -71,6 +71,12 @@ _HTML = """
 </div>
 
 <div>
+  <input id='searchBox' type='text' placeholder='Search nodes'>
+  <button onclick='doSearch()'>Search</button>
+</div>
+<div id='searchResults'></div>
+
+<div>
   <label for='lang'>Language:</label>
   <select id='lang'></select>
 </div>
@@ -134,6 +140,14 @@ async function sendCmd() {
   });
   await load();
 }
+
+async function doSearch() {
+  const q = document.getElementById('searchBox').value;
+  const res = await fetch('/graph/search?query=' + encodeURIComponent(q) +
+                          '&lang=' + currentLang).then(r => r.json());
+  const out = document.getElementById('searchResults');
+  out.innerHTML = res.map(r => r.text + ' (id ' + r.id + ')').join('<br>');
+}
 loadLanguages();
 load();
 </script>
@@ -171,12 +185,17 @@ class GraphUI:
         self._high_load = False
         self._last_update = 0.0
         self._cached_data: dict | None = None
+        self._lang_cache: dict[str, dict] = {}
 
         if self.load_monitor is not None:
             self.load_monitor.add_callback(self._on_load)
         self._setup_routes()
         # store initial summary
         self.logger.log(self.graph.self_reflect())
+
+    def _invalidate_cache(self) -> None:
+        self._cached_data = None
+        self._lang_cache.clear()
 
     def _on_load(self, load: float) -> None:
         prev = self._high_load
@@ -186,33 +205,67 @@ class GraphUI:
 
     def _get_graph_json(self, lang: str | None = None) -> dict:
         now = time.time()
-        if self._high_load and self._cached_data is not None:
-            if now - self._last_update < self.update_interval:
-                return self._cached_data
-        data = self.graph.to_json()
-        if lang and hasattr(self.graph, 'translate_node'):
-            for node in data.get("nodes", []):
+        base = self._cached_data
+        if (
+            base is None
+            or not self._high_load
+            or now - self._last_update >= self.update_interval
+        ):
+            base = self.graph.to_json()
+            if self._high_load:
+                for node in base.get("nodes", []):
+                    text = node.get("text", "")
+                    if len(text) > 30:
+                        node["text"] = text[:30] + "..."
+            self._cached_data = base
+            self._lang_cache.clear()
+            self._last_update = now
+
+        if not lang or lang == "en":
+            return base
+
+        cached = self._lang_cache.get(lang)
+        if cached is not None:
+            return cached
+
+        data = {"nodes": [dict(n) for n in base.get("nodes", [])], "edges": base.get("edges", [])}
+        if hasattr(self.graph, "translate_node"):
+            for node in data["nodes"]:
                 try:
                     node["text"] = self.graph.translate_node(node["id"], lang)
                 except Exception:
                     pass
-        if self._high_load:
-            for node in data.get("nodes", []):
-                text = node.get("text", "")
-                if len(text) > 30:
-                    node["text"] = text[:30] + "..."
-        self._cached_data = data
-        self._last_update = now
+        self._lang_cache[lang] = data
         return data
+
+    def _search_nodes(self, query: str, lang: str = "en") -> list[dict]:
+        translator = getattr(self.graph, "translator", None)
+        queries = [query.lower()]
+        if translator is not None:
+            try:
+                for t in translator.translate_all(query).values():
+                    queries.append(t.lower())
+            except Exception:
+                pass
+        results = []
+        for nid, node in self.graph.nodes.items():
+            text = node.text.lower()
+            if any(q in text for q in queries):
+                if hasattr(self.graph, "translate_node"):
+                    try:
+                        disp = self.graph.translate_node(nid, lang)
+                    except Exception:
+                        disp = node.text
+                else:
+                    disp = node.text
+                results.append({"id": nid, "text": disp})
+        return results
 
     # --------------------------------------------------------------
     def _setup_routes(self) -> None:
         @self.app.get('/graph', response_class=HTMLResponse)
         async def graph_page() -> Any:
-            langs = ''
-            if self.logger.translator is not None:
-                langs = ', '.join(self.logger.translator.languages)
-            return HTMLResponse(_HTML.replace('{languages}', langs))
+            return HTMLResponse(_HTML)
 
         async def _record() -> None:
             summary = self.graph.self_reflect()
@@ -231,14 +284,23 @@ class GraphUI:
             langs = self.logger.translator.languages if self.logger.translator else []
             return JSONResponse(langs)
 
+        @self.app.get('/graph/search')
+        async def graph_search(query: str, lang: str = 'en') -> Any:
+            return JSONResponse(self._search_nodes(query, lang))
+
         @self.app.post('/graph/node')
         async def add_node(req: Request) -> Any:
             data = await req.json()
             lang = data.get('lang')
             if lang and hasattr(self.graph, 'translate_node'):
-                node_id = self.graph.add_step(data.get('text', ''), lang=lang, metadata=data.get('metadata'))
+                node_id = self.graph.add_step(
+                    data.get('text', ''), lang=lang, metadata=data.get('metadata')
+                )
             else:
-                node_id = self.graph.add_step(data.get('text', ''), data.get('metadata'))
+                node_id = self.graph.add_step(
+                    data.get('text', ''), data.get('metadata')
+                )
+            self._invalidate_cache()
             await _record()
             return JSONResponse({'id': node_id})
 
@@ -246,6 +308,7 @@ class GraphUI:
         async def add_edge(req: Request) -> Any:
             data = await req.json()
             self.graph.connect(int(data['src']), int(data['dst']))
+            self._invalidate_cache()
             await _record()
             return JSONResponse({'status': 'ok'})
 
@@ -257,6 +320,7 @@ class GraphUI:
             self.graph.edges.pop(node_id, None)
             for src, dsts in list(self.graph.edges.items()):
                 self.graph.edges[src] = [d for d in dsts if d != node_id]
+            self._invalidate_cache()
             await _record()
             return JSONResponse({'status': 'ok'})
 
@@ -267,6 +331,7 @@ class GraphUI:
             dst = int(data['dst'])
             if src in self.graph.edges:
                 self.graph.edges[src] = [d for d in self.graph.edges[src] if d != dst]
+            self._invalidate_cache()
             await _record()
             return JSONResponse({'status': 'ok'})
 
@@ -283,8 +348,11 @@ class GraphUI:
             if lang and hasattr(self.graph, 'translate_node'):
                 new_ids = set(self.graph.nodes) - before
                 for nid in new_ids:
-                    self.graph.nodes[nid].metadata = dict(self.graph.nodes[nid].metadata or {})
+                    self.graph.nodes[nid].metadata = dict(
+                        self.graph.nodes[nid].metadata or {}
+                    )
                     self.graph.nodes[nid].metadata.setdefault('lang', lang)
+            self._invalidate_cache()
             await _record()
             return JSONResponse(result)
 
@@ -296,6 +364,7 @@ class GraphUI:
                 result = self.voice.apply(audio)
             except Exception as e:
                 return JSONResponse({'status': 'error', 'error': str(e)}, status_code=400)
+            self._invalidate_cache()
             await _record()
             return JSONResponse(result)
 

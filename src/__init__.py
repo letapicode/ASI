@@ -225,6 +225,7 @@ from .gradient_patch_editor import GradientPatchEditor, PatchConfig
 from .secure_federated_learner import SecureFederatedLearner
 
 from .zk_gradient_proof import ZKGradientProof
+from .retrieval_proof import RetrievalProof
 
 
 from .zk_verifier import ZKVerifier
@@ -302,6 +303,7 @@ from .carbon_aware_scheduler import CarbonAwareScheduler
 from .carbon_hpc_scheduler import CarbonAwareScheduler
 from .rl_carbon_scheduler import RLCarbonScheduler
 from .rl_cost_scheduler import RLCostScheduler
+from .coordinated_rl_cost_scheduler import CoordinatedRLCostScheduler
 from .carbon_aware_dataset_ingest import CarbonAwareDatasetIngest
 
 from .collaboration_portal import CollaborationPortal

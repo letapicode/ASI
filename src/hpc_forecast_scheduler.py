@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import time
-from typing import List, Union
+from typing import List, Union, Tuple, Dict
 
 import numpy as np
 from statsmodels.tsa.arima.model import ARIMA
@@ -40,10 +40,16 @@ class HPCForecastScheduler:
     cost_weight: float = 0.5
     backend: str = "slurm"
 
+    # cache keyed by (len(carbon_history), len(cost_history), steps)
+    _cache: Dict[Tuple[int, int, int], List[float]] = field(default_factory=dict, init=False)
+
     # --------------------------------------------------
     def forecast_scores(self, max_delay: float, clusters=None) -> List[float]:
         """Return combined carbon/cost forecasts for each hour."""
         steps = max(int(max_delay // 3600) + 1, 1)
+        key = (len(self.carbon_history), len(self.cost_history), steps)
+        if key in self._cache:
+            return list(self._cache[key])
         carbon_pred = arima_forecast(self.carbon_history, steps=steps)
         cost_pred = arima_forecast(self.cost_history, steps=steps)
         n = min(len(carbon_pred), len(cost_pred))
@@ -51,6 +57,9 @@ class HPCForecastScheduler:
             self.carbon_weight * carbon_pred[i] + self.cost_weight * cost_pred[i]
             for i in range(n)
         ]
+        # keep only latest entry to avoid unbounded memory
+        self._cache.clear()
+        self._cache[key] = list(scores)
         return scores
 
     # --------------------------------------------------

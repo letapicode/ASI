@@ -22,7 +22,13 @@ DiscoveredDataset = dd.DiscoveredDataset
 parse_hf = dd.discover_huggingface
 store_datasets = dd.store_datasets
 
-from asi.license_inspector import LicenseInspector
+loader_li = importlib.machinery.SourceFileLoader('src.license_inspector', 'src/license_inspector.py')
+spec_li = importlib.util.spec_from_loader(loader_li.name, loader_li)
+li = importlib.util.module_from_spec(spec_li)
+li.__package__ = 'src'
+sys.modules['src.license_inspector'] = li
+loader_li.exec_module(li)
+LicenseInspector = li.LicenseInspector
 
 
 class TestDatasetDiscovery(unittest.TestCase):
