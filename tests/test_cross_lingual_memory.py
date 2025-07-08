@@ -6,6 +6,7 @@ import types
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+pkg.__path__ = ['src']
 
 def load(name, path):
     loader = importlib.machinery.SourceFileLoader(name, path)
@@ -27,7 +28,13 @@ CrossLingualTranslator = di.CrossLingualTranslator
 class TestCrossLingualMemory(unittest.TestCase):
     def test_retrieval_across_languages(self):
         tr = CrossLingualTranslator(["es"])
-        mem = CrossLingualMemory(dim=4, compressed_dim=2, capacity=10, translator=tr)
+        mem = CrossLingualMemory(
+            dim=4,
+            compressed_dim=2,
+            capacity=10,
+            translator=tr,
+            encryption_key=b'0'*16
+        )
         mem.add("hello")
         vecs, meta = mem.search("[es] hello", k=1)
         self.assertEqual(len(meta), 1)

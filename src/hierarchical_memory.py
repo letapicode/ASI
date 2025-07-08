@@ -1,7 +1,91 @@
 import numpy as np
-import torch
-from pathlib import Path
 from typing import Iterable, Any, Tuple, List, Dict
+try:  # optional torch dependency
+    import torch
+except Exception:  # pragma: no cover - allow running without torch
+    import types
+
+    class _DummyTensor:
+        def __init__(self, data):
+            import numpy as np
+            self.data = np.asarray(data, dtype=np.float32)
+
+        def dim(self) -> int:
+            return self.data.ndim
+
+        def unsqueeze(self, axis: int) -> "_DummyTensor":
+            import numpy as np
+            return _DummyTensor(np.expand_dims(self.data, axis))
+
+        def __iter__(self):
+            if self.data.ndim == 0:
+                yield _DummyTensor(self.data)
+            else:
+                for row in self.data:
+                    yield _DummyTensor(row)
+
+        def detach(self) -> "_DummyTensor":
+            return self
+
+        def cpu(self) -> "_DummyTensor":
+            return self
+
+        def numpy(self) -> np.ndarray:
+            return self.data
+
+        def size(self, dim: int | None = None):
+            return self.data.shape if dim is None else self.data.shape[dim]
+
+        def to(self, *_args: Any, **_kw: Any) -> "_DummyTensor":
+            return self
+
+        @property
+        def device(self) -> str:
+            return "cpu"
+
+        def numel(self) -> int:
+            return self.data.size
+
+        def tolist(self):
+            return self.data.tolist()
+
+    class _DummyTorch(types.SimpleNamespace):
+        Tensor = _DummyTensor
+
+        def empty(self, *args: Any, **kw: Any):
+            import numpy as np
+            return _DummyTensor(np.empty(*args))
+
+        def stack(self, seq: Iterable[Any]):
+            import numpy as np
+            return _DummyTensor(np.stack([s.data for s in seq]))
+
+        def from_numpy(self, arr):
+            import numpy as np
+            return _DummyTensor(np.asarray(arr, dtype=np.float32))
+
+        def cat(self, seq: Iterable["_DummyTensor"], dim: int = 0):
+            import numpy as np
+            return _DummyTensor(np.concatenate([s.data for s in seq], axis=dim))
+
+        class nn(types.SimpleNamespace):
+            class functional(types.SimpleNamespace):
+                @staticmethod
+                def cosine_similarity(a, b, dim=1):
+                    import numpy as np
+                    a = a.data
+                    b = b.data
+                    dot = (a * b).sum(axis=dim)
+                    na = np.linalg.norm(a, axis=dim)
+                    nb = np.linalg.norm(b, axis=dim)
+                    return _DummyTensor(dot / (na * nb + 1e-8))
+
+        def from_numpy(self, arr):
+            import numpy as np
+            return _DummyTensor(np.asarray(arr, dtype=np.float32))
+
+    torch = _DummyTorch()
+from pathlib import Path
 
 try:
     import grpc  # type: ignore

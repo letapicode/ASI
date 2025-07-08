@@ -8,7 +8,15 @@ from typing import Iterable, List, Tuple, Callable, Any, Optional, Dict
 
 import numpy as np
 import asyncio
-import torch
+try:  # optional torch dependency
+    import torch
+except Exception:  # pragma: no cover - allow running without torch
+    import types
+
+    class _DummyTorch(types.SimpleNamespace):
+        Tensor = type("Tensor", (), {})
+
+    torch = _DummyTorch()
 import requests
 try:
     from .carbon_tracker import CarbonFootprintTracker
