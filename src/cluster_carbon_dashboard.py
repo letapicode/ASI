@@ -11,6 +11,7 @@ class ClusterCarbonDashboard:
 
     def __init__(self) -> None:
         self.metrics: Dict[str, Dict[str, float]] = {}
+        self.schedules: list[tuple[str, float]] = []
         self.httpd: HTTPServer | None = None
         self.thread: threading.Thread | None = None
         self.port: int | None = None
@@ -41,6 +42,9 @@ class ClusterCarbonDashboard:
             rec["energy_cost"] += float(cost)
         self.metrics[node_id] = rec
 
+    def record_schedule(self, cluster: str, carbon_saved: float) -> None:
+        self.schedules.append((cluster, float(carbon_saved)))
+
     def aggregate(self) -> Dict[str, Any]:
         total = {"energy_kwh": 0.0, "carbon_g": 0.0, "energy_cost": 0.0}
         for m in self.metrics.values():
@@ -49,7 +53,8 @@ class ClusterCarbonDashboard:
             total["energy_cost"] += m.get("energy_cost", 0.0)
         if total["energy_kwh"]:
             total["carbon_intensity"] = total["carbon_g"] / total["energy_kwh"]
-        return {"total": total, "nodes": self.metrics}
+        saved = sum(s for _, s in self.schedules)
+        return {"total": total, "nodes": self.metrics, "schedules": self.schedules, "carbon_saved": saved}
 
     # --------------------------------------------------------------
     def start(self, host: str = "localhost", port: int = 8090) -> None:
@@ -69,6 +74,15 @@ class ClusterCarbonDashboard:
                     intensity = float(data.get("carbon_intensity", 0.0))
                     cost = float(data.get("energy_cost", 0.0))
                     dashboard.record(node, energy, carbon, intensity, cost)
+                    self.send_response(200)
+                    self.end_headers()
+                elif self.path == "/schedule":
+                    length = int(self.headers.get("Content-Length", 0))
+                    body = self.rfile.read(length) if length else b"{}"
+                    data = json.loads(body.decode() or "{}")
+                    cl = str(data.get("cluster"))
+                    saved = float(data.get("carbon_saved", 0.0))
+                    dashboard.record_schedule(cl, saved)
                     self.send_response(200)
                     self.end_headers()
                 else:
@@ -91,11 +105,18 @@ class ClusterCarbonDashboard:
                         )
                     rows_str = "\n".join(rows)
                     total = agg["total"]
+                    sched_rows = "".join(
+                        f"<tr><td>{c}</td><td>{s:.3f}</td></tr>" for c, s in dashboard.schedules[-10:]
+                    )
+                    carbon_saved = sum(s for _, s in dashboard.schedules)
                     html = (
                         "<html><body><h1>Cluster Carbon Dashboard</h1>"
                         "<table border='1'><tr><th>Node</th><th>Energy (kWh)</th><th>Carbon (g)</th><th>Intensity</th><th>Cost</th></tr>"
                         f"{rows_str}</table>"
                         f"<p>Total energy: {total['energy_kwh']:.3f} kWh, Carbon: {total['carbon_g']:.3f} g, Cost: ${total['energy_cost']:.2f}</p>"
+                        "<h2>Schedules</h2><table border='1'><tr><th>Cluster</th><th>Carbon Saved</th></tr>"
+                        f"{sched_rows}</table>"
+                        f"<p>Total carbon saved: {carbon_saved:.3f} g</p>"
                         "</body></html>"
                     )
                     self.send_response(200)

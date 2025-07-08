@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Iterable, Any, Dict, Tuple
+from typing import Iterable, Any, Dict
+
+from dataclasses import dataclass
 
 import torch
 
@@ -9,6 +11,7 @@ from .hierarchical_memory import (
     MemoryServer,
     query_remote,
 )
+from .retrieval_proof import RetrievalProof
 
 try:
     import grpc  # type: ignore
@@ -22,6 +25,13 @@ if _HAS_GRPC:
 
     import time
     import uuid
+    from concurrent import futures
+
+    @dataclass
+    class _VectorState:
+        ts: int
+        vec: torch.Tensor
+        digest: str
 
     class FederatedMemoryServer(MemoryServer):
         """Memory server that replicates updates across peers using CRDTs."""
@@ -32,10 +42,13 @@ if _HAS_GRPC:
             address: str = "localhost:50051",
             peers: Iterable[str] | None = None,
             max_workers: int = 4,
+            *,
+            require_proof: bool = False,
         ) -> None:
             super().__init__(memory, address=address, max_workers=max_workers)
             self.peers = list(peers or [])
-            self.state: Dict[str, Tuple[int, torch.Tensor]] = {}
+            self.state: Dict[str, _VectorState] = {}
+            self.require_proof = require_proof
 
         def add_peer(self, address: str) -> None:
             """Register a new peer."""
@@ -50,42 +63,51 @@ if _HAS_GRPC:
         # --------------------------------------------------------------
         def _apply_update(self, key: str, vec: torch.Tensor, ts: int) -> None:
             cur = self.state.get(key)
-            if cur is not None and cur[0] >= ts:
+            if cur is not None and cur.ts >= ts:
                 return
             if cur is not None:
                 self.memory.delete(tag=key)
             self.memory.add(vec.unsqueeze(0), metadata=[key])
-            self.state[key] = (ts, vec.detach().cpu())
+            digest = RetrievalProof.generate(vec).digest
+            self.state[key] = _VectorState(ts, vec.detach().cpu(), digest)
 
         def _replicate_entries(self, entries: list[memory_pb2.VectorEntry]) -> None:
             md = (("x-replicated", "1"),)
             req = memory_pb2.SyncRequest(items=entries)
-            for addr in self.peers:
+
+            def _send(addr: str) -> None:
                 with grpc.insecure_channel(addr) as channel:
                     stub = memory_pb2_grpc.MemoryServiceStub(channel)
                     stub.Sync(req, metadata=md)
 
+            with futures.ThreadPoolExecutor(max_workers=len(self.peers)) as exe:
+                futs = [exe.submit(_send, addr) for addr in self.peers]
+                for f in futs:
+                    f.result()
+
         # --------------------------------------------------------------
         def _replicate(self, key: str) -> None:
-            ts, vec = self.state[key]
+            state = self.state[key]
             entry = memory_pb2.VectorEntry(
                 id=key,
-                vector=vec.view(-1).tolist(),
+                vector=state.vec.view(-1).tolist(),
                 metadata=key,
-                timestamp=ts,
+                timestamp=state.ts,
+                proof=state.digest,
             )
             self._replicate_entries([entry])
 
         def _replicate_batch(self, keys: Iterable[str]) -> None:
             entries = []
             for k in keys:
-                ts, vec = self.state[k]
+                state = self.state[k]
                 entries.append(
                     memory_pb2.VectorEntry(
                         id=k,
-                        vector=vec.view(-1).tolist(),
+                        vector=state.vec.view(-1).tolist(),
                         metadata=k,
-                        timestamp=ts,
+                        timestamp=state.ts,
+                        proof=state.digest,
                     )
                 )
             if entries:
@@ -138,6 +160,11 @@ if _HAS_GRPC:
                 key = item.id or item.metadata
                 if not key:
                     continue
+                if self.require_proof:
+                    if not item.proof or not RetrievalProof(item.proof).verify(vec):
+                        context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                        context.set_details("invalid retrieval proof")
+                        return memory_pb2.SyncReply(ok=False)
                 ts = int(item.timestamp)
                 self._apply_update(key, vec, ts)
                 keys.append(key)

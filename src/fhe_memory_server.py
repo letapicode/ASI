@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent import futures
 from typing import Any, Iterable
+import sys
 
 import numpy as np
 
@@ -20,6 +21,21 @@ except Exception:  # pragma: no cover - optional dependency
     _HAS_TENSEAL = False
 
 from .vector_store import VectorStore
+try:
+    from .zk_retrieval_proof import ZKRetrievalProof
+except Exception:  # pragma: no cover - fallback for tests
+    import importlib.util
+    from pathlib import Path
+
+    _p = Path(__file__).resolve().with_name("zk_retrieval_proof.py")
+    _spec = importlib.util.spec_from_file_location("zk_retrieval_proof", _p)
+    if _spec and _spec.loader:
+        _mod = importlib.util.module_from_spec(_spec)
+        sys.modules[_spec.name] = _mod
+        _spec.loader.exec_module(_mod)
+        ZKRetrievalProof = _mod.ZKRetrievalProof
+    else:  # pragma: no cover - should not happen
+        raise
 
 
 if _HAS_GRPC and _HAS_TENSEAL:
@@ -54,9 +70,11 @@ if _HAS_GRPC and _HAS_TENSEAL:
             q = np.array(enc_q.decrypt(), dtype=np.float32)
             out, meta = self.store.search(q, k=int(request.k))
             enc_out = ts.ckks_vector(self.ctx, out.reshape(-1).tolist())
+            proof = ZKRetrievalProof.generate(out, ["" if m is None else str(m) for m in meta])
             return fhe_memory_pb2.FHEQueryReply(
                 vectors=enc_out.serialize(),
                 metadata=["" if m is None else str(m) for m in meta],
+                proof=proof.digest,
             )
 
         def start(self) -> None:
@@ -82,13 +100,16 @@ if _HAS_GRPC and _HAS_TENSEAL:
             )
             self.stub.Push(req)
 
-        def search(self, vector: np.ndarray, k: int = 5):
+        def search(self, vector: np.ndarray, k: int = 5, verify: bool = True):
             enc_q = ts.ckks_vector(self.ctx, np.asarray(vector, dtype=np.float32).ravel().tolist())
             req = fhe_memory_pb2.FHEQueryRequest(vector=enc_q.serialize(), k=k)
             reply = self.stub.Query(req)
             enc_out = ts.CKKSVector.load(self.ctx, reply.vectors)
             dim = vector.size
             out = np.array(enc_out.decrypt(), dtype=np.float32).reshape(-1, dim)
+            proof = ZKRetrievalProof(reply.proof)
+            if verify and not proof.verify(out, reply.metadata):
+                raise ValueError("invalid retrieval proof")
             return out, list(reply.metadata)
 
         def close(self) -> None:

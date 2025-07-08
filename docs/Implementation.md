@@ -566,6 +566,23 @@ paraphrase_multilingual([Path("./data/text/0.txt")], translator, None, inspector
 Run `scripts/lineage_viewer.py ./data` to browse the recorded steps.
 ```
 
+After using `dataset_discovery.store_datasets()` the inspector can audit the
+resulting SQLite database and log a summary for each dataset:
+
+```python
+inspector = LicenseInspector(["mit"])  # allow only MIT
+lineage = DatasetLineageManager("./data")
+res = inspector.scan_discovered_db("./discovered.sqlite", lineage)
+print(res["hf:example"])  # True or False
+```
+
+`LicenseInspector` uses precompiled regex heuristics so scanning large discovery
+databases is quick even with thousands of entries.
+
+Each entry adds a note like ``inspect hf:example license=mit allowed=True`` to
+``dataset_lineage.json`` so compliance results are tracked alongside other
+ingestion steps.
+
 To inject noise for differential privacy, create a `PrivacyGuard` and pass it to
 `download_triples()`. After ingestion, inspect the remaining budget:
 
@@ -742,7 +759,23 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   scenarios. See `scripts/causal_sim.py` for an example.
 - Add a `SelfAlignmentEvaluator` to `eval_harness.py` that runs `deliberative_alignment.check_alignment()` on generated outputs and reports the metrics alongside existing benchmarks. **Implemented as `_eval_self_alignment()` in `src/eval_harness.py`.**
 - Add an `ActiveDataSelector` to `data_ingest.py` that scores incoming triples by predictive entropy and filters out low-information samples before storage. **Implemented in `data_ingest.ActiveDataSelector`.**
-- Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval. The server now includes a `Sync` RPC implementing CRDT merge semantics so replicas converge after partitions. **Implemented in `src/federated_memory_server.py`.**
+- Implement a `FederatedMemoryServer` variant that replicates vector stores across peers using gRPC streaming consensus for decentralized retrieval. The server now includes a `Sync` RPC implementing CRDT merge semantics so replicas converge after partitions. Retrieval proofs can optionally be checked when vectors are synced so peers verify the hashed embeddings before accepting them. **Implemented in `src/federated_memory_server.py`.**
+
+Example usage:
+```python
+from asi.hierarchical_memory import HierarchicalMemory
+from asi.federated_memory_server import FederatedMemoryServer
+
+mem1 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
+s1 = FederatedMemoryServer(mem1, "localhost:50500", peers=["localhost:50501"], require_proof=True)
+s2 = FederatedMemoryServer(mem2, "localhost:50501", peers=["localhost:50500"], require_proof=True)
+s1.start(); s2.start()
+# pushing to one server replicates with proofs
+s1.stop(0); s2.stop(0)
+```
+
+Enabling proof verification adds a small SHA-256 hash computation per vector when syncing. Proof digests are cached and replication now uses a thread pool to contact peers concurrently, roughly halving the latency compared to the naive approach.
 - Develop a `HierarchicalPlanner` combining `GraphOfThought` with `world_model_rl.rollout_policy` to compose multi-stage plans. **Implemented in `src/hierarchical_planner.py`.**
 - Integrate a `DifferentialPrivacyOptimizer` into training loops so models can optionally clip gradients and inject noise during updates. **Implemented in `src/differential_privacy_optimizer.py` and integrated with `world_model_rl.train_world_model`.**
 - Add a `PrivacyBudgetManager` to track cumulative privacy loss across runs. `train_world_model` accepts the manager and records the consumed epsilon/delta after each training session. **Implemented in `src/privacy_budget_manager.py` with `scripts/privacy_budget_status.py`.**
@@ -781,6 +814,10 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
   `query_summary()` retrieves these summaries in any supported language and
   `ReasoningHistoryLogger.log()` records which node ids were summarised along
   with the memory location for later inspection.
+- Extend `CrossLingualReasoningGraph` with `search(query, lang)` which
+  translates ``query`` to each node's language, embeds the texts using a
+  deterministic hash and returns node IDs ranked by cosine similarity.
+  Embeddings are cached per-language so subsequent searches reuse them.
 - Create a `WorldModelDistiller` module and a `scripts/distill_world_model.py`
   utility to train smaller student models from the large world model.
   **Implemented in `src/world_model_distiller.py` with the script
@@ -987,7 +1024,8 @@ sched.stop()
 ```
 
 `TelemetryLogger` publishes energy stats to a running
-`ClusterCarbonDashboard` so operators can monitor cluster-wide impact.
+`ClusterCarbonDashboard` so operators can monitor cluster-wide impact. The
+dashboard now lists negotiated schedules and the cumulative carbon saved.
 
 ### Telemetry Aggregation
 
@@ -1070,6 +1108,33 @@ Compared to the ARIMA‑based heuristic scheduler, the RL variant adapts to
 recurring patterns in queue delays and energy prices.  Over time it tends to
 migrate jobs toward the cheaper and greener cluster even when short‑term
 forecasts fluctuate.
+
+The scheduler now accepts a `telemetry` mapping so each cluster can register a
+`TelemetryLogger`. When jobs are dispatched the chosen cluster and estimated
+carbon saving are logged. Calling `cluster_stats()` returns the aggregated
+telemetry per cluster.
+
+````python
+from asi.telemetry import TelemetryLogger
+from asi.cluster_carbon_dashboard import ClusterCarbonDashboard
+from asi.rl_multi_cluster_scheduler import RLMultiClusterScheduler
+from asi.hpc_forecast_scheduler import HPCForecastScheduler
+
+dash = ClusterCarbonDashboard(); dash.start(port=0)
+tele = {
+    "us": TelemetryLogger(node_id="us", publish_url=f"http://localhost:{dash.port}/update"),
+    "eu": TelemetryLogger(node_id="eu", publish_url=f"http://localhost:{dash.port}/update"),
+}
+sched = RLMultiClusterScheduler({"us": HPCForecastScheduler(), "eu": HPCForecastScheduler()}, telemetry=tele, dashboard=dash)
+sched.submit_best_rl(["run.sh"], expected_duration=2.0)
+print(sched.cluster_stats())
+dash.stop()
+````
+`ClusterCarbonDashboard` now shows the negotiated schedules with their carbon
+savings in the web view.
+
+`HPCForecastScheduler.forecast_scores()` caches the ARIMA results keyed by the
+history lengths so repeated calls avoid refitting the model.
 
 - `src/nerf_world_model.py` implements a tiny NeRF renderer with multi-view dataset helpers. Training on the synthetic cube sequence reaches around **25 dB PSNR** after 50 epochs.
 

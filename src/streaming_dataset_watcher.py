@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from pathlib import Path
 from typing import Dict, List
@@ -7,8 +8,25 @@ from urllib.parse import urlparse
 
 import requests
 
+import json
 from .dataset_discovery import DiscoveredDataset, _parse_rss, store_datasets
 from .dataset_summarizer import summarize_dataset
+from .dataset_bias_detector import compute_word_freq, bias_score
+from .cross_lingual_fairness import CrossLingualFairnessEvaluator
+try:  # pragma: no cover - optional dependency
+    from .data_ingest import CrossLingualTranslator
+except Exception:  # pragma: no cover - missing torch
+    class CrossLingualTranslator:  # type: ignore
+        def __init__(self, languages):
+            self.languages = list(languages)
+
+        def translate(self, text: str, lang: str) -> str:
+            if lang not in self.languages:
+                raise ValueError("unsupported language")
+            return text
+
+        def translate_all(self, text: str):
+            return {l: text for l in self.languages}
 
 
 class StreamingDatasetWatcher:
@@ -28,6 +46,27 @@ class StreamingDatasetWatcher:
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
         return resp.text
+
+    def _analyze_dataset(self, root: Path) -> None:
+        """Compute bias and fairness metrics and save a JSON report."""
+        files = list(root.rglob("*.txt"))
+        freq = compute_word_freq(files, num_workers=os.cpu_count())
+        bscore = bias_score(freq)
+        langs = [p.name for p in root.iterdir() if p.is_dir()]
+        stats = {l: {"1": len(list((root / l).glob("*.txt")))} for l in langs}
+        if stats:
+            ev = CrossLingualFairnessEvaluator(
+                translator=CrossLingualTranslator(langs)
+            )
+            fairness = ev.evaluate(stats)
+        else:
+            fairness = {}
+        report = {"bias_score": bscore, "fairness": fairness}
+        out = root / "pre_ingest_analysis.json"
+        try:
+            out.write_text(json.dumps(report, indent=2))
+        except Exception:
+            pass
 
     def poll_once(self) -> List[DiscoveredDataset]:
         """Poll all feeds once and store any new entries."""
@@ -49,7 +88,9 @@ class StreamingDatasetWatcher:
                 parsed = urlparse(d.url)
                 if parsed.scheme == "file":
                     try:
-                        summarize_dataset(Path(parsed.path))
+                        root = Path(parsed.path)
+                        self._analyze_dataset(root)
+                        summarize_dataset(root)
                     except Exception:
                         pass
         return new
