@@ -596,6 +596,11 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      Run `python -m asi.streaming_dataset_watcher db.sqlite <rss-url>` to start
      watching feeds.
 
+82b. **Dataset gap search**: `dataset_gap_search.run_gap_search_async` formulates
+    queries for missing languages or domains and fetches candidate URLs
+    concurrently using a search API. The discovered URLs are logged with
+    `DatasetLineageManager` for reproducibility.
+
 83. **Analogy-based retrieval evaluation**: Use `analogical_retrieval.analogy_search()`
     on a small word-analogy dataset. For each tuple `(A, B, Q)` compute the
     offset `B - A` and query `HierarchicalMemory.search(mode="analogy")`. Report
