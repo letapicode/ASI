@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Dict, List, Tuple, TYPE_CHECKING, Sequence
 import json
 from collections import Counter
@@ -28,7 +28,7 @@ class ReasoningHistoryLogger:
         nodes: Sequence[int] | None = None,
         location: Any | None = None,
     ) -> None:
-        ts = datetime.utcnow().isoformat()
+        ts = datetime.now(UTC).isoformat()
         if isinstance(summary, dict):
             entry = dict(summary)
             if nodes is not None:
@@ -78,6 +78,14 @@ class ReasoningHistoryLogger:
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(graph.to_json(), fh)
         self.log({"graph_path": path})
+
+    def log_debate(
+        self, transcript: Sequence[Tuple[str, str]], verdict: str
+    ) -> None:
+        """Record a Socratic debate transcript and verdict."""
+        ts = datetime.now(UTC).isoformat()
+        entry = {"transcript": list(transcript), "verdict": verdict}
+        self.entries.append((ts, entry))
 
     @classmethod
     def load(cls, path: str) -> "ReasoningHistoryLogger":

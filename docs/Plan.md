@@ -65,6 +65,8 @@ See `docs/Implementation.md` for the optimisation workflow.
 
 - **Reasoning graph merger**: `reasoning_merger.merge_graphs()` deduplicates nodes across agents and aligns timestamps. The `MultiAgentDashboard` now displays the merged trace.
 
+- **Socratic debate harness**: `socratic_debate.run_debate()` runs two lightweight agents in alternating rounds. Results are stored with timezone-aware timestamps via `ReasoningHistoryLogger`.
+
 - **Zero-knowledge gradients**: set `require_proof=True` in `SecureFederatedLearner` to verify updates with `ZKVerifier` before aggregation.
 
 
