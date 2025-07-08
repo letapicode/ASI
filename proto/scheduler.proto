@@ -1,0 +1,18 @@
+syntax = "proto3";
+package asi;
+
+service ScheduleService {
+  rpc Propose (ScheduleProposal) returns (ScheduleReply);
+  rpc Accept  (ScheduleDecision) returns (Ack);
+}
+
+message CarbonForecast { int64 ts = 1; float intensity = 2; float price = 3; }
+message JobItem { string id = 1; string cmd = 2; float duration = 3; int32 priority = 4; }
+message ScheduleProposal {
+  string agent = 1;
+  repeated JobItem queue = 2;
+  repeated CarbonForecast forecast = 3;
+}
+message ScheduleReply { bool accept = 1; int64 start_ts = 2; string cluster = 3; }
+message ScheduleDecision { string id = 1; bool accepted = 2; int64 start_ts = 3; }
+message Ack { bool ok = 1; }

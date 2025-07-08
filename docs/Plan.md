@@ -719,6 +719,49 @@ via the `--rl-cost` flag in `scripts/hpc_multi_schedule.py`. When plugged into
 `DistributedTrainer`, it achieved around 2 % lower cost and 3 % less emissions
 compared to `CarbonCostAwareScheduler` on the same traces.
 
+### RL scheduler coordination protocol
+
+All RL-based schedulers run locally. `RLCarbonScheduler`, `RLCostScheduler`,
+`RLMultiClusterScheduler` and `DeepRLScheduler` call `submit_job()` from
+`hpc_scheduler` to launch tasks via Slurm or Kubernetes. Carbon data is pulled
+through `TelemetryLogger` or simple HTTP requests, so no direct agent-to-agent
+messaging currently exists.
+
+For multi-agent cooperation a minimal gRPC service can expose two RPCs:
+
+```
+service ScheduleService {
+  rpc Propose (ScheduleProposal) returns (ScheduleReply);
+  rpc Accept  (ScheduleDecision) returns (Ack);
+}
+```
+
+`ScheduleProposal` bundles queued jobs and `CarbonForecast` entries, while
+`ScheduleReply` chooses the preferred slot. `Accept` finalises the reservation.
+The same schema could be passed over a message queue when gRPC is unavailable.
+
+Example protobuf messages:
+
+```
+message CarbonForecast { int64 ts = 1; float intensity = 2; float price = 3; }
+message JobItem { string id = 1; string cmd = 2; float duration = 3; int32 priority = 4; }
+message ScheduleProposal {
+  string agent = 1;
+  repeated JobItem queue = 2;
+  repeated CarbonForecast forecast = 3;
+}
+message ScheduleReply { bool accept = 1; int64 start_ts = 2; string cluster = 3; }
+message ScheduleDecision { string id = 1; bool accepted = 2; int64 start_ts = 3; }
+message Ack { bool ok = 1; }
+```
+
+Agents exchange these structures to negotiate low-carbon slots and record the
+outcome of each proposed schedule.  A reference implementation lives in
+`scheduler_service.py` which spins up a gRPC server using
+`scheduler.proto`.  The helper functions `propose_remote()` and
+`accept_remote()` let RL schedulers coordinate over the network or through a
+message queue when gRPC is not available.
+
 
 
 
