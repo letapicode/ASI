@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, Callable, Optional, List
 
 from typing import Dict, Any, Callable, Optional
+import types
 import json
 import subprocess
 import urllib.request
@@ -114,17 +115,24 @@ class TelemetryLogger:
 
     # --------------------------------------------------------------
     def _collect(self) -> None:
-        last_net = psutil.net_io_counters()
+        if psutil is None:
+            last_net = types.SimpleNamespace(bytes_sent=0)
+        else:
+            last_net = psutil.net_io_counters()
         while not self._stop.is_set():
-            cpu = psutil.cpu_percent(interval=None)
-            mem = psutil.virtual_memory().percent
-            gpu = (
-                torch.cuda.utilization() if torch.cuda.is_available() else 0.0
-            )
+            cpu = psutil.cpu_percent(interval=None) if psutil is not None else 0.0
+            mem = psutil.virtual_memory().percent if psutil is not None else 0.0
+            if hasattr(torch, "cuda") and torch.cuda.is_available():
+                gpu = torch.cuda.utilization()
+            else:
+                gpu = 0.0
             battery = self.get_battery_level()
-            net = psutil.net_io_counters()
-            sent = net.bytes_sent - last_net.bytes_sent
-            last_net = net
+            if psutil is not None:
+                net = psutil.net_io_counters()
+                sent = net.bytes_sent - last_net.bytes_sent
+                last_net = net
+            else:
+                sent = 0
             if self.carbon_tracker is not None:
                 cf_stats = self.carbon_tracker.get_stats()
                 e = cf_stats.get("energy_kwh", 0.0)

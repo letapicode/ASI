@@ -14,6 +14,7 @@ from .hardware_detect import (
     list_loihi,
     list_analog,
 )
+from . import analog_backend
 
 try:  # pragma: no cover - optional dependency
     import psutil
@@ -159,7 +160,7 @@ class AdaptiveScheduler:
 
     # --------------------------------------------------------------
     def _device_utilization(self, device: str) -> float:
-        if device == "gpu" and torch.cuda.is_available():
+        if device == "gpu" and hasattr(torch, "cuda") and torch.cuda.is_available():
             try:
                 return (
                     torch.cuda.memory_allocated()
@@ -172,6 +173,14 @@ class AdaptiveScheduler:
                 return psutil.cpu_percent(interval=None) / 100.0
             except Exception:
                 return 0.0
+        if device == "analog" and getattr(analog_backend, "_HAS_ANALOG", False):
+            sim = getattr(analog_backend, "analogsim", None)
+            if sim is not None and hasattr(sim, "utilization"):
+                try:
+                    util = sim.utilization()
+                    return float(util)
+                except Exception:
+                    return 0.0
         return 0.0
 
     # --------------------------------------------------------------
