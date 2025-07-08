@@ -354,6 +354,16 @@ class TelemetryLogger:
             self.metrics["prof_cpu_time"] = cpu_total
             self.metrics["prof_gpu_mem"] = gpu_total
 
+    # --------------------------------------------------------------
+    def rolling_metrics(self, window: int = 10) -> Dict[str, float]:
+        """Return average carbon and cost over the last ``window`` samples."""
+        if not self.history:
+            return {"carbon_g": 0.0, "energy_cost": 0.0}
+        recent = self.history[-window:]
+        carbon = sum(float(e.get("carbon_g", 0.0)) for e in recent) / len(recent)
+        cost = sum(float(e.get("energy_cost", 0.0)) for e in recent) / len(recent)
+        return {"carbon_g": carbon, "energy_cost": cost}
+
 
 
 
