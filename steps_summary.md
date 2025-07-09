@@ -20,3 +20,10 @@
 - Created `cross_lingual_utils.embed_text` as shared deterministic text embedding helper.
 - Updated `cross_lingual_memory.py` and `cross_lingual_graph.py` to import this function instead of local implementations.
 - Adjusted tests to rely on the new module.
+
+## PR 5
+- Introduced `hpc_base_scheduler.HPCBaseScheduler` to handle job queueing and submission.
+- Added `ArimaStrategy` and `GNNStrategy` as pluggable forecast components used by the base class.
+- Refactored `hpc_forecast_scheduler.py` and `hpc_gnn_scheduler.py` to inherit from the base scheduler.
+- Simplified `hpc_multi_scheduler.py` by calling `forecast_scores()` directly on each scheduler instance.
+- Documented the new architecture in `docs/Plan.md`.

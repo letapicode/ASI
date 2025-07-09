@@ -9,8 +9,7 @@ from typing import Dict, List, Union, Tuple, Optional
 from .telemetry import TelemetryLogger
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
 
-from .hpc_forecast_scheduler import arima_forecast, HPCForecastScheduler
-from .hpc_gnn_scheduler import GNNForecastScheduler
+from .hpc_base_scheduler import HPCBaseScheduler
 from .hpc_scheduler import submit_job
 
 
@@ -18,7 +17,7 @@ from .hpc_scheduler import submit_job
 class MultiClusterScheduler:
     """Compare forecasts from multiple clusters and submit to the best one."""
 
-    clusters: Dict[str, HPCForecastScheduler] = field(default_factory=dict)
+    clusters: Dict[str, HPCBaseScheduler] = field(default_factory=dict)
     telemetry: Optional[Dict[str, TelemetryLogger]] = None
     dashboard: Optional[ClusterCarbonDashboard] = None
     schedule_log: list[tuple[str, float]] = field(default_factory=list)
@@ -39,18 +38,7 @@ class MultiClusterScheduler:
         best_delay = 0.0
 
         for name, sched in self.clusters.items():
-            if hasattr(sched, "forecast_scores"):
-                scores = sched.forecast_scores(max_delay, self.clusters)
-            else:
-                steps = max(int(max_delay // 3600) + 1, 1)
-                carbon_pred = arima_forecast(sched.carbon_history, steps=steps)
-                cost_pred = arima_forecast(sched.cost_history, steps=steps)
-                n = min(len(carbon_pred), len(cost_pred))
-                scores = [
-                    sched.carbon_weight * carbon_pred[i]
-                    + sched.cost_weight * cost_pred[i]
-                    for i in range(n)
-                ]
+            scores = sched.forecast_scores(max_delay, self.clusters)
             if not scores:
                 continue
             idx = int(min(range(len(scores)), key=lambda i: scores[i]))
