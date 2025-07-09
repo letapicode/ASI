@@ -779,6 +779,9 @@ multiple clusters.  Its `submit_best()` helper returns the chosen cluster and jo
 ID, waiting for the optimal delay if necessary.  See the
 `scripts/hpc_multi_schedule.py` CLI for a minimal example that prints which
 cluster was selected.
+`hpc_base_scheduler.HPCBaseScheduler` now centralises queue management and job
+submission while delegating forecasts to pluggable strategies like the ARIMA and
+GNN schedulers.
 
 `transformer_forecast_scheduler.TransformerForecastScheduler` swaps the ARIMA
 model for a tiny two-layer Transformer trained on recent traces. The model

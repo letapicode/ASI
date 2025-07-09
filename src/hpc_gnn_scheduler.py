@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+from .hpc_base_scheduler import HPCBaseScheduler, ForecastStrategy
+
 try:  # Optional heavy dependency
     import torch
     from torch import nn
@@ -35,19 +37,13 @@ else:  # pragma: no cover - fallback when torch unavailable
             raise ImportError("torch is required for SimpleGNN")
 
 
-@dataclass
-class GNNForecastScheduler:
-    """Schedule jobs using a simple GNN forecast across clusters."""
+class GNNStrategy(ForecastStrategy):
+    """GNN-based forecasting across multiple clusters."""
 
-    carbon_history: List[float] = field(default_factory=list)
-    cost_history: List[float] = field(default_factory=list)
-    carbon_weight: float = 0.5
-    cost_weight: float = 0.5
-    backend: str = "slurm"
-    hist_len: int = 4
-    _model: SimpleGNN | None = field(default=None, init=False, repr=False)
+    def __init__(self, hist_len: int = 4) -> None:
+        self.hist_len = hist_len
+        self._model: SimpleGNN | None = None
 
-    # --------------------------------------------------
     def _ensure_model(self, dim: int) -> None:
         if torch is None or nn is None:
             raise ImportError("torch is required for GNNForecastScheduler")
@@ -55,25 +51,26 @@ class GNNForecastScheduler:
             torch.manual_seed(0)
             self._model = SimpleGNN(dim)
 
-    # --------------------------------------------------
     def forecast_scores(
-        self, max_delay: float, clusters: Dict[str, "GNNForecastScheduler"] | None = None
+        self,
+        scheduler: HPCBaseScheduler,
+        max_delay: float,
+        clusters: Dict[str, HPCBaseScheduler] | None = None,
     ) -> List[float]:
-        """Return combined score forecast for this cluster."""
         steps = max(int(max_delay // 3600) + 1, 1)
         if not clusters:
-            clusters = {"self": self}
+            clusters = {"self": scheduler}
         scheds = list(clusters.values())
-        idx = scheds.index(self)
+        idx = scheds.index(scheduler)
         seq_len = min(
             self.hist_len,
             *[len(s.carbon_history) for s in scheds],
             *[len(s.cost_history) for s in scheds],
         )
         if seq_len == 0:
-            carbon = self.carbon_history[-1] if self.carbon_history else 0.0
-            cost = self.cost_history[-1] if self.cost_history else 0.0
-            score = self.carbon_weight * carbon + self.cost_weight * cost
+            carbon = scheduler.carbon_history[-1] if scheduler.carbon_history else 0.0
+            cost = scheduler.cost_history[-1] if scheduler.cost_history else 0.0
+            score = scheduler.carbon_weight * carbon + scheduler.cost_weight * cost
             return [score] * steps
         feats = []
         for s in scheds:
@@ -90,8 +87,18 @@ class GNNForecastScheduler:
             out = self._model(x, adj)
         carbon_pred = float(out[idx, 0].item())
         cost_pred = float(out[idx, 1].item())
-        score = self.carbon_weight * carbon_pred + self.cost_weight * cost_pred
+        score = scheduler.carbon_weight * carbon_pred + scheduler.cost_weight * cost_pred
         return [score] * steps
 
 
-__all__ = ["GNNForecastScheduler", "SimpleGNN"]
+@dataclass
+class GNNForecastScheduler(HPCBaseScheduler):
+    """Schedule jobs using a simple GNN forecast across clusters."""
+
+    hist_len: int = 4
+
+    def __post_init__(self) -> None:  # pragma: no cover - simple init
+        self.strategy = GNNStrategy(self.hist_len)
+
+
+__all__ = ["GNNForecastScheduler", "SimpleGNN", "GNNStrategy"]
