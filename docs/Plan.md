@@ -631,6 +631,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      VR with a vectorised layout for quicker updates. Run
      `scripts/vr_explorer.py trace.json` to open a WebXR scene with voice and
      gesture commands.
+82c. **Graph visualizer base**: `graph_visualizer_base.py` shares WebSocket
+     helpers, layout utilities and JSON loading across the 2D and 3D
+     visualizers to avoid duplication.
 83. **Graph UI**: `GraphUI` serves interactive D3 graphs via FastAPI. When
     cognitive load exceeds a threshold the UI throttles update frequency and
     shortens node text. Visit `http://localhost:8070/graph` while the server is

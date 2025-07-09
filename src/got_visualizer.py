@@ -1,10 +1,21 @@
 from __future__ import annotations
 
-import json
-import math
 from typing import Any, Dict, Iterable, List, Tuple
 
 import plotly.graph_objects as go
+try:  # pragma: no cover - prefer package imports
+    from asi.graph_visualizer_base import circular_layout, load_graph_json
+except Exception:  # pragma: no cover - fallback for tests
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location(
+        'graph_visualizer_base', Path(__file__).with_name('graph_visualizer_base.py')
+    )
+    assert spec and spec.loader
+    _base = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(_base)
+    circular_layout = _base.circular_layout
+    load_graph_json = _base.load_graph_json
 
 
 class GOTVisualizer:
@@ -16,24 +27,12 @@ class GOTVisualizer:
 
     @classmethod
     def from_json(cls, path: str) -> "GOTVisualizer":
-        with open(path, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        nodes = data.get("nodes", [])
-        raw_edges = data.get("edges", [])
-        if raw_edges and isinstance(raw_edges[0], dict):
-            edges = [(e["source"], e["target"]) for e in raw_edges]
-        else:
-            edges = [(src, dst) for src, dst in raw_edges]
+        nodes, edges = load_graph_json(path)
         return cls(nodes, edges)
 
     # --------------------------------------------------------------
     def _layout(self) -> Dict[str, Tuple[float, float]]:
-        n = max(len(self.nodes), 1)
-        pos: Dict[str, Tuple[float, float]] = {}
-        for i, node in enumerate(self.nodes):
-            angle = 2 * math.pi * i / n
-            pos[str(node["id"])] = (math.cos(angle), math.sin(angle))
-        return pos
+        return circular_layout(self.nodes)
 
     # --------------------------------------------------------------
     def to_figure(self) -> go.Figure:

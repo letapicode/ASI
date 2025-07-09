@@ -1,15 +1,10 @@
 from __future__ import annotations
 
-import asyncio
 import io
-import json
-import math
-import socket
-import threading
 from typing import Any, Dict, Iterable, List, Tuple
 
+import math
 import numpy as np
-import time
 from aiohttp import web
 from ipywidgets import embed
 from pythreejs import (
@@ -29,6 +24,24 @@ from pythreejs import (
     SpriteMaterial,
     TextTexture,
 )
+try:  # pragma: no cover - prefer package imports
+    from asi.graph_visualizer_base import (
+        spherical_layout,
+        load_graph_json,
+        WebSocketServer,
+    )
+except Exception:  # pragma: no cover - fallback for tests
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location(
+        'graph_visualizer_base', Path(__file__).with_name('graph_visualizer_base.py')
+    )
+    assert spec and spec.loader
+    _base = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(_base)
+    spherical_layout = _base.spherical_layout
+    load_graph_json = _base.load_graph_json
+    WebSocketServer = _base.WebSocketServer
 
 
 class GOT3DVisualizer:
@@ -43,32 +56,12 @@ class GOT3DVisualizer:
 
     @classmethod
     def from_json(cls, path: str) -> "GOT3DVisualizer":
-        with open(path, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        nodes = data.get("nodes", [])
-        raw_edges = data.get("edges", [])
-        if raw_edges and isinstance(raw_edges[0], dict):
-            edges = [(e["source"], e["target"]) for e in raw_edges]
-        else:
-            edges = [(src, dst) for src, dst in raw_edges]
+        nodes, edges = load_graph_json(path)
         return cls(nodes, edges)
 
     # --------------------------------------------------------------
     def _compute_layout(self) -> Dict[str, Tuple[float, float, float]]:
-        n = max(len(self.nodes), 1)
-        idx = np.arange(len(self.nodes)) + 0.5
-        phi = np.arccos(1 - 2 * idx / n)
-        theta = np.pi * (1 + math.sqrt(5.0)) * idx
-        r = 3.0
-        arr = np.stack(
-            [
-                r * np.sin(phi) * np.cos(theta),
-                r * np.sin(phi) * np.sin(theta),
-                r * np.cos(phi),
-            ],
-            axis=1,
-        )
-        pos = {str(node["id"]): tuple(p) for node, p in zip(self.nodes, arr)}
+        pos = spherical_layout(self.nodes)
         if self.edges:
             pts = []
             for src, dst in self.edges:
@@ -128,19 +121,13 @@ class GOT3DVisualizer:
         return self._html
 
 
-class GOT3DViewer:
+class GOT3DViewer(WebSocketServer):
     """Serve a 3D graph viewer with optional WebSocket updates."""
 
     def __init__(self, graph: GOT3DVisualizer) -> None:
+        super().__init__()
         self.graph = graph
-        self.app = web.Application()
         self.app.router.add_get("/", self._index)
-        self.app.router.add_get("/ws", self._ws_handler)
-        self.clients: List[web.WebSocketResponse] = []
-        self.loop: asyncio.AbstractEventLoop | None = None
-        self.runner: web.AppRunner | None = None
-        self.thread: threading.Thread | None = None
-        self.port: int | None = None
 
     async def _index(self, request: web.Request) -> web.Response:
         html = self.graph.to_html()
@@ -151,69 +138,9 @@ class GOT3DViewer:
         )
         return web.Response(text=html, content_type="text/html")
 
-    async def _ws_handler(self, request: web.Request) -> web.WebSocketResponse:
-        ws = web.WebSocketResponse()
-        await ws.prepare(request)
-        self.clients.append(ws)
-        try:
-            async for _ in ws:
-                pass
-        finally:
-            if ws in self.clients:
-                self.clients.remove(ws)
-        return ws
-
-    async def _broadcast(self, html: str) -> None:
-        if not self.clients:
-            return
-        results = await asyncio.gather(
-            *(ws.send_str(html) for ws in self.clients),
-            return_exceptions=True,
-        )
-        self.clients = [
-            ws for ws, res in zip(self.clients, results) if not isinstance(res, Exception)
-        ]
-
     def send_graph(self) -> None:
-        if self.loop is None:
-            return
         html = self.graph.to_html()
-        asyncio.run_coroutine_threadsafe(self._broadcast(html), self.loop)
-
-    def _run(self, host: str, port: int) -> None:
-        assert self.loop is not None
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(self.runner.setup())
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind((host, port))
-        _, real_port = sock.getsockname()
-        self.port = real_port
-        site = web.SockSite(self.runner, sock)
-        self.loop.run_until_complete(site.start())
-        try:
-            self.loop.run_forever()
-        finally:
-            self.loop.run_until_complete(self.runner.cleanup())
-
-    def start(self, host: str = "localhost", port: int = 8090) -> None:
-        if self.thread is not None:
-            return
-        self.loop = asyncio.new_event_loop()
-        self.runner = web.AppRunner(self.app)
-        self.thread = threading.Thread(target=self._run, args=(host, port), daemon=True)
-        self.thread.start()
-        while self.port is None:
-            time.sleep(0.01)
-
-    def stop(self) -> None:
-        if self.thread is None or self.loop is None:
-            return
-        self.loop.call_soon_threadsafe(self.loop.stop)
-        self.thread.join(timeout=1.0)
-        self.thread = None
-        self.runner = None
-        self.loop = None
-        self.port = None
+        self.send(html)
 
 
 __all__ = ["GOT3DVisualizer", "GOT3DViewer"]
