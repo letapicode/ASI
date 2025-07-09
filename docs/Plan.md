@@ -753,6 +753,9 @@ task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.  A
 `CarbonAwareScheduler` can now queue jobs until the current carbon intensity
 drops below a configured threshold, using `CarbonFootprintTracker` or an
 external API for the measurements.
+The new `hpc_schedulers.HPCJobScheduler` consolidates these utilities with
+queue management and optional carbon or battery checks so other schedulers
+inherit consistent behaviour.
 
 `carbon_hpc_scheduler.CarbonAwareScheduler` builds on this by querying an external
 carbon-intensity API and tracking energy via `CarbonFootprintTracker`.  Its

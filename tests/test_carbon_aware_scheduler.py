@@ -8,6 +8,7 @@ import unittest
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+pkg.__path__ = ['src']
 
 
 def _load(name, path):
@@ -20,8 +21,8 @@ def _load(name, path):
     return mod
 
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
+hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 CarbonAwareScheduler = _load('asi.carbon_aware_scheduler', 'src/carbon_aware_scheduler.py').CarbonAwareScheduler
-hpc_mod = _load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
 submit_job = hpc_mod.submit_job
 
 
