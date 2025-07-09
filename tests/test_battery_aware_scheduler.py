@@ -8,6 +8,7 @@ import unittest
 psutil_stub = types.SimpleNamespace(
     sensors_battery=lambda: types.SimpleNamespace(percent=10, power_plugged=False),
     cpu_percent=lambda interval=None: 0.0,
+    cpu_count=lambda logical=False: 1,
     virtual_memory=lambda: types.SimpleNamespace(percent=0.0),
     net_io_counters=lambda: types.SimpleNamespace(bytes_sent=0, bytes_recv=0),
 )
@@ -24,6 +25,7 @@ sys.modules['torch'] = torch_stub
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+pkg.__path__ = ['src']
 
 
 def _load(name, path):

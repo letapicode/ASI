@@ -7,6 +7,7 @@ import unittest
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+pkg.__path__ = ['src']
 
 loader = importlib.machinery.SourceFileLoader('asi.hpc_scheduler', 'src/hpc_scheduler.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
