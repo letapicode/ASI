@@ -27,3 +27,4 @@
 - Refactored `hpc_forecast_scheduler.py` and `hpc_gnn_scheduler.py` to inherit from the base scheduler.
 - Simplified `hpc_multi_scheduler.py` by calling `forecast_scores()` directly on each scheduler instance.
 - Documented the new architecture in `docs/Plan.md`.
+- Refactored summarizing memories to share BaseSummarizingMemory.

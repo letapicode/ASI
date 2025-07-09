@@ -6,11 +6,11 @@ from typing import Iterable, Any
 
 import torch
 
-from .hierarchical_memory import HierarchicalMemory
+from .summarizing_memory_base import BaseSummarizingMemory
 from .cross_modal_fusion import encode_all, MultiModalDataset, CrossModalFusion
 
 
-class MultiModalSummaryMemory(HierarchicalMemory):
+class MultiModalSummaryMemory(BaseSummarizingMemory):
     """HierarchicalMemory with compressed image and audio summaries."""
 
     def __init__(
@@ -20,7 +20,7 @@ class MultiModalSummaryMemory(HierarchicalMemory):
         audio_summarizer: Any,
         **kwargs: Any,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, summarizer=None, **kwargs)
         self.image_summarizer = image_summarizer
         self.audio_summarizer = audio_summarizer
 
@@ -43,10 +43,12 @@ class MultiModalSummaryMemory(HierarchicalMemory):
             img_vec = self.image_summarizer.expand(img_sum)
             aud_vec = self.audio_summarizer.expand(aud_sum)
             fused = (t + img_vec + aud_vec) / 3.0
-            super().add(
-                fused.unsqueeze(0),
-                [{"id": m, "image_summary": img_sum, "audio_summary": aud_sum}],
-            )
+            super().add(fused.unsqueeze(0), [m])
+            self.store._meta[-1] = {
+                "id": m,
+                "image_summary": img_sum,
+                "audio_summary": aud_sum,
+            }
 
     def add_dataset(
         self,
@@ -54,7 +56,7 @@ class MultiModalSummaryMemory(HierarchicalMemory):
         dataset: MultiModalDataset,
         batch_size: int = 8,
     ) -> None:
-        text, images, audio, _ = encode_all(model, dataset, batch_size=batch_size)
+        text, images, audio, _ = encode_all(model, dataset, batch_size=batch_size, include_bci=False)
         self.add_encoded(text, images, audio)
 
 
