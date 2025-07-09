@@ -5,6 +5,11 @@ from datetime import datetime, UTC
 from typing import Any, Dict, List, Tuple, TYPE_CHECKING, Sequence
 import json
 from collections import Counter
+import sys
+import types
+
+if __name__ not in sys.modules:  # pragma: no cover - for manual loaders
+    sys.modules[__name__] = types.ModuleType(__name__)
 
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from .data_ingest import CrossLingualTranslator

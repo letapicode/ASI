@@ -1,23 +1,35 @@
 from __future__ import annotations
 
 import json
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Iterable, Dict, Any
+from http.server import BaseHTTPRequestHandler
+from typing import Iterable, Dict, Any, Type
+import importlib.util
+from pathlib import Path
+import sys
+
+try:  # pragma: no cover - support namespace packages
+    from .dashboard_base import BaseDashboard
+except Exception:  # pragma: no cover - fallback when not packaged
+    spec = importlib.util.spec_from_file_location(
+        "dashboard_base", Path(__file__).with_name("dashboard_base.py")
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)  # type: ignore
+    sys.modules.setdefault("dashboard_base", module)
+    BaseDashboard = module.BaseDashboard  # type: ignore
 
 
-class AlignmentDashboard:
+class AlignmentDashboard(BaseDashboard):
     """Aggregate alignment metrics and serve them via HTTP."""
 
     def __init__(self) -> None:
+        super().__init__()
         self.total = 0
         self.passed = 0
         self.flagged: list[str] = []
         self.normative: list[str] = []
         self.bci_events = 0
-        self.httpd: HTTPServer | None = None
-        self.thread: threading.Thread | None = None
-        self.port: int | None = None
 
     # --------------------------------------------------------------
     def record(
@@ -51,9 +63,7 @@ class AlignmentDashboard:
         }
 
     # --------------------------------------------------------------
-    def start(self, host: str = "localhost", port: int = 8055) -> None:
-        if self.httpd is not None:
-            return
+    def get_handler(self) -> Type[BaseHTTPRequestHandler]:
         dashboard = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -78,22 +88,15 @@ class AlignmentDashboard:
             def log_message(self, format: str, *args: Any) -> None:  # noqa: D401
                 return
 
-        self.httpd = HTTPServer((host, port), Handler)
-        self.port = self.httpd.server_address[1]
-        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
-        self.thread.start()
+        return Handler
+
+    # --------------------------------------------------------------
+    def start(self, host: str = "localhost", port: int = 8055) -> None:
+        super().start(host, port)
 
     # --------------------------------------------------------------
     def stop(self) -> None:
-        if self.httpd is None:
-            return
-        assert self.thread is not None
-        self.httpd.shutdown()
-        self.thread.join(timeout=1.0)
-        self.httpd.server_close()
-        self.httpd = None
-        self.thread = None
-        self.port = None
+        super().stop()
 
 
 __all__ = ["AlignmentDashboard"]

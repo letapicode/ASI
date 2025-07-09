@@ -3,6 +3,11 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Sequence, TYPE_CHECKING
+import sys
+import types
+
+if __name__ not in sys.modules:  # pragma: no cover - for manual loaders
+    sys.modules[__name__] = types.ModuleType(__name__)
 
 try:  # pragma: no cover - optional heavy dep
     import torch

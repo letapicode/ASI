@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import json
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-from typing import Iterable, Dict, Any
+from typing import Iterable, Dict, Any, Type
 from pathlib import Path
 import base64
 import numpy as np
@@ -17,9 +16,26 @@ from .memory_timeline_viewer import MemoryTimelineViewer
 from .kg_visualizer import KGVisualizer
 
 from .hierarchical_memory import MemoryServer
+import importlib.util
+import sys
+from pathlib import Path
+
+try:
+    from .dashboard_base import BaseDashboard
+except Exception:  # pragma: no cover - fallback when not packaged
+    spec = importlib.util.spec_from_file_location(
+        "dashboard_base", Path(__file__).with_name("dashboard_base.py")
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)  # type: ignore
+    sys.modules.setdefault("dashboard_base", module)
+    BaseDashboard = module.BaseDashboard  # type: ignore
+except Exception:  # pragma: no cover - fallback when not packaged
+    from dashboard_base import BaseDashboard  # type: ignore
 
 
-class MemoryDashboard:
+class MemoryDashboard(BaseDashboard):
     """Aggregate telemetry stats from multiple ``MemoryServer`` instances."""
 
     def __init__(
@@ -28,12 +44,10 @@ class MemoryDashboard:
         visualizer: RetrievalVisualizer | None = None,
         trust_scorer: "RetrievalTrustScorer | None" = None,
     ) -> None:
+        super().__init__()
         self.servers = list(servers)
         self.visualizer = visualizer
         self.trust_scorer = trust_scorer
-        self.httpd: HTTPServer | None = None
-        self.thread: threading.Thread | None = None
-        self.port: int | None = None
         self._fairness_img: str | None = None
 
     # ----------------------------------------------------------
@@ -163,10 +177,7 @@ class MemoryDashboard:
         )
 
     # ----------------------------------------------------------
-    def start(self, host: str = "localhost", port: int = 8050) -> None:
-        if self.httpd is not None:
-            return
-
+    def get_handler(self) -> Type[BaseHTTPRequestHandler]:
         dashboard = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -320,21 +331,13 @@ class MemoryDashboard:
             def log_message(self, format: str, *args: Any) -> None:  # noqa: D401
                 return
 
-        self.httpd = HTTPServer((host, port), Handler)
-        self.port = self.httpd.server_address[1]
-        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
-        self.thread.start()
+        return Handler
+
+    def start(self, host: str = "localhost", port: int = 8050) -> None:
+        super().start(host, port)
 
     def stop(self) -> None:
-        if self.httpd is None:
-            return
-        assert self.thread is not None
-        self.httpd.shutdown()
-        self.thread.join(timeout=1.0)
-        self.httpd.server_close()
-        self.httpd = None
-        self.thread = None
-        self.port = None
+        super().stop()
 
 
 __all__ = ["MemoryDashboard"]

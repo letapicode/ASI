@@ -1,16 +1,30 @@
 from __future__ import annotations
 
 import json
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, Dict
+from http.server import BaseHTTPRequestHandler
+from typing import Any, Dict, Type
+import importlib.util
+import sys
+from pathlib import Path
+
+try:
+    from .dashboard_base import BaseDashboard
+except Exception:  # pragma: no cover - fallback when not packaged
+    spec = importlib.util.spec_from_file_location(
+        "dashboard_base", Path(__file__).with_name("dashboard_base.py")
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)  # type: ignore
+    sys.modules.setdefault("dashboard_base", module)
+    BaseDashboard = module.BaseDashboard  # type: ignore
 
 from .graph_of_thought import GraphOfThought
 from .reasoning_history import ReasoningHistoryLogger
 from .telemetry import TelemetryLogger
 
 
-class IntrospectionDashboard:
+class IntrospectionDashboard(BaseDashboard):
     """Serve reasoning history merged with telemetry statistics."""
 
     def __init__(
@@ -19,12 +33,10 @@ class IntrospectionDashboard:
         history: ReasoningHistoryLogger,
         telemetry: TelemetryLogger,
     ) -> None:
+        super().__init__()
         self.graph = graph
         self.history = history
         self.telemetry = telemetry
-        self.httpd: HTTPServer | None = None
-        self.thread: threading.Thread | None = None
-        self.port: int | None = None
 
     # --------------------------------------------------------------
     def aggregate(self) -> Dict[str, Any]:
@@ -57,9 +69,7 @@ class IntrospectionDashboard:
         )
 
     # --------------------------------------------------------------
-    def start(self, host: str = "localhost", port: int = 8060) -> None:
-        if self.httpd is not None:
-            return
+    def get_handler(self) -> Type[BaseHTTPRequestHandler]:
         dashboard = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -98,22 +108,14 @@ class IntrospectionDashboard:
             def log_message(self, format: str, *args: Any) -> None:  # noqa: D401
                 return
 
-        self.httpd = HTTPServer((host, port), Handler)
-        self.port = self.httpd.server_address[1]
-        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
-        self.thread.start()
+        return Handler
+
+    def start(self, host: str = "localhost", port: int = 8060) -> None:
+        super().start(host, port)
 
     # --------------------------------------------------------------
     def stop(self) -> None:
-        if self.httpd is None:
-            return
-        assert self.thread is not None
-        self.httpd.shutdown()
-        self.thread.join(timeout=1.0)
-        self.httpd.server_close()
-        self.httpd = None
-        self.thread = None
-        self.port = None
+        super().stop()
 
 
 __all__ = ["IntrospectionDashboard"]
