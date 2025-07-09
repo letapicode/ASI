@@ -8,11 +8,11 @@ from typing import Iterable, Any, Tuple, List, Dict
 
 import torch
 
-from .hierarchical_memory import HierarchicalMemory
+from .summarizing_memory_base import BaseSummarizingMemory
 from .data_ingest import CrossLingualTranslator
 
 
-class ContextSummaryMemory(HierarchicalMemory):
+class ContextSummaryMemory(BaseSummarizingMemory):
     """Hierarchical memory that replaces far-past vectors with summaries."""
 
     def __init__(
@@ -23,8 +23,7 @@ class ContextSummaryMemory(HierarchicalMemory):
         translator: CrossLingualTranslator | None = None,
         **kwargs,
     ) -> None:
-        super().__init__(*args, translator=translator, **kwargs)
-        self.summarizer = summarizer
+        super().__init__(*args, summarizer=summarizer, translator=translator, **kwargs)
         self.context_size = context_size
 
     def summarize_context(self) -> None:
@@ -36,14 +35,16 @@ class ContextSummaryMemory(HierarchicalMemory):
         old_vecs = self.compressor.buffer.data[:keep_start]
         old_meta = self.store._meta[:keep_start]
         self.compressor.buffer.data = self.compressor.buffer.data[keep_start:]
-        self.store._meta = self.store._meta[keep_start:]
+        self.usage = self.usage[keep_start:]
         for vec, meta in zip(old_vecs, old_meta):
             summary = self.summarizer.summarize(vec.unsqueeze(0))
             info: Dict[str, Any] = {"summary": summary}
             if self.translator is not None:
                 info["translations"] = self.translator.translate_all(summary)
             self.store.delete(tag=meta)
-            self.store.add(torch.zeros_like(vec).numpy(), [{"ctxsum": info}])
+            comp_dim = self.compressor.encoder.out_features
+            zero = torch.zeros(comp_dim, dtype=vec.dtype)
+            self.store.add(zero.numpy(), [{"ctxsum": info}])
 
     def search(
         self, query: torch.Tensor, k: int = 5, language: str | None = None

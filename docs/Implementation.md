@@ -845,6 +845,7 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
 - Implement a `SummarizingMemory` helper that compresses infrequently used vectors with a small language-model summarizer. Provide `scripts/summarize_memory_benchmark.py` to measure storage savings and retrieval accuracy.
   **Implemented in `src/summarizing_memory.py` with the benchmarking script
   `scripts/summarize_memory_benchmark.py`.**
+- Introduced `BaseSummarizingMemory` encapsulating usage tracking and summary replacement. `SummarizingMemory`, `ContextSummaryMemory` and `MultiModalSummaryMemory` now inherit from it.
 - Implement a `ContextSummaryMemory` that replaces far-past vectors with text summaries and re-expands them when retrieved. Unit test `tests/test_context_summary_memory.py` verifies summarization and expansion.
   **Implemented in `src/context_summary_memory.py` with tests.**
 - Extend `ContextSummaryMemory` with a `translator` argument so summaries are stored in multiple languages and returned in the query language. Tested in `tests/test_cross_lingual_summary_memory.py`.

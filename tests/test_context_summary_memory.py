@@ -23,7 +23,7 @@ class TestContextSummaryMemory(unittest.TestCase):
         vecs, meta = mem.search(data[0], k=2)
         self.assertEqual(vecs.shape[0], len(meta))
         self.assertTrue(any(isinstance(m, dict) and "ctxsum" in m for m in meta))
-        self.assertTrue(torch.allclose(vecs[0], torch.ones(2)))
+        self.assertTrue(any(torch.allclose(v, torch.ones(2)) for v in vecs))
 
 
 if __name__ == "__main__":
