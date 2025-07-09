@@ -27,6 +27,7 @@ def load(name, path):
 di = load('asi.data_ingest', 'src/data_ingest.py')
 goth = load('asi.graph_of_thought', 'src/graph_of_thought.py')
 cg = load('asi.cross_lingual_graph', 'src/cross_lingual_graph.py')
+clu = load('asi.cross_lingual_utils', 'src/cross_lingual_utils.py')
 
 CrossLingualReasoningGraph = cg.CrossLingualReasoningGraph
 CrossLingualTranslator = di.CrossLingualTranslator
@@ -41,9 +42,8 @@ class TestCrossLingualGraphSearch(unittest.TestCase):
         result = g.search('hola', 'es')
 
         def embed(text):
-            seed = abs(hash(text)) % (2 ** 32)
-            rng = np.random.default_rng(seed)
-            return rng.standard_normal(8)
+            vec = clu.embed_text(text, 8)
+            return vec.numpy() if hasattr(vec, 'numpy') else vec
 
         def cos(a, b):
             return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-8))

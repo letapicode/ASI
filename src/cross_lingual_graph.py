@@ -10,6 +10,7 @@ except Exception:  # pragma: no cover - torch optional
 
 from .graph_of_thought import GraphOfThought
 from .data_ingest import CrossLingualTranslator
+from .cross_lingual_utils import embed_text
 try:  # pragma: no cover - optional dependency
     from .context_summary_memory import ContextSummaryMemory
 except Exception:  # pragma: no cover - missing torch or other deps
@@ -20,10 +21,10 @@ from .reasoning_history import ReasoningHistoryLogger
 _EMBED_DIM = 8
 
 def _embed_text(text: str) -> np.ndarray:
-    """Return a deterministic embedding for ``text``."""
-    seed = abs(hash(text)) % (2 ** 32)
-    rng = np.random.default_rng(seed)
-    return rng.standard_normal(_EMBED_DIM).astype(np.float32)
+    vec = embed_text(text, _EMBED_DIM)
+    if torch is not None:
+        return vec.detach().cpu().numpy()
+    return np.asarray(vec, dtype=np.float32)
 
 def _cos_sim(a: np.ndarray, b: np.ndarray) -> float:
     """Return cosine similarity between ``a`` and ``b``."""

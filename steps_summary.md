@@ -15,3 +15,8 @@
 - Introduced `graph_visualizer_base.py` with helper functions for reading graph JSON, layout calculations and a reusable `WebSocketServer`.
 - Refactored `got_visualizer.py`, `got_3d_visualizer.py`, and `ar_got_overlay.py` to use the new helpers, eliminating duplicated code and adding fallback imports for tests.
 - Updated `docs/Plan.md` with a bullet about the shared base module.
+
+## PR 4
+- Created `cross_lingual_utils.embed_text` as shared deterministic text embedding helper.
+- Updated `cross_lingual_memory.py` and `cross_lingual_graph.py` to import this function instead of local implementations.
+- Adjusted tests to rely on the new module.
