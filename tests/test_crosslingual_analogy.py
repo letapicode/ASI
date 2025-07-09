@@ -45,13 +45,13 @@ def load(name, path):
 di = load('asi.data_ingest', 'src/data_ingest.py')
 hm = load('asi.hierarchical_memory', 'src/hierarchical_memory.py')
 clm = load('asi.cross_lingual_memory', 'src/cross_lingual_memory.py')
-ca = load('asi.crosslingual_analogy_eval', 'src/crosslingual_analogy_eval.py')
+ar = load('asi.analogical_retrieval', 'src/analogical_retrieval.py')
 
 
 class TestCrosslingualAnalogyEval(unittest.TestCase):
     def test_accuracy(self):
         path = 'tests/data/multilingual_analogies.jsonl'
-        acc = ca.analogy_accuracy(path, ['es'])
+        acc = ar.analogy_accuracy(path, ['es'])
         self.assertGreaterEqual(acc, 0.5)
 
 

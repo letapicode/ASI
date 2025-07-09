@@ -257,7 +257,6 @@ class HierarchicalMemory:
                 if encryption_key is None:
                     self.store = VectorStore(dim=compressed_dim)
                 else:
-                    from .encrypted_vector_store import EncryptedVectorStore
                     self.store = EncryptedVectorStore(
                         dim=compressed_dim, key=encryption_key
                     )
