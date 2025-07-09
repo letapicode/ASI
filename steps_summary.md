@@ -10,3 +10,8 @@
 - Refined the bullet in `AGENTS.md` describing the PR summary requirement for brevity.
 - Updated Task 1 in `parallel_tasks.md` with concrete review notes for `AGENTS.md`.
 - Documented these adjustments in this file.
+
+## PR 3
+- Introduced `graph_visualizer_base.py` with helper functions for reading graph JSON, layout calculations and a reusable `WebSocketServer`.
+- Refactored `got_visualizer.py`, `got_3d_visualizer.py`, and `ar_got_overlay.py` to use the new helpers, eliminating duplicated code and adding fallback imports for tests.
+- Updated `docs/Plan.md` with a bullet about the shared base module.
