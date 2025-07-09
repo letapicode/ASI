@@ -3,10 +3,11 @@ from __future__ import annotations
 import base64
 import json
 import tempfile
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler
 from pathlib import Path
-from typing import Iterable, Any, Dict
+from typing import Iterable, Any, Dict, Type
+import importlib.util
+import sys
 
 from .graph_of_thought import GraphOfThought
 
@@ -17,6 +18,19 @@ except Exception:  # pragma: no cover - fallback when torch is missing
 
 from .memory_dashboard import MemoryDashboard
 from .transformer_circuits import AttentionVisualizer
+try:
+    from .dashboard_base import BaseDashboard
+except Exception:  # pragma: no cover - fallback when not packaged
+    spec = importlib.util.spec_from_file_location(
+        "dashboard_base", Path(__file__).with_name("dashboard_base.py")
+    )
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)  # type: ignore
+    sys.modules.setdefault("dashboard_base", module)
+    BaseDashboard = module.BaseDashboard  # type: ignore
+except Exception:  # pragma: no cover - fallback when not packaged
+    from dashboard_base import BaseDashboard  # type: ignore
 
 _HTML = """
 <!DOCTYPE html>
@@ -45,7 +59,7 @@ load();
 """
 
 
-class InterpretabilityDashboard:
+class InterpretabilityDashboard(BaseDashboard):
     """Serve attention heatmaps and memory statistics."""
 
     def __init__(
@@ -55,6 +69,7 @@ class InterpretabilityDashboard:
         sample: "torch.Tensor | Any",
         graph: GraphOfThought | None = None,
     ) -> None:
+        super().__init__()
         self.model = model
         self.mem_dash = MemoryDashboard(servers)
         self.graph = graph
@@ -64,9 +79,6 @@ class InterpretabilityDashboard:
             self.vis.run(sample)
         else:  # pragma: no cover - torch optional
             self.vis = None
-        self.httpd: HTTPServer | None = None
-        self.thread: threading.Thread | None = None
-        self.port: int | None = None
 
     # --------------------------------------------------------------
     def _heatmaps(self) -> Dict[str, Any]:
@@ -80,9 +92,7 @@ class InterpretabilityDashboard:
         return {"images": imgs}
 
     # --------------------------------------------------------------
-    def start(self, host: str = "localhost", port: int = 8060) -> None:
-        if self.httpd is not None:
-            return
+    def get_handler(self) -> Type[BaseHTTPRequestHandler]:
         dashboard = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -117,21 +127,14 @@ class InterpretabilityDashboard:
             def log_message(self, format: str, *args: Any) -> None:  # noqa: D401
                 return
 
-        self.httpd = HTTPServer((host, port), Handler)
-        self.port = self.httpd.server_address[1]
-        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
-        self.thread.start()
+        return Handler
+
+    def start(self, host: str = "localhost", port: int = 8060) -> None:
+        super().start(host, port)
 
     # --------------------------------------------------------------
     def stop(self) -> None:
-        if self.httpd is None:
-            return
-        assert self.thread is not None
-        self.httpd.shutdown()
-        self.thread.join(timeout=1.0)
-        self.httpd.server_close()
-        self.httpd = None
-        self.thread = None
+        super().stop()
 
 
 __all__ = ["InterpretabilityDashboard"]

@@ -14,7 +14,18 @@ except Exception:  # pragma: no cover - fallback for direct module load
     spec.loader.exec_module(module)  # type: ignore[attr-defined]
     QAEHyperparamSearch = module.QAEHyperparamSearch
 
-from .rl_decision_narrator import RLDecisionNarrator
+try:
+    from .rl_decision_narrator import RLDecisionNarrator
+except Exception:  # pragma: no cover - fallback for direct module load
+    import importlib.util as _ilu2
+    from pathlib import Path as _Path2
+
+    _p = _Path2(__file__).resolve().parent / "rl_decision_narrator.py"
+    _spec = _ilu2.spec_from_file_location("rl_decision_narrator", _p)
+    _mod = _ilu2.module_from_spec(_spec)
+    assert _spec and _spec.loader
+    _spec.loader.exec_module(_mod)  # type: ignore[attr-defined]
+    RLDecisionNarrator = _mod.RLDecisionNarrator
 
 
 class MetaRLRefactorAgent:
