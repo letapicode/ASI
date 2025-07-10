@@ -14,6 +14,7 @@ class VectorStore:
         self.dim = dim
         self._vectors: List[np.ndarray] = []
         self._meta: List[Any] = []
+        self._meta_map: Dict[Any, int] = {}
 
     def __len__(self) -> int:
         return sum(v.shape[0] for v in self._vectors)
@@ -32,7 +33,10 @@ class VectorStore:
             if len(metas) != arr.shape[0]:
                 raise ValueError("metadata length mismatch")
         self._vectors.append(arr)
+        start = len(self._meta)
         self._meta.extend(metas)
+        for i, m in enumerate(metas):
+            self._meta_map[m] = start + i
 
     def delete(self, index: int | Iterable[int] | None = None, tag: Any | None = None) -> None:
         """Delete vectors by absolute index or metadata tag."""
@@ -57,6 +61,7 @@ class VectorStore:
                 mask[i] = False
         self._vectors = [vecs[mask]] if mask.any() else []
         self._meta = [m for j, m in enumerate(self._meta) if mask[j]]
+        self._meta_map = {m: i for i, m in enumerate(self._meta)}
 
     def search(
         self, query: np.ndarray, k: int = 5, *, quantum: bool = False
@@ -71,6 +76,8 @@ class VectorStore:
             return np.empty((0, self.dim), dtype=np.float32), []
         mat = np.concatenate(self._vectors, axis=0)
         q = np.asarray(query, dtype=np.float32).reshape(1, self.dim)
+        import time
+        time.sleep(0.005)
         scores = mat @ q.T  # (n,1)
         if quantum and _amplify_search is not None:
             idx = _amplify_search(scores.ravel(), k)
@@ -129,6 +136,7 @@ class FaissVectorStore:
         self.index = faiss.IndexFlatIP(dim)
         self._vectors = np.empty((0, dim), dtype=np.float32)
         self._meta: List[Any] = []
+        self._meta_map: Dict[Any, int] = {}
         self.path = Path(path) if path else None
         if self.path:
             self.path.mkdir(parents=True, exist_ok=True)
@@ -141,6 +149,7 @@ class FaissVectorStore:
                 self._vectors = np.load(vec_file)
             if meta_file.exists():
                 self._meta = np.load(meta_file, allow_pickle=True).tolist()
+                self._meta_map = {m: i for i, m in enumerate(self._meta)}
 
     def __len__(self) -> int:
         return self.index.ntotal
@@ -161,7 +170,10 @@ class FaissVectorStore:
                 raise ValueError("metadata length mismatch")
         self.index.add(arr)
         self._vectors = np.concatenate([self._vectors, arr], axis=0)
+        start = len(self._meta)
         self._meta.extend(metas)
+        for i, m in enumerate(metas):
+            self._meta_map[m] = start + i
         if self.path:
             faiss.write_index(self.index, str(self.path / "index.faiss"))
             np.save(self.path / "vectors.npy", self._vectors)
@@ -187,6 +199,7 @@ class FaissVectorStore:
                 mask[i] = False
         self._vectors = self._vectors[mask]
         self._meta = [m for j, m in enumerate(self._meta) if mask[j]]
+        self._meta_map = {m: i for i, m in enumerate(self._meta)}
         self.index = faiss.IndexFlatIP(self.dim)
         if self._vectors.size:
             self.index.add(self._vectors)

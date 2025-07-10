@@ -37,8 +37,14 @@ except Exception:  # pragma: no cover - allow running without torch
         def detach(self) -> "_DummyTensor":
             return self
 
+        def clone(self) -> "_DummyTensor":
+            return _DummyTensor(self.data.copy())
+
         def cpu(self) -> "_DummyTensor":
             return self
+
+        def __getitem__(self, idx: int) -> "_DummyTensor":
+            return _DummyTensor(self.data[idx])
 
         def numpy(self) -> np.ndarray:
             return self.data

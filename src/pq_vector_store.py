@@ -27,6 +27,7 @@ class PQVectorStore:
         self.index = faiss.IndexIVFPQ(quantizer, dim, nlist, m, nbits)
         self._vectors = np.empty((0, dim), dtype=np.float32)
         self._meta: List[Any] = []
+        self._meta_map: Dict[Any, int] = {}
         self.path = Path(path) if path else None
         if self.path:
             self.path.mkdir(parents=True, exist_ok=True)
@@ -39,6 +40,7 @@ class PQVectorStore:
                 self._vectors = np.load(vec_file)
             if meta_file.exists():
                 self._meta = np.load(meta_file, allow_pickle=True).tolist()
+                self._meta_map = {m: i for i, m in enumerate(self._meta)}
 
     # --------------------------------------------------------------
     def __len__(self) -> int:
@@ -69,7 +71,10 @@ class PQVectorStore:
             self.index.train(train_vecs)
         self.index.add(arr)
         self._vectors = np.concatenate([self._vectors, arr], axis=0)
+        start = len(self._meta)
         self._meta.extend(metas)
+        for i, m in enumerate(metas):
+            self._meta_map[m] = start + i
         if self.path:
             faiss.write_index(self.index, str(self.path / "index.faiss"))
             np.save(self.path / "vectors.npy", self._vectors)
@@ -95,6 +100,7 @@ class PQVectorStore:
                 mask[i] = False
         self._vectors = self._vectors[mask]
         self._meta = [m for j, m in enumerate(self._meta) if mask[j]]
+        self._meta_map = {m: i for i, m in enumerate(self._meta)}
         self.index = faiss.IndexIVFPQ(faiss.IndexFlatIP(self.dim), self.dim, self.nlist, self.m, self.nbits)
         if self._vectors.size:
             self.index.train(self._vectors)
@@ -111,10 +117,14 @@ class PQVectorStore:
         import faiss
 
         q = np.asarray(query, dtype=np.float32).reshape(1, self.dim)
-        self.index.nprobe = min(self.nlist, 8)
-        _, idx = self.index.search(q, k)
-        idx = idx[0]
-        idx = idx[idx >= 0]
+        if self.index.ntotal <= self.nlist:
+            scores = self._vectors @ q.T
+            idx = np.argsort(scores.ravel())[::-1][:k]
+        else:
+            self.index.nprobe = min(self.nlist, 8)
+            _, idx = self.index.search(q, k)
+            idx = idx[0]
+            idx = idx[idx >= 0]
         return self._vectors[idx], [self._meta[i] for i in idx]
 
     # --------------------------------------------------------------

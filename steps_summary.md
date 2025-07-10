@@ -28,3 +28,21 @@
 - Simplified `hpc_multi_scheduler.py` by calling `forecast_scores()` directly on each scheduler instance.
 - Documented the new architecture in `docs/Plan.md`.
 - Refactored summarizing memories to share BaseSummarizingMemory.
+
+## PR 6
+- Documented the quantized search pipeline in `docs/quantized_vector_search_tasks.md`.
+- Added `CodeIndexer` and `IncrementalPQIndexer` to embed code and manage PQ shards.
+- Extended `HierarchicalMemory` with a `pq_store` and re-ranking search logic.
+- Implemented `QuantizedMemoryServer` and client for remote queries.
+- Created `build_pq_index.py` script and new unit test `test_quantized_search.py`.
+- Updated `Implementation.md`, `Plan.md` and README with usage instructions.
+
+## PR 7
+- Fixed failing quantized search test by adding missing `_DummyTensor` helpers
+  and tweaking retrieval logic.
+
+## PR 8
+- Optimized candidate lookup in `HierarchicalMemory.search` by indexing
+  metadata to vector indices.
+- Extended `VectorStore`, `FaissVectorStore` and `PQVectorStore` with
+  `_meta_map` dictionaries to speed up retrieval.

@@ -17,6 +17,13 @@ except Exception:  # pragma: no cover - allow running without torch
             import numpy as np
             return _DummyTensor(np.expand_dims(self.data, axis))
 
+        def expand_as(self, other: "_DummyTensor") -> "_DummyTensor":
+            import numpy as np
+            arr = self.data
+            if arr.shape[-1] != other.data.shape[-1]:
+                arr = arr[..., : other.data.shape[-1]]
+            return _DummyTensor(np.broadcast_to(arr, other.data.shape))
+
         def __iter__(self):
             if self.data.ndim == 0:
                 yield _DummyTensor(self.data)
@@ -24,8 +31,14 @@ except Exception:  # pragma: no cover - allow running without torch
                 for row in self.data:
                     yield _DummyTensor(row)
 
+        def __getitem__(self, idx: int) -> "_DummyTensor":
+            return _DummyTensor(self.data[idx])
+
         def detach(self) -> "_DummyTensor":
             return self
+
+        def clone(self) -> "_DummyTensor":
+            return _DummyTensor(self.data.copy())
 
         def cpu(self) -> "_DummyTensor":
             return self
@@ -232,6 +245,7 @@ class HierarchicalMemory:
             )
         self.use_async = use_async
         self._next_id = 0
+        self.pq_store: PQVectorStore | None = None
         if store_type == "ephemeral":
             self.store = EphemeralVectorStore(dim=compressed_dim, ttl=ephemeral_ttl)
         elif store_type == "holographic":
@@ -251,7 +265,12 @@ class HierarchicalMemory:
         elif use_lsh:
             self.store = LocalitySensitiveHashIndex(dim=compressed_dim, num_planes=lsh_planes)
         elif use_pq:
-            self.store = PQVectorStore(dim=compressed_dim, path=db_path)
+            self.store = (
+                FaissVectorStore(dim=compressed_dim, path=db_path)
+                if db_path is not None
+                else VectorStore(dim=compressed_dim)
+            )
+            self.pq_store = PQVectorStore(dim=compressed_dim, path=db_path)
         else:
             if db_path is None:
                 if encryption_key is None:
@@ -262,6 +281,7 @@ class HierarchicalMemory:
                     )
             else:
                 self.store = FaissVectorStore(dim=compressed_dim, path=db_path)
+            self.pq_store = None
         self.cache: SSDCache | None = None
         if cache_dir is not None:
             self.cache = SSDCache(dim=dim, path=cache_dir, max_size=cache_size)
@@ -393,6 +413,8 @@ class HierarchicalMemory:
                 metas = [self._next_id + i for i in range(comp.shape[0])]
                 self._next_id += comp.shape[0]
             self.store.add(comp, metas)
+            if self.pq_store is not None:
+                self.pq_store.add(comp, metas)
             for m in metas:
                 self._usage[m] = 0
             if self.kg is not None:
@@ -420,6 +442,8 @@ class HierarchicalMemory:
             metas = [self._next_id + i for i in range(arr.shape[0])]
             self._next_id += arr.shape[0]
         self.store.add(arr, metas)
+        if self.pq_store is not None:
+            self.pq_store.add(arr, metas)
         for m in metas:
             self._usage[m] = 0
         if self.kg is not None:
@@ -443,6 +467,8 @@ class HierarchicalMemory:
         else:
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(None, self.store.add, arr, metas)
+        if self.pq_store is not None:
+            self.pq_store.add(arr, metas)
         for m in metas:
             self._usage[m] = 0
         if self.kg is not None:
@@ -654,17 +680,42 @@ class HierarchicalMemory:
             q = self.compressor.encoder(query).detach().cpu().numpy()
             if q.ndim == 2:
                 q = q[0]
-            if mode == "hyde" and hasattr(self.store, "hyde_search"):
-                comp_vecs, meta = self.store.hyde_search(q, remaining)
-            else:
-                comp_vecs, meta = self.store.search(q, remaining)
-            if comp_vecs.shape[0] > 0:
-                comp_t = torch.from_numpy(comp_vecs)
-                decoded = self.compressor.decoder(comp_t).to(query.device)
-                out_vecs.append(decoded)
-                out_meta.extend(meta)
-                if self.cache is not None:
-                    self.cache.add(decoded.detach().cpu().numpy(), meta)
+            if self.pq_store is not None and len(self.pq_store) > 1000:
+                pq_vecs, pq_meta = self.pq_store.search(q, remaining)
+                comp_list = []
+                meta_list = []
+                for m in pq_meta:
+                    idx = None
+                    if hasattr(self.store, "_meta_map"):
+                        idx = self.store._meta_map.get(m)
+                    if idx is None:
+                        try:
+                            idx = self.store._meta.index(m)
+                        except ValueError:
+                            continue
+                    comp_list.append(self.store._vectors[idx])
+                    meta_list.append(m)
+                if comp_list:
+                    comp_arr = np.stack(comp_list)
+                    comp_t = torch.from_numpy(comp_arr)
+                    decoded = self.compressor.decoder(comp_t).to(query.device)
+                    out_vecs.append(decoded)
+                    out_meta.extend(meta_list)
+                    if self.cache is not None:
+                        self.cache.add(decoded.detach().cpu().numpy(), meta_list)
+                    remaining = k - len(out_meta)
+            if remaining > 0:
+                if mode == "hyde" and hasattr(self.store, "hyde_search"):
+                    comp_vecs, meta = self.store.hyde_search(q, remaining)
+                else:
+                    comp_vecs, meta = self.store.search(q, remaining)
+                if comp_vecs.shape[0] > 0:
+                    comp_t = torch.from_numpy(comp_vecs)
+                    decoded = self.compressor.decoder(comp_t).to(query.device)
+                    out_vecs.append(decoded)
+                    out_meta.extend(meta)
+                    if self.cache is not None:
+                        self.cache.add(decoded.detach().cpu().numpy(), meta)
         if c_meta:
             out_vecs.insert(0, torch.from_numpy(c_vecs).to(query.device))
             out_meta = c_meta + out_meta
@@ -910,6 +961,8 @@ class HierarchicalMemory:
             self.store.save(path / "lsh_store")
         elif not isinstance(self.store, HopfieldStore):
             self.store.save(path / "store.npz")
+        if self.pq_store is not None and self.pq_store is not self.store:
+            self.pq_store.save(path / "pq_store")
         if self.cache is not None:
             cache_dir = path / "cache"
             cache_dir.mkdir(parents=True, exist_ok=True)
@@ -945,6 +998,8 @@ class HierarchicalMemory:
             self.store.save(path / "lsh_store")
         elif not isinstance(self.store, HopfieldStore):
             self.store.save(path / "store.npz")
+        if self.pq_store is not None and self.pq_store is not self.store:
+            self.pq_store.save(path / "pq_store")
         if self.cache is not None:
             cache_dir = path / "cache"
             cache_dir.mkdir(parents=True, exist_ok=True)
@@ -984,8 +1039,11 @@ class HierarchicalMemory:
         holo_dir = path / "holo_store"
         if lsh_dir.exists():
             mem.store = LocalitySensitiveHashIndex.load(lsh_dir)
-        elif pq_dir.exists():
+        elif pq_dir.exists() and not store_dir.exists():
             mem.store = PQVectorStore.load(pq_dir)
+        elif pq_dir.exists():
+            mem.store = FaissVectorStore.load(store_dir)
+            mem.pq_store = PQVectorStore.load(pq_dir)
         elif holo_dir.exists():
             mem.store = HolographicVectorStore.load(holo_dir)
         elif store_dir.exists():
@@ -1024,8 +1082,14 @@ class HierarchicalMemory:
         holo_dir = path / "holo_store"
         if lsh_dir.exists():
             mem.store = LocalitySensitiveHashIndex.load(lsh_dir)
-        elif pq_dir.exists():
+        elif pq_dir.exists() and not store_dir.exists():
             mem.store = PQVectorStore.load(pq_dir)
+        elif pq_dir.exists():
+            if use_async:
+                mem.store = await AsyncFaissVectorStore.load_async(store_dir)
+            else:
+                mem.store = FaissVectorStore.load(store_dir)
+            mem.pq_store = PQVectorStore.load(pq_dir)
         elif holo_dir.exists():
             mem.store = HolographicVectorStore.load(holo_dir)
         elif store_dir.exists():
