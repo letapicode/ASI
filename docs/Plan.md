@@ -758,12 +758,15 @@ queue management and optional carbon or battery checks so other schedulers
 inherit consistent behaviour.
 - A quantized vector search pipeline stores code embeddings in sharded PQ indexes. `QuantizedMemoryServer` serves them and `HierarchicalMemory` re-ranks candidates with full vectors.
 
-`carbon_hpc_scheduler.CarbonAwareScheduler` builds on this by querying an external
+`carbon_aware_scheduler.CarbonAwareScheduler` builds on this by querying an external
 carbon-intensity API and tracking energy via `CarbonFootprintTracker`.  Its
 `submit_when_green()` method delays a job until the forecast for the chosen region
 drops below a threshold, while `submit_at_optimal_time()` waits for the lowest
 forecast in the next 24 h.  Both helpers call `submit_job()` once conditions are
 favourable, reducing cluster emissions without manual tuning.
+
+The legacy `carbon_hpc_scheduler` module now re-exports this scheduler for
+backward compatibility.
 
 
 `rl_carbon_scheduler.RLCarbonScheduler` goes a step further by learning when to

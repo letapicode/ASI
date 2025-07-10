@@ -46,3 +46,8 @@
   metadata to vector indices.
 - Extended `VectorStore`, `FaissVectorStore` and `PQVectorStore` with
   `_meta_map` dictionaries to speed up retrieval.
+
+## PR 9
+- Unified carbon-aware scheduling by merging `carbon_hpc_scheduler` into `carbon_aware_scheduler`.
+- Added `dashboard_import_helper.load_base_dashboard` and updated key dashboards to use it.
+- Documented scheduler changes in `docs/Plan.md`.
