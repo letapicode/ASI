@@ -789,6 +789,9 @@ cluster was selected.
 `hpc_base_scheduler.HPCBaseScheduler` now centralises queue management and job
 submission while delegating forecasts to pluggable strategies like the ARIMA and
 GNN schedulers.
+`submit_best()` and the RL variant now share a private helper
+`_record_carbon_saving()` which logs estimated carbon savings to attached
+dashboards.
 
 `transformer_forecast_scheduler.TransformerForecastScheduler` swaps the ARIMA
 model for a tiny two-layer Transformer trained on recent traces. The model
