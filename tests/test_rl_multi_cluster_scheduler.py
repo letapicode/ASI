@@ -44,13 +44,20 @@ forecast_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.p
 rl_mod = _load('asi.rl_multi_cluster_scheduler', 'src/rl_multi_cluster_scheduler.py')
 HPCForecastScheduler = forecast_mod.HPCForecastScheduler
 RLMultiClusterScheduler = rl_mod.RLMultiClusterScheduler
+TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 
 
 class TestRLMultiClusterScheduler(unittest.TestCase):
     def test_policy_prefers_cheaper_cluster(self):
         cheap = HPCForecastScheduler()
         exp = HPCForecastScheduler()
-        sched = RLMultiClusterScheduler({'cheap': cheap, 'expensive': exp}, epsilon=0.0)
+        tel_c = TelemetryLogger(carbon_data={'default': 0.2})
+        tel_e = TelemetryLogger(carbon_data={'default': 0.5})
+        sched = RLMultiClusterScheduler(
+            {'cheap': cheap, 'expensive': exp},
+            epsilon=0.0,
+            telemetry={'cheap': tel_c, 'expensive': tel_e},
+        )
         history = [
             {'cluster': 'cheap', 'hour': 0, 'queue_time': 0.1, 'duration': 1.0, 'carbon': 0.2},
             {'cluster': 'expensive', 'hour': 0, 'queue_time': 0.1, 'duration': 1.0, 'carbon': 2.0},
@@ -64,7 +71,9 @@ class TestRLMultiClusterScheduler(unittest.TestCase):
             cluster, jid = sched.submit_best_rl(['run.sh'])
             self.assertEqual(cluster, 'cheap')
             self.assertEqual(jid, 'jid')
-            sj.assert_called_with(['run.sh'], backend='slurm')
+            sj.assert_called_with(['run.sh'], backend='slurm', telemetry=tel_c)
+            self.assertAlmostEqual(tel_c.metrics['carbon_saved'], 0.15)
+            self.assertEqual(sched.schedule_log[-1][0], 'cheap')
 
 
 if __name__ == '__main__':

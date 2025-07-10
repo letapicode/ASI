@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Tuple, Union, List
 
 from .hpc_forecast_scheduler import HPCForecastScheduler
-from .hpc_multi_scheduler import MultiClusterScheduler
+from .hpc_multi_scheduler import MultiClusterScheduler, _record_carbon_saving
 from .hpc_scheduler import submit_job
 
 
@@ -52,16 +52,14 @@ class RLMultiClusterScheduler(MultiClusterScheduler):
             backend = self.clusters[choice].backend
             tel = self.telemetry.get(choice) if self.telemetry else None
             job_id = submit_job(command, backend=backend, telemetry=tel)
-            if tel is not None and self.telemetry:
-                baseline = sum(
-                    t.get_live_carbon_intensity() for t in self.telemetry.values()
-                ) / len(self.telemetry)
-                chosen = tel.get_live_carbon_intensity()
-                saving = (baseline - chosen) * expected_duration
-                tel.metrics["carbon_saved"] = tel.metrics.get("carbon_saved", 0.0) + saving
-                self.schedule_log.append((choice, saving))
-                if self.dashboard is not None:
-                    self.dashboard.record_schedule(choice, saving)
+            _record_carbon_saving(
+                self.telemetry,
+                tel,
+                choice,
+                expected_duration,
+                self.schedule_log,
+                self.dashboard,
+            )
             return choice, job_id
 
         best_cluster = clusters[0]
@@ -74,16 +72,14 @@ class RLMultiClusterScheduler(MultiClusterScheduler):
         backend = self.clusters[best_cluster].backend
         tel = self.telemetry.get(best_cluster) if self.telemetry else None
         job_id = submit_job(command, backend=backend, telemetry=tel)
-        if tel is not None and self.telemetry:
-            baseline = sum(
-                t.get_live_carbon_intensity() for t in self.telemetry.values()
-            ) / len(self.telemetry)
-            chosen = tel.get_live_carbon_intensity()
-            saving = (baseline - chosen) * expected_duration
-            tel.metrics["carbon_saved"] = tel.metrics.get("carbon_saved", 0.0) + saving
-            self.schedule_log.append((best_cluster, saving))
-            if self.dashboard is not None:
-                self.dashboard.record_schedule(best_cluster, saving)
+        _record_carbon_saving(
+            self.telemetry,
+            tel,
+            best_cluster,
+            expected_duration,
+            self.schedule_log,
+            self.dashboard,
+        )
         return best_cluster, job_id
 
 

@@ -13,6 +13,27 @@ from .hpc_base_scheduler import HPCBaseScheduler
 from .hpc_scheduler import submit_job
 
 
+def _record_carbon_saving(
+    telemetry_map: Optional[Dict[str, TelemetryLogger]],
+    tel: Optional[TelemetryLogger],
+    cluster: str,
+    duration: float,
+    log: List[Tuple[str, float]],
+    dashboard: Optional[ClusterCarbonDashboard],
+) -> None:
+    """Record carbon savings for a scheduled job."""
+    if telemetry_map and tel is not None and len(telemetry_map) > 0:
+        baseline = sum(
+            t.get_live_carbon_intensity() for t in telemetry_map.values()
+        ) / len(telemetry_map)
+        chosen = tel.get_live_carbon_intensity()
+        saving = (baseline - chosen) * duration
+        tel.metrics["carbon_saved"] = tel.metrics.get("carbon_saved", 0.0) + saving
+        log.append((cluster, saving))
+        if dashboard is not None:
+            dashboard.record_schedule(cluster, saving)
+
+
 @dataclass
 class MultiClusterScheduler:
     """Compare forecasts from multiple clusters and submit to the best one."""
@@ -58,16 +79,14 @@ class MultiClusterScheduler:
         job_id = globals()["submit_job"](
             command, backend=best_backend, telemetry=tel
         )
-        if self.telemetry and tel is not None and len(self.telemetry) > 0:
-            baseline = sum(
-                t.get_live_carbon_intensity() for t in self.telemetry.values()
-            ) / len(self.telemetry)
-            chosen = tel.get_live_carbon_intensity()
-            saving = (baseline - chosen) * expected_duration
-            tel.metrics["carbon_saved"] = tel.metrics.get("carbon_saved", 0.0) + saving
-            self.schedule_log.append((best_cluster, saving))
-            if self.dashboard is not None:
-                self.dashboard.record_schedule(best_cluster, saving)
+        _record_carbon_saving(
+            self.telemetry,
+            tel,
+            best_cluster,
+            expected_duration,
+            self.schedule_log,
+            self.dashboard,
+        )
         return best_cluster, job_id
 
     # --------------------------------------------------

@@ -51,3 +51,8 @@
 - Unified carbon-aware scheduling by merging `carbon_hpc_scheduler` into `carbon_aware_scheduler`.
 - Added `dashboard_import_helper.load_base_dashboard` and updated key dashboards to use it.
 - Documented scheduler changes in `docs/Plan.md`.
+
+## PR 10
+- Introduced `_record_carbon_saving` helper used by `submit_best` and
+  `submit_best_rl` to consolidate telemetry logic.
+- Updated unit tests and documentation accordingly.

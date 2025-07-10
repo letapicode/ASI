@@ -45,13 +45,18 @@ forecast_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.p
 mod = _load('asi.hpc_multi_scheduler', 'src/hpc_multi_scheduler.py')
 HPCForecastScheduler = forecast_mod.HPCForecastScheduler
 MultiClusterScheduler = mod.MultiClusterScheduler
+TelemetryLogger = mod.TelemetryLogger
 
 
 class TestMultiClusterScheduler(unittest.TestCase):
     def test_submit_best(self):
         a = HPCForecastScheduler()
         b = HPCForecastScheduler(backend='k8s')
-        sched = MultiClusterScheduler({'a': a, 'b': b})
+        tel_a = TelemetryLogger(carbon_data={'default': 0.5})
+        tel_b = TelemetryLogger(carbon_data={'default': 0.2})
+        sched = MultiClusterScheduler(
+            {'a': a, 'b': b}, telemetry={'a': tel_a, 'b': tel_b}
+        )
         with patch('asi.hpc_forecast_scheduler.arima_forecast', side_effect=[[10, 1], [1.0, 0.2], [5, 0.5], [0.5, 0.1]]), \
              patch('time.sleep') as sl, \
              patch('subprocess.run') as sp:
@@ -60,6 +65,11 @@ class TestMultiClusterScheduler(unittest.TestCase):
             sp.assert_called()
             self.assertIn(cluster, {'a', 'b'})
             self.assertEqual(jid, 'jid')
+            baseline = (tel_a.get_live_carbon_intensity() + tel_b.get_live_carbon_intensity()) / 2
+            chosen_tel = tel_a if cluster == 'a' else tel_b
+            expected = (baseline - chosen_tel.get_live_carbon_intensity())
+            self.assertAlmostEqual(chosen_tel.metrics['carbon_saved'], expected)
+            self.assertEqual(sched.schedule_log[-1][0], cluster)
 
 
 if __name__ == '__main__':
