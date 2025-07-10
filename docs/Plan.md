@@ -756,6 +756,7 @@ external API for the measurements.
 The new `hpc_schedulers.HPCJobScheduler` consolidates these utilities with
 queue management and optional carbon or battery checks so other schedulers
 inherit consistent behaviour.
+- A quantized vector search pipeline stores code embeddings in sharded PQ indexes. `QuantizedMemoryServer` serves them and `HierarchicalMemory` re-ranks candidates with full vectors.
 
 `carbon_hpc_scheduler.CarbonAwareScheduler` builds on this by querying an external
 carbon-intensity API and tracking energy via `CarbonFootprintTracker`.  Its

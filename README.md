@@ -115,6 +115,22 @@ server = serve(mem, "localhost:50900", fhe_context=ctx)
 
 Visit `http://localhost:8000` to view Prometheus metrics.
 
+### Quantized Search Example
+
+```python
+from asi.code_indexer import CodeIndexer
+from asi.incremental_pq_indexer import IncrementalPQIndexer
+from asi.hierarchical_memory import HierarchicalMemory
+from asi.quantized_memory_server import QuantizedMemoryServer
+
+CodeIndexer("src").save()  # index source files
+pq = IncrementalPQIndexer(32, "pq_shards")
+mem = HierarchicalMemory(dim=32, compressed_dim=32, capacity=100, use_pq=True)
+mem.pq_store = pq.shards[0] if pq.shards else None
+server = QuantizedMemoryServer(mem, "localhost:50100")
+server.start()
+```
+
 `RiskDashboard` combines these metrics with ethical risk scores from
 `RiskScoreboard` and serves them via the same HTTP interface. Launch it with
 `scripts/memory_dashboard.py`. The script also starts an
