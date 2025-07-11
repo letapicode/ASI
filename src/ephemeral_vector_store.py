@@ -3,61 +3,82 @@ from typing import Iterable, Any, List, Tuple
 
 import numpy as np
 
+from .vector_store import VectorStore
 
-class EphemeralVectorStore:
-    """In-memory vector store that drops old entries after ``ttl`` seconds."""
+
+class EphemeralVectorStore(VectorStore):
+    """VectorStore that drops entries older than ``ttl`` seconds."""
 
     def __init__(self, dim: int, ttl: float = 60.0) -> None:
-        self.dim = dim
+        super().__init__(dim)
         self.ttl = float(ttl)
-        self._vectors: List[np.ndarray] = []
-        self._meta: List[Any] = []
         self._time: List[float] = []
 
     def __len__(self) -> int:
         self.cleanup_expired()
-        return len(self._meta)
+        return super().__len__()
 
     def add(self, vectors: np.ndarray, metadata: Iterable[Any] | None = None) -> None:
-        """Add vectors with optional metadata."""
         arr = np.asarray(vectors, dtype=np.float32)
         if arr.ndim == 1:
             arr = arr[None, :]
-        if arr.shape[1] != self.dim:
-            raise ValueError("vector dimension mismatch")
-        if metadata is None:
-            metas = [None] * arr.shape[0]
-        else:
-            metas = list(metadata)
-            if len(metas) != arr.shape[0]:
-                raise ValueError("metadata length mismatch")
+        super().add(arr, metadata=metadata)
         now = time.time()
-        self._vectors.extend(arr)
-        self._meta.extend(metas)
         self._time.extend([now] * arr.shape[0])
         self.cleanup_expired()
 
-    def search(self, query: np.ndarray, k: int = 5) -> Tuple[np.ndarray, List[Any]]:
+    def search(
+        self, query: np.ndarray, k: int = 5, *, quantum: bool = False
+    ) -> Tuple[np.ndarray, List[Any]]:
         self.cleanup_expired()
-        if not self._vectors:
-            return np.empty((0, self.dim), dtype=np.float32), []
-        mat = np.vstack(self._vectors)
-        q = np.asarray(query, dtype=np.float32).reshape(1, self.dim)
-        scores = mat @ q.T
-        idx = np.argsort(scores.ravel())[::-1][:k]
-        return mat[idx], [self._meta[i] for i in idx]
+        return super().search(query, k, quantum=quantum)
+
+    def delete(
+        self, index: int | Iterable[int] | None = None, tag: Any | None = None
+    ) -> None:
+        self.cleanup_expired()
+        if index is None and tag is None:
+            raise ValueError("index or tag must be specified")
+        if isinstance(index, Iterable) and not isinstance(index, (bytes, str, bytearray)):
+            indices = sorted(int(i) for i in index)
+        elif index is not None:
+            indices = [int(index)]
+        else:
+            indices = [i for i, m in enumerate(self._meta) if m == tag]
+        if not indices:
+            return
+        vecs = (
+            np.concatenate(self._vectors, axis=0)
+            if self._vectors
+            else np.empty((0, self.dim), dtype=np.float32)
+        )
+        mask = np.ones(len(self._meta), dtype=bool)
+        for i in indices:
+            if 0 <= i < len(mask):
+                mask[i] = False
+        self._vectors = [vecs[mask]] if mask.any() else []
+        self._meta = [m for j, m in enumerate(self._meta) if mask[j]]
+        self._meta_map = {m: i for i, m in enumerate(self._meta)}
+        self._time = [t for j, t in enumerate(self._time) if mask[j]]
 
     def cleanup_expired(self) -> None:
-        """Remove entries older than the TTL."""
+        """Remove entries older than ``ttl`` seconds."""
         if not self._time:
             return
         cutoff = time.time() - self.ttl
-        mask = [t >= cutoff for t in self._time]
-        if all(mask):
+        mask = np.array([t >= cutoff for t in self._time], dtype=bool)
+        if mask.all():
             return
-        self._vectors = [v for v, m in zip(self._vectors, mask) if m]
-        self._meta = [m for m, keep in zip(self._meta, mask) if keep]
-        self._time = [t for t in self._time if t >= cutoff]
+        vecs = (
+            np.concatenate(self._vectors, axis=0)
+            if self._vectors
+            else np.empty((0, self.dim), dtype=np.float32)
+        )
+        vecs = vecs[mask]
+        self._vectors = [vecs] if vecs.size else []
+        self._meta = [m for j, m in enumerate(self._meta) if mask[j]]
+        self._meta_map = {m: i for i, m in enumerate(self._meta)}
+        self._time = [t for j, t in enumerate(self._time) if mask[j]]
 
 
 __all__ = ["EphemeralVectorStore"]
