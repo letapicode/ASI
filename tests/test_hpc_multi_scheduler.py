@@ -40,24 +40,24 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
-forecast_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
+base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
 mod = _load('asi.hpc_multi_scheduler', 'src/hpc_multi_scheduler.py')
-HPCForecastScheduler = forecast_mod.HPCForecastScheduler
+make_scheduler = base_mod.make_scheduler
 MultiClusterScheduler = mod.MultiClusterScheduler
 TelemetryLogger = mod.TelemetryLogger
 
 
 class TestMultiClusterScheduler(unittest.TestCase):
     def test_submit_best(self):
-        a = HPCForecastScheduler()
-        b = HPCForecastScheduler(backend='k8s')
+        a = make_scheduler('arima')
+        b = make_scheduler('arima', backend='k8s')
         tel_a = TelemetryLogger(carbon_data={'default': 0.5})
         tel_b = TelemetryLogger(carbon_data={'default': 0.2})
         sched = MultiClusterScheduler(
             {'a': a, 'b': b}, telemetry={'a': tel_a, 'b': tel_b}
         )
-        with patch('asi.hpc_forecast_scheduler.arima_forecast', side_effect=[[10, 1], [1.0, 0.2], [5, 0.5], [0.5, 0.1]]), \
+        with patch('asi.forecast_strategies.arima_forecast', side_effect=[[10, 1], [1.0, 0.2], [5, 0.5], [0.5, 0.1]]), \
              patch('time.sleep') as sl, \
              patch('subprocess.run') as sp:
             sp.return_value = types.SimpleNamespace(stdout='jid', returncode=0)

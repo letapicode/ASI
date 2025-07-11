@@ -7,7 +7,6 @@ import time
 from dataclasses import dataclass, field
 from typing import Dict, Tuple, Union, List
 
-from .hpc_forecast_scheduler import HPCForecastScheduler
 from .hpc_multi_scheduler import MultiClusterScheduler, _record_carbon_saving
 from .hpc_schedulers import submit_job
 
