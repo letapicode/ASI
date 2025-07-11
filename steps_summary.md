@@ -86,3 +86,11 @@
 ## PR 15
 - Renamed `tests/test_hpc_scheduler.py` to `tests/test_hpc_schedulers.py` for clarity.
 - Documented the import path `asi.hpc_schedulers` in `docs/Plan.md`.
+
+## PR 16
+- Reworked `EphemeralVectorStore` to inherit from `VectorStore` and reuse its
+  insertion logic.
+- Added timestamp tracking so expired vectors are purged automatically before
+  searching, deleting or checking the length.
+- Updated unit tests to rely on this implicit cleanup and noted the subclass in
+  `docs/Plan.md`.

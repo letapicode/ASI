@@ -431,8 +431,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      for vector search using `quantum_retrieval.amplify_search`. The accompanying
      `QuantumMemoryClient` lets peers push embeddings and query the server over
      the network.
-37c. **Ephemeral vector store**: `EphemeralVectorStore` keeps in-memory vectors
-     with a TTL and integrates into `HierarchicalMemory` via `store_type="ephemeral"`.
+37c. **Ephemeral vector store**: `EphemeralVectorStore` subclasses
+    `VectorStore`, tracks insert timestamps and automatically purges
+    expired embeddings. It integrates into `HierarchicalMemory` via
+    `store_type="ephemeral"`.
 37d. **Proof-carrying queries**: pass `proof=True` to `MemoryServer.query()` or
      `HierarchicalMemory.search()` to request verifiable results. The server
      encrypts stored vectors under an AES key and computes a
