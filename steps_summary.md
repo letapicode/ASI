@@ -75,3 +75,7 @@
 - Updated all scheduler modules, tests and documentation to import from the new
   package path.
 - Confirmed scheduler-related tests run with pytest.
+
+## PR 14
+- Renamed `tests/test_hpc_scheduler.py` to `tests/test_hpc_schedulers.py` for clarity.
+- Documented the import path `asi.hpc_schedulers` in `docs/Plan.md`.

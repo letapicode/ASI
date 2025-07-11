@@ -761,7 +761,8 @@ drops below a configured threshold, using `CarbonFootprintTracker` or an
 external API for the measurements.
 The new `hpc_schedulers.HPCJobScheduler` consolidates these utilities with
 queue management and optional carbon or battery checks so other schedulers
-inherit consistent behaviour.
+inherit consistent behaviour. Import it via
+`from asi.hpc_schedulers import submit_job, monitor_job, cancel_job`.
 - A quantized vector search pipeline stores code embeddings in sharded PQ indexes. `QuantizedMemoryServer` serves them and `HierarchicalMemory` re-ranks candidates with full vectors.
 
 `carbon_aware_scheduler.CarbonAwareScheduler` builds on this by querying an external
