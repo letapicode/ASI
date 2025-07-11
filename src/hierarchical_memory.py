@@ -1126,7 +1126,9 @@ class HierarchicalMemory:
 
 
 if _HAS_GRPC:
-    class MemoryServer(memory_pb2_grpc.MemoryServiceServicer):
+    from .base_memory_server import BaseMemoryServer
+
+    class MemoryServer(BaseMemoryServer):
         """gRPC server exposing a ``HierarchicalMemory`` backend."""
 
         def __init__(
@@ -1137,65 +1139,9 @@ if _HAS_GRPC:
             telemetry: "TelemetryLogger | None" = None,
         ) -> None:
             self.memory = memory
-            self.address = address
-            self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
-            memory_pb2_grpc.add_MemoryServiceServicer_to_server(self, self.server)
-            self.server.add_insecure_port(address)
-            self.telemetry = telemetry
+            super().__init__(memory, address=address, max_workers=max_workers, telemetry=telemetry)
 
-        def Push(self, request: memory_pb2.PushRequest, context) -> memory_pb2.PushReply:  # noqa: N802
-            vec = torch.tensor(request.vector).reshape(1, -1)
-            meta = request.metadata if request.metadata else None
-            self.memory.add(vec, metadata=[meta])
-            if self.telemetry:
-                stats = self.telemetry.get_stats()
-                stats["push"] = stats.get("push", 0) + 1
-                print("telemetry", stats)
-            return memory_pb2.PushReply(ok=True)
-
-        def Query(self, request: memory_pb2.QueryRequest, context) -> memory_pb2.QueryReply:  # noqa: N802
-            q = torch.tensor(request.vector).reshape(1, -1)
-            out, meta = self.memory.search(q, k=int(request.k))
-            flat = out.detach().cpu().view(-1).tolist()
-            meta = [str(m) for m in meta]
-            if self.telemetry:
-                stats = self.telemetry.get_stats()
-                stats["query"] = stats.get("query", 0) + 1
-                print("telemetry", stats)
-            return memory_pb2.QueryReply(vectors=flat, metadata=meta)
-
-        def PushBatch(
-            self, request: memory_pb2.PushBatchRequest, context
-        ) -> memory_pb2.PushReply:  # noqa: N802
-            for item in request.items:
-                vec = torch.tensor(item.vector).reshape(1, -1)
-                meta = item.metadata if item.metadata else None
-                self.memory.add(vec, metadata=[meta])
-            return memory_pb2.PushReply(ok=True)
-
-        def QueryBatch(
-            self, request: memory_pb2.QueryBatchRequest, context
-        ) -> memory_pb2.QueryBatchReply:  # noqa: N802
-            replies = []
-            for q in request.items:
-                qt = torch.tensor(q.vector).reshape(1, -1)
-                out, meta = self.memory.search(qt, k=int(q.k))
-                flat = out.detach().cpu().view(-1).tolist()
-                meta = [str(m) for m in meta]
-                replies.append(memory_pb2.QueryReply(vectors=flat, metadata=meta))
-            return memory_pb2.QueryBatchReply(items=replies)
-
-        def start(self) -> None:
-            """Start serving requests."""
-            if self.telemetry:
-                self.telemetry.start()
-            self.server.start()
-
-        def stop(self, grace: float = 0) -> None:
-            """Stop the server."""
-            self.server.stop(grace)
-            if self.telemetry:
-                self.telemetry.stop()
+        # handlers are inherited from :class:`BaseMemoryServer`
 
 
 def push_remote(address: str, vector: torch.Tensor, metadata: Any | None = None, timeout: float = 5.0) -> bool:

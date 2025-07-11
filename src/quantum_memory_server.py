@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from concurrent import futures
 from typing import Iterable, Any
 
 import numpy as np
 
 from .vector_store import VectorStore
+from .base_memory_server import BaseMemoryServer
 
 try:
     import grpc  # type: ignore
@@ -17,7 +17,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 if _HAS_GRPC:
 
-    class QuantumMemoryServer(memory_pb2_grpc.MemoryServiceServicer):
+    class QuantumMemoryServer(BaseMemoryServer):
         """gRPC server exposing a :class:`VectorStore` with quantum search."""
 
         def __init__(
@@ -27,10 +27,7 @@ if _HAS_GRPC:
             max_workers: int = 4,
         ) -> None:
             self.store = store
-            self.address = address
-            self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
-            memory_pb2_grpc.add_MemoryServiceServicer_to_server(self, self.server)
-            self.server.add_insecure_port(address)
+            super().__init__(store, address=address, max_workers=max_workers)
 
         # --------------------------------------------------------------
         def Push(self, request: memory_pb2.PushRequest, context) -> memory_pb2.PushReply:  # noqa: N802
@@ -71,11 +68,7 @@ if _HAS_GRPC:
                 )
             return memory_pb2.QueryBatchReply(items=replies)
 
-        def start(self) -> None:
-            self.server.start()
-
-        def stop(self, grace: float = 0) -> None:
-            self.server.stop(grace)
+        # start/stop inherited from ``BaseMemoryServer``
 
 
 __all__ = ["QuantumMemoryServer"]

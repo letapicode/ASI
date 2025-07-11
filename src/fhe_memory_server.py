@@ -21,6 +21,7 @@ except Exception:  # pragma: no cover - optional dependency
     _HAS_TENSEAL = False
 
 from .vector_store import VectorStore
+from .base_memory_server import BaseMemoryServer
 try:
     from .zk_retrieval_proof import ZKRetrievalProof
 except Exception:  # pragma: no cover - fallback for tests
@@ -40,7 +41,7 @@ except Exception:  # pragma: no cover - fallback for tests
 
 if _HAS_GRPC and _HAS_TENSEAL:
 
-    class FHEMemoryServer(fhe_memory_pb2_grpc.FHEMemoryServiceServicer):
+    class FHEMemoryServer(BaseMemoryServer, fhe_memory_pb2_grpc.FHEMemoryServiceServicer):
         """gRPC server operating on encrypted vectors via TenSEAL."""
 
         def __init__(
@@ -52,10 +53,12 @@ if _HAS_GRPC and _HAS_TENSEAL:
         ) -> None:
             self.store = store
             self.ctx = ctx
-            self.address = address
-            self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
-            fhe_memory_pb2_grpc.add_FHEMemoryServiceServicer_to_server(self, self.server)
-            self.server.add_insecure_port(address)
+            super().__init__(
+                store,
+                address=address,
+                max_workers=max_workers,
+                service_adder=fhe_memory_pb2_grpc.add_FHEMemoryServiceServicer_to_server,
+            )
 
         # --------------------------------------------------
         def Push(self, request: fhe_memory_pb2.FHEPushRequest, context) -> memory_pb2.PushReply:  # noqa: N802
@@ -77,11 +80,7 @@ if _HAS_GRPC and _HAS_TENSEAL:
                 proof=proof.digest,
             )
 
-        def start(self) -> None:
-            self.server.start()
-
-        def stop(self, grace: float = 0) -> None:
-            self.server.stop(grace)
+        # start/stop inherited from ``BaseMemoryServer``
 
 
     class FHEMemoryClient:

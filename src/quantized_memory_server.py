@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .hierarchical_memory import HierarchicalMemory
+from .base_memory_server import BaseMemoryServer
 
 try:
     import grpc  # type: ignore
@@ -12,7 +13,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 if _HAS_GRPC:
 
-    class QuantizedMemoryServer(HierarchicalMemory.MemoryServer):
+    class QuantizedMemoryServer(BaseMemoryServer):
         """MemoryServer variant for quantized search."""
 
         def __init__(
@@ -22,7 +23,8 @@ if _HAS_GRPC:
             max_workers: int = 4,
             telemetry: "TelemetryLogger | None" = None,
         ) -> None:
-            super().__init__(memory, address, max_workers, telemetry)
+            self.memory = memory
+            super().__init__(memory, address=address, max_workers=max_workers, telemetry=telemetry)
 
 
 __all__ = ["QuantizedMemoryServer"]

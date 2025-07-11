@@ -8,9 +8,9 @@ import torch
 
 from .hierarchical_memory import (
     HierarchicalMemory,
-    MemoryServer,
     query_remote,
 )
+from .base_memory_server import BaseMemoryServer
 from .retrieval_proof import RetrievalProof
 
 try:
@@ -33,7 +33,7 @@ if _HAS_GRPC:
         vec: torch.Tensor
         digest: str
 
-    class FederatedMemoryServer(MemoryServer):
+    class FederatedMemoryServer(BaseMemoryServer):
         """Memory server that replicates updates across peers using CRDTs."""
 
         def __init__(
@@ -45,6 +45,7 @@ if _HAS_GRPC:
             *,
             require_proof: bool = False,
         ) -> None:
+            self.memory = memory
             super().__init__(memory, address=address, max_workers=max_workers)
             self.peers = list(peers or [])
             self.state: Dict[str, _VectorState] = {}
@@ -172,11 +173,7 @@ if _HAS_GRPC:
                 self._replicate_batch(keys)
             return memory_pb2.SyncReply(ok=True)
 
-        def start(self) -> None:  # type: ignore[override]
-            super().start()
-
-        def stop(self, grace: float = 0) -> None:  # type: ignore[override]
-            super().stop(grace)
+        # start/stop inherited from ``BaseMemoryServer``
 
 
 __all__ = ["FederatedMemoryServer"]

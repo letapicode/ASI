@@ -109,6 +109,9 @@
 - Removed algorithm-specific scheduler modules.
 - Added `make_scheduler()` factory in `hpc_base_scheduler`.
 - Updated code, tests and scripts to use the new strategy module.
-- Documented the changes in `docs/Plan.md`.
 
-
+## PR 8
+- Extracted BaseMemoryServer with common gRPC logic.
+- Refactored MemoryServer and specialized servers to inherit from it.
+- Updated memory_service to return BaseMemoryServer.
+- Tests could not run due to missing dependencies.

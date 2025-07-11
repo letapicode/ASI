@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .hierarchical_memory import HierarchicalMemory, MemoryServer
+from .base_memory_server import BaseMemoryServer
 from .telemetry import TelemetryLogger
 from .blockchain_provenance_ledger import BlockchainProvenanceLedger
 
@@ -21,13 +22,13 @@ def serve(
     telemetry: TelemetryLogger | None = None,
     fhe_context: "ts.Context | None" = None,
     ledger: BlockchainProvenanceLedger | None = None,
-) -> MemoryServer:
+) -> BaseMemoryServer:
     """Start a ``MemoryServer`` at ``address`` and return it.
 
     If ``ledger`` is provided, a :class:`ZeroTrustMemoryServer` is started
     which validates access tokens against the ledger.
     """
-    server: MemoryServer
+    server: BaseMemoryServer
     if fhe_context is not None:
         if not _HAS_TENSEAL:
             raise ImportError("tenseal is required for FHEMemoryServer")
@@ -56,4 +57,4 @@ def serve(
     return server
 
 
-__all__ = ["serve", "MemoryServer"]
+__all__ = ["serve", "MemoryServer", "BaseMemoryServer"]
