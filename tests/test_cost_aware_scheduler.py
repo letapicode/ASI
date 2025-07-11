@@ -39,7 +39,7 @@ def _load(name, path):
 hpc_tel = _load('asi.telemetry', 'src/telemetry.py')
 hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 ct_mod = _load('asi.carbon_tracker', 'src/carbon_tracker.py')
-carb_mod = _load('asi.carbon_hpc_scheduler', 'src/carbon_hpc_scheduler.py')
+carb_mod = _load('asi.carbon_aware_scheduler', 'src/carbon_aware_scheduler.py')
 mod = _load('asi.cost_aware_scheduler', 'src/cost_aware_scheduler.py')
 CarbonCostAwareScheduler = mod.CarbonCostAwareScheduler
 get_hourly_price_forecast = mod.get_hourly_price_forecast

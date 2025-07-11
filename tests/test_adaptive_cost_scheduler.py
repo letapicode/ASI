@@ -42,19 +42,20 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-hfc = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
+base = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+strat = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
 multi = _load('asi.hpc_multi_scheduler', 'src/hpc_multi_scheduler.py')
 mod = _load('asi.adaptive_cost_scheduler', 'src/adaptive_cost_scheduler.py')
 AdaptiveCostScheduler = mod.AdaptiveCostScheduler
-HPCForecastScheduler = hfc.HPCForecastScheduler
+make_scheduler = base.make_scheduler
 
 
 class TestAdaptiveCostScheduler(unittest.TestCase):
     def test_submit_best(self):
-        a = HPCForecastScheduler()
-        b = HPCForecastScheduler(backend='k8s')
+        a = make_scheduler('arima')
+        b = make_scheduler('arima', backend='k8s')
         sched = AdaptiveCostScheduler({'a': a, 'b': b})
-        with patch('asi.adaptive_cost_scheduler.arima_forecast', side_effect=[[10, 1], [1.0, 0.2], [5, 0.5], [0.5, 0.1]]), \
+        with patch('asi.forecast_strategies.arima_forecast', side_effect=[[10, 1], [1.0, 0.2], [5, 0.5], [0.5, 0.1]]), \
              patch.object(sched, '_policy', return_value=0) as pol, \
              patch('time.sleep') as sl, \
              patch('asi.adaptive_cost_scheduler.submit_job', return_value='jid') as sj:
@@ -66,8 +67,8 @@ class TestAdaptiveCostScheduler(unittest.TestCase):
             pol.assert_called()
 
     def test_persist_qtable(self):
-        a = HPCForecastScheduler(carbon_history=[1, 2], cost_history=[2, 1])
-        b = HPCForecastScheduler(backend='k8s', carbon_history=[3, 4], cost_history=[4, 3])
+        a = make_scheduler('arima', carbon_history=[1, 2], cost_history=[2, 1])
+        b = make_scheduler('arima', backend='k8s', carbon_history=[3, 4], cost_history=[4, 3])
         with tempfile.TemporaryDirectory() as td:
             path = os.path.join(td, 'q.json')
             sched = AdaptiveCostScheduler({'a': a, 'b': b}, qtable_path=path)

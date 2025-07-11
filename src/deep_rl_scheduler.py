@@ -8,6 +8,7 @@ from typing import Dict, List, Tuple, Union
 
 from .hpc_multi_scheduler import MultiClusterScheduler
 from .hpc_schedulers import submit_job
+from .forecast_strategies import _TrendRNN
 
 try:
     import torch
@@ -17,29 +18,6 @@ except Exception:  # pragma: no cover - torch may not be installed
     nn = None  # type: ignore
 
 
-if torch is not None:
-    class _TrendRNN(nn.Module):  # pragma: no cover - simple model
-        """Two-layer LSTM used for forecasting."""
-
-        def __init__(self, input_size: int = 2, hidden_size: int = 16,
-                     num_layers: int = 2, dropout: float = 0.1) -> None:
-            super().__init__()
-            self.lstm = nn.LSTM(
-                input_size,
-                hidden_size,
-                num_layers=num_layers,
-                batch_first=True,
-                dropout=dropout,
-            )
-            self.out = nn.Linear(hidden_size, 2)
-
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            y, _ = self.lstm(x)
-            return self.out(y[:, -1])
-else:
-    class _TrendRNN:  # pragma: no cover - torch absent
-        def __init__(self, *args, **kwargs) -> None:
-            raise RuntimeError("PyTorch is required for _TrendRNN")
 
 
 @dataclass

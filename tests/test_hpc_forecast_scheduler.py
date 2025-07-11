@@ -41,9 +41,10 @@ def _load(name, path):
     return mod
 
 hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
-mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
-arima_forecast = mod.arima_forecast
-HPCForecastScheduler = mod.HPCForecastScheduler
+base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
+arima_forecast = strat_mod.arima_forecast
+make_scheduler = base_mod.make_scheduler
 
 
 class TestHPCForecastScheduler(unittest.TestCase):
@@ -52,10 +53,10 @@ class TestHPCForecastScheduler(unittest.TestCase):
         self.assertEqual(res, [1.0, 1.0])
 
     def test_submit_at_optimal_time(self):
-        sched = HPCForecastScheduler(carbon_weight=1.0, cost_weight=1.0)
+        sched = make_scheduler('arima', carbon_weight=1.0, cost_weight=1.0)
         sched.carbon_history = [5.0, 1.0]
         sched.cost_history = [2.0, 0.5]
-        with patch('asi.hpc_forecast_scheduler.arima_forecast', side_effect=[[10, 1], [1.0, 0.2]]), \
+        with patch('asi.forecast_strategies.arima_forecast', side_effect=[[10, 1], [1.0, 0.2]]), \
              patch('time.sleep') as sl, \
              patch('subprocess.run') as sp:
             sp.return_value = types.SimpleNamespace(stdout='jid', returncode=0)
