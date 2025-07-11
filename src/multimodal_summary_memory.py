@@ -6,7 +6,7 @@ from typing import Iterable, Any
 
 import torch
 
-from .summarizing_memory_base import BaseSummarizingMemory
+from .summarizing_memory import BaseSummarizingMemory
 from .cross_modal_fusion import encode_all, MultiModalDataset, CrossModalFusion
 
 

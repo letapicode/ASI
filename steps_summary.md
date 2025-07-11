@@ -56,3 +56,9 @@
 - Introduced `_record_carbon_saving` helper used by `submit_best` and
   `submit_best_rl` to consolidate telemetry logic.
 - Updated unit tests and documentation accordingly.
+
+## PR 11
+- Moved `BaseSummarizingMemory` into `summarizing_memory.py` and removed the old module.
+- Updated dependent modules and tests to import `BaseSummarizingMemory` from `asi.summarizing_memory`.
+- Adjusted unit tests to load the new unified module with lightweight stubs.
+
