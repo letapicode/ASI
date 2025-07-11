@@ -36,7 +36,7 @@ mod_ct = importlib.util.module_from_spec(spec)
 sys.modules[loader.name] = mod_ct
 loader.exec_module(mod_ct)
 
-loader = importlib.machinery.SourceFileLoader('asi.carbon_hpc_scheduler', 'src/carbon_hpc_scheduler.py')
+loader = importlib.machinery.SourceFileLoader('asi.carbon_aware_scheduler', 'src/carbon_aware_scheduler.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mod = importlib.util.module_from_spec(spec)
 sys.modules[loader.name] = mod
@@ -52,10 +52,9 @@ class TestCarbonAwareScheduler(unittest.TestCase):
             raise_for_status=lambda: None,
         )
         with patch('urllib.request.urlopen', return_value=types.SimpleNamespace(__enter__=lambda s: resp, __exit__=lambda *a: None)) as get, \
-             patch('asi.carbon_aware_scheduler.submit_job', return_value='42') as sj:
+             patch('asi.hpc_schedulers.subprocess.run', return_value=types.SimpleNamespace(stdout='42', returncode=0, check_returncode=lambda: None)):
             job_id = sch.submit_when_green(['run.sh'])
             get.assert_called()
-            sj.assert_called()
             self.assertEqual(job_id, '42')
 
     def test_get_hourly_forecast(self):
@@ -66,9 +65,8 @@ class TestCarbonAwareScheduler(unittest.TestCase):
             ]},
             raise_for_status=lambda: None,
         )
-        with patch('asi.carbon_aware_scheduler.requests.get', return_value=resp) as get:
-            hours = get_hourly_forecast()
-            get.assert_called()
+        requests_stub.get = lambda *a, **kw: resp
+        hours = get_hourly_forecast()
         self.assertEqual(len(hours), 2)
 
 if __name__ == '__main__':

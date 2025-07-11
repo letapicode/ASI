@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import Dict, List
 
-from asi.hpc_forecast_scheduler import HPCForecastScheduler
+from asi.hpc_base_scheduler import make_scheduler
 from asi.rl_multi_cluster_scheduler import RLMultiClusterScheduler
 
 
@@ -35,12 +35,12 @@ def main() -> None:  # pragma: no cover - CLI entry
     )
     args = parser.parse_args()
 
-    schedulers: Dict[str, HPCForecastScheduler] = {}
+    schedulers: Dict[str, object] = {}
     history: List[Dict[str, float]] = []
     for pair in args.clusters:
         name, path = pair.split("=", 1)
         csv_path = Path(path)
-        schedulers[name] = HPCForecastScheduler()
+        schedulers[name] = make_scheduler('arima')
         for entry in load_history(csv_path):
             entry["cluster"] = name
             history.append(entry)

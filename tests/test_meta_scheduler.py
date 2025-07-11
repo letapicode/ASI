@@ -49,16 +49,15 @@ def _load(name: str, path: str):
 telemetry_mod = _load('asi.telemetry', 'src/telemetry.py')
 ca_mod = _load('asi.carbon_aware_scheduler', 'src/carbon_aware_scheduler.py')
 rl_mod = _load('asi.rl_carbon_scheduler', 'src/rl_carbon_scheduler.py')
-forecast_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
-tf_mod = _load('asi.transformer_forecast_scheduler', 'src/transformer_forecast_scheduler.py')
+base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
 meta_mod = _load('asi.meta_scheduler', 'src/meta_scheduler.py')
 hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 
 TelemetryLogger = telemetry_mod.TelemetryLogger
 CarbonAwareScheduler = ca_mod.CarbonAwareScheduler
 RLCarbonScheduler = rl_mod.RLCarbonScheduler
-HPCForecastScheduler = forecast_mod.HPCForecastScheduler
-TransformerForecastScheduler = tf_mod.TransformerForecastScheduler
+make_scheduler = base_mod.make_scheduler
 MetaScheduler = meta_mod.MetaScheduler
 
 
@@ -66,8 +65,8 @@ class TestMetaScheduler(unittest.TestCase):
     def test_choose_best_scheduler(self) -> None:
         ca = CarbonAwareScheduler(1.0, telemetry=TelemetryLogger(interval=0.05), check_interval=0.05)
         rl = RLCarbonScheduler([], telemetry=TelemetryLogger(interval=0.05), check_interval=0.05)
-        fc = HPCForecastScheduler()
-        tf = TransformerForecastScheduler()
+        fc = make_scheduler('arima')
+        tf = make_scheduler('arima')
         sched = MetaScheduler({'ca': ca, 'rl': rl, 'fc': fc, 'tf': tf})
         sched.record_result('rl', True, 0.5, 0.5)
         sched.record_result('ca', True, 1.0, 1.0)

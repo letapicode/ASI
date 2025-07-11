@@ -27,9 +27,11 @@ def _load(name, path):
     return mod
 
 if HAS_TORCH:
-    gnn_mod = _load('asi.hpc_gnn_scheduler', 'src/hpc_gnn_scheduler.py')
+    strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
+    base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
     multi_mod = _load('asi.hpc_multi_scheduler', 'src/hpc_multi_scheduler.py')
-    GNNForecastScheduler = gnn_mod.GNNForecastScheduler
+    GNNStrategy = strat_mod.GNNStrategy
+    make_scheduler = base_mod.make_scheduler
     MultiClusterScheduler = multi_mod.MultiClusterScheduler
 
 
@@ -37,10 +39,10 @@ class TestGNNForecastScheduler(unittest.TestCase):
     def test_submit_best_gnn(self):
         if not HAS_TORCH:
             self.skipTest('torch not available')
-        a = GNNForecastScheduler(carbon_history=[1.0], cost_history=[1.0])
-        b = GNNForecastScheduler(carbon_history=[2.0], cost_history=[2.0])
+        a = make_scheduler('gnn', carbon_history=[1.0], cost_history=[1.0])
+        b = make_scheduler('gnn', carbon_history=[2.0], cost_history=[2.0])
         sched = MultiClusterScheduler({'a': a, 'b': b})
-        with patch.object(gnn_mod.SimpleGNN, 'forward', return_value=torch.tensor([[0.5, 0.5], [1.0, 1.0]])), \
+        with patch('asi.forecast_strategies.SimpleGNN.forward', return_value=torch.tensor([[0.5, 0.5], [1.0, 1.0]])), \
              patch('time.sleep') as sl, \
              patch('asi.hpc_multi_scheduler.submit_job', return_value='jid') as sj:
             cluster, jid = sched.submit_best(['run.sh'], max_delay=3600.0)

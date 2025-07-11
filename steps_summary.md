@@ -92,3 +92,23 @@
 - Removed legacy `gpu_aware_scheduler.py` and `thermal_gpu_scheduler.py` modules.
 - Updated tests to use `AcceleratorScheduler(max_util=..., max_temp=...)`.
 - Adjusted documentation for the new behaviour.
+
+
+- Reworked `EphemeralVectorStore` to inherit from `VectorStore` and reuse its
+  insertion logic.
+- Added timestamp tracking so expired vectors are purged automatically before
+  searching, deleting or checking the length.
+- Updated unit tests to rely on this implicit cleanup and noted the subclass in
+  `docs/Plan.md`.
+
+- Removed the legacy `carbon_hpc_scheduler` module.
+- Updated all imports and tests to use `asi.carbon_aware_scheduler`.
+- Documented the change and cleaned up related task descriptions.
+
+- Unified forecasting strategies in `forecast_strategies.py`.
+- Removed algorithm-specific scheduler modules.
+- Added `make_scheduler()` factory in `hpc_base_scheduler`.
+- Updated code, tests and scripts to use the new strategy module.
+- Documented the changes in `docs/Plan.md`.
+
+

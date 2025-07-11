@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from asi.hpc_forecast_scheduler import HPCForecastScheduler
+from asi.hpc_base_scheduler import make_scheduler
 from asi.hpc_multi_scheduler import MultiClusterScheduler
 from asi.rl_cost_scheduler import RLCostScheduler
 from asi.rl_carbon_scheduler import RLCarbonScheduler
@@ -19,22 +19,15 @@ def main() -> None:  # pragma: no cover - CLI entry
     args = parser.parse_args()
 
     clusters = {
-        "east": HPCForecastScheduler(),
-        "west": HPCForecastScheduler(backend="k8s"),
+        "east": make_scheduler('arima'),
+        "west": make_scheduler('arima', backend="k8s"),
     }
     if args.meta:
         scheds = {
             "carbon": CarbonAwareScheduler(0.5),
             "rl": RLCarbonScheduler([], telemetry=None),
-            "forecast": HPCForecastScheduler(),
+            "forecast": make_scheduler('arima'),
         }
-        try:
-            from asi.transformer_forecast_scheduler import (
-                TransformerForecastScheduler,
-            )
-            scheds["transformer"] = TransformerForecastScheduler()
-        except Exception:
-            pass
         sched = MetaScheduler(scheds)
     elif args.rl_cost:
         sched = RLCostScheduler(clusters)
