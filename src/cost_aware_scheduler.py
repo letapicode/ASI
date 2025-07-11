@@ -9,7 +9,7 @@ from typing import List, Union
 import requests
 
 from .carbon_hpc_scheduler import CarbonAwareScheduler, get_hourly_forecast
-from .hpc_scheduler import submit_job
+from .hpc_schedulers import submit_job
 
 
 def get_current_price(provider: str, region: str, instance_type: str) -> float:

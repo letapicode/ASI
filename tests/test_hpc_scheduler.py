@@ -9,7 +9,7 @@ pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
 pkg.__path__ = ['src']
 
-loader = importlib.machinery.SourceFileLoader('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+loader = importlib.machinery.SourceFileLoader('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mod = importlib.util.module_from_spec(spec)
 sys.modules[loader.name] = mod

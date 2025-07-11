@@ -7,7 +7,7 @@ import time
 from typing import Dict, List, Tuple, Union
 
 from .hpc_multi_scheduler import MultiClusterScheduler
-from .hpc_scheduler import submit_job
+from .hpc_schedulers import submit_job
 
 try:
     import torch

@@ -18,6 +18,9 @@ pynvml_stub = types.SimpleNamespace(
 )
 sys.modules['psutil'] = psutil_stub
 sys.modules['pynvml'] = pynvml_stub
+requests_stub = types.ModuleType('requests')
+requests_stub.get = lambda *a, **kw: types.SimpleNamespace(json=lambda: {}, raise_for_status=lambda: None)
+sys.modules['requests'] = requests_stub
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
@@ -34,7 +37,7 @@ def _load(name, path):
     return mod
 
 hpc_tel = _load('asi.telemetry', 'src/telemetry.py')
-hpc_mod = _load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 ct_mod = _load('asi.carbon_tracker', 'src/carbon_tracker.py')
 carb_mod = _load('asi.carbon_hpc_scheduler', 'src/carbon_hpc_scheduler.py')
 mod = _load('asi.cost_aware_scheduler', 'src/cost_aware_scheduler.py')
@@ -48,12 +51,12 @@ class TestCostAwareScheduler(unittest.TestCase):
             json=lambda: {'forecast': [0.2, 0.1]},
             raise_for_status=lambda: None,
         )
-        with patch('requests.get', return_value=resp):
+        with patch('asi.cost_aware_scheduler.requests.get', return_value=resp):
             prices = get_hourly_price_forecast('aws', 'us', 'm5')
         self.assertEqual(prices, [0.2, 0.1])
 
     def test_combined_delay(self):
-        sched = CarbonCostAwareScheduler(carbon_weight=1.0, cost_weight=1.0)
+        sched = CarbonCostAwareScheduler(carbon_weight=1.0, cost_weight=1.0, threshold=0.5)
         with patch('asi.cost_aware_scheduler.get_hourly_forecast', return_value=[200, 50]), \
              patch('asi.cost_aware_scheduler.get_hourly_price_forecast', return_value=[1.0, 0.1]), \
              patch('time.sleep') as sl, \

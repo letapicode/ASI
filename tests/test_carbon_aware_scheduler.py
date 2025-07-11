@@ -10,6 +10,10 @@ pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
 pkg.__path__ = ['src']
 
+requests_stub = types.ModuleType('requests')
+requests_stub.get = lambda *a, **kw: types.SimpleNamespace(json=lambda: {}, raise_for_status=lambda: None)
+sys.modules['requests'] = requests_stub
+
 
 def _load(name, path):
     loader = importlib.machinery.SourceFileLoader(name, path)

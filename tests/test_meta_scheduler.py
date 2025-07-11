@@ -27,6 +27,10 @@ sm_arima = types.ModuleType('statsmodels.tsa.arima.model')
 sm_arima.ARIMA = object
 sys.modules['statsmodels.tsa.arima.model'] = sm_arima
 
+requests_stub = types.ModuleType('requests')
+requests_stub.get = lambda *a, **kw: types.SimpleNamespace(json=lambda: {}, raise_for_status=lambda: None)
+sys.modules['requests'] = requests_stub
+
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
 pkg.__path__ = ['src']
@@ -48,7 +52,7 @@ rl_mod = _load('asi.rl_carbon_scheduler', 'src/rl_carbon_scheduler.py')
 forecast_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
 tf_mod = _load('asi.transformer_forecast_scheduler', 'src/transformer_forecast_scheduler.py')
 meta_mod = _load('asi.meta_scheduler', 'src/meta_scheduler.py')
-hpc_mod = _load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 
 TelemetryLogger = telemetry_mod.TelemetryLogger
 CarbonAwareScheduler = ca_mod.CarbonAwareScheduler
@@ -71,7 +75,7 @@ class TestMetaScheduler(unittest.TestCase):
         sched.record_result('tf', True, 2.0, 2.0)
         with patch.object(hpc_mod, 'submit_job', return_value='jid'), \
              patch.object(rl_mod, 'submit_job', return_value='jid'), \
-             patch.object(forecast_mod, 'submit_job', return_value='jid'):
+             patch('asi.hpc_base_scheduler.submit_job', return_value='jid'):
             name, jid = sched.submit_best(['run.sh'])
             self.assertEqual(name, 'rl')
             self.assertEqual(jid, 'jid')

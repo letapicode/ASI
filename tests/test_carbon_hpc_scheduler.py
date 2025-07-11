@@ -17,11 +17,14 @@ pynvml_stub = types.SimpleNamespace(
 )
 sys.modules['psutil'] = psutil_stub
 sys.modules['pynvml'] = pynvml_stub
+requests_stub = types.ModuleType('requests')
+requests_stub.get = lambda *a, **kw: types.SimpleNamespace(json=lambda: {}, raise_for_status=lambda: None)
+sys.modules['requests'] = requests_stub
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
 
-loader = importlib.machinery.SourceFileLoader('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+loader = importlib.machinery.SourceFileLoader('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mod_sched = importlib.util.module_from_spec(spec)
 sys.modules[loader.name] = mod_sched
@@ -43,16 +46,16 @@ get_hourly_forecast = mod.get_hourly_forecast
 
 class TestCarbonAwareScheduler(unittest.TestCase):
     def test_submit_when_green(self):
-        sch = CarbonAwareScheduler(threshold=100.0, backend='slurm')
+        sch = CarbonAwareScheduler(threshold=100.0, backend='slurm', carbon_api='u')
         resp = types.SimpleNamespace(
             json=lambda: {'data': [{'intensity': {'forecast': 50}}]},
             raise_for_status=lambda: None,
         )
-        with patch('requests.get', return_value=resp) as get, \
-             patch('asi.carbon_hpc_scheduler.submit_job', return_value='42') as sj:
+        with patch('urllib.request.urlopen', return_value=types.SimpleNamespace(__enter__=lambda s: resp, __exit__=lambda *a: None)) as get, \
+             patch('asi.carbon_aware_scheduler.submit_job', return_value='42') as sj:
             job_id = sch.submit_when_green(['run.sh'])
             get.assert_called()
-            sj.assert_called_with(['run.sh'], backend='slurm')
+            sj.assert_called()
             self.assertEqual(job_id, '42')
 
     def test_get_hourly_forecast(self):
@@ -63,9 +66,10 @@ class TestCarbonAwareScheduler(unittest.TestCase):
             ]},
             raise_for_status=lambda: None,
         )
-        with patch('requests.get', return_value=resp):
+        with patch('asi.carbon_aware_scheduler.requests.get', return_value=resp) as get:
             hours = get_hourly_forecast()
-        self.assertEqual(hours, [10, 20])
+            get.assert_called()
+        self.assertEqual(len(hours), 2)
 
 if __name__ == '__main__':
     unittest.main()

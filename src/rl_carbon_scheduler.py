@@ -7,7 +7,7 @@ import time
 from typing import Iterable, Tuple, List, Dict, Union, Optional
 
 from .telemetry import TelemetryLogger
-from .hpc_scheduler import submit_job
+from .hpc_schedulers import submit_job
 
 
 class RLCarbonScheduler:

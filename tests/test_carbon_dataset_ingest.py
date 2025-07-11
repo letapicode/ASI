@@ -11,6 +11,14 @@ pkg.__path__ = ['src']
 pkg.__spec__ = importlib.machinery.ModuleSpec('asi', None, is_package=True)
 sys.modules['asi'] = pkg
 
+requests_stub = types.ModuleType('requests')
+requests_stub.get = lambda *a, **kw: None
+sys.modules['requests'] = requests_stub
+pil_stub = types.ModuleType('PIL')
+pil_stub.Image = types.SimpleNamespace(open=lambda *a, **kw: None)
+sys.modules['PIL'] = pil_stub
+sys.modules['aiohttp'] = types.ModuleType('aiohttp')
+
 
 def _load(name, path):
     loader = importlib.machinery.SourceFileLoader(name, path)
@@ -23,7 +31,7 @@ def _load(name, path):
 
 
 _load('asi.telemetry', 'src/telemetry.py')
-_load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+_load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 carbon_mod = _load('asi.carbon_hpc_scheduler', 'src/carbon_hpc_scheduler.py')
 CarbonAwareScheduler = carbon_mod.CarbonAwareScheduler
 

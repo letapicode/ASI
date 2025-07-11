@@ -40,7 +40,7 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-hpc_mod = _load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
 arima_forecast = mod.arima_forecast
 HPCForecastScheduler = mod.HPCForecastScheduler

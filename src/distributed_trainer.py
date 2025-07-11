@@ -16,7 +16,7 @@ from .gradient_compression import GradientCompressionConfig, GradientCompressor
 from .telemetry import TelemetryLogger
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .gpu_aware_scheduler import GPUAwareScheduler
-from .hpc_scheduler import submit_job
+from .hpc_schedulers import submit_job
 from .enclave_runner import EnclaveRunner, EnclaveConfig
 
 

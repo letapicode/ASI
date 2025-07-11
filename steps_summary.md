@@ -56,3 +56,9 @@
 - Introduced `_record_carbon_saving` helper used by `submit_best` and
   `submit_best_rl` to consolidate telemetry logic.
 - Updated unit tests and documentation accordingly.
+
+## PR 11
+- Removed `src/hpc_scheduler.py` in favour of `asi.hpc_schedulers`.
+- Updated all scheduler modules, tests and documentation to import from the new
+  package path.
+- Confirmed scheduler-related tests run with pytest.
