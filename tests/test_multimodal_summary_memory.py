@@ -42,13 +42,13 @@ loader_hm.exec_module(hm)
 sys.modules['asi.hierarchical_memory'] = hm
 setattr(pkg, 'hierarchical_memory', hm)
 
-loader_bs = importlib.machinery.SourceFileLoader('bs', 'src/summarizing_memory_base.py')
-spec_bs = importlib.util.spec_from_loader(loader_bs.name, loader_bs)
-bs = importlib.util.module_from_spec(spec_bs)
-bs.__package__ = 'asi'
-loader_bs.exec_module(bs)
-sys.modules['asi.summarizing_memory_base'] = bs
-setattr(pkg, 'summarizing_memory_base', bs)
+loader_sm = importlib.machinery.SourceFileLoader('sm', 'src/summarizing_memory.py')
+spec_sm = importlib.util.spec_from_loader(loader_sm.name, loader_sm)
+sm = importlib.util.module_from_spec(spec_sm)
+sm.__package__ = 'asi'
+loader_sm.exec_module(sm)
+sys.modules['asi.summarizing_memory'] = sm
+setattr(pkg, 'summarizing_memory', sm)
 
 loader_mm = importlib.machinery.SourceFileLoader('mm', 'src/multimodal_summary_memory.py')
 spec_mm = importlib.util.spec_from_loader(loader_mm.name, loader_mm)

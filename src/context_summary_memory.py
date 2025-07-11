@@ -8,7 +8,7 @@ from typing import Iterable, Any, Tuple, List, Dict
 
 import torch
 
-from .summarizing_memory_base import BaseSummarizingMemory
+from .summarizing_memory import BaseSummarizingMemory
 from .data_ingest import CrossLingualTranslator
 
 

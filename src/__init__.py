@@ -29,6 +29,7 @@ from .distributed_memory import DistributedMemory
 from .federated_memory_exchange import FederatedMemoryExchange
 from .distributed_trainer import DistributedTrainer, MemoryConfig
 from .remote_memory import RemoteMemory
+from .memory_client_base import MemoryClientBase
 from .edge_memory_client import EdgeMemoryClient
 from .vector_store import VectorStore, FaissVectorStore
 from .encrypted_vector_store import EncryptedVectorStore

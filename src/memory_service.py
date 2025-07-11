@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from .hierarchical_memory import HierarchicalMemory, MemoryServer
 from .telemetry import TelemetryLogger
-from .zero_trust_memory_server import ZeroTrustMemoryServer
 from .blockchain_provenance_ledger import BlockchainProvenanceLedger
 
 try:
@@ -41,8 +40,7 @@ def serve(
             max_workers=max_workers,
         )
     elif ledger is not None:
-        if ZeroTrustMemoryServer is None:
-            raise ImportError("grpcio is required for ZeroTrustMemoryServer")
+        from .zero_trust_memory_server import ZeroTrustMemoryServer  # type: ignore
         server = ZeroTrustMemoryServer(
             memory,
             ledger,
@@ -58,4 +56,4 @@ def serve(
     return server
 
 
-__all__ = ["serve", "MemoryServer", "ZeroTrustMemoryServer"]
+__all__ = ["serve", "MemoryServer"]

@@ -715,6 +715,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     band by `BCIFeedbackTrainer` to produce rewards. `EdgeRLTrainer.interactive_session`
     feeds these rewards back into `train_world_model` so online updates can
     refine the world model in real time.
+86c. **Memory client base**: `memory_client_base.py` shares batched `add_batch`
+     and `query_batch` helpers. `RemoteMemory` and `QuantizedMemoryClient`
+     inherit these methods to avoid duplicate gRPC logic.
 
 87. **RL decision narrator**: `RLDecisionNarrator` intercepts action choices
     in `world_model_rl` and `MetaRLRefactorAgent`. Each decision logs a brief
