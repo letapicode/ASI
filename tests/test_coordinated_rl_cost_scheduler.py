@@ -62,7 +62,7 @@ def _load(name, path):
 _load('asi.carbon_tracker', 'src/carbon_tracker.py')
 _load('asi.memory_event_detector', 'src/memory_event_detector.py')
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
-_load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+_load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 rl_mod = _load('asi.coordinated_rl_cost_scheduler', 'src/coordinated_rl_cost_scheduler.py')
 CoordinatedRLCostScheduler = rl_mod.CoordinatedRLCostScheduler
 hfc_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')

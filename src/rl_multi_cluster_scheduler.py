@@ -9,7 +9,7 @@ from typing import Dict, Tuple, Union, List
 
 from .hpc_forecast_scheduler import HPCForecastScheduler
 from .hpc_multi_scheduler import MultiClusterScheduler, _record_carbon_saving
-from .hpc_scheduler import submit_job
+from .hpc_schedulers import submit_job
 
 
 @dataclass

@@ -162,7 +162,7 @@ class TransformerForecastScheduler:
 
     # --------------------------------------------------
     def submit_at_optimal_time(self, command, max_delay: float = 21600.0):
-        from .hpc_scheduler import submit_job
+        from .hpc_schedulers import submit_job
 
         idx = self.predict_slot(max_delay)
         delay = idx * 3600.0

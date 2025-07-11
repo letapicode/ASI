@@ -18,6 +18,8 @@ pynvml_stub = types.SimpleNamespace(
 )
 sys.modules['psutil'] = psutil_stub
 sys.modules['pynvml'] = pynvml_stub
+if 'torch' in sys.modules:
+    del sys.modules['torch']
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
@@ -33,7 +35,7 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-hpc_mod = _load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 mod = _load('asi.transformer_forecast_scheduler', 'src/transformer_forecast_scheduler.py')
 TransformerForecastScheduler = mod.TransformerForecastScheduler
 

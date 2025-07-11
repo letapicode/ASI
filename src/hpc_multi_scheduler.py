@@ -10,7 +10,7 @@ from .telemetry import TelemetryLogger
 from .cluster_carbon_dashboard import ClusterCarbonDashboard
 
 from .hpc_base_scheduler import HPCBaseScheduler
-from .hpc_scheduler import submit_job
+from .hpc_schedulers import submit_job
 
 
 def _record_carbon_saving(

@@ -15,6 +15,14 @@ sys.modules['psutil'] = psutil_stub
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+torch_stub = types.SimpleNamespace(
+    cuda=types.SimpleNamespace(
+        is_available=lambda: True,
+        memory_allocated=lambda: 0,
+        get_device_properties=lambda idx: types.SimpleNamespace(total_memory=1),
+    )
+)
+sys.modules['torch'] = torch_stub
 
 
 
@@ -32,7 +40,7 @@ _load('asi.memory_event_detector', 'src/memory_event_detector.py')
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 accel_mod = _load('asi.accelerator_scheduler', 'src/accelerator_scheduler.py')
 ThermalScheduler = _load('asi.thermal_gpu_scheduler', 'src/thermal_gpu_scheduler.py').ThermalGPUAwareScheduler
-hpc_mod = _load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 
 
 class TestThermalScheduler(unittest.TestCase):

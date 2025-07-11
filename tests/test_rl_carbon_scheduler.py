@@ -38,7 +38,7 @@ def _load(name, path):
 _load('asi.carbon_tracker', 'src/carbon_tracker.py')
 _load('asi.memory_event_detector', 'src/memory_event_detector.py')
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
-_load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+_load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 gc_stub = types.ModuleType('asi.gradient_compression')
 class _GCfg:
     def __init__(self, topk=None, bits=None):
@@ -74,7 +74,7 @@ class _DM:
 dm_stub.DistributedMemory = _DM
 sys.modules['asi.distributed_memory'] = dm_stub
 RLCarbonScheduler = _load('asi.rl_carbon_scheduler', 'src/rl_carbon_scheduler.py').RLCarbonScheduler
-hpc_mod = _load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 submit_job = hpc_mod.submit_job
 dt_mod = _load('asi.distributed_trainer', 'src/distributed_trainer.py')
 DistributedTrainer = dt_mod.DistributedTrainer

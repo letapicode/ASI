@@ -39,7 +39,7 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-_load('asi.hpc_scheduler', 'src/hpc_scheduler.py')
+_load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 forecast_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
 rl_mod = _load('asi.rl_multi_cluster_scheduler', 'src/rl_multi_cluster_scheduler.py')
 HPCForecastScheduler = forecast_mod.HPCForecastScheduler

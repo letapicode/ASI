@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import time
 from typing import List, Protocol, Union, Dict
 
-from .hpc_scheduler import submit_job
+from .hpc_schedulers import submit_job
 
 
 class ForecastStrategy(Protocol):

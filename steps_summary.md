@@ -62,6 +62,7 @@
 - Updated dependent modules and tests to import `BaseSummarizingMemory` from `asi.summarizing_memory`.
 - Adjusted unit tests to load the new unified module with lightweight stubs.
 
+## PR 12
 - Added `memory_client_base.MemoryClientBase` with reusable `add_batch` and
   `query_batch` methods shared by gRPC memory clients.
 - Refactored `RemoteMemory` and `QuantizedMemoryClient` to inherit the base and
@@ -69,3 +70,8 @@
 - Updated unit tests and exported the base class. Documented the change in
   `docs/Plan.md`.
 
+## PR 13
+- Removed `src/hpc_scheduler.py` in favour of `asi.hpc_schedulers`.
+- Updated all scheduler modules, tests and documentation to import from the new
+  package path.
+- Confirmed scheduler-related tests run with pytest.

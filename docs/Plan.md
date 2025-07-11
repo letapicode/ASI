@@ -750,9 +750,12 @@ print(consensus_reasoner.report_disagreements(issues))
 
 ### Scalability
 
-The `hpc_scheduler` module wraps `sbatch`, `srun` and `kubectl` so jobs can be launched on an HPC cluster or a Kubernetes grid.  Pass
-`hpc_backend="slurm"` or `"kubernetes"` to `DistributedTrainer` to dispatch workers through the scheduler.  Use `submit_job()` to start a
-task, `monitor_job()` to poll its status, and `cancel_job()` to terminate it.  A
+The old `hpc_scheduler` wrapper has been removed. `hpc_schedulers` now wraps
+`sbatch`, `srun` and `kubectl` so jobs can be launched on an HPC cluster or a
+Kubernetes grid.  Pass `hpc_backend="slurm"` or `"kubernetes"` to
+`DistributedTrainer` to dispatch workers through the scheduler.  Use
+`submit_job()` to start a task, `monitor_job()` to poll its status, and
+`cancel_job()` to terminate it.  A
 `CarbonAwareScheduler` can now queue jobs until the current carbon intensity
 drops below a configured threshold, using `CarbonFootprintTracker` or an
 external API for the measurements.
@@ -835,7 +838,7 @@ with a single-agent `RLCostScheduler`.
 
 All RL-based schedulers run locally. `RLCarbonScheduler`, `RLCostScheduler`,
 `RLMultiClusterScheduler` and `DeepRLScheduler` call `submit_job()` from
-`hpc_scheduler` to launch tasks via Slurm or Kubernetes. Carbon data is pulled
+`hpc_schedulers` to launch tasks via Slurm or Kubernetes. Carbon data is pulled
 through `TelemetryLogger` or simple HTTP requests, so no direct agent-to-agent
 messaging currently exists.
 
