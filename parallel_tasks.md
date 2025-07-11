@@ -508,9 +508,9 @@ Analyze the file `src/carbon_aware_dataset_ingest.py` for code quality, document
 
 Analyze the file `src/carbon_aware_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 128: Review src/carbon_hpc_scheduler.py
+## Task 128: Review src/carbon_aware_scheduler.py
 
-Analyze the file `src/carbon_hpc_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/carbon_aware_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 129: Review src/carbon_tracker.py
 
@@ -1634,7 +1634,7 @@ Analyze the file `tests/test_carbon_dataset_ingest.py` for code quality, documen
 
 ## Task 409: Review tests/test_carbon_hpc_scheduler.py
 
-Analyze the file `tests/test_carbon_hpc_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `tests/test_carbon_hpc_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`. (This test now loads `asi.carbon_aware_scheduler`.)
 
 ## Task 410: Review tests/test_carbon_tracker.py
 

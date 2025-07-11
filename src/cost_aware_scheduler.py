@@ -8,7 +8,7 @@ from typing import List, Union
 
 import requests
 
-from .carbon_hpc_scheduler import CarbonAwareScheduler, get_hourly_forecast
+from .carbon_aware_scheduler import CarbonAwareScheduler, get_hourly_forecast
 from .hpc_schedulers import submit_job
 
 

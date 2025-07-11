@@ -18,6 +18,21 @@ pil_stub = types.ModuleType('PIL')
 pil_stub.Image = types.SimpleNamespace(open=lambda *a, **kw: None)
 sys.modules['PIL'] = pil_stub
 sys.modules['aiohttp'] = types.ModuleType('aiohttp')
+np_stub = types.SimpleNamespace(array=lambda x, dtype=None: x, ndarray=object)
+sys.modules['numpy'] = np_stub
+psutil_stub = types.SimpleNamespace(
+    cpu_percent=lambda interval=None: 50.0,
+    virtual_memory=lambda: types.SimpleNamespace(percent=10.0),
+    net_io_counters=lambda: types.SimpleNamespace(bytes_sent=0, bytes_recv=0),
+)
+pynvml_stub = types.SimpleNamespace(
+    nvmlInit=lambda: None,
+    nvmlDeviceGetCount=lambda: 1,
+    nvmlDeviceGetHandleByIndex=lambda i: i,
+    nvmlDeviceGetPowerUsage=lambda h: 50000,
+)
+sys.modules['psutil'] = psutil_stub
+sys.modules['pynvml'] = pynvml_stub
 
 
 def _load(name, path):
@@ -32,7 +47,7 @@ def _load(name, path):
 
 _load('asi.telemetry', 'src/telemetry.py')
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
-carbon_mod = _load('asi.carbon_hpc_scheduler', 'src/carbon_hpc_scheduler.py')
+carbon_mod = _load('asi.carbon_aware_scheduler', 'src/carbon_aware_scheduler.py')
 CarbonAwareScheduler = carbon_mod.CarbonAwareScheduler
 
 _load('asi.carbon_tracker', 'src/carbon_tracker.py')
@@ -54,7 +69,7 @@ class TestCarbonAwareDatasetIngest(unittest.TestCase):
             calls.append(1)
             return 500.0 if len(calls) == 1 else 200.0
 
-        with patch('asi.carbon_hpc_scheduler.get_carbon_intensity', side_effect=fake_intensity), \
+        with patch('asi.carbon_aware_scheduler.get_carbon_intensity', side_effect=fake_intensity), \
              patch('asi.carbon_aware_dataset_ingest.get_carbon_intensity', side_effect=fake_intensity), \
              patch('asi.carbon_aware_dataset_ingest.download_triples', return_value=['ok']) as dl, \
              patch('asi.carbon_aware_dataset_ingest.time.sleep', lambda s: None):
@@ -67,7 +82,7 @@ class TestCarbonAwareDatasetIngest(unittest.TestCase):
         sched = CarbonAwareScheduler(threshold=300.0, check_interval=0.01)
         ingest = CarbonAwareDatasetIngest(sched)
 
-        with patch('asi.carbon_hpc_scheduler.get_hourly_forecast', return_value=[400, 200]), \
+        with patch('asi.carbon_aware_scheduler.get_hourly_forecast', return_value=[400, 200]), \
              patch('asi.carbon_aware_dataset_ingest.get_hourly_forecast', return_value=[400, 200]), \
              patch('asi.carbon_aware_dataset_ingest.time.sleep', lambda s: None), \
              patch('asi.carbon_aware_dataset_ingest.download_triples', return_value=['x']) as dl:

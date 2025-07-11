@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import Iterable, List, Tuple
 
-from .carbon_hpc_scheduler import (
+from .carbon_aware_scheduler import (
     CarbonAwareScheduler,
     get_carbon_intensity,
     get_hourly_forecast,
