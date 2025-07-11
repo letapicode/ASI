@@ -3,7 +3,35 @@ import importlib.machinery
 import importlib.util
 import types
 import sys
-import torch
+try:
+    import torch  # pragma: no cover - optional heavy dep
+except Exception:
+    torch = types.ModuleType('torch')
+sys.modules['torch'] = torch
+np = types.SimpleNamespace(mean=lambda x: sum(x)/len(x) if x else 0.0,
+                           corrcoef=lambda a,b: [[0,0],[0,0]],
+                           array=lambda x: x,
+                           ndarray=list)
+sys.modules.setdefault('numpy', np)
+sys.modules.setdefault('matplotlib', types.ModuleType('matplotlib'))
+sys.modules.setdefault('matplotlib.pyplot', types.SimpleNamespace())
+re_stub = types.ModuleType('asi.retrieval_explainer')
+re_stub.RetrievalExplainer = type('RE', (), {})
+rv_stub = types.ModuleType('asi.retrieval_visualizer')
+rv_stub.RetrievalVisualizer = type('RV', (), {})
+rts_stub = types.ModuleType('asi.retrieval_trust_scorer')
+rts_stub.RetrievalTrustScorer = type('RTS', (), {'score': staticmethod(lambda *a, **k: 0.0)})
+mtv_stub = types.ModuleType('asi.memory_timeline_viewer')
+mtv_stub.MemoryTimelineViewer = type('MTV', (), {})
+kgv_stub = types.ModuleType('asi.kg_visualizer')
+kgv_stub.KGVisualizer = type('KGV', (), {})
+sys.modules.update({
+    'asi.retrieval_explainer': re_stub,
+    'asi.retrieval_visualizer': rv_stub,
+    'asi.retrieval_trust_scorer': rts_stub,
+    'asi.memory_timeline_viewer': mtv_stub,
+    'asi.kg_visualizer': kgv_stub,
+})
 
 src_pkg = types.ModuleType('src')
 src_pkg.__path__ = ['src']

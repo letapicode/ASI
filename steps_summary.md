@@ -77,5 +77,12 @@
 - Confirmed scheduler-related tests run with pytest.
 
 ## PR 14
+- Replaced manual BaseDashboard fallbacks in several dashboards with
+  `load_base_dashboard` from `dashboard_import_helper`.
+- Added helper import fallbacks and cleaned up unused imports.
+- Updated dashboard tests with lightweight stubs for missing dependencies so
+  they run without external packages.
+
+## PR 15
 - Renamed `tests/test_hpc_scheduler.py` to `tests/test_hpc_schedulers.py` for clarity.
 - Documented the import path `asi.hpc_schedulers` in `docs/Plan.md`.

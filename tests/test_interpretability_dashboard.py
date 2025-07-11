@@ -2,6 +2,7 @@ import unittest
 import http.client
 import json
 import sys
+import types
 try:
     import torch
 except Exception:  # pragma: no cover - optional heavy dep

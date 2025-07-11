@@ -5,23 +5,24 @@ from dataclasses import asdict
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 from typing import Any, Iterable, List, Type
-import importlib.util
-import sys
-from pathlib import Path
 
 try:
-    from .dashboard_base import BaseDashboard
+    from .dashboard_import_helper import load_base_dashboard
 except Exception:  # pragma: no cover - fallback when not packaged
+    import importlib.util
+    import sys
+    from pathlib import Path
+
     spec = importlib.util.spec_from_file_location(
-        "dashboard_base", Path(__file__).with_name("dashboard_base.py")
+        "dashboard_import_helper", Path(__file__).with_name("dashboard_import_helper.py")
     )
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)  # type: ignore
-    sys.modules.setdefault("dashboard_base", module)
-    BaseDashboard = module.BaseDashboard  # type: ignore
-except Exception:  # pragma: no cover - fallback when not packaged
-    from dashboard_base import BaseDashboard  # type: ignore
+    sys.modules.setdefault("dashboard_import_helper", module)
+    load_base_dashboard = module.load_base_dashboard  # type: ignore
+
+BaseDashboard = load_base_dashboard(__file__)
 
 from .dataset_lineage_manager import DatasetLineageManager, LineageStep
 
