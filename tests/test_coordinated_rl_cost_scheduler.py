@@ -63,10 +63,12 @@ _load('asi.carbon_tracker', 'src/carbon_tracker.py')
 _load('asi.memory_event_detector', 'src/memory_event_detector.py')
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
-rl_mod = _load('asi.coordinated_rl_cost_scheduler', 'src/coordinated_rl_cost_scheduler.py')
-CoordinatedRLCostScheduler = rl_mod.CoordinatedRLCostScheduler
 hfc_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
 HPCForecastScheduler = hfc_mod.HPCForecastScheduler
+rl_mod = _load('asi.coordinated_rl_cost_scheduler', 'src/coordinated_rl_cost_scheduler.py')
+CoordinatedRLCostScheduler = rl_mod.CoordinatedRLCostScheduler
+import importlib
+RLSchedulerBase = importlib.import_module('asi.rl_scheduler_base').RLSchedulerBase
 
 
 class TestCoordinatedRLCostScheduler(unittest.TestCase):
@@ -86,6 +88,9 @@ class TestCoordinatedRLCostScheduler(unittest.TestCase):
             sj.assert_called()
         # q-value should average with peer
         self.assertAlmostEqual(sched1.q1[(0, 0, 0)], 2.0)
+
+    def test_inherits_base(self):
+        self.assertTrue(issubclass(CoordinatedRLCostScheduler, RLSchedulerBase))
 
     def test_wait_loop_with_peers(self):
         logger = TelemetryLogger(interval=0.05,

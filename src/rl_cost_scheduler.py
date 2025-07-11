@@ -5,17 +5,17 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import json
 import os
-import random
 import time
 from typing import Dict, List, Optional, Tuple, Union
 
 from .hpc_multi_scheduler import MultiClusterScheduler
 from .hpc_forecast_scheduler import arima_forecast
 from .hpc_schedulers import submit_job
+from .rl_scheduler_base import RLSchedulerBase
 
 
 @dataclass
-class RLCostScheduler(MultiClusterScheduler):
+class RLCostScheduler(MultiClusterScheduler, RLSchedulerBase):
     """Learn when to submit jobs using carbon and cost traces."""
 
     bins: int = 10
@@ -32,6 +32,14 @@ class RLCostScheduler(MultiClusterScheduler):
     max_p: float = field(default=1.0, init=False)
 
     def __post_init__(self) -> None:
+        RLSchedulerBase.__init__(
+            self,
+            bins=self.bins,
+            epsilon=self.epsilon,
+            alpha=self.alpha,
+            gamma=self.gamma,
+            double_q=True,
+        )
         if self.qtable_path and os.path.exists(self.qtable_path):
             with open(self.qtable_path) as fh:
                 data = json.load(fh)
@@ -54,56 +62,27 @@ class RLCostScheduler(MultiClusterScheduler):
         if p_vals:
             self.min_p = min(p_vals)
             self.max_p = max(p_vals)
+        self.configure_state_bounds([self.min_c, self.min_p], [self.max_c, self.max_p])
         if (c_vals or p_vals) and not (self.q1 or self.q2):
             self._train(10)
 
     # --------------------------------------------------
-    def _bucket(self, value: float, min_v: float, max_v: float) -> int:
-        if max_v == min_v:
-            return 0
-        ratio = (value - min_v) / (max_v - min_v)
-        return max(0, min(self.bins - 1, int(ratio * (self.bins - 1))))
-
-    # --------------------------------------------------
     def _train(self, cycles: int = 1) -> None:
-        traces: List[Tuple[float, float]] = []
+        traces: List[Tuple[Tuple[float, float], Tuple[float, float], float]] = []
         for sched in self.clusters.values():
             n = min(len(sched.carbon_history), len(sched.cost_history))
-            for i in range(n):
-                traces.append((sched.carbon_history[i], sched.cost_history[i]))
-        for _ in range(cycles):
-            for i in range(len(traces) - 1):
-                c, p = traces[i]
-                c_next, p_next = traces[i + 1]
-                s = (
-                    self._bucket(c, self.min_c, self.max_c),
-                    self._bucket(p, self.min_p, self.max_p),
+            for i in range(n - 1):
+                traces.append(
+                    (
+                        (sched.carbon_history[i], sched.cost_history[i]),
+                        (sched.carbon_history[i + 1], sched.cost_history[i + 1]),
+                        -(sched.carbon_history[i] + sched.cost_history[i]),
+                    )
                 )
-                sp = (
-                    self._bucket(c_next, self.min_c, self.max_c),
-                    self._bucket(p_next, self.min_p, self.max_p),
-                )
-                score = c + p
-                for action, reward in ((0, -score), (1, -0.1)):
-                    if random.random() < 0.5:
-                        q_cur = self.q1
-                        q_other = self.q2
-                    else:
-                        q_cur = self.q2
-                        q_other = self.q1
-                    cur = q_cur.get((s[0], s[1], action), 0.0)
-                    best_a = 0
-                    best_val = -float("inf")
-                    for a in (0, 1):
-                        val = q_cur.get((sp[0], sp[1], a), 0.0) + q_other.get((sp[0], sp[1], a), 0.0)
-                        if val > best_val:
-                            best_val = val
-                            best_a = a
-                    next_q = q_other.get((sp[0], sp[1], best_a), 0.0)
-                    target = reward + self.gamma * next_q
-                    q_cur[(s[0], s[1], action)] = cur + self.alpha * (target - cur)
-        self.epsilon = max(self.epsilon * 0.99, 0.01)
-        self._save()
+        super()._train(traces, cycles)
+        if traces:
+            self.epsilon = max(self.epsilon * 0.99, 0.01)
+            self._save()
 
     # --------------------------------------------------
     def _save(self) -> None:
@@ -116,17 +95,6 @@ class RLCostScheduler(MultiClusterScheduler):
             with open(self.qtable_path, "w") as fh:
                 json.dump(data, fh)
 
-    # --------------------------------------------------
-    def _policy(self, carbon: float, price: float) -> int:
-        s = (
-            self._bucket(carbon, self.min_c, self.max_c),
-            self._bucket(price, self.min_p, self.max_p),
-        )
-        if random.random() < self.epsilon:
-            return random.randint(0, 1)
-        run_q = self.q1.get((s[0], s[1], 0), 0.0) + self.q2.get((s[0], s[1], 0), 0.0)
-        wait_q = self.q1.get((s[0], s[1], 1), 0.0) + self.q2.get((s[0], s[1], 1), 0.0)
-        return 0 if run_q >= wait_q else 1
 
     # --------------------------------------------------
     def submit_best(

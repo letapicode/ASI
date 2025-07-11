@@ -2,15 +2,15 @@ from __future__ import annotations
 
 """Reinforcement learning based carbon-aware scheduler."""
 
-import random
 import time
 from typing import Iterable, Tuple, List, Dict, Union, Optional
 
 from .telemetry import TelemetryLogger
 from .hpc_schedulers import submit_job
+from .rl_scheduler_base import RLSchedulerBase
 
 
-class RLCarbonScheduler:
+class RLCarbonScheduler(RLSchedulerBase):
     """Schedule jobs using a Q-learning policy trained on historical data."""
 
     def __init__(
@@ -25,11 +25,8 @@ class RLCarbonScheduler:
         telemetry: Optional[TelemetryLogger] = None,
         region: Optional[str] = None,
     ) -> None:
+        super().__init__(bins=bins, epsilon=epsilon, alpha=alpha, gamma=gamma)
         self.history = list(history)
-        self.bins = bins
-        self.epsilon = epsilon
-        self.alpha = alpha
-        self.gamma = gamma
         self.check_interval = check_interval
         self.telemetry = telemetry or TelemetryLogger(interval=check_interval)
         self.region = region
@@ -39,41 +36,18 @@ class RLCarbonScheduler:
         else:
             self.min_i = 0.0
             self.max_i = 1.0
-        self.q: Dict[Tuple[int, int], float] = {}
+        self.configure_state_bounds([self.min_i], [self.max_i])
+        self.q: Dict[Tuple[int, int], float] = self.q1  # backward compatibility
         if self.history:
-            self._train(10)
-
-    # --------------------------------------------------------------
-    def _bucket(self, intensity: float) -> int:
-        if self.max_i == self.min_i:
-            return 0
-        ratio = (intensity - self.min_i) / (self.max_i - self.min_i)
-        return max(0, min(self.bins - 1, int(ratio * (self.bins - 1))))
-
-    # --------------------------------------------------------------
-    def _train(self, cycles: int = 1) -> None:
-        for _ in range(cycles):
-            for idx in range(len(self.history) - 1):
-                i, dur = self.history[idx]
-                j, _ = self.history[idx + 1]
-                s = self._bucket(i)
-                sp = self._bucket(j)
-                for action, reward in ((0, -i * dur), (1, -0.1)):
-                    cur = self.q.get((s, action), 0.0)
-                    next_max = max(
-                        self.q.get((sp, a), 0.0) for a in (0, 1)
-                    )
-                    target = reward + self.gamma * next_max
-                    self.q[(s, action)] = cur + self.alpha * (target - cur)
-
-    # --------------------------------------------------------------
-    def _policy(self, intensity: float) -> int:
-        s = self._bucket(intensity)
-        if random.random() < self.epsilon:
-            return random.randint(0, 1)
-        run_q = self.q.get((s, 0), 0.0)
-        wait_q = self.q.get((s, 1), 0.0)
-        return 0 if run_q >= wait_q else 1
+            traces = [
+                (
+                    (self.history[i][0],),
+                    (self.history[i + 1][0],),
+                    -self.history[i][0] * self.history[i][1],
+                )
+                for i in range(len(self.history) - 1)
+            ]
+            super()._train(traces, cycles=10)
 
     # --------------------------------------------------------------
     def submit_job(

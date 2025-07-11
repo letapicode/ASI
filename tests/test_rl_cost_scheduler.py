@@ -79,6 +79,7 @@ TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 rl_mod = _load('asi.rl_cost_scheduler', 'src/rl_cost_scheduler.py')
 RLCostScheduler = rl_mod.RLCostScheduler
+RLSchedulerBase = rl_mod.RLSchedulerBase
 hfc_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
 HPCForecastScheduler = hfc_mod.HPCForecastScheduler
 
@@ -121,6 +122,9 @@ class TestRLCostScheduler(unittest.TestCase):
             trainer = DistributedTrainer(dummy, cfg, '/tmp', hpc_backend='slurm', scheduler=sched)
             trainer.run(steps=1)
             sb.assert_called()
+
+    def test_inherits_base(self):
+        self.assertTrue(issubclass(RLCostScheduler, RLSchedulerBase))
 
 
 if __name__ == '__main__':

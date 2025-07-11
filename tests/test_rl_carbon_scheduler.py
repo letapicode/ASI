@@ -12,6 +12,7 @@ psutil_stub = types.SimpleNamespace(
     net_io_counters=lambda: types.SimpleNamespace(bytes_sent=0, bytes_recv=0),
 )
 sys.modules['psutil'] = psutil_stub
+sys.modules['numpy'] = types.SimpleNamespace(asarray=lambda x, dtype=None: x)
 
 torch_stub = types.SimpleNamespace(
     cuda=types.SimpleNamespace(
@@ -39,6 +40,7 @@ _load('asi.carbon_tracker', 'src/carbon_tracker.py')
 _load('asi.memory_event_detector', 'src/memory_event_detector.py')
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
+RLSchedulerBase = _load('asi.rl_scheduler_base', 'src/rl_scheduler_base.py').RLSchedulerBase
 gc_stub = types.ModuleType('asi.gradient_compression')
 class _GCfg:
     def __init__(self, topk=None, bits=None):
@@ -113,6 +115,9 @@ class TestRLCarbonScheduler(unittest.TestCase):
             trainer = DistributedTrainer(dummy, cfg, '/tmp', hpc_backend='slurm', scheduler=sched)
             trainer.run(steps=1)
             sj.assert_called()
+
+    def test_inherits_base(self):
+        self.assertTrue(issubclass(RLCarbonScheduler, RLSchedulerBase))
 
 
 if __name__ == '__main__':

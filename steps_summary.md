@@ -86,3 +86,9 @@
 ## PR 15
 - Renamed `tests/test_hpc_scheduler.py` to `tests/test_hpc_schedulers.py` for clarity.
 - Documented the import path `asi.hpc_schedulers` in `docs/Plan.md`.
+
+## PR 16
+- Introduced `RLSchedulerBase` with common Q-learning logic and refactored
+  `RLCarbonScheduler`, `RLCostScheduler`, and `CoordinatedRLCostScheduler` to
+  subclass it. Updated tests to check inheritance and added the new export in
+  ``src/__init__.py``.

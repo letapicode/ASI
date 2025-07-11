@@ -307,6 +307,7 @@ from .hpc_schedulers import submit_job, monitor_job, cancel_job, HPCJobScheduler
 from .carbon_aware_scheduler import CarbonAwareScheduler
 
 from .carbon_hpc_scheduler import CarbonAwareScheduler
+from .rl_scheduler_base import RLSchedulerBase
 from .rl_carbon_scheduler import RLCarbonScheduler
 from .rl_cost_scheduler import RLCostScheduler
 from .coordinated_rl_cost_scheduler import CoordinatedRLCostScheduler

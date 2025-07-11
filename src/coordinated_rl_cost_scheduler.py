@@ -85,10 +85,7 @@ class CoordinatedRLCostScheduler(RLCostScheduler):
     # --------------------------------------------------
     def _policy(self, carbon: float, price: float) -> int:
         self.exchange_values()
-        s = (
-            self._bucket(carbon, self.min_c, self.max_c),
-            self._bucket(price, self.min_p, self.max_p),
-        )
+        s = self._state_key((carbon, price))
         if random.random() < self.epsilon:
             return random.randint(0, 1)
         run_q = self._peer_q(s, 0)
