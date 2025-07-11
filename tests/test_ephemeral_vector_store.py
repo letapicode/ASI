@@ -17,7 +17,6 @@ class TestEphemeralVectorStore(unittest.TestCase):
         store = EphemeralVectorStore(dim=2, ttl=0.1)
         store.add(np.array([[1.0, 0.0]]), metadata=["x"])
         time.sleep(0.2)
-        store.cleanup_expired()
         self.assertEqual(len(store), 0)
 
     def test_search_after_expire(self):
