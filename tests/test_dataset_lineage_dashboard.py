@@ -8,6 +8,14 @@ import importlib.util
 import sys
 import types
 
+pil = types.ModuleType('PIL')
+pil.Image = types.SimpleNamespace(open=lambda *a, **k: None)
+pil.PngImagePlugin = types.SimpleNamespace(PngInfo=lambda *a, **k: object())
+pil.UnidentifiedImageError = Exception
+sys.modules.setdefault('PIL', pil)
+sys.modules.setdefault('PIL.Image', pil.Image)
+sys.modules.setdefault('PIL.PngImagePlugin', pil.PngImagePlugin)
+
 src_pkg = types.ModuleType('src')
 sys.modules['src'] = src_pkg
 src_pkg.__path__ = ['src']

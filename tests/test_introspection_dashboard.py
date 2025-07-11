@@ -14,8 +14,8 @@ def _load(name, path):
     loader = importlib.machinery.SourceFileLoader(name, path)
     spec = importlib.util.spec_from_loader(name, loader)
     mod = importlib.util.module_from_spec(spec)
-    loader.exec_module(mod)
     sys.modules[name] = mod
+    loader.exec_module(mod)
     return mod
 
 GraphOfThought = _load('asi.graph_of_thought', 'src/graph_of_thought.py').GraphOfThought

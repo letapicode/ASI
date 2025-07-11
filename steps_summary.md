@@ -75,3 +75,10 @@
 - Updated all scheduler modules, tests and documentation to import from the new
   package path.
 - Confirmed scheduler-related tests run with pytest.
+
+## PR 14
+- Replaced manual BaseDashboard fallbacks in several dashboards with
+  `load_base_dashboard` from `dashboard_import_helper`.
+- Added helper import fallbacks and cleaned up unused imports.
+- Updated dashboard tests with lightweight stubs for missing dependencies so
+  they run without external packages.

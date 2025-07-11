@@ -6,17 +6,28 @@ import sys
 import json
 import http.client
 import time
+np = types.SimpleNamespace(argmax=lambda x: 0)
+sys.modules.setdefault('numpy', np)
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+meta_stub = types.ModuleType('asi.meta_rl_refactor')
+meta_stub.MetaRLRefactorAgent = type('A', (), {})
+sys.modules['asi.meta_rl_refactor'] = meta_stub
+rl_stub = types.ModuleType('asi.rl_decision_narrator')
+rl_stub.RLDecisionNarrator = type('R', (), {})
+sys.modules['asi.rl_decision_narrator'] = rl_stub
+ct_stub = types.ModuleType('asi.carbon_tracker')
+ct_stub.CarbonFootprintTracker = lambda *a, **k: None
+sys.modules['asi.carbon_tracker'] = ct_stub
 
 
 def _load(name, path):
     loader = importlib.machinery.SourceFileLoader(name, path)
     spec = importlib.util.spec_from_loader(name, loader)
     mod = importlib.util.module_from_spec(spec)
-    loader.exec_module(mod)
     sys.modules[name] = mod
+    loader.exec_module(mod)
     return mod
 
 MultiAgentDashboard = _load('asi.multi_agent_dashboard', 'src/multi_agent_dashboard.py').MultiAgentDashboard
