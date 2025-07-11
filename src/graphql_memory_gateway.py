@@ -6,9 +6,17 @@ from typing import List
 
 import torch
 
-from graphql import GraphQLSchema, GraphQLObjectType, GraphQLField, GraphQLList, GraphQLFloat, GraphQLString, graphql_sync
+from graphql import (
+    GraphQLSchema,
+    GraphQLObjectType,
+    GraphQLField,
+    GraphQLList,
+    GraphQLFloat,
+    GraphQLString,
+    graphql_sync,
+)
 
-from .hierarchical_memory import query_remote, push_remote
+from .remote_memory import query_remote, push_remote
 
 
 class GraphQLMemoryGateway:
@@ -21,7 +29,11 @@ class GraphQLMemoryGateway:
                     "query": GraphQLField(
                         GraphQLList(GraphQLFloat),
                         args={"vector": GraphQLList(GraphQLFloat), "k": GraphQLFloat},
-                        resolve=lambda obj, info, vector, k=5: query_remote(address, torch.tensor(vector), int(k))[0].view(-1).tolist(),
+                        resolve=lambda obj, info, vector, k=5: query_remote(
+                            address, torch.tensor(vector), int(k)
+                        )[0]
+                        .view(-1)
+                        .tolist(),
                     )
                 },
             ),

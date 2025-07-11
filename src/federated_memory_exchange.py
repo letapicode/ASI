@@ -4,11 +4,8 @@ from typing import Iterable, Any, Tuple, List
 
 import torch
 
-from .hierarchical_memory import (
-    HierarchicalMemory,
-    push_batch_remote,
-    query_remote,
-)
+from .hierarchical_memory import HierarchicalMemory
+from .remote_memory import push_batch_remote, query_remote
 
 
 class FederatedMemoryExchange:
@@ -27,7 +24,9 @@ class FederatedMemoryExchange:
         if address not in self.peers:
             self.peers.append(address)
 
-    def push(self, vectors: torch.Tensor, metadata: Iterable[Any] | None = None) -> None:
+    def push(
+        self, vectors: torch.Tensor, metadata: Iterable[Any] | None = None
+    ) -> None:
         """Store ``vectors`` locally and replicate them to all peers."""
         self.local.add(vectors, metadata)
         if not self.peers:

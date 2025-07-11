@@ -4,9 +4,8 @@ import asyncio
 from pathlib import Path
 import torch
 
-from asi.hierarchical_memory import (
-    HierarchicalMemory,
-    MemoryServer,
+from asi.hierarchical_memory import HierarchicalMemory, MemoryServer
+from asi.remote_memory import (
     push_remote,
     query_remote,
     push_remote_async,
@@ -16,8 +15,10 @@ from asi.hierarchical_memory import (
     push_batch_remote_async,
     query_batch_remote_async,
 )
+
 try:
     import grpc  # noqa: F401
+
     _HAS_GRPC = True
 except Exception:
     _HAS_GRPC = False
@@ -51,30 +52,41 @@ class TestHierarchicalMemory(unittest.TestCase):
     def test_faiss_backend(self):
         torch.manual_seed(0)
         with tempfile.TemporaryDirectory() as tmpdir:
-            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
+            mem = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, db_path=tmpdir
+            )
             data = torch.randn(3, 4)
             mem.add(data, metadata=["x", "y", "z"])
             # ensure vectors are saved by adding and reloading
-            mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
+            mem2 = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, db_path=tmpdir
+            )
             out, meta = mem2.search(data[0], k=1)
             self.assertEqual(len(meta), 1)
 
     def test_async_add_search(self):
         torch.manual_seed(0)
+
         async def run():
-            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, use_async=True)
+            mem = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, use_async=True
+            )
             data = torch.randn(2, 4)
             await mem.aadd(data, metadata=["a", "b"])
             out, meta = await mem.asearch(data[0], k=1)
             self.assertEqual(out.shape, (1, 4))
             self.assertEqual(len(meta), 1)
             self.assertIn(meta[0], ["a", "b"])
+
         asyncio.run(run())
 
     def test_async_save_load(self):
         torch.manual_seed(0)
+
         async def run():
-            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, use_async=True)
+            mem = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, use_async=True
+            )
             data = torch.randn(3, 4)
             await mem.aadd(data, metadata=["x", "y", "z"])
             out_before, meta_before = await mem.asearch(data[0], k=1)
@@ -84,6 +96,7 @@ class TestHierarchicalMemory(unittest.TestCase):
                 out_after, meta_after = await loaded.asearch(data[0], k=1)
             torch.testing.assert_close(out_after, out_before)
             self.assertEqual(meta_after, meta_before)
+
         asyncio.run(run())
 
     def test_delete(self):
@@ -97,23 +110,31 @@ class TestHierarchicalMemory(unittest.TestCase):
     def test_delete_persist_faiss(self):
         torch.manual_seed(0)
         with tempfile.TemporaryDirectory() as tmpdir:
-            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
+            mem = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, db_path=tmpdir
+            )
             data = torch.randn(3, 4)
             mem.add(data, metadata=["x", "y", "z"])
             mem.delete(index=1)
             self.assertEqual(len(mem), 2)
-            mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, db_path=tmpdir)
+            mem2 = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, db_path=tmpdir
+            )
             self.assertEqual(len(mem2), 2)
 
     def test_ssd_cache_persistence(self):
         torch.manual_seed(0)
         with tempfile.TemporaryDirectory() as tmpdir:
-            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, cache_dir=tmpdir)
+            mem = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, cache_dir=tmpdir
+            )
             data = torch.randn(1, 4)
             mem.add(data, metadata=["a"])
             mem.search(data[0], k=1)
             self.assertTrue(Path(tmpdir, "cache.npz").exists())
-            mem2 = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, cache_dir=tmpdir)
+            mem2 = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, cache_dir=tmpdir
+            )
             out, meta = mem2.search(data[0], k=1)
             self.assertEqual(meta, ["a"])
 
@@ -132,7 +153,9 @@ class TestHierarchicalMemory(unittest.TestCase):
         torch.manual_seed(0)
         with tempfile.TemporaryDirectory() as tmpdir:
             cache_dir = Path(tmpdir) / "c"
-            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, cache_dir=cache_dir)
+            mem = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, cache_dir=cache_dir
+            )
             data = torch.randn(1, 4)
             mem.add(data, metadata=["z"])
             mem.search(data[0], k=1)
@@ -144,7 +167,9 @@ class TestHierarchicalMemory(unittest.TestCase):
 
     def test_holographic_store(self):
         torch.manual_seed(0)
-        mem = HierarchicalMemory(dim=8, compressed_dim=4, capacity=10, store_type="holographic")
+        mem = HierarchicalMemory(
+            dim=8, compressed_dim=4, capacity=10, store_type="holographic"
+        )
         text = torch.randn(1, 8)
         imgs = torch.randn(1, 8)
         aud = torch.randn(1, 8)
@@ -158,7 +183,9 @@ class TestHierarchicalMemory(unittest.TestCase):
         torch.manual_seed(0)
 
         async def run():
-            mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10, use_async=True)
+            mem = HierarchicalMemory(
+                dim=4, compressed_dim=2, capacity=10, use_async=True
+            )
             data = torch.randn(2, 4)
 
             t = mem.add(data, metadata=["a", "b"])
@@ -257,9 +284,7 @@ class TestHierarchicalMemory(unittest.TestCase):
                 "localhost:50073", data, metadata=["m", "n"]
             )
             self.assertTrue(ok)
-            vec, meta = await query_batch_remote_async(
-                "localhost:50073", data, k=1
-            )
+            vec, meta = await query_batch_remote_async("localhost:50073", data, k=1)
             self.assertEqual(vec.shape, (2, 1, 4))
             self.assertEqual(len(meta), 2)
             server.stop(0)
