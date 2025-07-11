@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from asi.hpc_forecast_scheduler import HPCForecastScheduler
+from asi.hpc_base_scheduler import make_scheduler
 from asi.adaptive_cost_scheduler import AdaptiveCostScheduler
 
 
@@ -20,8 +20,8 @@ def main() -> None:  # pragma: no cover - CLI entry
     args = parser.parse_args()
 
     clusters = {
-        "east": HPCForecastScheduler(),
-        "west": HPCForecastScheduler(backend="k8s"),
+        "east": make_scheduler('arima'),
+        "west": make_scheduler('arima', backend="k8s"),
     }
     sched = AdaptiveCostScheduler(
         clusters,

@@ -65,20 +65,20 @@ TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 rl_mod = _load('asi.coordinated_rl_cost_scheduler', 'src/coordinated_rl_cost_scheduler.py')
 CoordinatedRLCostScheduler = rl_mod.CoordinatedRLCostScheduler
-hfc_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
-HPCForecastScheduler = hfc_mod.HPCForecastScheduler
+base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+make_scheduler = base_mod.make_scheduler
 
 
 class TestCoordinatedRLCostScheduler(unittest.TestCase):
     def test_peer_exchange(self):
-        sched1 = CoordinatedRLCostScheduler({'c': HPCForecastScheduler()}, epsilon=0.0)
-        sched2 = CoordinatedRLCostScheduler({'c': HPCForecastScheduler()}, epsilon=0.0)
+        sched1 = CoordinatedRLCostScheduler({'c': make_scheduler('arima')}, epsilon=0.0)
+        sched2 = CoordinatedRLCostScheduler({'c': make_scheduler('arima')}, epsilon=0.0)
         sched1.q1[(0, 0, 0)] = 1.0
         sched2.q1[(0, 0, 0)] = 3.0
         sched1.register_peer('p', sched2)
         with patch.object(sched1, '_bucket', return_value=0), \
              patch.object(sched1, '_train', return_value=None), \
-             patch('asi.rl_cost_scheduler.arima_forecast', return_value=[0.0]), \
+             patch('asi.forecast_strategies.arima_forecast', return_value=[0.0]), \
              patch('asi.rl_cost_scheduler.submit_job', return_value='jid') as sj:
             cluster, jid = sched1.submit_best(['run'], max_delay=0.0)
             self.assertEqual(cluster, 'c')
@@ -91,7 +91,7 @@ class TestCoordinatedRLCostScheduler(unittest.TestCase):
         logger = TelemetryLogger(interval=0.05,
                                  carbon_data={'default': 1.0},
                                  energy_price_data={'default': 1.0})
-        hist = HPCForecastScheduler(carbon_history=[1.0, 0.2], cost_history=[1.0, 0.1])
+        hist = make_scheduler('arima', carbon_history=[1.0, 0.2], cost_history=[1.0, 0.1])
         sched1 = CoordinatedRLCostScheduler({'c': hist}, check_interval=0.05)
         sched2 = CoordinatedRLCostScheduler({'c': hist}, check_interval=0.05)
         sched1.register_peer('p', sched2)

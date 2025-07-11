@@ -39,16 +39,16 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-forecast_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
+base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
 deep_mod = _load('asi.deep_rl_scheduler', 'src/deep_rl_scheduler.py')
-HPCForecastScheduler = forecast_mod.HPCForecastScheduler
+make_scheduler = base_mod.make_scheduler
 DeepRLScheduler = deep_mod.DeepRLScheduler
 
 
 class TestDeepRLScheduler(unittest.TestCase):
     def test_schedule_job(self):
-        a = HPCForecastScheduler()
-        b = HPCForecastScheduler(backend='k8s')
+        a = make_scheduler('arima')
+        b = make_scheduler('arima', backend='k8s')
         sched = DeepRLScheduler({'a': a, 'b': b})
         with patch.object(sched, '_predict', side_effect=[([10, 1], [1.0, 0.2]), ([5, 0.5], [0.5, 0.1])]), \
              patch('time.sleep') as sl, \
@@ -60,7 +60,7 @@ class TestDeepRLScheduler(unittest.TestCase):
             self.assertEqual(jid, 'jid')
 
     def test_fallback_without_torch(self):
-        a = HPCForecastScheduler(carbon_history=[1.0], cost_history=[0.5])
+        a = make_scheduler('arima', carbon_history=[1.0], cost_history=[0.5])
         deep_mod.torch = None
         sched = DeepRLScheduler({'a': a})
         with patch('asi.deep_rl_scheduler.submit_job', return_value='jid') as sj:
