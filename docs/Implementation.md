@@ -422,8 +422,8 @@ print(summary)
   server and retrieve nearest neighbours over the network. Asynchronous variants `push_remote_async()` and `query_remote_async()` allow non-blocking interaction when using ``grpc.aio``.
 - The server constructor accepts an ``address`` and ``max_workers`` to control
   the bind host and connection pool size.
-- `src/remote_memory.py` provides a small :class:`RemoteMemory` client that wraps
-  these RPCs in a convenient Python interface.
+  - `src/memory_clients.py` provides a small :class:`RemoteMemoryClient` that wraps
+    these RPCs in a convenient Python interface.
 
 ## C-9 Hopfield Associative Memory
 
@@ -708,7 +708,7 @@ train_world_model(model, trajectory_ds, event_dataset=events,
 - Rewrite `download_triples()` with asyncio to fetch dataset files
   concurrently. **Implemented** with an async helper using `aiohttp`.
 - Add streaming RPCs to `MemoryServer` so batches of vectors can be pushed and
-  queried in one call. Update `memory.proto` and the `RemoteMemory` client.
+  queried in one call. Update `memory.proto` and the `RemoteMemoryClient` client.
   **Implemented** via `push_batch_remote()` and `query_batch_remote()` in
   `src/hierarchical_memory.py`.
 - Implement optional gradient checkpointing in `multimodal_world_model.py` via a
@@ -739,8 +739,8 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `DistributedTrainer` that automatically restarts failed
   processes and coordinates checkpoints with `DistributedMemory`. **Implemented**
   in `src/distributed_trainer.py` with tests.
-- Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemory`
-  so edge devices can handle large-context inference. **Implemented**
+  - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemoryClient`
+    so edge devices can handle large-context inference. **Implemented**
 - The client now keeps a local queue when the network is unreachable and
   periodically flushes queued `add`/`delete` operations once connectivity
   returns. Run `scripts/edge_memory_client_demo.py --offline` to observe

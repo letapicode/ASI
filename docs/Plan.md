@@ -31,7 +31,7 @@ For a full list of repository review tasks, see `parallel_tasks.md`.
 | **C-5** | **Top-k Sparse Attention for inference**        | Select k≈64 most-relevant keys each step                           | 20 %b/word latency cut at 1 M tokens; accuracy drop <0.5 pp ([arxiv.org][11])                                                |
 | **C-6** | **RWKV infinite-context training loop**         | Constant-memory recurrence with token-shift trick                  | Train 7 B RWKV on 4 M-token samples, VRAM ≤80 GB; effective context ≥2 M at inference ([wiki.rwkv.com][12], [arxiv.org][13]) |
 | **C-7** | **Hierarchical Retrieval Memory**         | Cache long-tail tokens in a disk-backed vector DB                     | Retrieval hit rate ≥85 % at 1 M tokens |
-| **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service (see `MemoryServer`, `RemoteMemory`) | Throughput scales to 4+ nodes with <1.2× single-node latency |
+| **C-8** | **Distributed Hierarchical Memory Backend** | Share the vector store across nodes via a gRPC service (see `MemoryServer`, `RemoteMemoryClient`) | Throughput scales to 4+ nodes with <1.2× single-node latency |
 | **C-9** | **Hopfield Associative Memory** | Store binary patterns as attractors and recall them from noisy cues | Recall accuracy >95 % on 32-bit vectors with up to 20 % noise |
 | **C-10** | **RL-guided retrieval** | Learn a policy to rank memory vectors by hit rate and latency | Recall improves after online training from query logs |
 | **C-11** | **Emotion-conditioned retrieval** | Re-rank memory hits by matching sentiment | Positive/negative queries return ≥1 matching-tone item first |
@@ -309,8 +309,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     in a `DistributedTrainer` that automatically resumes from failures.
     *Implemented in `src/distributed_trainer.py` with integration tests.*
 14. **Edge-memory virtualization**: Stream context from `HierarchicalMemory`
-    through `RemoteMemory` so low-memory devices can handle large-context
-    inference. *Implemented in `src/edge_memory_client.py` with tests.*
+    through `RemoteMemoryClient` so low-memory devices can handle large-context
+    inference. *Implemented in `src/memory_clients.py` with tests.*
 15. **Adaptive curriculum scheduler**: Mix curated datasets with self-play logs
     via reinforcement learning to accelerate skill acquisition. Implemented in
     `adaptive_curriculum.py` and used by `self_play_skill_loop`.
@@ -717,9 +717,10 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     band by `BCIFeedbackTrainer` to produce rewards. `EdgeRLTrainer.interactive_session`
     feeds these rewards back into `train_world_model` so online updates can
     refine the world model in real time.
-86c. **Memory client base**: `memory_client_base.py` shares batched `add_batch`
-     and `query_batch` helpers. `RemoteMemory` and `QuantizedMemoryClient`
-     inherit these methods to avoid duplicate gRPC logic.
+86c. **Memory client base**: `memory_clients.py` houses `MemoryClientBase`
+     with shared `add_batch` and `query_batch` helpers. `RemoteMemoryClient`
+     and `QuantizedMemoryClient` reuse these utilities to avoid duplicate gRPC
+     logic.
 
 87. **RL decision narrator**: `RLDecisionNarrator` intercepts action choices
     in `world_model_rl` and `MetaRLRefactorAgent`. Each decision logs a brief

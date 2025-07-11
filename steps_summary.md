@@ -112,3 +112,4 @@
 - Documented the changes in `docs/Plan.md`.
 
 
+- Consolidated memory clients into `memory_clients.py`. Old modules now re-export the classes. Updated imports, docs and tests accordingly.
