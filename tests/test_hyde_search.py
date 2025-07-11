@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import torch
 
-from asi.vector_store import VectorStore
+from asi.vector_stores import VectorStore
 from asi.hierarchical_memory import HierarchicalMemory
 
 

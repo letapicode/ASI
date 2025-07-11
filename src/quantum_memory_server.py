@@ -5,7 +5,7 @@ from typing import Iterable, Any
 
 import numpy as np
 
-from .vector_store import VectorStore
+from .vector_stores import VectorStore
 
 try:
     import grpc  # type: ignore

@@ -2,7 +2,7 @@ import unittest
 import time
 import numpy as np
 
-from asi.vector_store import FaissVectorStore
+from asi.vector_stores import FaissVectorStore
 
 
 class TestQuantumRetrieval(unittest.TestCase):

@@ -129,14 +129,18 @@ except Exception:  # pragma: no cover - optional dependency
 
 from .streaming_compression import StreamingCompressor, TemporalVectorCompressor
 from .knowledge_graph_memory import KnowledgeGraphMemory, TimedTriple
-from .vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
-from .encrypted_vector_store import EncryptedVectorStore
-from .pq_vector_store import PQVectorStore
-from .holographic_vector_store import HolographicVectorStore
-from .async_vector_store import AsyncFaissVectorStore
+from .vector_stores import (
+    VectorStore,
+    FaissVectorStore,
+    LocalitySensitiveHashIndex,
+    EncryptedVectorStore,
+    PQVectorStore,
+    HolographicVectorStore,
+    AsyncFaissVectorStore,
+    EphemeralVectorStore,
+)
 from .hopfield_memory import HopfieldMemory
 from .dnc_memory import DNCMemory
-from .ephemeral_vector_store import EphemeralVectorStore
 from .data_ingest import CrossLingualTranslator
 from .retrieval_rl import RetrievalPolicy
 from .user_preferences import UserPreferences

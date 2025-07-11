@@ -3,8 +3,12 @@ import tempfile
 import unittest
 import numpy as np
 
-from asi.vector_store import VectorStore, FaissVectorStore, LocalitySensitiveHashIndex
-from asi.pq_vector_store import PQVectorStore
+from asi.vector_stores import (
+    VectorStore,
+    FaissVectorStore,
+    LocalitySensitiveHashIndex,
+    PQVectorStore,
+)
 
 class TestVectorStore(unittest.TestCase):
     def test_add_and_search(self):

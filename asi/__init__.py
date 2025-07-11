@@ -30,10 +30,7 @@ def _import(name: str) -> None:
 
 
 for _m in [
-    "vector_store",
-    "pq_vector_store",
-    "async_vector_store",
-    "ephemeral_vector_store",
+    "vector_stores",
     "quantum_retrieval",
     "quantum_sampler",
     "quantum_hpo",

@@ -5,7 +5,7 @@ from typing import Iterable, Any, List
 
 import numpy as np
 
-from .pq_vector_store import PQVectorStore
+from .vector_stores import PQVectorStore
 
 
 class IncrementalPQIndexer:

@@ -11,23 +11,14 @@ except Exception:  # pragma: no cover - torch optional
 
 SRC_DIR = os.path.join(os.path.dirname(__file__), "..", "src")
 spec_vs = importlib.util.spec_from_file_location(
-    "src.vector_store", os.path.join(SRC_DIR, "vector_store.py")
+    "src.vector_stores", os.path.join(SRC_DIR, "vector_stores.py"), submodule_search_locations=[SRC_DIR]
 )
-vector_store = importlib.util.module_from_spec(spec_vs)
-sys.modules["src.vector_store"] = vector_store
-spec_vs.loader.exec_module(vector_store)
+vector_stores = importlib.util.module_from_spec(spec_vs)
+sys.modules["src.vector_stores"] = vector_stores
+spec_vs.loader.exec_module(vector_stores)
 
-spec_enc = importlib.util.spec_from_file_location(
-    "src.encrypted_vector_store",
-    os.path.join(SRC_DIR, "encrypted_vector_store.py"),
-    submodule_search_locations=[SRC_DIR],
-)
-encrypted_vector_store = importlib.util.module_from_spec(spec_enc)
-sys.modules["src.encrypted_vector_store"] = encrypted_vector_store
-spec_enc.loader.exec_module(encrypted_vector_store)
-
-EncryptedVectorStore = encrypted_vector_store.EncryptedVectorStore
-VectorStore = vector_store.VectorStore
+EncryptedVectorStore = vector_stores.EncryptedVectorStore
+VectorStore = vector_stores.VectorStore
 
 
 class TestEncryptedVectorStore(unittest.TestCase):

@@ -20,7 +20,7 @@ except Exception:  # pragma: no cover - optional dependency
     ts = None
     _HAS_TENSEAL = False
 
-from .vector_store import VectorStore
+from .vector_stores import VectorStore
 try:
     from .zk_retrieval_proof import ZKRetrievalProof
 except Exception:  # pragma: no cover - fallback for tests

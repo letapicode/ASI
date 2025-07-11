@@ -102,7 +102,7 @@ def _average_memories(mems: list[DistributedMemory]) -> DistributedMemory:
     base.compressor.buffer.count = len(data)
     # merge vector stores when possible
     try:
-        from .vector_store import VectorStore
+        from .vector_stores import VectorStore
 
         if isinstance(base.store, VectorStore):
             vecs = []
