@@ -15,7 +15,7 @@ import torch
 from .gradient_compression import GradientCompressionConfig, GradientCompressor
 from .telemetry import TelemetryLogger
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
-from .gpu_aware_scheduler import GPUAwareScheduler
+from .accelerator_scheduler import AcceleratorScheduler
 from .hpc_schedulers import submit_job
 from .enclave_runner import EnclaveRunner, EnclaveConfig
 
@@ -131,7 +131,7 @@ class DistributedTrainer:
         max_restarts: int = 3,
         grad_compression: GradientCompressionConfig | None = None,
         telemetry: TelemetryLogger | None = None,
-        scheduler: GPUAwareScheduler | None = None,
+        scheduler: AcceleratorScheduler | None = None,
         micro_batcher: AdaptiveMicroBatcher | None = None,
         hpc_backend: str | None = None,
         enclave: EnclaveConfig | None = None,

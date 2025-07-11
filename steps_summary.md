@@ -88,6 +88,11 @@
 - Documented the import path `asi.hpc_schedulers` in `docs/Plan.md`.
 
 ## PR 16
+- Integrated temperature-aware throttling directly into `AcceleratorScheduler`.
+- Removed legacy `gpu_aware_scheduler.py` and `thermal_gpu_scheduler.py` modules.
+- Updated tests to use `AcceleratorScheduler(max_util=..., max_temp=...)`.
+- Adjusted documentation for the new behaviour.
+
 
 - Reworked `EphemeralVectorStore` to inherit from `VectorStore` and reuse its
   insertion logic.
@@ -105,6 +110,5 @@
 - Added `make_scheduler()` factory in `hpc_base_scheduler`.
 - Updated code, tests and scripts to use the new strategy module.
 - Documented the changes in `docs/Plan.md`.
-
 
 

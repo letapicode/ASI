@@ -948,7 +948,7 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
   **Implemented in `src/secure_federated_learner.py` with `scripts/federated_train.py`.**
 - Add an `AcceleratorScheduler` that detects GPU, TPU or CPU utilisation and dispatches queued jobs when the requested device has available capacity. Integrate it with `DistributedTrainer`.
   Combine it with `ComputeBudgetTracker` in `adaptive_scheduler.py` so jobs pause when the accelerator budget runs out and resume once progress improves.
-  **Implemented in `src/accelerator_scheduler.py` with a backwards-compatible alias `GPUAwareScheduler` and extended by `src/adaptive_scheduler.py`.**
+  **Implemented in `src/accelerator_scheduler.py` with optional temperature throttling and extended by `src/adaptive_scheduler.py`.**
 - Develop an `AdversarialRobustnessSuite` that generates adversarial prompts and reports failure cases through `eval_harness`.
   **Implemented in `src/adversarial_robustness.py`.**
 - Implement a `DatasetBiasDetector` module that computes representation metrics and integrates with `AutoDatasetFilter`. Provide a `dataset_bias_report.py` utility for bias analysis.
