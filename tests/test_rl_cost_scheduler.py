@@ -79,8 +79,9 @@ TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 rl_mod = _load('asi.rl_cost_scheduler', 'src/rl_cost_scheduler.py')
 RLCostScheduler = rl_mod.RLCostScheduler
-hfc_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
-HPCForecastScheduler = hfc_mod.HPCForecastScheduler
+base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
+make_scheduler = base_mod.make_scheduler
 
 dt_mod = _load('asi.distributed_trainer', 'src/distributed_trainer.py')
 DistributedTrainer = dt_mod.DistributedTrainer
@@ -92,7 +93,7 @@ class TestRLCostScheduler(unittest.TestCase):
         logger = TelemetryLogger(interval=0.05,
                                  carbon_data={'default': 1.0},
                                  energy_price_data={'default': 1.0})
-        hist = HPCForecastScheduler(carbon_history=[1.0, 0.2], cost_history=[1.0, 0.1])
+        hist = make_scheduler('arima', carbon_history=[1.0, 0.2], cost_history=[1.0, 0.1])
         sched = RLCostScheduler({'c': hist}, check_interval=0.05)
         job = []
 
@@ -111,7 +112,7 @@ class TestRLCostScheduler(unittest.TestCase):
 
     def test_trainer_integration(self):
         logger = TelemetryLogger(interval=0.05)
-        sched = RLCostScheduler({'a': HPCForecastScheduler()})
+        sched = RLCostScheduler({'a': make_scheduler('arima')})
 
         def dummy(mem, step, comp=None):
             pass

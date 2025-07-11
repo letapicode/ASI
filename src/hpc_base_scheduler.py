@@ -8,6 +8,9 @@ from typing import List, Protocol, Union, Dict
 
 from .hpc_schedulers import submit_job
 
+# Strategies are defined in ``forecast_strategies`` to avoid circular imports
+from .forecast_strategies import ArimaStrategy, GNNStrategy
+
 
 class ForecastStrategy(Protocol):
     """Interface for forecasting cluster cost/carbon scores."""
@@ -73,3 +76,25 @@ class HPCBaseScheduler:
 
 
 __all__ = ["HPCBaseScheduler", "ForecastStrategy"]
+
+
+# ---------------------------------------------------------------------------
+def make_scheduler(strategy_name: str, **kw) -> HPCBaseScheduler:
+    """Return :class:`HPCBaseScheduler` with the chosen forecasting strategy."""
+
+    name = strategy_name.lower()
+    strat_kw = {}
+    if name == "gnn" and "hist_len" in kw:
+        strat_kw["hist_len"] = kw.pop("hist_len")
+
+    sched = HPCBaseScheduler(**kw)
+    if name == "arima":
+        sched.strategy = ArimaStrategy()
+    elif name == "gnn":
+        sched.strategy = GNNStrategy(**strat_kw)
+    else:
+        raise ValueError(f"Unknown strategy {strategy_name}")
+    return sched
+
+
+__all__.append("make_scheduler")

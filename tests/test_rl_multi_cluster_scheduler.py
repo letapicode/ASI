@@ -40,17 +40,17 @@ def _load(name, path):
     return mod
 
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
-forecast_mod = _load('asi.hpc_forecast_scheduler', 'src/hpc_forecast_scheduler.py')
+base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
 rl_mod = _load('asi.rl_multi_cluster_scheduler', 'src/rl_multi_cluster_scheduler.py')
-HPCForecastScheduler = forecast_mod.HPCForecastScheduler
+make_scheduler = base_mod.make_scheduler
 RLMultiClusterScheduler = rl_mod.RLMultiClusterScheduler
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 
 
 class TestRLMultiClusterScheduler(unittest.TestCase):
     def test_policy_prefers_cheaper_cluster(self):
-        cheap = HPCForecastScheduler()
-        exp = HPCForecastScheduler()
+        cheap = make_scheduler('arima')
+        exp = make_scheduler('arima')
         tel_c = TelemetryLogger(carbon_data={'default': 0.2})
         tel_e = TelemetryLogger(carbon_data={'default': 0.5})
         sched = RLMultiClusterScheduler(
