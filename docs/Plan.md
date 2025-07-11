@@ -772,8 +772,8 @@ drops below a threshold, while `submit_at_optimal_time()` waits for the lowest
 forecast in the next 24 h.  Both helpers call `submit_job()` once conditions are
 favourable, reducing cluster emissions without manual tuning.
 
-The legacy `carbon_hpc_scheduler` module now re-exports this scheduler for
-backward compatibility.
+The old `carbon_hpc_scheduler` module has been removed; import
+`CarbonAwareScheduler` directly from `carbon_aware_scheduler`.
 
 
 `rl_carbon_scheduler.RLCarbonScheduler` goes a step further by learning when to
