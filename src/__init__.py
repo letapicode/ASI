@@ -16,6 +16,9 @@ from .streaming_compression import ReservoirBuffer, StreamingCompressor
 from .hierarchical_memory import (
     HierarchicalMemory,
     SSDCache,
+)
+from .remote_memory import (
+    RemoteMemory,
     push_remote,
     query_remote,
     push_remote_async,
@@ -28,7 +31,6 @@ from .hierarchical_memory import (
 from .distributed_memory import DistributedMemory
 from .federated_memory_exchange import FederatedMemoryExchange
 from .distributed_trainer import DistributedTrainer, MemoryConfig
-from .remote_memory import RemoteMemory
 from .memory_client_base import MemoryClientBase
 from .edge_memory_client import EdgeMemoryClient
 from .vector_store import VectorStore, FaissVectorStore

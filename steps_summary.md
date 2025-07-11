@@ -111,4 +111,10 @@
 - Updated code, tests and scripts to use the new strategy module.
 - Documented the changes in `docs/Plan.md`.
 
+## PR 17
+- Moved gRPC helper functions (`push_remote`, `query_remote` and batch/async
+  variants) from `hierarchical_memory.py` into `remote_memory.py`.
+- Updated modules and tests to import the unified helpers.
+- Adjusted documentation in `Implementation.md` to reference the new location.
+
 

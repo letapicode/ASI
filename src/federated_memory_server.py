@@ -9,20 +9,20 @@ import torch
 from .hierarchical_memory import (
     HierarchicalMemory,
     MemoryServer,
-    query_remote,
 )
+from .remote_memory import query_remote
 from .retrieval_proof import RetrievalProof
 
 try:
     import grpc  # type: ignore
     from . import memory_pb2, memory_pb2_grpc
+
     _HAS_GRPC = True
 except Exception:  # pragma: no cover - optional
     _HAS_GRPC = False
 
 
 if _HAS_GRPC:
-
     import time
     import uuid
     from concurrent import futures
@@ -114,7 +114,9 @@ if _HAS_GRPC:
                 self._replicate_entries(entries)
 
         # gRPC handlers -------------------------------------------------
-        def Push(self, request: memory_pb2.PushRequest, context) -> memory_pb2.PushReply:  # noqa: N802
+        def Push(
+            self, request: memory_pb2.PushRequest, context
+        ) -> memory_pb2.PushReply:  # noqa: N802
             vec = torch.tensor(request.vector).reshape(1, -1)
             meta = request.metadata if request.metadata else None
             key = str(meta) if meta is not None else uuid.uuid4().hex
@@ -124,7 +126,9 @@ if _HAS_GRPC:
                 self._replicate(key)
             return memory_pb2.PushReply(ok=True)
 
-        def Query(self, request: memory_pb2.QueryRequest, context) -> memory_pb2.QueryReply:  # noqa: N802
+        def Query(
+            self, request: memory_pb2.QueryRequest, context
+        ) -> memory_pb2.QueryReply:  # noqa: N802
             q = torch.tensor(request.vector).reshape(1, -1)
             out, meta = self.memory.search(q, k=int(request.k))
             for addr in self.peers:
@@ -140,7 +144,9 @@ if _HAS_GRPC:
             meta_out = [str(meta[i]) for i in idx]
             return memory_pb2.QueryReply(vectors=flat, metadata=meta_out)
 
-        def PushBatch(self, request: memory_pb2.PushBatchRequest, context) -> memory_pb2.PushReply:  # noqa: N802
+        def PushBatch(
+            self, request: memory_pb2.PushBatchRequest, context
+        ) -> memory_pb2.PushReply:  # noqa: N802
             keys = []
             for item in request.items:
                 vec = torch.tensor(item.vector)
@@ -149,11 +155,15 @@ if _HAS_GRPC:
                 ts = int(time.time() * 1000)
                 self._apply_update(key, vec, ts)
                 keys.append(key)
-            if keys and not any(m.key == "x-replicated" for m in context.invocation_metadata()):
+            if keys and not any(
+                m.key == "x-replicated" for m in context.invocation_metadata()
+            ):
                 self._replicate_batch(keys)
             return memory_pb2.PushReply(ok=True)
 
-        def Sync(self, request: memory_pb2.SyncRequest, context) -> memory_pb2.SyncReply:  # noqa: N802
+        def Sync(
+            self, request: memory_pb2.SyncRequest, context
+        ) -> memory_pb2.SyncReply:  # noqa: N802
             keys = []
             for item in request.items:
                 vec = torch.tensor(item.vector)
@@ -168,7 +178,9 @@ if _HAS_GRPC:
                 ts = int(item.timestamp)
                 self._apply_update(key, vec, ts)
                 keys.append(key)
-            if keys and not any(m.key == "x-replicated" for m in context.invocation_metadata()):
+            if keys and not any(
+                m.key == "x-replicated" for m in context.invocation_metadata()
+            ):
                 self._replicate_batch(keys)
             return memory_pb2.SyncReply(ok=True)
 
@@ -180,4 +192,3 @@ if _HAS_GRPC:
 
 
 __all__ = ["FederatedMemoryServer"]
-

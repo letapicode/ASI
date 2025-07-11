@@ -418,8 +418,10 @@ print(summary)
 
 - `src/hierarchical_memory.py` now includes optional gRPC support. `MemoryServer`
   wraps a `HierarchicalMemory` instance and serves ``Push`` and ``Query`` RPCs.
-- Helper functions `push_remote()` and `query_remote()` send vectors to the
-  server and retrieve nearest neighbours over the network. Asynchronous variants `push_remote_async()` and `query_remote_async()` allow non-blocking interaction when using ``grpc.aio``.
+- Helper functions `push_remote()` and `query_remote()` in
+  `src/remote_memory.py` send vectors to the server and retrieve nearest
+  neighbours over the network. Asynchronous variants `push_remote_async()` and
+  `query_remote_async()` allow non-blocking interaction when using ``grpc.aio``.
 - The server constructor accepts an ``address`` and ``max_workers`` to control
   the bind host and connection pool size.
 - `src/remote_memory.py` provides a small :class:`RemoteMemory` client that wraps

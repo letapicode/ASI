@@ -2,7 +2,8 @@ import time
 import unittest
 import torch
 
-from asi.hierarchical_memory import HierarchicalMemory, push_remote, query_remote
+from asi.hierarchical_memory import HierarchicalMemory
+from asi.remote_memory import push_remote, query_remote
 from asi.federated_memory_server import FederatedMemoryServer
 
 
