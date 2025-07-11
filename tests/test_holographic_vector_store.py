@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from asi.holographic_vector_store import HolographicVectorStore
+from asi.vector_stores import HolographicVectorStore
 
 
 class TestHolographicVectorStore(unittest.TestCase):

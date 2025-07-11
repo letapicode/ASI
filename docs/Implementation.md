@@ -228,7 +228,7 @@ print(model.breakpoint, model.predict(params))
 
 ## Hierarchical Vector Store
 
-- `src/vector_store.py` provides an in-memory `VectorStore` with dot-product
+ - `src/vector_stores.py` provides an in-memory `VectorStore` with dot-product
   similarity search.
 - `VectorStore.add()` stores embeddings with optional metadata and
   `search()` returns the top-k nearest vectors.
@@ -236,7 +236,7 @@ print(model.breakpoint, model.predict(params))
   to a compressed `.npz` file.
 - This serves as a minimal prototype for the *hierarchical retrieval* memory
   described in the Plan.
-- `src/async_vector_store.py` adds `AsyncFaissVectorStore` which wraps the
+ - `src/vector_stores.py` adds `AsyncFaissVectorStore` which wraps the
   disk-backed FAISS index with a thread pool. `add_async()` and `search_async()`
   submit operations to background workers, while `aadd()` and `asearch()`
   provide `asyncio` interfaces. It can also be used with
@@ -804,12 +804,12 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
   `distributed_trainer.py`.**
 - **Added** an asynchronous training mode in `DistributedTrainer`. Workers apply
   gradients locally and periodically synchronize via parameter averaging.
-- Add a `LocalitySensitiveHashIndex` option in `vector_store.py` so `HierarchicalMemory` can perform approximate nearest neighbor search with sub-linear query time. **Implemented in `vector_store.LocalitySensitiveHashIndex` and wired through `HierarchicalMemory`.**
+ - Add a `LocalitySensitiveHashIndex` option in `vector_stores.py` so `HierarchicalMemory` can perform approximate nearest neighbor search with sub-linear query time. **Implemented in `vector_stores.LocalitySensitiveHashIndex` and wired through `HierarchicalMemory`.**
 - Create an `EmbeddingVisualizer` module that runs UMAP/t-SNE on cross-modal embeddings and serves interactive plots through a minimal web interface.
 **Implemented in `src/embedding_visualizer.py`.**
 - Implement a `MultiAgentCoordinator` that synchronizes multiple `MetaRLRefactorAgent` instances and schedules cooperative refactoring tasks across repositories. **Implemented in `src/multi_agent_coordinator.py` with unit tests.**
 - Extend `MultiAgentCoordinator` with a pluggable `NegotiationProtocol`. A reinforcement-learning based `RLNegotiator` assigns tasks to agents. **Implemented with tests in `src/multi_agent_coordinator.py`.**
-- Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`. **Implemented in `src/pq_vector_store.py` and integrated with `HierarchicalMemory`.**
+ - Implement a `PQVectorStore` using FAISS `IndexIVFPQ` for compressed vector storage and integrate it with `HierarchicalMemory`. Benchmark retrieval accuracy against `FaissVectorStore`. **Implemented in `src/vector_stores.py` and integrated with `HierarchicalMemory`.**
 - Build quantized code indexes with `code_indexer.py` and `incremental_pq_indexer.py`. Run `scripts/build_pq_index.py src index_dir` then start `QuantizedMemoryServer` to serve the shards.
 - Implement a `HolographicVectorStore` that encodes text, image and audio embeddings with holographic reduced representations. `scripts/holographic_retrieval_benchmark.py` measures retrieval accuracy with this store type. Run `python scripts/holographic_retrieval_benchmark.py --samples 500` after installing `faiss-cpu` to reproduce the numbers.
 - Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`. **Implemented in `src/duplicate_detector.py` and integrated with `filter_text_files()`.**

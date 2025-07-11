@@ -47,8 +47,7 @@ stub_mods = {
     "asi.data_ingest": types.ModuleType("data_ingest"),
     "asi.retrieval_rl": types.ModuleType("retrieval_rl"),
     "asi.user_preferences": types.ModuleType("user_preferences"),
-    "asi.pq_vector_store": types.ModuleType("pq_vector_store"),
-    "asi.async_vector_store": types.ModuleType("async_vector_store"),
+    "asi.vector_stores": types.ModuleType("vector_stores"),
 }
 stub_mods["asi.data_ingest"].CrossLingualTranslator = object
 stub_mods["asi.retrieval_rl"].RetrievalPolicy = object
@@ -56,8 +55,8 @@ stub_mods["asi.user_preferences"].UserPreferences = object
 class _DummyAsyncStore:
     pass
 
-stub_mods["asi.pq_vector_store"].PQVectorStore = object
-stub_mods["asi.async_vector_store"].AsyncFaissVectorStore = _DummyAsyncStore
+stub_mods["asi.vector_stores"].PQVectorStore = object
+stub_mods["asi.vector_stores"].AsyncFaissVectorStore = _DummyAsyncStore
 for name, mod in stub_mods.items():
     sys.modules.setdefault(name, mod)
 

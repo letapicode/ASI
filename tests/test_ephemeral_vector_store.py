@@ -2,7 +2,7 @@ import time
 import unittest
 import numpy as np
 
-from asi.ephemeral_vector_store import EphemeralVectorStore
+from asi.vector_stores import EphemeralVectorStore
 
 
 class TestEphemeralVectorStore(unittest.TestCase):

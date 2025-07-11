@@ -132,7 +132,7 @@ def _eval_streaming_compression() -> Tuple[bool, str]:
 
 
 def _eval_vector_store() -> Tuple[bool, str]:
-    from asi.vector_store import VectorStore
+    from asi.vector_stores import VectorStore
 
     store = VectorStore(dim=4)
     vec = np.ones((2, 4), dtype=np.float32)

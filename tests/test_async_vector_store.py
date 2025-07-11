@@ -4,7 +4,7 @@ import unittest
 import asyncio
 import numpy as np
 
-from asi.async_vector_store import AsyncFaissVectorStore
+from asi.vector_stores import AsyncFaissVectorStore
 
 
 class TestAsyncFaissVectorStore(unittest.TestCase):

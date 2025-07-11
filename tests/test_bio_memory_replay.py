@@ -19,7 +19,7 @@ def _load(name: str, path: str):
     return mod
 
 _load("asi.streaming_compression", "src/streaming_compression.py")
-_load("asi.encrypted_vector_store", "src/encrypted_vector_store.py")
+_load("asi.vector_stores", "src/vector_stores.py")
 HierarchicalMemory = _load("asi.hierarchical_memory", "src/hierarchical_memory.py").HierarchicalMemory
 ContextSummaryMemory = _load("asi.context_summary_memory", "src/context_summary_memory.py").ContextSummaryMemory
 bm = _load("asi.bio_memory_replay", "src/bio_memory_replay.py")

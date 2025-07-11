@@ -19,7 +19,7 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-VectorStore = _load('asi.vector_store', 'src/vector_store.py').VectorStore
+VectorStore = _load('asi.vector_stores', 'src/vector_stores.py').VectorStore
 _load('memory_pb2', 'src/memory_pb2.py')
 _load('asi.memory_pb2', 'src/memory_pb2.py')
 _load('fhe_memory_pb2', 'src/fhe_memory_pb2.py')

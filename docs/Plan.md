@@ -158,8 +158,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `src/hyena_filter.py` implements the implicit-FFT filter for **C-3**.
 - `src/streaming_compression.py` maintains a reservoir buffer with a small
   autoencoder for **streaming compression**.
-- `src/vector_store.py` stores embeddings in memory and now supports a
-  disk-backed `FaissVectorStore`.
+ - `src/vector_stores.py` stores embeddings in memory and now supports a
+   disk-backed `FaissVectorStore`.
 - `src/hierarchical_memory.py` ties compression and retrieval together for
   hierarchical context. With a database path it hooks into FAISS so far-past
   tokens reload from disk automatically. Search results remain on the
@@ -167,8 +167,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 - `VectorStore.hyde_search()` blends a hypothetical document embedding with the
   query before nearest-neighbour lookup. Use `HierarchicalMemory.search(mode="hyde")`
   or its async counterpart to enable this HyDE-style retrieval.
-- `src/async_vector_store.py` exposes `ahyde_search()` for background HyDE retrieval
-  when using FAISS asynchronously.
+ - `src/vector_stores.py` exposes `ahyde_search()` for background HyDE retrieval
+   when using FAISS asynchronously.
 - `src/link_slot_attention.py` implements retrieval-augmented attention that
   fetches top-k vectors from the hierarchical memory for each token.
 - `src/megabyte_patching.py` adds a hierarchical byte patcher for **C-4**.
@@ -411,7 +411,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     refactoring and exploration.
 33. **Differential privacy optimizer**: Integrate gradient clipping and noise
     injection into training loops so models can train with privacy guarantees.
-34. **LSH retrieval index**: Add `LocalitySensitiveHashIndex` in `vector_store.py` so
+34. **LSH retrieval index**: Add `LocalitySensitiveHashIndex` in `vector_stores.py` so
     `HierarchicalMemory` can perform approximate nearest neighbor search with
     sub-linear query time.
 35. **Embedding visualizer**: Build a module to project cross-modal embeddings using UMAP/t-SNE and expose the plots via a lightweight web viewer. Implemented in `src/embedding_visualizer.py`.
