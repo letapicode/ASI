@@ -62,6 +62,16 @@ except Exception:  # pragma: no cover - allow running without torch
         def tolist(self):
             return self.data.tolist()
 
+        @property
+        def ndim(self) -> int:
+            return self.data.ndim
+
+        def view(self, *shape: int) -> "_DummyTensor":
+            import numpy as np
+            return _DummyTensor(np.reshape(self.data, shape))
+
+        reshape = view
+
     class _DummyTorch(types.SimpleNamespace):
         Tensor = _DummyTensor
 
@@ -80,6 +90,14 @@ except Exception:  # pragma: no cover - allow running without torch
         def cat(self, seq: Iterable["_DummyTensor"], dim: int = 0):
             import numpy as np
             return _DummyTensor(np.concatenate([s.data for s in seq], axis=dim))
+
+        def tensor(self, data):
+            import numpy as np
+            return _DummyTensor(np.asarray(data, dtype=np.float32))
+
+        def randn(self, *shape: int):
+            import numpy as np
+            return _DummyTensor(np.random.randn(*shape).astype(np.float32))
 
         class nn(types.SimpleNamespace):
             class functional(types.SimpleNamespace):

@@ -56,3 +56,11 @@
 - Introduced `_record_carbon_saving` helper used by `submit_best` and
   `submit_best_rl` to consolidate telemetry logic.
 - Updated unit tests and documentation accordingly.
+
+## PR 11
+- Added `memory_client_base.MemoryClientBase` with reusable `add_batch` and
+  `query_batch` methods shared by gRPC memory clients.
+- Refactored `RemoteMemory` and `QuantizedMemoryClient` to inherit the base and
+  renamed `RemoteMemory.search_batch` to `query_batch`.
+- Updated unit tests and exported the base class. Documented the change in
+  `docs/Plan.md`.
