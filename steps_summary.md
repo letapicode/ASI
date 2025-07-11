@@ -58,9 +58,14 @@
 - Updated unit tests and documentation accordingly.
 
 ## PR 11
+- Moved `BaseSummarizingMemory` into `summarizing_memory.py` and removed the old module.
+- Updated dependent modules and tests to import `BaseSummarizingMemory` from `asi.summarizing_memory`.
+- Adjusted unit tests to load the new unified module with lightweight stubs.
+
 - Added `memory_client_base.MemoryClientBase` with reusable `add_batch` and
   `query_batch` methods shared by gRPC memory clients.
 - Refactored `RemoteMemory` and `QuantizedMemoryClient` to inherit the base and
   renamed `RemoteMemory.search_batch` to `query_batch`.
 - Updated unit tests and exported the base class. Documented the change in
   `docs/Plan.md`.
+
