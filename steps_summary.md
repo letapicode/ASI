@@ -86,3 +86,11 @@
 ## PR 15
 - Renamed `tests/test_hpc_scheduler.py` to `tests/test_hpc_schedulers.py` for clarity.
 - Documented the import path `asi.hpc_schedulers` in `docs/Plan.md`.
+
+## PR 16
+- Unified forecasting strategies in `forecast_strategies.py`.
+- Removed algorithm-specific scheduler modules.
+- Added `make_scheduler()` factory in `hpc_base_scheduler`.
+- Updated code, tests and scripts to use the new strategy module.
+- Documented the changes in `docs/Plan.md`.
+

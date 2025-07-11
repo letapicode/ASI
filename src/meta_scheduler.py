@@ -8,18 +8,12 @@ from typing import Deque, Dict, List, Tuple, Union
 
 from .carbon_aware_scheduler import CarbonAwareScheduler
 from .rl_carbon_scheduler import RLCarbonScheduler
-from .hpc_forecast_scheduler import HPCForecastScheduler
-
-try:  # pragma: no cover - optional
-    from .transformer_forecast_scheduler import TransformerForecastScheduler
-except Exception:  # pragma: no cover - missing dep
-    TransformerForecastScheduler = None  # type: ignore
+from .hpc_base_scheduler import HPCBaseScheduler
 
 SchedulerType = Union[
     CarbonAwareScheduler,
     RLCarbonScheduler,
-    HPCForecastScheduler,
-    "TransformerForecastScheduler",
+    HPCBaseScheduler,
 ]
 
 

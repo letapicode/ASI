@@ -785,25 +785,22 @@ records estimated energy usage and wait time via `TelemetryLogger`.
 
 The new `CarbonCostAwareScheduler` extends this by also polling cloud price APIs and weighting the forecasts. Configurable `carbon_weight` and `cost_weight` pick the cheapest-greenest slot before calling `submit_job()`.
 
-`hpc_forecast_scheduler.HPCForecastScheduler` fits an ARIMA model to past
-carbon-intensity and price traces for a single cluster and sleeps until the
-predicted lowest-score slot.  Building on that,
-`hpc_multi_scheduler.MultiClusterScheduler` compares those forecasts across
-multiple clusters.  Its `submit_best()` helper returns the chosen cluster and job
-ID, waiting for the optimal delay if necessary.  See the
-`scripts/hpc_multi_schedule.py` CLI for a minimal example that prints which
-cluster was selected.
-`hpc_base_scheduler.HPCBaseScheduler` now centralises queue management and job
-submission while delegating forecasts to pluggable strategies like the ARIMA and
-GNN schedulers.
+`hpc_base_scheduler.HPCBaseScheduler` centralises queue management and job
+submission while delegating forecasts to pluggable strategies. The helper
+`make_scheduler('arima')` creates an instance configured with the ARIMA strategy
+formerly provided by `HPCForecastScheduler`. `make_scheduler('gnn')` returns a
+scheduler using the lightweight GNN predictor. These can be compared across
+clusters with `hpc_multi_scheduler.MultiClusterScheduler`. Its
+`submit_best()` helper returns the chosen cluster and job ID, waiting for the
+optimal delay if necessary. See `scripts/hpc_multi_schedule.py` for a minimal
+example that prints which cluster was selected.
 `submit_best()` and the RL variant now share a private helper
 `_record_carbon_saving()` which logs estimated carbon savings to attached
 dashboards.
 
-`transformer_forecast_scheduler.TransformerForecastScheduler` swaps the ARIMA
-model for a tiny two-layer Transformer trained on recent traces. The model
-predicts upcoming carbon intensity and price to rank hourly windows. Calling
-`predict_slot()` returns the index of the best time slot for a single cluster.
+For research purposes the lightweight `_TrendTransformer` model lives in
+`forecast_strategies`. It can be plugged into custom schedulers to predict
+upcoming carbon intensity and price using a tiny Transformer network.
 
 `adaptive_cost_scheduler.AdaptiveCostScheduler` builds on this multi-cluster
 approach by training a simple Q-learning policy from the stored carbon and price
@@ -822,10 +819,10 @@ via the `--rl-cost` flag in `scripts/hpc_multi_schedule.py`. When plugged into
 compared to `CarbonCostAwareScheduler` on the same traces.
 
 `meta_scheduler.MetaScheduler` chooses between `CarbonAwareScheduler`,
-`RLCarbonScheduler`, `HPCForecastScheduler` and `TransformerForecastScheduler`
-based on recent job success and rolling carbon/cost metrics reported by
-`TelemetryLogger`. Enable it via `--meta` in `scripts/hpc_multi_schedule.py` to
-automatically pick the best strategy.
+`RLCarbonScheduler` and any number of `HPCBaseScheduler` instances configured via
+`make_scheduler()`. It bases the choice on recent job success and rolling
+carbon/cost metrics reported by `TelemetryLogger`. Enable it via `--meta` in
+`scripts/hpc_multi_schedule.py` to automatically pick the best strategy.
 
 
 `coordinated_rl_cost_scheduler.CoordinatedRLCostScheduler` lets multiple

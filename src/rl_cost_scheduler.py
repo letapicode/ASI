@@ -10,7 +10,7 @@ import time
 from typing import Dict, List, Optional, Tuple, Union
 
 from .hpc_multi_scheduler import MultiClusterScheduler
-from .hpc_forecast_scheduler import arima_forecast
+from .forecast_strategies import arima_forecast
 from .hpc_schedulers import submit_job
 
 
