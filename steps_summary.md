@@ -86,3 +86,9 @@
 ## PR 15
 - Renamed `tests/test_hpc_scheduler.py` to `tests/test_hpc_schedulers.py` for clarity.
 - Documented the import path `asi.hpc_schedulers` in `docs/Plan.md`.
+
+## PR 16
+- Integrated temperature-aware throttling directly into `AcceleratorScheduler`.
+- Removed legacy `gpu_aware_scheduler.py` and `thermal_gpu_scheduler.py` modules.
+- Updated tests to use `AcceleratorScheduler(max_util=..., max_temp=...)`.
+- Adjusted documentation for the new behaviour.

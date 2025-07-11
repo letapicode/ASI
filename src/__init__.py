@@ -194,7 +194,6 @@ from .streaming_dataset_watcher import StreamingDatasetWatcher
 from .streaming_compression import AdaptiveCompressor, TemporalVectorCompressor
 from .context_profiler import profile_model, ContextWindowProfiler
 from .accelerator_scheduler import AcceleratorScheduler
-from .gpu_aware_scheduler import GPUAwareScheduler
 from .adaptive_scheduler import AdaptiveScheduler
 from .dataset_bias_detector import (
     compute_word_freq,
