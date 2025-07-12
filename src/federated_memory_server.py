@@ -6,8 +6,6 @@ from dataclasses import dataclass
 
 import torch
 
-from .hierarchical_memory import HierarchicalMemory
-from .remote_memory import query_remote
 from .base_memory_server import BaseMemoryServer
 from .hierarchical_memory import (
     HierarchicalMemory,

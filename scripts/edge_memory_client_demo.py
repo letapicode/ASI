@@ -4,7 +4,7 @@ import torch
 
 from asi.hierarchical_memory import HierarchicalMemory
 from asi.memory_service import serve
-from asi.edge_memory_client import EdgeMemoryClient
+from asi.memory_clients import EdgeMemoryClient
 
 
 def main() -> None:

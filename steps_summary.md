@@ -126,5 +126,14 @@
   `RemoteMemoryClient`, `QuantumMemoryClient`, `QuantizedMemoryClient` and
   `EdgeMemoryClient`. Updated modules, tests and docs accordingly.
 
+## PR 19
+- Removed `memory_client_base.py`, `edge_memory_client.py`,
+  `quantized_memory_client.py`, `quantum_memory_client.py` and
+  `remote_memory.py`.
+- Updated all imports to reference `memory_clients.py` directly and dropped the
+  obsolete `RemoteMemory` alias.
+- Documentation now states `memory_clients.py` is the single entry point for all
+  gRPC clients.
+
 
 
