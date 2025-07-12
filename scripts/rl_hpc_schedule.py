@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from asi.hpc_base_scheduler import make_scheduler
-from asi.rl_multi_cluster_scheduler import RLMultiClusterScheduler
+from asi.rl_schedulers import RLMultiClusterScheduler
 
 
 def load_history(path: Path) -> List[Dict[str, float]]:

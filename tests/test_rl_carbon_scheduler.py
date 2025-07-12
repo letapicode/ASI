@@ -24,6 +24,7 @@ sys.modules['torch'] = torch_stub
 
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
+pkg.__path__ = ['src']
 
 
 def _load(name, path):
@@ -73,7 +74,7 @@ class _DM:
 
 dm_stub.DistributedMemory = _DM
 sys.modules['asi.distributed_memory'] = dm_stub
-RLCarbonScheduler = _load('asi.rl_carbon_scheduler', 'src/rl_carbon_scheduler.py').RLCarbonScheduler
+RLCarbonScheduler = _load('asi.rl_schedulers', 'src/rl_schedulers.py').RLCarbonScheduler
 hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 submit_job = hpc_mod.submit_job
 dt_mod = _load('asi.distributed_trainer', 'src/distributed_trainer.py')
@@ -91,7 +92,7 @@ class TestRLCarbonScheduler(unittest.TestCase):
         def run():
             job_id.append(sched.submit_job(['job.sh'], backend='slurm'))
 
-        with patch('asi.rl_carbon_scheduler.submit_job', return_value='ok') as sj:
+        with patch('asi.rl_schedulers.submit_job', return_value='ok') as sj:
             t = threading.Thread(target=run)
             t.start()
             time.sleep(0.1)

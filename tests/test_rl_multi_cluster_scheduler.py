@@ -41,7 +41,7 @@ def _load(name, path):
 
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
-rl_mod = _load('asi.rl_multi_cluster_scheduler', 'src/rl_multi_cluster_scheduler.py')
+rl_mod = _load('asi.rl_schedulers', 'src/rl_schedulers.py')
 make_scheduler = base_mod.make_scheduler
 RLMultiClusterScheduler = rl_mod.RLMultiClusterScheduler
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
@@ -65,7 +65,7 @@ class TestRLMultiClusterScheduler(unittest.TestCase):
         for _ in range(5):
             for e in history:
                 sched.update_policy(e)
-        with patch('asi.rl_multi_cluster_scheduler.submit_job', return_value='jid') as sj, \
+        with patch('asi.rl_schedulers.submit_job', return_value='jid') as sj, \
              patch('random.random', return_value=1.0), \
              patch('time.time', return_value=0.0):
             cluster, jid = sched.submit_best_rl(['run.sh'])

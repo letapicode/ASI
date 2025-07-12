@@ -63,7 +63,7 @@ _load('asi.carbon_tracker', 'src/carbon_tracker.py')
 _load('asi.memory_event_detector', 'src/memory_event_detector.py')
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
-rl_mod = _load('asi.coordinated_rl_cost_scheduler', 'src/coordinated_rl_cost_scheduler.py')
+rl_mod = _load('asi.rl_schedulers', 'src/rl_schedulers.py')
 CoordinatedRLCostScheduler = rl_mod.CoordinatedRLCostScheduler
 base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
 make_scheduler = base_mod.make_scheduler
@@ -79,7 +79,7 @@ class TestCoordinatedRLCostScheduler(unittest.TestCase):
         with patch.object(sched1, '_bucket', return_value=0), \
              patch.object(sched1, '_train', return_value=None), \
              patch('asi.forecast_strategies.arima_forecast', return_value=[0.0]), \
-             patch('asi.rl_cost_scheduler.submit_job', return_value='jid') as sj:
+             patch('asi.rl_schedulers.submit_job', return_value='jid') as sj:
             cluster, jid = sched1.submit_best(['run'], max_delay=0.0)
             self.assertEqual(cluster, 'c')
             self.assertEqual(jid, 'jid')
@@ -100,7 +100,7 @@ class TestCoordinatedRLCostScheduler(unittest.TestCase):
         def run():
             job.append(sched1.submit_best(['job.sh'], max_delay=0.0))
 
-        with patch('asi.rl_cost_scheduler.submit_job', return_value='ok') as sj:
+        with patch('asi.rl_schedulers.submit_job', return_value='ok') as sj:
             t = threading.Thread(target=run)
             t.start()
             time.sleep(0.1)

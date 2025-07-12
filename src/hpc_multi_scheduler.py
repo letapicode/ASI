@@ -7,7 +7,7 @@ import time
 from typing import Dict, List, Union, Tuple, Optional
 
 from .telemetry import TelemetryLogger
-from .cluster_carbon_dashboard import ClusterCarbonDashboard
+from .dashboards import ClusterCarbonDashboard
 
 from .hpc_base_scheduler import HPCBaseScheduler
 from .hpc_schedulers import submit_job

@@ -40,7 +40,7 @@ def _load(name, path):
     return mod
 
 base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
-deep_mod = _load('asi.deep_rl_scheduler', 'src/deep_rl_scheduler.py')
+deep_mod = _load('asi.rl_schedulers', 'src/rl_schedulers.py')
 make_scheduler = base_mod.make_scheduler
 DeepRLScheduler = deep_mod.DeepRLScheduler
 
@@ -52,7 +52,7 @@ class TestDeepRLScheduler(unittest.TestCase):
         sched = DeepRLScheduler({'a': a, 'b': b})
         with patch.object(sched, '_predict', side_effect=[([10, 1], [1.0, 0.2]), ([5, 0.5], [0.5, 0.1])]), \
              patch('time.sleep') as sl, \
-             patch('asi.deep_rl_scheduler.submit_job', return_value='jid') as sj:
+             patch('asi.rl_schedulers.submit_job', return_value='jid') as sj:
             cluster, jid = sched.schedule_job(['run.sh'], max_delay=7200.0)
             sl.assert_called_with(3600.0)
             sj.assert_called_with(['run.sh'], backend='k8s')
@@ -63,7 +63,7 @@ class TestDeepRLScheduler(unittest.TestCase):
         a = make_scheduler('arima', carbon_history=[1.0], cost_history=[0.5])
         deep_mod.torch = None
         sched = DeepRLScheduler({'a': a})
-        with patch('asi.deep_rl_scheduler.submit_job', return_value='jid') as sj:
+        with patch('asi.rl_schedulers.submit_job', return_value='jid') as sj:
             cluster, jid = sched.schedule_job(['run.sh'], max_delay=0.0)
             self.assertEqual(cluster, 'a')
             self.assertEqual(jid, 'jid')

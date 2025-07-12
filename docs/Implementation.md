@@ -1135,7 +1135,7 @@ examples rather than large‑scale training.
 
 ### RL Multi-Cluster Scheduler
 
-`src/rl_multi_cluster_scheduler.py` extends the heuristic `MultiClusterScheduler`
+`src/rl_schedulers.py` extends the heuristic `MultiClusterScheduler`
 with a tiny Q-learning policy.  The table is keyed by `(cluster, hour)` and is
 updated from historical queue time, spot price and carbon intensity logs using
 `update_policy()`.  At runtime `submit_best_rl()` chooses the cluster with the
@@ -1155,7 +1155,7 @@ telemetry per cluster.
 ````python
 from asi.telemetry import TelemetryLogger
 from asi.dashboards import ClusterCarbonDashboard
-from asi.rl_multi_cluster_scheduler import RLMultiClusterScheduler
+from asi.rl_schedulers import RLMultiClusterScheduler
 from asi.hpc_forecast_scheduler import HPCForecastScheduler
 
 dash = ClusterCarbonDashboard(); dash.start(port=0)

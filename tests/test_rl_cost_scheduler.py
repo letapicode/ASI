@@ -77,7 +77,7 @@ _load('asi.carbon_tracker', 'src/carbon_tracker.py')
 _load('asi.memory_event_detector', 'src/memory_event_detector.py')
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
-rl_mod = _load('asi.rl_cost_scheduler', 'src/rl_cost_scheduler.py')
+rl_mod = _load('asi.rl_schedulers', 'src/rl_schedulers.py')
 RLCostScheduler = rl_mod.RLCostScheduler
 base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
 strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
@@ -100,7 +100,7 @@ class TestRLCostScheduler(unittest.TestCase):
         def run():
             job.append(sched.submit_best(['job.sh'], max_delay=0.0))
 
-        with patch('asi.rl_cost_scheduler.submit_job', return_value='ok') as sj:
+        with patch('asi.rl_schedulers.submit_job', return_value='ok') as sj:
             t = threading.Thread(target=run)
             t.start()
             time.sleep(0.1)
