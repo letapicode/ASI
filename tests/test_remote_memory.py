@@ -7,7 +7,7 @@ try:
 except Exception:
     torch = None
 from asi.memory_service import serve
-from asi.remote_memory import RemoteMemory
+from asi.memory_clients import RemoteMemoryClient
 
 
 class TestRemoteMemory(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestRemoteMemory(unittest.TestCase):
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
         server = serve(mem, "localhost:50200")
 
-        client = RemoteMemory("localhost:50200")
+        client = RemoteMemoryClient("localhost:50200")
         data = ht.from_numpy(np.random.randn(1, 4).astype(np.float32))
         client.add(data[0], metadata=["x"])
         out, meta = client.search(data[0], k=1)
@@ -41,7 +41,7 @@ class TestRemoteMemory(unittest.TestCase):
         mem = HierarchicalMemory(dim=4, compressed_dim=2, capacity=10)
         server = serve(mem, "localhost:50201")
 
-        client = RemoteMemory("localhost:50201")
+        client = RemoteMemoryClient("localhost:50201")
         data = ht.from_numpy(np.random.randn(2, 4).astype(np.float32))
         client.add_batch(data, metadata=["a", "b"])
         out, meta = client.query_batch(data, k=1)

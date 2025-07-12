@@ -17,8 +17,12 @@ from .hierarchical_memory import (
     HierarchicalMemory,
     SSDCache,
 )
-from .remote_memory import (
-    RemoteMemory,
+from .memory_clients import (
+    MemoryClientBase,
+    RemoteMemoryClient,
+    QuantumMemoryClient,
+    QuantizedMemoryClient,
+    EdgeMemoryClient,
     push_remote,
     query_remote,
     push_remote_async,
@@ -31,8 +35,8 @@ from .remote_memory import (
 from .distributed_memory import DistributedMemory
 from .federated_memory_exchange import FederatedMemoryExchange
 from .distributed_trainer import DistributedTrainer, MemoryConfig
-from .memory_client_base import MemoryClientBase
-from .edge_memory_client import EdgeMemoryClient
+
+RemoteMemory = RemoteMemoryClient
 from .vector_stores import (
     VectorStore,
     FaissVectorStore,

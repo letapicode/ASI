@@ -5,7 +5,7 @@ from typing import Iterable, Any, Tuple, List
 import torch
 
 from .hierarchical_memory import HierarchicalMemory
-from .remote_memory import push_batch_remote, query_remote
+from .memory_clients import push_batch_remote, query_remote
 
 
 class FederatedMemoryExchange:
