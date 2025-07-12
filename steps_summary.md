@@ -126,5 +126,11 @@
   `RemoteMemoryClient`, `QuantumMemoryClient`, `QuantizedMemoryClient` and
   `EdgeMemoryClient`. Updated modules, tests and docs accordingly.
 
+## PR 19
+- Removed the stale `query_remote` import from `remote_memory` in
+  `federated_memory_server.py`.
+- Kept the import from `memory_clients` and cleaned unused imports so `ruff`
+  passes.
+
 
 
