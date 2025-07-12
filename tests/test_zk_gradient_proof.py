@@ -1,6 +1,6 @@
 import unittest
 import torch
-from asi.zk_gradient_proof import ZKGradientProof
+from asi.proofs import ZKGradientProof
 
 
 class TestZKGradientProof(unittest.TestCase):

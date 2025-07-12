@@ -1,13 +1,6 @@
 import unittest
-import importlib.machinery
-import importlib.util
 import torch
-
-loader = importlib.machinery.SourceFileLoader('zk', 'src/zk_verifier.py')
-spec = importlib.util.spec_from_loader(loader.name, loader)
-zk = importlib.util.module_from_spec(spec)
-loader.exec_module(zk)
-ZKVerifier = zk.ZKVerifier
+from asi.proofs import ZKVerifier
 
 
 class TestZKVerifier(unittest.TestCase):

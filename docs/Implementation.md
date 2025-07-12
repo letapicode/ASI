@@ -200,7 +200,7 @@ print(model.breakpoint, model.predict(params))
 
 ## C-1 RetNet Retention Kernel
 
-- `src/retnet_retention.py` implements a minimal retention module.
+- `src/retention.py` implements a minimal retention module.
 - It sequentially accumulates `k * v` products with a decay factor and multiplies by the query at each step.
 - The design follows the linear-time, constant-memory retention described in the
   RetNet paper and serves as a placeholder for more optimised kernels.
@@ -670,8 +670,8 @@ train_world_model(model, trajectory_ds, event_dataset=events,
 ### Upcoming Implementation Tasks
 
 - Create a `HybridRetention` module that combines the linear update from
-- `MambaBlock` with the decay kernel in `RetNetRetention`. **Implemented** in
-  `src/hybrid_retention.py` with a unit test.
+  `MambaBlock` with the decay kernel in `RetNetRetention`. **Implemented** in
+  `src/retention.py` with a unit test.
 - Extend `HierarchicalMemory` so `cross_modal_fusion.encode_all()` can store and
   retrieve averaged multimodal embeddings via `add_multimodal`. **Implemented**:
   `encode_all()` now calls `memory.add_multimodal()` when a memory instance is

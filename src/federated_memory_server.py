@@ -12,7 +12,7 @@ from .hierarchical_memory import (
     MemoryServer,
 )
 from .memory_clients import query_remote
-from .retrieval_proof import RetrievalProof
+from .proofs import RetrievalProof
 
 try:
     import grpc  # type: ignore

@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from asi.retnet_retention import RetNetRetention
+from asi.retention import RetNetRetention
 
 class TestRetNetRetention(unittest.TestCase):
     def test_retention_shapes(self):

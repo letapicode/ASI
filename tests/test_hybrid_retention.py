@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from asi.hybrid_retention import HybridRetention
+from asi.retention import HybridRetention
 
 
 class TestHybridRetention(unittest.TestCase):

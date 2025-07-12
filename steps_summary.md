@@ -156,3 +156,9 @@
 - Removed obsolete scheduler modules and updated imports across tests, scripts, docs and package `__init__`.
 - Added `translator_fallback.py` to share a stub `CrossLingualTranslator`, used by dataset watcher and fairness evaluator.
 - Documented the new module references in `docs/Plan.md` and `docs/Implementation.md`.
+
+## PR 23
+- Consolidated proof helpers into `src/proofs.py` and removed the old modules.
+- Removed `hybrid_retention.py` and `retnet_retention.py`; `src/retention.py` now exports both classes.
+- Updated imports across the package and adjusted unit tests.
+- Cleaned up documentation references in `docs/Implementation.md` and `docs/Plan.md`.

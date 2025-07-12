@@ -57,8 +57,7 @@ from .self_healing_trainer import SelfHealingTrainer
 from .scaling_law import BreakpointScalingLaw
 from .link_slot_attention import LinkSlotAttention
 from .mamba_block import MambaBlock
-from .retnet_retention import RetNetRetention
-from .hybrid_retention import HybridRetention
+from .retention import RetNetRetention, HybridRetention
 from .adaptive_planner import GraphOfThoughtPlanner, AdaptivePlanner
 
 from .pull_request_monitor import (
@@ -236,11 +235,9 @@ from .training_anomaly_detector import TrainingAnomalyDetector
 from .gradient_patch_editor import GradientPatchEditor, PatchConfig
 from .secure_federated_learner import SecureFederatedLearner
 
-from .zk_gradient_proof import ZKGradientProof
-from .retrieval_proof import RetrievalProof
+from .proofs import RetrievalProof, ZKGradientProof, ZKRetrievalProof, ZKVerifier
 
 
-from .zk_verifier import ZKVerifier
 from .enclave_runner import EnclaveRunner, EnclaveConfig
 from .federated_world_model_trainer import (
     FederatedWorldModelTrainer,
