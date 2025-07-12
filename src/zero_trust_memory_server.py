@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .blockchain_provenance_ledger import BlockchainProvenanceLedger
+from .base_memory_server import BaseMemoryServer
 
 try:
     import grpc  # type: ignore
@@ -13,11 +14,10 @@ except Exception:  # pragma: no cover - optional dependency
 
 
 if _HAS_GRPC:
-    from concurrent import futures
     import torch
     from . import memory_pb2_grpc
 
-    class ZeroTrustMemoryServer(memory_pb2_grpc.MemoryServiceServicer):
+    class ZeroTrustMemoryServer(BaseMemoryServer):
         """Memory server that verifies signed access tokens."""
 
         def __init__(
@@ -30,13 +30,7 @@ if _HAS_GRPC:
         ) -> None:
             self.memory = memory
             self.ledger = ledger
-            self.address = address
-            self.server = grpc.server(
-                futures.ThreadPoolExecutor(max_workers=max_workers)
-            )
-            memory_pb2_grpc.add_MemoryServiceServicer_to_server(self, self.server)
-            self.server.add_insecure_port(address)
-            self.telemetry = telemetry
+            super().__init__(memory, address=address, max_workers=max_workers, telemetry=telemetry)
 
         # --------------------------------------------------
         def _check_token(self, context: grpc.ServicerContext) -> bool:
@@ -96,15 +90,7 @@ if _HAS_GRPC:
                 replies.append(memory_pb2.QueryReply(vectors=flat, metadata=meta))
             return memory_pb2.QueryBatchReply(items=replies)
 
-        def start(self) -> None:
-            if self.telemetry:
-                self.telemetry.start()
-            self.server.start()
-
-        def stop(self, grace: float = 0) -> None:
-            self.server.stop(grace)
-            if self.telemetry:
-                self.telemetry.stop()
+        # start/stop inherited from ``BaseMemoryServer``
 
     __all__ = ["ZeroTrustMemoryServer"]
 else:  # pragma: no cover - optional dependency
