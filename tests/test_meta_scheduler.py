@@ -49,7 +49,7 @@ def _load(name: str, path: str):
 telemetry_mod = _load('asi.telemetry', 'src/telemetry.py')
 ca_mod = _load('asi.carbon_aware_scheduler', 'src/carbon_aware_scheduler.py')
 rl_mod = _load('asi.rl_schedulers', 'src/rl_schedulers.py')
-base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+base_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
 meta_mod = _load('asi.meta_scheduler', 'src/meta_scheduler.py')
 hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
@@ -74,7 +74,7 @@ class TestMetaScheduler(unittest.TestCase):
         sched.record_result('tf', True, 2.0, 2.0)
         with patch.object(hpc_mod, 'submit_job', return_value='jid'), \
              patch.object(rl_mod, 'submit_job', return_value='jid'), \
-             patch('asi.hpc_base_scheduler.submit_job', return_value='jid'):
+             patch('asi.hpc_schedulers.submit_job', return_value='jid'):
             name, jid = sched.submit_best(['run.sh'])
             self.assertEqual(name, 'rl')
             self.assertEqual(jid, 'jid')

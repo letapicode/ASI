@@ -162,3 +162,9 @@
 - Removed `hybrid_retention.py` and `retnet_retention.py`; `src/retention.py` now exports both classes.
 - Updated imports across the package and adjusted unit tests.
 - Cleaned up documentation references in `docs/Implementation.md` and `docs/Plan.md`.
+
+## PR 24
+- Merged `hpc_base_scheduler.py` and `hpc_multi_scheduler.py` into `hpc_schedulers.py`.
+- Added `HPCBaseScheduler`, `MultiClusterScheduler` and `make_scheduler` to the unified module.
+- Updated all imports, scripts, and tests to reference the new path.
+- Documented the consolidated scheduler in `docs/Plan.md` and exported the helpers in `__init__.py`.

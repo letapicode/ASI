@@ -787,12 +787,12 @@ records estimated energy usage and wait time via `TelemetryLogger`.
 
 The new `CarbonCostAwareScheduler` extends this by also polling cloud price APIs and weighting the forecasts. Configurable `carbon_weight` and `cost_weight` pick the cheapest-greenest slot before calling `submit_job()`.
 
-`hpc_base_scheduler.HPCBaseScheduler` centralises queue management and job
+`hpc_schedulers.HPCBaseScheduler` centralises queue management and job
 submission while delegating forecasts to pluggable strategies. The helper
 `make_scheduler('arima')` creates an instance configured with the ARIMA strategy
 formerly provided by `HPCForecastScheduler`. `make_scheduler('gnn')` returns a
 scheduler using the lightweight GNN predictor. These can be compared across
-clusters with `hpc_multi_scheduler.MultiClusterScheduler`. Its
+clusters with `hpc_schedulers.MultiClusterScheduler`. Its
 `submit_best()` helper returns the chosen cluster and job ID, waiting for the
 optimal delay if necessary. See `scripts/hpc_multi_schedule.py` for a minimal
 example that prints which cluster was selected.

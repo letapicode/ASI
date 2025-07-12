@@ -65,7 +65,7 @@ TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 rl_mod = _load('asi.rl_schedulers', 'src/rl_schedulers.py')
 CoordinatedRLCostScheduler = rl_mod.CoordinatedRLCostScheduler
-base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+base_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 make_scheduler = base_mod.make_scheduler
 
 

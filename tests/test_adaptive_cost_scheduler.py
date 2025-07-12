@@ -42,12 +42,11 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-base = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+multi = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 strat = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
-multi = _load('asi.hpc_multi_scheduler', 'src/hpc_multi_scheduler.py')
 mod = _load('asi.adaptive_cost_scheduler', 'src/adaptive_cost_scheduler.py')
 AdaptiveCostScheduler = mod.AdaptiveCostScheduler
-make_scheduler = base.make_scheduler
+make_scheduler = multi.make_scheduler
 
 
 class TestAdaptiveCostScheduler(unittest.TestCase):

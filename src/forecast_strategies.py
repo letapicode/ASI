@@ -14,7 +14,7 @@ except Exception:  # pragma: no cover - torch optional
     torch = None  # type: ignore
     nn = None  # type: ignore
 
-from .hpc_base_scheduler import ForecastStrategy
+from .hpc_schedulers import ForecastStrategy
 
 
 # ---------------------------------------------------------------------------

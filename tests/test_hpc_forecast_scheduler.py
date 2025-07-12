@@ -41,7 +41,7 @@ def _load(name, path):
     return mod
 
 hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
-base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+base_mod = hpc_mod
 strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
 arima_forecast = strat_mod.arima_forecast
 make_scheduler = base_mod.make_scheduler

@@ -16,6 +16,12 @@ except Exception:  # pragma: no cover - allow running without psutil
     psutil = None  # type: ignore
 
 from .telemetry import TelemetryLogger
+from dataclasses import dataclass, field
+from typing import Dict, Protocol, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - for type hints
+    from .dashboards import ClusterCarbonDashboard
+
 
 
 # ---------------------------------------------------------------------------
@@ -210,4 +216,186 @@ class HPCJobScheduler:
             self.thread.join(timeout=1.0)
 
 
-__all__ = ["submit_job", "monitor_job", "cancel_job", "HPCJobScheduler"]
+# ---------------------------------------------------------------------------
+class ForecastStrategy(Protocol):
+    """Interface for forecasting cluster cost/carbon scores."""
+
+    def forecast_scores(
+        self,
+        scheduler: "HPCBaseScheduler",
+        max_delay: float,
+        clusters: Dict[str, "HPCBaseScheduler"] | None = None,
+    ) -> List[float]:
+        ...
+
+
+@dataclass
+class HPCBaseScheduler:
+    """Manage job queueing and submission using a forecasting strategy."""
+
+    carbon_history: List[float] = field(default_factory=list)
+    cost_history: List[float] = field(default_factory=list)
+    carbon_weight: float = 0.5
+    cost_weight: float = 0.5
+    backend: str = "slurm"
+    strategy: ForecastStrategy | None = field(default=None, repr=False)
+
+    _queue: List[Union[str, List[str]]] = field(default_factory=list, init=False, repr=False)
+
+    # --------------------------------------------------
+    def forecast_scores(
+        self, max_delay: float, clusters: Dict[str, "HPCBaseScheduler"] | None = None
+    ) -> List[float]:
+        """Delegate forecasting to the attached strategy."""
+        if self.strategy is None:
+            raise NotImplementedError("No forecasting strategy configured")
+        return self.strategy.forecast_scores(self, max_delay, clusters)
+
+    # --------------------------------------------------
+    def submit_at_optimal_time(
+        self, command: Union[str, List[str]], max_delay: float = 21600.0
+    ) -> str:
+        """Submit ``command`` when the forecast is most favourable."""
+        scores = self.forecast_scores(max_delay)
+        delay = 0.0
+        if scores:
+            idx = int(min(range(len(scores)), key=lambda i: scores[i]))
+            delay = idx * 3600.0
+        if delay and delay <= max_delay:
+            time.sleep(delay)
+        return submit_job(command, backend=self.backend)
+
+    # --------------------------------------------------
+    def queue_job(self, command: Union[str, List[str]]) -> None:
+        """Add a command to the local queue."""
+        self._queue.append(command)
+
+    # --------------------------------------------------
+    def run_queue(self, max_delay: float = 21600.0) -> List[str]:
+        """Submit all queued commands sequentially."""
+        results: List[str] = []
+        while self._queue:
+            cmd = self._queue.pop(0)
+            results.append(self.submit_at_optimal_time(cmd, max_delay))
+        return results
+
+
+def make_scheduler(strategy_name: str, **kw) -> HPCBaseScheduler:
+    """Return :class:`HPCBaseScheduler` with the chosen forecasting strategy."""
+
+    name = strategy_name.lower()
+    strat_kw: Dict[str, object] = {}
+    if name == "gnn" and "hist_len" in kw:
+        strat_kw["hist_len"] = kw.pop("hist_len")
+
+    sched = HPCBaseScheduler(**kw)
+    if name == "arima":
+        from .forecast_strategies import ArimaStrategy
+
+        sched.strategy = ArimaStrategy()
+    elif name == "gnn":
+        from .forecast_strategies import GNNStrategy
+
+        sched.strategy = GNNStrategy(**strat_kw)
+    else:
+        raise ValueError(f"Unknown strategy {strategy_name}")
+    return sched
+
+
+def _record_carbon_saving(
+    telemetry_map: Optional[Dict[str, TelemetryLogger]],
+    tel: Optional[TelemetryLogger],
+    cluster: str,
+    duration: float,
+    log: List[Tuple[str, float]],
+    dashboard: Optional["ClusterCarbonDashboard"],
+) -> None:
+    """Record carbon savings for a scheduled job."""
+    if telemetry_map and tel is not None and len(telemetry_map) > 0:
+        baseline = sum(
+            t.get_live_carbon_intensity() for t in telemetry_map.values()
+        ) / len(telemetry_map)
+        chosen = tel.get_live_carbon_intensity()
+        saving = (baseline - chosen) * duration
+        tel.metrics["carbon_saved"] = tel.metrics.get("carbon_saved", 0.0) + saving
+        log.append((cluster, saving))
+        if dashboard is not None:
+            dashboard.record_schedule(cluster, saving)
+
+
+@dataclass
+class MultiClusterScheduler:
+    """Compare forecasts from multiple clusters and submit to the best one."""
+
+    clusters: Dict[str, HPCBaseScheduler] = field(default_factory=dict)
+    telemetry: Optional[Dict[str, TelemetryLogger]] = None
+    dashboard: Optional["ClusterCarbonDashboard"] = None
+    schedule_log: list[tuple[str, float]] = field(default_factory=list)
+
+    # --------------------------------------------------
+    def submit_best(
+        self,
+        command: Union[str, List[str]],
+        max_delay: float = 21600.0,
+        *,
+        expected_duration: float = 1.0,
+    ) -> Tuple[str, str]:
+        """Return chosen cluster name and job id after submission."""
+
+        best_cluster = None
+        best_backend = None
+        best_score = float("inf")
+        best_delay = 0.0
+
+        for name, sched in self.clusters.items():
+            scores = sched.forecast_scores(max_delay, self.clusters)
+            if not scores:
+                continue
+            idx = int(min(range(len(scores)), key=lambda i: scores[i]))
+            if scores[idx] < best_score:
+                best_score = scores[idx]
+                best_delay = idx * 3600.0
+                best_cluster = name
+                best_backend = sched.backend
+
+        if best_cluster is None:
+            raise ValueError("No forecasts available to choose a cluster")
+        if best_delay and best_delay <= max_delay:
+            time.sleep(best_delay)
+        tel = self.telemetry.get(best_cluster) if self.telemetry else None
+        job_id = globals()["submit_job"](
+            command, backend=best_backend, telemetry=tel
+        )
+        _record_carbon_saving(
+            self.telemetry,
+            tel,
+            best_cluster,
+            expected_duration,
+            self.schedule_log,
+            self.dashboard,
+        )
+        return best_cluster, job_id
+
+    # --------------------------------------------------
+    def cluster_stats(self) -> Dict[str, Dict[str, float]]:
+        """Return metrics from attached telemetry loggers."""
+        out: Dict[str, Dict[str, float]] = {}
+        if self.telemetry:
+            for name, tel in self.telemetry.items():
+                out[name] = tel.get_stats()
+                if tel.metrics.get("carbon_saved") is not None:
+                    out[name]["carbon_saved"] = float(tel.metrics["carbon_saved"])
+        return out
+
+
+__all__ = [
+    "submit_job",
+    "monitor_job",
+    "cancel_job",
+    "HPCJobScheduler",
+    "HPCBaseScheduler",
+    "ForecastStrategy",
+    "make_scheduler",
+    "MultiClusterScheduler",
+    "_record_carbon_saving",
+]

@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import Dict, List
 
-from asi.hpc_base_scheduler import make_scheduler
+from asi.hpc_schedulers import make_scheduler
 from asi.rl_schedulers import RLMultiClusterScheduler
 
 

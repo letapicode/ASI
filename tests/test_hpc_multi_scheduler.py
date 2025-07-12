@@ -40,10 +40,9 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
-mod = _load('asi.hpc_multi_scheduler', 'src/hpc_multi_scheduler.py')
-make_scheduler = base_mod.make_scheduler
+make_scheduler = mod.make_scheduler
 MultiClusterScheduler = mod.MultiClusterScheduler
 TelemetryLogger = mod.TelemetryLogger
 
