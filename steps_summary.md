@@ -143,3 +143,10 @@
 - Removed the old individual files and updated imports across the package.
 - Updated documentation references in `Implementation.md` and `Plan.md`.
 - Adjusted unit tests to load dashboard classes from the new module.
+
+## PR 21
+- Combined `ElasticMoERouter` and `RLMoERouter` into `src/moe_router.py`.
+- Removed the old router modules and updated imports across code and docs.
+- Documented the consolidation in `docs/Implementation.md` and `docs/Plan.md`.
+- Updated tests to import from the unified router module.
+

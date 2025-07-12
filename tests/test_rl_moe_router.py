@@ -15,14 +15,7 @@ moe_router.__package__ = 'asi'
 sys.modules['asi.moe_router'] = moe_router
 loader.exec_module(moe_router)
 
-loader2 = importlib.machinery.SourceFileLoader('asi.rl_moe_router', 'src/rl_moe_router.py')
-spec2 = importlib.util.spec_from_loader(loader2.name, loader2)
-rl_mod = importlib.util.module_from_spec(spec2)
-rl_mod.__package__ = 'asi'
-sys.modules['asi.rl_moe_router'] = rl_mod
-loader2.exec_module(rl_mod)
-
-RLMoERouter = rl_mod.RLMoERouter
+RLMoERouter = moe_router.RLMoERouter
 
 
 class TestRLMoERouter(unittest.TestCase):
