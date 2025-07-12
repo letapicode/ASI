@@ -118,8 +118,13 @@
 - Adjusted documentation in `Implementation.md` to reference the new location.
 
 ## PR 18
+- Extracted `BaseMemoryServer` with common start/stop and push/query logic.
+- Updated `MemoryServer` and specialized variants to inherit from it.
+- `serve()` now returns a `BaseMemoryServer` instance.
+- Documented the change in `docs/Plan.md`.
 - Consolidated gRPC memory clients into `memory_clients.py` with
   `RemoteMemoryClient`, `QuantumMemoryClient`, `QuantizedMemoryClient` and
   `EdgeMemoryClient`. Updated modules, tests and docs accordingly.
+
 
 
