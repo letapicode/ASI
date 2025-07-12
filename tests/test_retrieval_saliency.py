@@ -59,7 +59,7 @@ RetrievalSaliency = _load('asi.retrieval_saliency', 'src/retrieval_saliency.py')
 _load('asi.streaming_compression', 'src/streaming_compression.py')
 _load('asi.retrieval_explainer', 'src/retrieval_explainer.py')
 HierarchicalMemory = _load('asi.hierarchical_memory', 'src/hierarchical_memory.py').HierarchicalMemory
-MemoryDashboard = _load('asi.memory_dashboard', 'src/memory_dashboard.py').MemoryDashboard
+MemoryDashboard = _load('asi.dashboards', 'src/dashboards.py').MemoryDashboard
 RetrievalVisualizer = _load('asi.retrieval_visualizer', 'src/retrieval_visualizer.py').RetrievalVisualizer
 
 

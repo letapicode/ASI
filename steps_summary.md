@@ -138,3 +138,8 @@
 
 
 - Consolidated hardware backends and retention modules into single shared files.
+## PR 20
+- Consolidated all dashboard modules into `src/dashboards.py`.
+- Removed the old individual files and updated imports across the package.
+- Updated documentation references in `Implementation.md` and `Plan.md`.
+- Adjusted unit tests to load dashboard classes from the new module.

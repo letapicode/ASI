@@ -253,7 +253,15 @@ from .graph_of_thought import ReasoningDebugger, AnalogicalReasoningDebugger
 from .multi_stage_oversight import MultiStageOversight
 from .knowledge_graph_memory import KnowledgeGraphMemory
 from .knowledge_base_client import KnowledgeBaseClient
-from .memory_dashboard import MemoryDashboard
+from .dashboards import (
+    MemoryDashboard,
+    AlignmentDashboard,
+    InterpretabilityDashboard,
+    IntrospectionDashboard,
+    ClusterCarbonDashboard,
+    RiskDashboard,
+    MultiAgentDashboard,
+)
 from .multi_agent_coordinator import MultiAgentCoordinator, RLNegotiator, NegotiationProtocol
 from .dp_memory import DifferentialPrivacyMemory
 from .privacy_budget_manager import PrivacyBudgetManager
@@ -277,8 +285,6 @@ from .fairness_evaluator import FairnessEvaluator
 from .fairness_adaptation import FairnessAdaptationPipeline
 from .fairness_visualizer import FairnessVisualizer
 from .cross_lingual_fairness import CrossLingualFairnessEvaluator
-from .risk_dashboard import RiskDashboard
-from .alignment_dashboard import AlignmentDashboard
 from .graph_neural_reasoner import GraphNeuralReasoner
 from .gnn_memory import GNNMemory
 from .temporal_reasoner import TemporalReasoner
@@ -297,8 +303,6 @@ from .adaptive_micro_batcher import AdaptiveMicroBatcher
 from .retrieval_explainer import RetrievalExplainer
 from .retrieval_rl import RetrievalPolicy, train_policy
 from .retrieval_policy_updater import RetrievalPolicyUpdater
-from .interpretability_dashboard import InterpretabilityDashboard
-from .introspection_dashboard import IntrospectionDashboard
 from .graph_ui import GraphUI
 from .nl_graph_editor import NLGraphEditor
 from .voice_graph_controller import VoiceGraphController, SignLanguageGraphController
@@ -320,7 +324,6 @@ from .meta_scheduler import MetaScheduler
 from .carbon_aware_dataset_ingest import CarbonAwareDatasetIngest
 
 from .collaboration_portal import CollaborationPortal
-from .cluster_carbon_dashboard import ClusterCarbonDashboard
 from .distributed_anomaly_monitor import DistributedAnomalyMonitor
 from .spiking_layers import LIFNeuron, SpikingLinear
 

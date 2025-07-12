@@ -881,9 +881,9 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
   `MemoryServer` now starts and stops a provided `TelemetryLogger` automatically.
   **Implemented in `src/telemetry.py`.**
 - Implement a `MemoryDashboard` that aggregates `TelemetryLogger` statistics from multiple `MemoryServer` nodes and serves them via a simple web endpoint. The script `scripts/memory_dashboard.py` launches the dashboard.
-  **Implemented in `src/memory_dashboard.py` with tests.**
+  **Implemented in `src/dashboards.py` with tests.**
 - Extend `MemoryDashboard` with `/entries`, `/add` and `/delete` HTTP routes for manipulating `HierarchicalMemory` contents.
-  **Implemented in `src/memory_dashboard.py` with tests.**
+  **Implemented in `src/dashboards.py` with tests.**
 - Add a `RetrievalVisualizer` that records timestamped hit/miss events and
   serves an aggregated latency plot via the dashboard's new `/patterns` endpoint.
   Enable it during evaluation to monitor retrieval frequency.
@@ -910,13 +910,13 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
   `AttentionVisualizer` along with memory statistics through a small HTML/JS
   interface. `scripts/memory_dashboard.py` starts this dashboard next to the
   risk metrics server.
-  **Implemented in `src/interpretability_dashboard.py` with tests.**
+  **Implemented in `src/dashboards.py` with tests.**
 - Implement a `MultiAgentDashboard` that aggregates telemetry and reasoning logs from multiple agents and exposes task assignments and carbon usage via a small HTTP server.
-  **Implemented in `src/multi_agent_dashboard.py` with tests.**
+  **Implemented in `src/dashboards.py` with tests.**
 - Build an `AlignmentDashboard` that records outputs from `DeliberativeAligner`,
   `IterativeAligner` and `CriticRLHFTrainer`. `eval_harness.py` publishes pass
   rates and flagged examples to this dashboard.
-  **Implemented in `src/alignment_dashboard.py` with tests.**
+  **Implemented in `src/dashboards.py` with tests.**
   - Extend `data_ingest.py` with a `LicenseInspector` that parses dataset metadata for license terms and rejects incompatible samples. Include a `scripts/license_check.py` CLI to audit stored triples.
   **Implemented in `src/license_inspector.py` with the CLI `scripts/license_check.py`.**
 - Add an `AdaptiveCompressor` that tunes the compression ratio in `StreamingCompressor` based on retrieval frequency so rarely accessed vectors use fewer bytes.
@@ -1151,7 +1151,7 @@ telemetry per cluster.
 
 ````python
 from asi.telemetry import TelemetryLogger
-from asi.cluster_carbon_dashboard import ClusterCarbonDashboard
+from asi.dashboards import ClusterCarbonDashboard
 from asi.rl_multi_cluster_scheduler import RLMultiClusterScheduler
 from asi.hpc_forecast_scheduler import HPCForecastScheduler
 

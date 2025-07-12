@@ -22,7 +22,7 @@ MemoryTimelineViewer = _load('asi.memory_timeline_viewer', 'src/memory_timeline_
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 MemoryEventDetector = _load('asi.memory_event_detector', 'src/memory_event_detector.py').MemoryEventDetector
 HierarchicalMemory = _load('asi.hierarchical_memory', 'src/hierarchical_memory.py').HierarchicalMemory
-MemoryDashboard = _load('asi.memory_dashboard', 'src/memory_dashboard.py').MemoryDashboard
+MemoryDashboard = _load('asi.dashboards', 'src/dashboards.py').MemoryDashboard
 serve = _load('asi.memory_service', 'src/memory_service.py').serve
 
 

@@ -53,7 +53,7 @@ def _load(name, path):
     return mod
 
 if HAS_TORCH:
-    InterpretabilityDashboard = _load('asi.interpretability_dashboard', 'src/interpretability_dashboard.py').InterpretabilityDashboard
+    InterpretabilityDashboard = _load('asi.dashboards', 'src/dashboards.py').InterpretabilityDashboard
     TransformerCircuitAnalyzer = _load('asi.transformer_circuit_analyzer', 'src/transformer_circuit_analyzer.py').TransformerCircuitAnalyzer
     GraphOfThought = _load('asi.graph_of_thought', 'src/graph_of_thought.py').GraphOfThought
     TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger

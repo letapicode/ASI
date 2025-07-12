@@ -19,7 +19,7 @@ def _load(name, path):
     setattr(pkg, name.split('.')[-1], mod)
     return mod
 
-AlignmentDashboard = _load('asi.alignment_dashboard', 'src/alignment_dashboard.py').AlignmentDashboard
+AlignmentDashboard = _load('asi.dashboards', 'src/dashboards.py').AlignmentDashboard
 
 
 class TestAlignmentDashboard(unittest.TestCase):
