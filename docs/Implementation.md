@@ -420,12 +420,13 @@ print(summary)
   wraps a `HierarchicalMemory` instance and serves ``Push`` and ``Query`` RPCs.
   - Helper functions `push_remote()` and `query_remote()` in
     `src/memory_clients.py` send vectors to the server and retrieve nearest
-  neighbours over the network. Asynchronous variants `push_remote_async()` and
-  `query_remote_async()` allow non-blocking interaction when using ``grpc.aio``.
-- The server constructor accepts an ``address`` and ``max_workers`` to control
-  the bind host and connection pool size.
-  - `src/memory_clients.py` provides a small :class:`RemoteMemoryClient` that wraps
-    these RPCs in a convenient Python interface.
+    neighbours. Asynchronous variants `push_remote_async()` and
+    `query_remote_async()` allow non-blocking interaction when using ``grpc.aio``.
+  - The server constructor accepts an ``address`` and ``max_workers`` to control
+    the bind host and connection pool size.
+  - All gRPC clients now live in `src/memory_clients.py` which exposes
+    ``RemoteMemoryClient``, ``QuantumMemoryClient``, ``QuantizedMemoryClient`` and
+    ``EdgeMemoryClient`` behind a consistent interface.
 
 ## C-9 Hopfield Associative Memory
 
@@ -741,8 +742,9 @@ python scripts/attention_analysis.py --model model.pt --input sample.txt --out-d
 - Implement a `DistributedTrainer` that automatically restarts failed
   processes and coordinates checkpoints with `DistributedMemory`. **Implemented**
   in `src/distributed_trainer.py` with tests.
-  - Build an `EdgeMemoryClient` to stream context vectors to `RemoteMemoryClient`
-  so edge devices can handle large-context inference. **Implemented**
+    - Build an `EdgeMemoryClient` in `memory_clients.py` to stream context vectors
+      to `RemoteMemoryClient` so edge devices can handle large-context inference.
+      **Implemented**
 - The client now keeps a local queue when the network is unreachable and
   periodically flushes queued `add`/`delete` operations once connectivity
   returns. Run `scripts/edge_memory_client_demo.py --offline` to observe

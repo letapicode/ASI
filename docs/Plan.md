@@ -310,7 +310,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     *Implemented in `src/distributed_trainer.py` with integration tests.*
 14. **Edge-memory virtualization**: Stream context from `HierarchicalMemory`
     through `RemoteMemoryClient` so low-memory devices can handle large-context
-    inference. *Implemented in `src/edge_memory_client.py` with tests.*
+    inference. *Implemented in `memory_clients.py` via `EdgeMemoryClient` with
+    tests.*
 15. **Adaptive curriculum scheduler**: Mix curated datasets with self-play logs
     via reinforcement learning to accelerate skill acquisition. Implemented in
     `adaptive_curriculum.py` and used by `self_play_skill_loop`.
@@ -429,8 +430,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
      with ~1.5× latency.
 37b. **Quantum memory server**: `quantum_memory_server` exposes gRPC APIs
      for vector search using `quantum_retrieval.amplify_search`. The accompanying
-     `QuantumMemoryClient` lets peers push embeddings and query the server over
-     the network.
+     `QuantumMemoryClient` in `memory_clients.py` lets peers push embeddings and
+     query the server over the network.
 37c. **Ephemeral vector store**: `EphemeralVectorStore` subclasses
     `VectorStore`, tracks insert timestamps and automatically purges
     expired embeddings. It integrates into `HierarchicalMemory` via
@@ -719,8 +720,9 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     feeds these rewards back into `train_world_model` so online updates can
     refine the world model in real time.
 86c. **Memory client base**: `memory_clients.py` exposes `MemoryClientBase` with
-     reusable `add_batch` and `query_batch` helpers. `RemoteMemoryClient` and
-     `QuantizedMemoryClient` inherit these methods to avoid duplicate gRPC logic.
+     reusable `add_batch` and `query_batch` helpers. All gRPC clients
+     (``RemoteMemoryClient``, ``QuantumMemoryClient``, ``QuantizedMemoryClient``
+     and ``EdgeMemoryClient``) live here to avoid duplicate logic.
 
 87. **RL decision narrator**: `RLDecisionNarrator` intercepts action choices
     in `world_model_rl` and `MetaRLRefactorAgent`. Each decision logs a brief

@@ -35,8 +35,6 @@ from .memory_clients import (
 from .distributed_memory import DistributedMemory
 from .federated_memory_exchange import FederatedMemoryExchange
 from .distributed_trainer import DistributedTrainer, MemoryConfig
-
-RemoteMemory = RemoteMemoryClient
 from .vector_stores import (
     VectorStore,
     FaissVectorStore,

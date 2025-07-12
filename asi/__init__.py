@@ -37,7 +37,6 @@ for _m in [
     "memory_pb2",
     "memory_pb2_grpc",
     "quantum_memory_server",
-    "quantum_memory_client",
     "enclave_runner",
     "zero_trust_memory_server",
 ]:

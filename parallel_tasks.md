@@ -728,9 +728,9 @@ Analyze the file `src/dp_memory.py` for code quality, documentation, and testing
 
 Analyze the file `src/duplicate_detector.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 183: Review src/edge_memory_client.py
+## Task 183: Review EdgeMemoryClient implementation
 
-Analyze the file `src/edge_memory_client.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the `EdgeMemoryClient` in `src/memory_clients.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 184: Review src/edge_rl_trainer.py
 
@@ -1208,9 +1208,9 @@ Analyze the file `src/pull_request_monitor.py` for code quality, documentation, 
 
 Analyze the file `src/quantum_hpo.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 303: Review src/quantum_memory_client.py
+## Task 303: Review QuantumMemoryClient implementation
 
-Analyze the file `src/quantum_memory_client.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the `QuantumMemoryClient` in `src/memory_clients.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 304: Review src/quantum_memory_server.py
 
@@ -1252,9 +1252,9 @@ Analyze the file `src/reasoning_merger.py` for code quality, documentation, and 
 
 Analyze the file `src/reasoning_summary_translator.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 314: Review src/remote_memory.py
+## Task 314: Review remote memory helpers
 
-Analyze the file `src/remote_memory.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the remote memory helper functions in `src/memory_clients.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 315: Review src/research_ingest.py
 
