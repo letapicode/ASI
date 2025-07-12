@@ -48,7 +48,7 @@ def _load(name: str, path: str):
 
 telemetry_mod = _load('asi.telemetry', 'src/telemetry.py')
 ca_mod = _load('asi.carbon_aware_scheduler', 'src/carbon_aware_scheduler.py')
-rl_mod = _load('asi.rl_carbon_scheduler', 'src/rl_carbon_scheduler.py')
+rl_mod = _load('asi.rl_schedulers', 'src/rl_schedulers.py')
 base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
 strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
 meta_mod = _load('asi.meta_scheduler', 'src/meta_scheduler.py')

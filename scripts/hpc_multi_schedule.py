@@ -5,8 +5,7 @@ from __future__ import annotations
 import argparse
 from asi.hpc_base_scheduler import make_scheduler
 from asi.hpc_multi_scheduler import MultiClusterScheduler
-from asi.rl_cost_scheduler import RLCostScheduler
-from asi.rl_carbon_scheduler import RLCarbonScheduler
+from asi.rl_schedulers import RLCarbonScheduler, RLCostScheduler
 from asi.carbon_aware_scheduler import CarbonAwareScheduler
 from asi.meta_scheduler import MetaScheduler
 

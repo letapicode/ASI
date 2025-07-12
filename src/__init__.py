@@ -317,9 +317,13 @@ from .hpc_schedulers import submit_job, monitor_job, cancel_job, HPCJobScheduler
 
 from .carbon_aware_scheduler import CarbonAwareScheduler
 
-from .rl_carbon_scheduler import RLCarbonScheduler
-from .rl_cost_scheduler import RLCostScheduler
-from .coordinated_rl_cost_scheduler import CoordinatedRLCostScheduler
+from .rl_schedulers import (
+    RLCarbonScheduler,
+    RLCostScheduler,
+    CoordinatedRLCostScheduler,
+    RLMultiClusterScheduler,
+    DeepRLScheduler,
+)
 from .meta_scheduler import MetaScheduler
 from .carbon_aware_dataset_ingest import CarbonAwareDatasetIngest
 

@@ -150,3 +150,9 @@
 - Documented the consolidation in `docs/Implementation.md` and `docs/Plan.md`.
 - Updated tests to import from the unified router module.
 
+
+## PR 22
+- Merged all RL scheduler implementations into `src/rl_schedulers.py`.
+- Removed obsolete scheduler modules and updated imports across tests, scripts, docs and package `__init__`.
+- Added `translator_fallback.py` to share a stub `CrossLingualTranslator`, used by dataset watcher and fairness evaluator.
+- Documented the new module references in `docs/Plan.md` and `docs/Implementation.md`.

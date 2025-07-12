@@ -7,7 +7,7 @@ from collections import deque
 from typing import Deque, Dict, List, Tuple, Union
 
 from .carbon_aware_scheduler import CarbonAwareScheduler
-from .rl_carbon_scheduler import RLCarbonScheduler
+from .rl_schedulers import RLCarbonScheduler
 from .hpc_base_scheduler import HPCBaseScheduler
 
 SchedulerType = Union[

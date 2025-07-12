@@ -778,7 +778,7 @@ The old `carbon_hpc_scheduler` module has been removed; import
 `CarbonAwareScheduler` directly from `carbon_aware_scheduler`.
 
 
-`rl_carbon_scheduler.RLCarbonScheduler` goes a step further by learning when to
+`rl_schedulers.RLCarbonScheduler` goes a step further by learning when to
 launch jobs from historical intensity and job-duration traces.  It employs a
 Q-learning policy to trade off energy consumption against queueing delay.  The
 scheduler plugs into `DistributedTrainer` like the rule-based versions and
@@ -811,9 +811,9 @@ submit immediately.  Tune `bins`, `epsilon`, `alpha`, `gamma` and
 `check_interval` to control exploration and learning rate.  A demonstration is
 available via `scripts/adaptive_cost_schedule.py`.  Set `qtable_path` to persist
 the learned Q-table between runs.
-`deep_rl_scheduler.DeepRLScheduler` now uses a two-layer LSTM trained on sliding windows of past traces. Retraining after each update improved average cost by ~7 % and carbon usage by ~6 % versus the Q-learning policy.
+`rl_schedulers.DeepRLScheduler` now uses a two-layer LSTM trained on sliding windows of past traces. Retraining after each update improved average cost by ~7 % and carbon usage by ~6 % versus the Q-learning policy.
 
-`rl_cost_scheduler.RLCostScheduler` extends the idea by bucketising both carbon
+`rl_schedulers.RLCostScheduler` extends the idea by bucketising both carbon
 intensity and energy price. A double Q-learning strategy with decaying
 exploration updates two tables after each run for faster convergence. Enable it
 via the `--rl-cost` flag in `scripts/hpc_multi_schedule.py`. When plugged into
@@ -827,7 +827,7 @@ carbon/cost metrics reported by `TelemetryLogger`. Enable it via `--meta` in
 `scripts/hpc_multi_schedule.py` to automatically pick the best strategy.
 
 
-`coordinated_rl_cost_scheduler.CoordinatedRLCostScheduler` lets multiple
+`rl_schedulers.CoordinatedRLCostScheduler` lets multiple
 schedulers share Q-tables through a lightweight aggregation group. This reduces
 coordination overhead from quadratic to linear in the number of agents while the
 averaged policy still steers runs toward cheap, green slots. Internal tests
