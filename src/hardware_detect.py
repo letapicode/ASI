@@ -12,7 +12,7 @@ try:  # optional torch dependency
 except Exception:  # pragma: no cover - allow running without torch
     torch = None  # type: ignore
 
-from . import fpga_backend, analog_backend, loihi_backend
+from . import hardware_backends as backends
 
 # cache (devices, env_str, sim_id)
 _ANALOG_DEVICES_CACHE: tuple[list[str], str | None, int] | None = None
@@ -36,11 +36,11 @@ def list_gpus() -> list[str]:
 
 def list_fpgas() -> list[str]:
     """Return a list of available FPGA device names."""
-    if getattr(fpga_backend, "_HAS_FPGA", False) and getattr(fpga_backend, "cl", None):
+    if getattr(backends, "_HAS_FPGA", False) and getattr(backends, "cl", None):
         try:
             devices: list[str] = []
-            for platform in fpga_backend.cl.get_platforms():
-                for dev in platform.get_devices(device_type=fpga_backend.cl.device_type.ACCELERATOR):
+            for platform in backends.cl.get_platforms():
+                for dev in platform.get_devices(device_type=backends.cl.device_type.ACCELERATOR):
                     devices.append(getattr(dev, "name", "fpga"))
             return devices or ["fpga0"]
         except Exception:
@@ -50,7 +50,7 @@ def list_fpgas() -> list[str]:
 
 def list_loihi() -> list[str]:
     """Return a list of available Loihi accelerator identifiers."""
-    if getattr(loihi_backend, "_HAS_LOIHI", False):
+    if getattr(backends, "_HAS_LOIHI", False):
         return ["loihi0"]
     return []
 
@@ -59,12 +59,12 @@ def list_analog() -> list[str]:
     """Return a list of available analog accelerator identifiers."""
     global _ANALOG_DEVICES_CACHE
     env = os.getenv("ASI_ANALOG_DEVICES")
-    sim = getattr(analog_backend, "analogsim", None)
+    sim = getattr(backends, "analogsim", None)
     key = (env, id(sim))
     if _ANALOG_DEVICES_CACHE is not None and _ANALOG_DEVICES_CACHE[1:] == key:
         return list(_ANALOG_DEVICES_CACHE[0])
 
-    if not getattr(analog_backend, "_HAS_ANALOG", False):
+    if not getattr(backends, "_HAS_ANALOG", False):
         _ANALOG_DEVICES_CACHE = ([], env, id(sim))
         return []
 

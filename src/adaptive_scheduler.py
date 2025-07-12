@@ -14,7 +14,7 @@ from .hardware_detect import (
     list_loihi,
     list_analog,
 )
-from . import analog_backend
+from . import hardware_backends as analog_backend
 
 try:  # pragma: no cover - optional dependency
     import psutil

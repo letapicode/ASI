@@ -204,15 +204,12 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   `use_spiking=True` in `MultiModalWorldModelConfig` to replace MLP blocks with
   these energy-efficient neurons. When the optional Loihi SDK is installed,
   enable `use_loihi=True` to run them on neuromorphic hardware via
-  `src/loihi_backend.py`.
+  `src/hardware_backends.py`.
 - `src/edge_rl_trainer.py` now takes a `use_loihi` flag and logs power
   consumption for CPU vs. Loihi execution through `TelemetryLogger`.
-- `src/fpga_backend.py` adds an `FPGAAccelerator` and optional `use_fpga`
-  flag in `MultiModalWorldModelConfig` and `EdgeRLTrainer` for FPGA offload.
-- - `src/analog_backend.py` adds an `AnalogAccelerator` context manager for
-   analog matrix multiplies. Enable `use_analog=True` in
-   `MultiModalWorldModelConfig` or `EdgeRLTrainer` to patch `torch.matmul`
-   during training.
+- `src/hardware_backends.py` adds `FPGAAccelerator`, `AnalogAccelerator` and
+  related configuration helpers. Enable `use_fpga` or `use_analog` in
+  `MultiModalWorldModelConfig` or `EdgeRLTrainer` to offload computations.
 - `scripts/benchmark_gpu_vs_analog.py` compares GPU and analog inference on a
   tiny two-layer MLP and now supports `--amp` and `--compile` flags. Compiling
   the model and enabling autocast roughly halved GPU latency while analog energy

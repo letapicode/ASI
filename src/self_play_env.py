@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Callable, Tuple, List
 
-from .loihi_backend import LoihiConfig, configure_loihi
+from .hardware_backends import LoihiConfig, configure_loihi
 
 import torch
 
