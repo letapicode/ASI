@@ -1,18 +1,13 @@
 from __future__ import annotations
 
-from typing import Iterable, Any, Dict
+from typing import Iterable, Dict
 
 from dataclasses import dataclass
 
 import torch
 
 from .hierarchical_memory import HierarchicalMemory
-from .remote_memory import query_remote
 from .base_memory_server import BaseMemoryServer
-from .hierarchical_memory import (
-    HierarchicalMemory,
-    MemoryServer,
-)
 from .memory_clients import query_remote
 from .retrieval_proof import RetrievalProof
 
