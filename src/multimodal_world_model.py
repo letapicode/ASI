@@ -29,15 +29,16 @@ except Exception:  # pragma: no cover - fallback for tests
         from lora_quant import apply_quant_lora  # type: ignore
 
 try:
-    from .fpga_backend import FPGAAccelerator, _HAS_FPGA
+    from .hardware_backends import (
+        FPGAAccelerator,
+        _HAS_FPGA,
+        AnalogAccelerator,
+        _HAS_ANALOG,
+    )
 except Exception:  # pragma: no cover - fallback for tests
     FPGAAccelerator = None  # type: ignore
-    _HAS_FPGA = False
-
-try:
-    from .analog_backend import AnalogAccelerator, _HAS_ANALOG
-except Exception:  # pragma: no cover - fallback for tests
     AnalogAccelerator = None  # type: ignore
+    _HAS_FPGA = False
     _HAS_ANALOG = False
 
 

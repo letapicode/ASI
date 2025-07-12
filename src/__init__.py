@@ -326,14 +326,12 @@ from .spiking_layers import LIFNeuron, SpikingLinear
 
 
 from .fhe_runner import run_fhe
-from .fpga_backend import (
+from .hardware_backends import (
     FPGAAccelerator,
     FPGAConfig,
     configure_fpga,
     get_fpga_config,
     _HAS_FPGA,
-)
-from .analog_backend import (
     AnalogAccelerator,
     AnalogConfig,
     configure_analog,
@@ -352,8 +350,6 @@ from .reasoning_kb_bridge import (
     get_following_steps,
     get_step_metadata,
 )
-
-from .multi_agent_self_play import MultiAgentSelfPlayConfig, run_multi_agent_self_play, MultiAgentSelfPlay
 
 from .multi_agent_self_play import MultiAgentSelfPlayConfig, run_multi_agent_self_play, MultiAgentSelfPlay
 

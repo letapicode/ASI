@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 from torch import nn
 
-from . import loihi_backend
+from . import hardware_backends as loihi_backend
 
 
 class _SpikeFn(torch.autograd.Function):

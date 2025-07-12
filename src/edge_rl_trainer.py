@@ -5,7 +5,7 @@ import numpy as np
 from contextlib import nullcontext
 
 import torch
-from .analog_backend import AnalogAccelerator
+from .hardware_backends import AnalogAccelerator
 
 from .compute_budget_tracker import ComputeBudgetTracker
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
