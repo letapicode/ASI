@@ -7,7 +7,7 @@ from asi.moe_router import (
     balance_loss_probs,
     token_drop_rate,
 )
-from asi.elastic_moe_router import ElasticMoERouter
+from asi.moe_router import ElasticMoERouter
 
 
 class TestBaseRouter(unittest.TestCase):

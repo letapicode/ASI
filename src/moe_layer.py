@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from .moe_router import BaseRouter, HashRouter, SwitchRouter, balance_loss
-from .elastic_moe_router import ElasticMoERouter
+from .moe_router import ElasticMoERouter
 
 
 class MoELayer(nn.Module):

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from src.moe_router import HashRouter, SwitchRouter
-from src.elastic_moe_router import ElasticMoERouter
+from src.moe_router import ElasticMoERouter
 import argparse
 
 class ToyModel(nn.Module):
