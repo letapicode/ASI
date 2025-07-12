@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from asi.hpc_base_scheduler import make_scheduler
+from asi.hpc_schedulers import make_scheduler
 from asi.adaptive_cost_scheduler import AdaptiveCostScheduler
 
 

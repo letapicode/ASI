@@ -310,7 +310,16 @@ from .energy_aware_scheduler import EnergyAwareScheduler
 from .doc_summarizer import summarize_module
 from .dataset_summarizer import summarize_dataset
 
-from .hpc_schedulers import submit_job, monitor_job, cancel_job, HPCJobScheduler
+from .hpc_schedulers import (
+    submit_job,
+    monitor_job,
+    cancel_job,
+    HPCJobScheduler,
+    HPCBaseScheduler,
+    MultiClusterScheduler,
+    make_scheduler,
+    _record_carbon_saving,
+)
 
 from .carbon_aware_scheduler import CarbonAwareScheduler
 

@@ -28,10 +28,9 @@ def _load(name, path):
 
 if HAS_TORCH:
     strat_mod = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
-    base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
-    multi_mod = _load('asi.hpc_multi_scheduler', 'src/hpc_multi_scheduler.py')
+    multi_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
     GNNStrategy = strat_mod.GNNStrategy
-    make_scheduler = base_mod.make_scheduler
+    make_scheduler = multi_mod.make_scheduler
     MultiClusterScheduler = multi_mod.MultiClusterScheduler
 
 
@@ -44,7 +43,7 @@ class TestGNNForecastScheduler(unittest.TestCase):
         sched = MultiClusterScheduler({'a': a, 'b': b})
         with patch('asi.forecast_strategies.SimpleGNN.forward', return_value=torch.tensor([[0.5, 0.5], [1.0, 1.0]])), \
              patch('time.sleep') as sl, \
-             patch('asi.hpc_multi_scheduler.submit_job', return_value='jid') as sj:
+             patch('asi.hpc_schedulers.submit_job', return_value='jid') as sj:
             cluster, jid = sched.submit_best(['run.sh'], max_delay=3600.0)
             sl.assert_not_called()
             sj.assert_called_with(['run.sh'], backend='slurm')

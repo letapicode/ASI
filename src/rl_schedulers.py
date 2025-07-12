@@ -11,7 +11,7 @@ from typing import Iterable, Tuple, List, Dict, Union, Optional
 
 from .telemetry import TelemetryLogger
 from .hpc_schedulers import submit_job
-from .hpc_multi_scheduler import MultiClusterScheduler, _record_carbon_saving
+from .hpc_schedulers import MultiClusterScheduler, _record_carbon_saving
 from .forecast_strategies import arima_forecast, _TrendRNN
 
 try:

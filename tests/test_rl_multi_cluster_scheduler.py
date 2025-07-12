@@ -39,8 +39,7 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-_load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
-base_mod = _load('asi.hpc_base_scheduler', 'src/hpc_base_scheduler.py')
+base_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 rl_mod = _load('asi.rl_schedulers', 'src/rl_schedulers.py')
 make_scheduler = base_mod.make_scheduler
 RLMultiClusterScheduler = rl_mod.RLMultiClusterScheduler
