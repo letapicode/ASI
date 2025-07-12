@@ -10,7 +10,7 @@ from .hierarchical_memory import (
     HierarchicalMemory,
     MemoryServer,
 )
-from .remote_memory import query_remote
+from .memory_clients import query_remote
 from .retrieval_proof import RetrievalProof
 
 try:

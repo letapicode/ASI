@@ -3,7 +3,7 @@ import numpy as np
 
 from asi.vector_stores import VectorStore
 from asi.quantum_memory_server import QuantumMemoryServer
-from asi.quantum_memory_client import QuantumMemoryClient
+from asi.memory_clients import QuantumMemoryClient
 
 
 class TestQuantumMemoryServer(unittest.TestCase):

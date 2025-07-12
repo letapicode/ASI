@@ -16,7 +16,7 @@ from graphql import (
     graphql_sync,
 )
 
-from .remote_memory import query_remote, push_remote
+from .memory_clients import query_remote, push_remote
 
 
 class GraphQLMemoryGateway:
