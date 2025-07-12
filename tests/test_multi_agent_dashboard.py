@@ -30,7 +30,7 @@ def _load(name, path):
     loader.exec_module(mod)
     return mod
 
-MultiAgentDashboard = _load('asi.multi_agent_dashboard', 'src/multi_agent_dashboard.py').MultiAgentDashboard
+MultiAgentDashboard = _load('asi.dashboards', 'src/dashboards.py').MultiAgentDashboard
 MultiAgentCoordinator = _load('asi.multi_agent_coordinator', 'src/multi_agent_coordinator.py').MultiAgentCoordinator
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 ReasoningHistoryLogger = _load('asi.reasoning_history', 'src/reasoning_history.py').ReasoningHistoryLogger

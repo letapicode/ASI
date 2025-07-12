@@ -21,7 +21,7 @@ def _load(name, path):
 GraphOfThought = _load('asi.graph_of_thought', 'src/graph_of_thought.py').GraphOfThought
 ReasoningHistoryLogger = _load('asi.reasoning_history', 'src/reasoning_history.py').ReasoningHistoryLogger
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
-IntrospectionDashboard = _load('asi.introspection_dashboard', 'src/introspection_dashboard.py').IntrospectionDashboard
+IntrospectionDashboard = _load('asi.dashboards', 'src/dashboards.py').IntrospectionDashboard
 
 
 class TestIntrospectionDashboard(unittest.TestCase):

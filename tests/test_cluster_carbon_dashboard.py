@@ -18,7 +18,7 @@ def _load(name, path):
     sys.modules[name] = mod
     return mod
 
-ClusterCarbonDashboard = _load('asi.cluster_carbon_dashboard', 'src/cluster_carbon_dashboard.py').ClusterCarbonDashboard
+ClusterCarbonDashboard = _load('asi.dashboards', 'src/dashboards.py').ClusterCarbonDashboard
 
 
 class TestClusterCarbonDashboard(unittest.TestCase):

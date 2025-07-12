@@ -229,7 +229,7 @@ def _load(name, path):
     sys.modules[name] = mod
     return mod
 
-MemoryDashboard = _load('asi.memory_dashboard', 'src/memory_dashboard.py').MemoryDashboard
+MemoryDashboard = _load('asi.dashboards', 'src/dashboards.py').MemoryDashboard
 _load('asi.streaming_compression', 'src/streaming_compression.py')
 HierarchicalMemory = _load('asi.hierarchical_memory', 'src/hierarchical_memory.py').HierarchicalMemory
 serve = _load('asi.memory_service', 'src/memory_service.py').serve

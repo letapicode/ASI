@@ -65,7 +65,7 @@ See `docs/Implementation.md` for the optimisation workflow.
 - **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
 - **Code refinement pipeline**: run `scripts/code_refine.py <file>` to clean up LLM-generated Python before committing. The tool adds `Any` type hints, fixes `None`/`bool` comparisons and ensures future annotations.
 
-- **Reasoning graph merger**: `reasoning_merger.merge_graphs()` deduplicates nodes across agents and aligns timestamps. The `MultiAgentDashboard` now displays the merged trace.
+- **Reasoning graph merger**: `reasoning_merger.merge_graphs()` deduplicates nodes across agents and aligns timestamps. The `dashboards.MultiAgentDashboard` now displays the merged trace.
 
 - **Socratic debate harness**: `socratic_debate.run_debate()` runs two lightweight agents in alternating rounds. Results are stored with timezone-aware timestamps via `ReasoningHistoryLogger`.
 
@@ -648,8 +648,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 84b. **Cross-lingual voice chat**: `cross_lingual_voice_chat.py` maintains a short history and answers via text-to-speech. The JSON response includes base64 encoded audio when available. `GraphUI` exposes `/chat/voice` and `/chat/ws` for real-time conversations.
 
 85. **Temporal telemetry monitoring**: `MemoryEventDetector` parses logged hardware metrics and flags change points. `TelemetryLogger` stores these events so the memory dashboard exposes them via `/events`.
-86. **Introspection dashboard**: `IntrospectionDashboard` merges reasoning history with telemetry metrics. Run `scripts/introspection_dashboard.py` and open `http://localhost:8060` to inspect graph evolution alongside hardware usage.
-86b. **Alignment dashboard**: `alignment_dashboard.AlignmentDashboard` collects
+86. **Introspection dashboard**: `dashboards.IntrospectionDashboard` merges reasoning history with telemetry metrics. Run `scripts/introspection_dashboard.py` and open `http://localhost:8060` to inspect graph evolution alongside hardware usage.
+86b. **Alignment dashboard**: `dashboards.AlignmentDashboard` collects
      results from `DeliberativeAligner`, `IterativeAligner` and `CriticRLHF`
      during evaluations. `eval_harness.py` pushes pass rates and any flagged
      examples so operators can monitor alignment in real time.
@@ -742,7 +742,7 @@ print(consensus_reasoner.report_disagreements(issues))
 88. **Multi-agent self-play**: `run_multi_agent_self_play()` launches multiple
     `MetaRLRefactorAgent` instances inside `self_play_env`. A Q-learning based
     `RLNegotiator` in `MultiAgentCoordinator` assigns each episode to one agent
-    and updates task values from the rewards. `MultiAgentDashboard` aggregates
+    and updates task values from the rewards. `dashboards.MultiAgentDashboard` aggregates
     metrics to compare cooperation versus competition efficiency.
 
 

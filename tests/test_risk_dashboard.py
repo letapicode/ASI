@@ -45,8 +45,7 @@ stub_hm.MemoryServer = type('MS', (), {'__init__': lambda self,*a,**k: None, 'me
 stub_hm.HierarchicalMemory = type('HM', (), {})
 sys.modules['src.hierarchical_memory'] = stub_hm
 for mod_name in [
-    'risk_dashboard',
-    'memory_dashboard',
+    'dashboards',
     'risk_scoreboard',
     'telemetry',
     'memory_service',
@@ -60,8 +59,8 @@ for mod_name in [
     if mod_name == 'hierarchical_memory' and 'MemoryServer' not in m.__dict__:
         m.MemoryServer = type('MS', (), {})
 
-RiskDashboard = sys.modules['src.risk_dashboard'].RiskDashboard
-MemoryDashboard = sys.modules['src.memory_dashboard'].MemoryDashboard
+RiskDashboard = sys.modules['src.dashboards'].RiskDashboard
+MemoryDashboard = sys.modules['src.dashboards'].MemoryDashboard
 RiskScoreboard = sys.modules['src.risk_scoreboard'].RiskScoreboard
 TelemetryLogger = sys.modules['src.telemetry'].TelemetryLogger
 

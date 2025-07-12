@@ -56,7 +56,7 @@ def _load(name, path):
     return mod
 
 HierarchicalMemory = _load('asi.hierarchical_memory', 'src/hierarchical_memory.py').HierarchicalMemory
-MemoryDashboard = _load('asi.memory_dashboard', 'src/memory_dashboard.py').MemoryDashboard
+MemoryDashboard = _load('asi.dashboards', 'src/dashboards.py').MemoryDashboard
 RetrievalVisualizer = _load('asi.retrieval_visualizer', 'src/retrieval_visualizer.py').RetrievalVisualizer
 
 
