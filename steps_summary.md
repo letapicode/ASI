@@ -168,3 +168,9 @@
 - Added `HPCBaseScheduler`, `MultiClusterScheduler` and `make_scheduler` to the unified module.
 - Updated all imports, scripts, and tests to reference the new path.
 - Documented the consolidated scheduler in `docs/Plan.md` and exported the helpers in `__init__.py`.
+
+## PR 25
+- Combined all memory server implementations into `src/memory_servers.py`.
+- Old modules now re-export the classes to keep backward compatibility.
+- Updated `hierarchical_memory.py` to import the unified `MemoryServer`.
+- Documented the change in `docs/Plan.md`.

@@ -1130,21 +1130,6 @@ class HierarchicalMemory:
 
 
 if _HAS_GRPC:
-    from .base_memory_server import BaseMemoryServer
-
-    class MemoryServer(BaseMemoryServer):
-        """gRPC server exposing a ``HierarchicalMemory`` backend."""
-
-        def __init__(
-            self,
-            memory: HierarchicalMemory,
-            address: str = "localhost:50051",
-            max_workers: int = 4,
-            telemetry: "TelemetryLogger | None" = None,
-        ) -> None:
-            self.memory = memory
-            super().__init__(memory, address=address, max_workers=max_workers, telemetry=telemetry)
-
-        # handlers and lifecycle methods are inherited from ``BaseMemoryServer``
+    from .memory_servers import MemoryServer
 
 

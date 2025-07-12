@@ -532,6 +532,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 43. **Summarizing memory compression**: Condense rarely accessed vectors with a small language model before persisting them to disk. Success is a ≥50 % reduction in storage while retrieval accuracy drops <5 %.
 44. **Telemetry instrumentation**: Record GPU/CPU utilization and network throughput across distributed nodes using OpenTelemetry and expose the metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster. *`MemoryServer` now accepts a `TelemetryLogger` to start and stop metrics automatically.*
 44a. **Common server base**: `BaseMemoryServer` holds the gRPC start/stop logic so `MemoryServer` and friends share a single implementation.
+    All memory server variants now reside in `src/memory_servers.py` for easier maintenance.
 45. **Memory usage dashboard**: Aggregate telemetry from multiple memory nodes and present hit/miss rates in real time.
 46. **License compliance checker**: Parse dataset sources for license text during ingestion and block incompatible samples. Every stored triple should include a valid license entry.
 47. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
