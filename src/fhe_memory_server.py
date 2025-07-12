@@ -23,13 +23,13 @@ except Exception:  # pragma: no cover - optional dependency
 from .vector_stores import VectorStore
 from .base_memory_server import BaseMemoryServer
 try:
-    from .zk_retrieval_proof import ZKRetrievalProof
+    from .proofs import ZKRetrievalProof
 except Exception:  # pragma: no cover - fallback for tests
     import importlib.util
     from pathlib import Path
 
-    _p = Path(__file__).resolve().with_name("zk_retrieval_proof.py")
-    _spec = importlib.util.spec_from_file_location("zk_retrieval_proof", _p)
+    _p = Path(__file__).resolve().with_name("proofs.py")
+    _spec = importlib.util.spec_from_file_location("proofs", _p)
     if _spec and _spec.loader:
         _mod = importlib.util.module_from_spec(_spec)
         sys.modules[_spec.name] = _mod

@@ -11,7 +11,7 @@ except Exception:  # pragma: no cover - optional dependency
     ts = None
 
 from .secure_federated_learner import SecureFederatedLearner
-from .zk_gradient_proof import ZKGradientProof
+from .proofs import ZKGradientProof
 from .world_model_rl import RLBridgeConfig, WorldModel, TransitionDataset
 from .fhe_runner import run_fhe
 

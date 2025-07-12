@@ -153,7 +153,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   scaling-law breakpoint task.
 - `src/scaling_breakpoint.py` provides a light-weight `fit_breakpoint()` helper
   that returns a dataclass `BreakpointModel` with piecewise slopes.
-- `src/retnet_retention.py` implements a RetNet-style retention kernel for **C-1**.
+ - `src/retention.py` implements a RetNet-style retention kernel for **C-1**.
 - `src/mamba_block.py` provides a simplified Mamba state-space block for **C-2**.
 - `src/hyena_filter.py` implements the implicit-FFT filter for **C-3**.
 - `src/streaming_compression.py` maintains a reservoir buffer with a small
@@ -249,7 +249,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 
 1. **Hybrid retention backbone**: Fuse `RetNetRetention` with `MambaBlock` and
    measure throughput and memory compared with the individual kernels.
-   *Implemented in `src/hybrid_retention.py` with unit tests.*
+   *Implemented in `src/retention.py` with unit tests.*
 2. **Cross-modal retrieval memory**: Store embeddings from
    `cross_modal_fusion.encode_all()` inside `HierarchicalMemory` and evaluate
  retrieval accuracy on 1&nbsp;M-token streams. *Implemented via
@@ -680,7 +680,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     the percentage of cases where the top result matches the expected word; aim
     for ≥70% accuracy on the toy set.
 
-83b. **Cross-lingual analogy evaluation**: `crosslingual_analogy_eval.analogy_accuracy`
+83b. **Cross-lingual analogy evaluation**: `analogical_retrieval.analogy_accuracy`
     loads a multilingual analogy dataset and computes accuracy using
     `CrossLingualTranslator` so offsets can span languages.
 

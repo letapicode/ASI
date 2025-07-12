@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 from .self_play_env import SimpleEnv, rollout_env
 from .self_play_skill_loop import SelfPlaySkillLoopConfig
 from .secure_federated_learner import SecureFederatedLearner
-from .zk_verifier import ZKVerifier
+from .proofs import ZKVerifier
 
 
 @dataclass

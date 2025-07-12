@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, Tuple
 
-from .zk_gradient_proof import ZKGradientProof
-
-
-from .zk_verifier import ZKVerifier
+from .proofs import ZKGradientProof, ZKVerifier
 
 import torch
 

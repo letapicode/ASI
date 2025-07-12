@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from asi.zk_retrieval_proof import ZKRetrievalProof
+from asi.proofs import ZKRetrievalProof
 
 
 class TestZKRetrievalProof(unittest.TestCase):

@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from .world_model_rl import RLBridgeConfig, WorldModel, TransitionDataset
 from .secure_federated_learner import SecureFederatedLearner
-from .zk_gradient_proof import ZKGradientProof
+from .proofs import ZKGradientProof
 
 @dataclass
 class FederatedTrainerConfig:
