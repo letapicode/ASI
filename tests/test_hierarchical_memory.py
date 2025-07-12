@@ -5,7 +5,7 @@ from pathlib import Path
 import torch
 
 from asi.hierarchical_memory import HierarchicalMemory, MemoryServer
-from asi.remote_memory import (
+from asi.memory_clients import (
     push_remote,
     query_remote,
     push_remote_async,

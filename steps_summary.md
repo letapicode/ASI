@@ -117,4 +117,9 @@
 - Updated modules and tests to import the unified helpers.
 - Adjusted documentation in `Implementation.md` to reference the new location.
 
+## PR 18
+- Consolidated gRPC memory clients into `memory_clients.py` with
+  `RemoteMemoryClient`, `QuantumMemoryClient`, `QuantizedMemoryClient` and
+  `EdgeMemoryClient`. Updated modules, tests and docs accordingly.
+
 
