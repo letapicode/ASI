@@ -1,51 +1,22 @@
 from __future__ import annotations
 
-from typing import Dict
+from importlib import import_module, util
+from pathlib import Path
+import sys
 
-from .fairness_evaluator import FairnessEvaluator
-try:  # pragma: no cover - optional dependency
-    from .data_ingest import CrossLingualTranslator
-except Exception:  # pragma: no cover - missing torch
-    from .translator_fallback import CrossLingualTranslator
-
-
-class CrossLingualFairnessEvaluator:
-    """FairnessEvaluator that normalizes groups across languages."""
-
-    def __init__(
-        self,
-        translator: CrossLingualTranslator | None = None,
-        target_lang: str = "en",
-    ) -> None:
-        self.translator = translator
-        self.target_lang = target_lang
-        self.base = FairnessEvaluator()
-
-    def _translate(self, text: str) -> str:
-        if self.translator is None:
-            return text
-        return self.translator.translate(text, self.target_lang)
-
-    def _normalize(self, stats: Dict[str, Dict[str, int]]) -> Dict[str, Dict[str, int]]:
-        norm: Dict[str, Dict[str, int]] = {}
-        for group, counts in stats.items():
-            g = self._translate(group)
-            out = norm.setdefault(g, {})
-            for label, cnt in counts.items():
-                if label in {"tp", "fp", "fn", "tn"}:
-                    l = label
-                else:
-                    l = self._translate(label)
-                out[l] = out.get(l, 0) + cnt
-        return norm
-
-    def evaluate(self, stats: Dict[str, Dict[str, int]], positive_label: str = "1") -> Dict[str, float]:
-        norm = self._normalize(stats)
-        if positive_label in {"tp", "fp", "fn", "tn"}:
-            pos = positive_label
-        else:
-            pos = self._translate(positive_label)
-        return self.base.evaluate(norm, positive_label=pos)
-
+try:
+    CrossLingualFairnessEvaluator = (
+        import_module(__package__ + '.fairness').CrossLingualFairnessEvaluator
+    )
+except Exception:  # pragma: no cover - fallback for direct file loading
+    path = Path(__file__).with_name('fairness.py')
+    spec = util.spec_from_file_location(
+        __package__ + '.fairness', path, submodule_search_locations=[str(path.parent)]
+    )
+    mod = util.module_from_spec(spec)
+    sys.modules.setdefault(spec.name, mod)
+    if spec.loader:
+        spec.loader.exec_module(mod)
+    CrossLingualFairnessEvaluator = mod.CrossLingualFairnessEvaluator
 
 __all__ = ["CrossLingualFairnessEvaluator"]

@@ -277,10 +277,13 @@ from .risk_scoreboard import RiskScoreboard
 from .semantic_drift_detector import SemanticDriftDetector
 from .data_provenance_ledger import DataProvenanceLedger
 from .blockchain_provenance_ledger import BlockchainProvenanceLedger
-from .fairness_evaluator import FairnessEvaluator
+from .fairness import (
+    FairnessEvaluator,
+    FairnessFeedback,
+    FairnessVisualizer,
+    CrossLingualFairnessEvaluator,
+)
 from .fairness_adaptation import FairnessAdaptationPipeline
-from .fairness_visualizer import FairnessVisualizer
-from .cross_lingual_fairness import CrossLingualFairnessEvaluator
 from .graph_neural_reasoner import GraphNeuralReasoner
 from .gnn_memory import GNNMemory
 from .temporal_reasoner import TemporalReasoner

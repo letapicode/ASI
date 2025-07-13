@@ -18,9 +18,9 @@ except Exception:  # pragma: no cover - during tests
     from license_inspector import LicenseInspector  # type: ignore
 
 try:
-    from .fairness_evaluator import FairnessEvaluator
+    from .fairness import FairnessEvaluator
 except Exception:  # pragma: no cover - during tests
-    from fairness_evaluator import FairnessEvaluator  # type: ignore
+    from fairness import FairnessEvaluator  # type: ignore
 
 
 class DatasetWeightAgent:

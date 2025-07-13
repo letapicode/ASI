@@ -174,4 +174,12 @@
 - Old modules now re-export the classes to keep backward compatibility.
 - Updated `hierarchical_memory.py` to import the unified `MemoryServer`.
 - Documented the change in `docs/Plan.md`.
-\n## PR 26\n- Unified various schedulers into `schedulers.py` and moved shared hardware checks to `scheduler_utils.py`.\n- Old scheduler modules now re-export from the new file to maintain compatibility.\n- Updated `__init__.py` imports accordingly.
+\n## PR 26
+- Unified various schedulers into `schedulers.py` and moved shared hardware checks to `scheduler_utils.py`.
+- Old scheduler modules now re-export from the new file to maintain compatibility.
+- Updated `__init__.py` imports accordingly.
+
+## PR 27
+- Consolidated fairness utilities into `src/fairness.py`.
+- Legacy modules now import classes from the unified file for backward compatibility.
+- Updated dependent modules, docs, and tests to reference the new path.

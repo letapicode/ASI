@@ -7,7 +7,7 @@ from .data_ingest import ActiveDataSelector
 from .dataset_bias_detector import DatasetBiasDetector
 from .cognitive_load_monitor import CognitiveLoadMonitor
 from .dataset_lineage_manager import DatasetLineageManager
-from .fairness_evaluator import FairnessEvaluator
+from .fairness import FairnessEvaluator
 
 
 class FairnessAdaptationPipeline:
