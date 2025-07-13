@@ -1,51 +1,18 @@
-from __future__ import annotations
+"""Backward compatibility wrapper for :mod:`schedulers`."""
 
-import psutil
+from importlib import import_module
+from pathlib import Path
+import sys
 
-from .adaptive_scheduler import AdaptiveScheduler
+pkg = sys.modules.get("asi")
+if pkg is None:
+    src_pkg = sys.modules.get("src")
+    if src_pkg is not None:
+        pkg = sys.modules["asi"] = src_pkg
+if pkg is not None and not getattr(pkg, "__path__", None):
+    pkg.__path__ = [str(Path(__file__).parent)]
 
-
-class BatteryAwareScheduler(AdaptiveScheduler):
-    """Pause jobs when system battery level is low."""
-
-    def __init__(
-        self,
-        budget,
-        run_id: str,
-        max_mem: float = 0.9,
-        check_interval: float = 1.0,
-        window: int = 3,
-        min_improvement: float = 0.01,
-        battery_threshold: float = 0.2,
-    ) -> None:
-        super().__init__(
-            budget,
-            run_id,
-            max_mem=max_mem,
-            check_interval=check_interval,
-            window=window,
-            min_improvement=min_improvement,
-        )
-        self.battery_threshold = battery_threshold
-
-    # --------------------------------------------------------------
-    def _battery_level(self) -> float:
-        try:
-            info = psutil.sensors_battery()
-            if info is not None and info.percent is not None:
-                level = float(info.percent) / 100.0
-                self.telemetry.metrics["battery"] = info.percent
-                return level
-        except Exception:
-            pass
-        self.telemetry.metrics["battery"] = 100.0
-        return 1.0
-
-    # --------------------------------------------------------------
-    def _should_pause(self) -> bool:  # type: ignore[override]
-        if self._battery_level() < self.battery_threshold:
-            return True
-        return super()._should_pause()
-
+_sched = import_module("asi.schedulers")
+BatteryAwareScheduler = _sched.BatteryAwareScheduler
 
 __all__ = ["BatteryAwareScheduler"]

@@ -200,8 +200,7 @@ from .rl_dataset_discovery import DatasetQualityAgent
 from .streaming_dataset_watcher import StreamingDatasetWatcher
 from .streaming_compression import AdaptiveCompressor, TemporalVectorCompressor
 from .context_profiler import profile_model, ContextWindowProfiler
-from .accelerator_scheduler import AcceleratorScheduler
-from .adaptive_scheduler import AdaptiveScheduler
+from .schedulers import AcceleratorScheduler, AdaptiveScheduler, EnergyAwareScheduler, BatteryAwareScheduler
 from .dataset_bias_detector import (
     compute_word_freq,
     bias_score,
@@ -306,7 +305,6 @@ from .voice_graph_controller import VoiceGraphController, SignLanguageGraphContr
 from .collaborative_healing import CollaborativeHealingLoop
 from .compute_budget_tracker import ComputeBudgetTracker
 from .budget_aware_scheduler import BudgetAwareScheduler
-from .energy_aware_scheduler import EnergyAwareScheduler
 from .doc_summarizer import summarize_module
 from .dataset_summarizer import summarize_dataset
 
