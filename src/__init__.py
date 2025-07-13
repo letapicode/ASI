@@ -282,8 +282,8 @@ from .fairness import (
     FairnessFeedback,
     FairnessVisualizer,
     CrossLingualFairnessEvaluator,
+    FairnessAdaptationPipeline,
 )
-from .fairness_adaptation import FairnessAdaptationPipeline
 from .graph_neural_reasoner import GraphNeuralReasoner
 from .gnn_memory import GNNMemory
 from .temporal_reasoner import TemporalReasoner

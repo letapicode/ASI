@@ -47,14 +47,13 @@ data_ingest = _load('asi.data_ingest', 'src/data_ingest.py')
 bias_mod = _load('asi.dataset_bias_detector', 'src/dataset_bias_detector.py')
 clm_mod = _load('asi.cognitive_load_monitor', 'src/cognitive_load_monitor.py')
 dlm_mod = _load('asi.dataset_lineage_manager', 'src/dataset_lineage_manager.py')
-fap_mod = _load('asi.fairness_adaptation', 'src/fairness_adaptation.py')
-fe_mod = _load('asi.fairness_evaluator', 'src/fairness_evaluator.py')
+fap_mod = _load('asi.fairness', 'src/fairness.py')
 
 ActiveDataSelector = data_ingest.ActiveDataSelector
 DatasetBiasDetector = bias_mod.DatasetBiasDetector
 CognitiveLoadMonitor = clm_mod.CognitiveLoadMonitor
 FairnessAdaptationPipeline = fap_mod.FairnessAdaptationPipeline
-FairnessEvaluator = fe_mod.FairnessEvaluator
+FairnessEvaluator = fap_mod.FairnessEvaluator
 
 
 class TestFairnessAdaptationPipeline(unittest.TestCase):

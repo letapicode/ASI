@@ -188,3 +188,8 @@
 - Created `fairness_wrappers.py`, `scheduler_wrappers.py`, and `memory_server_wrappers.py` to consolidate repetitive wrapper logic.
 - Updated individual wrapper modules to import from these new files.
 - This removes duplicated import boilerplate while keeping backward compatibility.
+
+## PR 29
+- Merged `fairness_adaptation.py` into `fairness.py` and re-exported the class via `fairness_wrappers`.
+- Updated imports in `__init__.py` and tests to reference the unified module.
+- Documented the consolidation in `docs/Plan.md`.
