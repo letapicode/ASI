@@ -183,3 +183,8 @@
 - Consolidated fairness utilities into `src/fairness.py`.
 - Legacy modules now import classes from the unified file for backward compatibility.
 - Updated dependent modules, docs, and tests to reference the new path.
+
+## PR 28
+- Created `fairness_wrappers.py`, `scheduler_wrappers.py`, and `memory_server_wrappers.py` to consolidate repetitive wrapper logic.
+- Updated individual wrapper modules to import from these new files.
+- This removes duplicated import boilerplate while keeping backward compatibility.

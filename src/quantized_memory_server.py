@@ -1,3 +1,3 @@
-from .memory_servers import QuantizedMemoryServer
+from .memory_server_wrappers import QuantizedMemoryServer
 
 __all__ = ["QuantizedMemoryServer"]

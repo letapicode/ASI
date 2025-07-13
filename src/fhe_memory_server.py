@@ -1,3 +1,3 @@
-from .memory_servers import FHEMemoryServer, FHEMemoryClient
+from .memory_server_wrappers import FHEMemoryServer, FHEMemoryClient
 
 __all__ = ["FHEMemoryServer", "FHEMemoryClient"]

@@ -1,3 +1,3 @@
-from .memory_servers import QuantumMemoryServer
+from .memory_server_wrappers import QuantumMemoryServer
 
 __all__ = ["QuantumMemoryServer"]
