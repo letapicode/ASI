@@ -1,3 +1,3 @@
-from .memory_servers import FederatedMemoryServer
+from .memory_server_wrappers import FederatedMemoryServer
 
 __all__ = ["FederatedMemoryServer"]
