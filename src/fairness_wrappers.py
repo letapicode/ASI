@@ -26,10 +26,12 @@ FairnessEvaluator = _load('FairnessEvaluator')
 CrossLingualFairnessEvaluator = _load('CrossLingualFairnessEvaluator')
 FairnessFeedback = _load('FairnessFeedback')
 FairnessVisualizer = _load('FairnessVisualizer')
+FairnessAdaptationPipeline = _load('FairnessAdaptationPipeline')
 
 __all__ = [
     'FairnessEvaluator',
     'CrossLingualFairnessEvaluator',
     'FairnessFeedback',
+    'FairnessAdaptationPipeline',
     'FairnessVisualizer',
 ]

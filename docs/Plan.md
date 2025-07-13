@@ -567,6 +567,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 61b. **Fairness gap visualizer**: `fairness.FairnessVisualizer` plots demographic parity and opportunity gaps. `dataset_summary.py --fairness-report` saves the charts under `docs/datasets/`; they appear in the lineage and memory dashboards for quick inspection.
 
 61e. **Fairness adaptation pipeline**: `FairnessAdaptationPipeline` streams bias and cognitive load metrics during ingestion and adjusts `ActiveDataSelector` weights. Bias scores are cached and weight updates are vectorised for faster adaptation. `DatasetLineageManager` logs fairness before and after adaptation, showing improved demographic parity on toy datasets.
+61f. **Consolidated fairness modules**: All fairness classes, including `FairnessAdaptationPipeline`, now live in `fairness.py`. Legacy modules import from this unified file for backward compatibility.
 
 61c. **Pre-ingest bias and fairness checks**: `StreamingDatasetWatcher.poll_once()` runs `DatasetBiasDetector` and `fairness.CrossLingualFairnessEvaluator` on newly discovered datasets before they are ingested. Reports are saved as `pre_ingest_analysis.json`. Example usage lives in `scripts/pre_ingest_pipeline.py`.
 61d. **Parallelized bias analysis**: `compute_word_freq()` now uses multithreading when available, roughly doubling analysis throughput for large datasets.
