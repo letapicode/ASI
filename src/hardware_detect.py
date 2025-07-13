@@ -12,7 +12,18 @@ try:  # optional torch dependency
 except Exception:  # pragma: no cover - allow running without torch
     torch = None  # type: ignore
 
-from . import hardware_backends as backends
+try:  # pragma: no cover - optional dependency
+    from . import hardware_backends as backends
+except Exception:  # pragma: no cover - fallback when package missing
+    import types
+
+    backends = types.SimpleNamespace(
+        _HAS_FPGA=False,
+        _HAS_ANALOG=False,
+        _HAS_LOIHI=False,
+        cl=None,
+        analogsim=None,
+    )
 
 # cache (devices, env_str, sim_id)
 _ANALOG_DEVICES_CACHE: tuple[list[str], str | None, int] | None = None
