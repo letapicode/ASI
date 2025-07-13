@@ -303,7 +303,7 @@ def _collect_alignment_metrics() -> tuple[bool, list[str]]:
 
 
 def _eval_fairness_evaluator() -> Tuple[bool, str]:
-    from asi.fairness_evaluator import FairnessEvaluator
+    from asi.fairness import FairnessEvaluator
 
     stats = {
         "a": {"tp": 5, "fp": 5, "fn": 5, "tn": 5},
@@ -316,7 +316,7 @@ def _eval_fairness_evaluator() -> Tuple[bool, str]:
 
 
 def _eval_cross_lingual_fairness() -> Tuple[bool, str]:
-    from asi.cross_lingual_fairness import CrossLingualFairnessEvaluator
+    from asi.fairness import CrossLingualFairnessEvaluator
     from asi.data_ingest import CrossLingualTranslator
 
     stats = {

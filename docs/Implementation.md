@@ -1097,13 +1097,13 @@ the aggregator which can then be scraped by Prometheus.
 
 ## Fairness Evaluator
 
-`src/fairness_evaluator.py` computes demographic parity and equal opportunity gaps from per-group label statistics. The evaluation harness exposes these metrics via the `fairness_evaluator` entry.
+`src/fairness.py` defines `FairnessEvaluator` for demographic parity and equal opportunity metrics. The evaluation harness exposes these metrics via the `fairness_evaluator` entry.
 
 `data_ingest.paraphrase_multilingual()` generates translations and paraphrases
 in multiple languages. Outputs are filtered with `AutoDatasetFilter` and checked
 by `LicenseInspector` before being saved. The number of generated and retained
 files is logged through `DatasetLineageManager`. To quantify fairness gains,
-run `CrossLingualFairnessEvaluator` on the dataset before and after augmentation
+run `fairness.CrossLingualFairnessEvaluator` on the dataset before and after augmentation
 and compare the demographic parity gap.
 
 `src/dataset_weight_agent.py` maintains per-dataset weights by combining

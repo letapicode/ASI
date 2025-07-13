@@ -89,7 +89,7 @@ def main(argv: list[str] | None = None) -> None:
         out_file.write_text(out)
         print(f"Wrote {out_file}")
     if args.fairness_report:
-        from asi.fairness_visualizer import FairnessVisualizer
+        from asi.fairness import FairnessVisualizer
 
         stats_path = Path(args.fairness_report)
         if not stats_path.is_file():
