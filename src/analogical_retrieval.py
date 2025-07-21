@@ -5,7 +5,7 @@ from typing import Tuple, List, Any, TYPE_CHECKING, Iterable, Sequence, Dict
 import torch
 
 from .data_ingest import CrossLingualTranslator
-from .cross_lingual_memory import _embed_text
+from .cross_lingual_utils import embed_text
 
 if TYPE_CHECKING:  # pragma: no cover - import for type hints
     from .hierarchical_memory import HierarchicalMemory
@@ -94,38 +94,12 @@ def analogy_search(
         return memory.search(q_vec + offset, k=k, **kwargs)
 
 
-_BASE_VECS = {
-    "man": torch.tensor([1.0, 0.0, 0.0]),
-    "woman": torch.tensor([0.0, 1.0, 0.0]),
-    "king": torch.tensor([1.0, 0.0, 1.0]),
-    "queen": torch.tensor([0.0, 1.0, 1.0]),
-    "france": torch.tensor([1.0, 0.0, 0.0]),
-    "germany": torch.tensor([0.0, 1.0, 0.0]),
-    "paris": torch.tensor([1.0, 0.0, 1.0]),
-    "berlin": torch.tensor([0.0, 1.0, 1.0]),
-}
-
-
-def _embed_dataset_text(text: str, dim: int) -> torch.Tensor:
-    """Embed ``text`` using deterministic toy vectors for tests."""
-    base = text.split(" ")[-1]
-    if base in _BASE_VECS:
-        vec = _BASE_VECS[base]
-    else:
-        seed = abs(hash(text)) % (2 ** 32)
-        rng = np.random.default_rng(seed)
-        vec = torch.from_numpy(rng.standard_normal(dim).astype(np.float32))
-    if vec.numel() != dim:
-        vec = torch.nn.functional.pad(vec, (0, dim - vec.numel()))
-    return vec
-
-
 def _dataset_vec(
     text: str, lang: str | None, tr: CrossLingualTranslator, dim: int
 ) -> torch.Tensor:
     if lang is not None and lang in tr.languages:
         text = tr.translate(text, lang)
-    return _embed_dataset_text(text, dim)
+    return embed_text(text, dim)
 
 
 def load_analogy_dataset(path: str | Path) -> List[Dict[str, str]]:
@@ -139,10 +113,10 @@ def build_vocab_embeddings(
 ) -> Dict[str, torch.Tensor]:
     vecs: Dict[str, torch.Tensor] = {}
     for w in words:
-        vecs[w] = _embed_dataset_text(w, dim)
+        vecs[w] = embed_text(w, dim)
         for l in tr.languages:
             trans = tr.translate(w, l)
-            vecs[trans] = _embed_dataset_text(trans, dim)
+            vecs[trans] = embed_text(trans, dim)
     return vecs
 
 
