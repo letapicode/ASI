@@ -4,7 +4,7 @@ import torch
 
 from asi.hierarchical_memory import HierarchicalMemory
 from asi.memory_clients import push_remote, query_remote
-from asi.federated_memory_server import FederatedMemoryServer
+from asi.memory_servers import FederatedMemoryServer
 
 
 class TestFederatedMemoryServer(unittest.TestCase):

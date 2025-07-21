@@ -19,7 +19,7 @@ def load(name, path):
     return mod
 
 
-fe = load('asi.fairness_evaluator', 'src/fairness_evaluator.py')
+fe = load('asi.fairness', 'src/fairness.py')
 
 class CrossLingualTranslator:
     def __init__(self, languages):
@@ -38,7 +38,7 @@ dummy = types.ModuleType('asi.data_ingest')
 dummy.CrossLingualTranslator = CrossLingualTranslator
 sys.modules['asi.data_ingest'] = dummy
 
-clf = load('asi.cross_lingual_fairness', 'src/cross_lingual_fairness.py')
+clf = load('asi.cross_lingual_fairness', 'src/fairness.py')
 
 CrossLingualFairnessEvaluator = clf.CrossLingualFairnessEvaluator
 

@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from asi.vector_stores import VectorStore
-from asi.quantum_memory_server import QuantumMemoryServer
+from asi.memory_servers import QuantumMemoryServer
 from asi.memory_clients import QuantumMemoryClient
 
 

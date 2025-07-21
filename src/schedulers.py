@@ -7,6 +7,8 @@ import time
 from collections import deque
 from typing import Any, Callable, Deque, Dict, List, Optional
 import yaml
+from pathlib import Path
+import sys
 
 from .scheduler_utils import (
     cpu_utilization,
@@ -15,6 +17,10 @@ from .scheduler_utils import (
     analog_utilization,
     battery_level,
 )
+
+pkg = sys.modules.get('asi')
+if pkg is not None and not getattr(pkg, '__path__', None):
+    pkg.__path__ = [str(Path(__file__).parent)]
 
 try:  # pragma: no cover - optional torch dependency
     import torch  # type: ignore

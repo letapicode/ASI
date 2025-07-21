@@ -43,14 +43,14 @@ def _load(name, path):
 
 # load dependencies
 
-_load('fairness_evaluator', 'src/fairness_evaluator.py')
+_load('fairness', 'src/fairness.py')
 
 data_ingest = _load('data_ingest', 'src/data_ingest.py')
 _load('dataset_lineage_manager', 'src/dataset_lineage_manager.py')
 _load('adaptive_curriculum', 'src/adaptive_curriculum.py')
-_load('cross_lingual_fairness', 'src/cross_lingual_fairness.py')
+_load('cross_lingual_fairness', 'src/fairness.py')
 _load('dataset_weight_agent', 'src/dataset_weight_agent.py')
-ff_mod = _load('fairness_feedback', 'src/fairness_feedback.py')
+ff_mod = _load('fairness', 'src/fairness.py')
 
 ActiveDataSelector = data_ingest.ActiveDataSelector
 DatasetLineageManager = sys.modules['src.dataset_lineage_manager'].DatasetLineageManager

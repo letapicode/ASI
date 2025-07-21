@@ -63,8 +63,8 @@ sys.modules['asi.cost_aware_scheduler'] = cas_stub
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 sys.modules['asi.telemetry']._HAS_PROM = False
 ComputeBudgetTracker = _load('asi.compute_budget_tracker', 'src/compute_budget_tracker.py').ComputeBudgetTracker
-AdaptiveScheduler = _load('asi.adaptive_scheduler', 'src/adaptive_scheduler.py').AdaptiveScheduler
-BatteryAwareScheduler = _load('asi.battery_aware_scheduler', 'src/battery_aware_scheduler.py').BatteryAwareScheduler
+AdaptiveScheduler = _load('asi.schedulers', 'src/schedulers.py').AdaptiveScheduler
+BatteryAwareScheduler = _load('asi.schedulers', 'src/schedulers.py').BatteryAwareScheduler
 
 
 class TestBatteryAwareScheduler(unittest.TestCase):

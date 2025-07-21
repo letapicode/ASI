@@ -106,8 +106,8 @@ def load(name, path):
     return mod
 
 # load required modules
-fe = load('asi.fairness_evaluator', 'src/fairness_evaluator.py')
-clf = load('asi.cross_lingual_fairness', 'src/cross_lingual_fairness.py')
+fe = load('asi.fairness', 'src/fairness.py')
+clf = load('asi.cross_lingual_fairness', 'src/fairness.py')
 ed = load('asi.emotion_detector', 'src/emotion_detector.py')
 load('asi.deliberative_alignment', 'src/deliberative_alignment.py')
 load('asi.iter_align', 'src/iter_align.py')

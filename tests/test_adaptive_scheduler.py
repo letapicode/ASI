@@ -64,8 +64,8 @@ hardware_detect.list_fpgas = lambda: ['fpga0']
 hardware_detect.list_loihi = lambda: []
 hardware_detect.list_analog = hardware_detect.list_analog
 ComputeBudgetTracker = _load('asi.compute_budget_tracker', 'src/compute_budget_tracker.py').ComputeBudgetTracker
-AdaptiveScheduler = _load('asi.adaptive_scheduler', 'src/adaptive_scheduler.py').AdaptiveScheduler
-sys.modules['asi.adaptive_scheduler'].torch = torch
+AdaptiveScheduler = _load('asi.schedulers', 'src/schedulers.py').AdaptiveScheduler
+sys.modules['asi.schedulers'].torch = torch
 
 
 class TestAdaptiveScheduler(unittest.TestCase):
@@ -130,7 +130,7 @@ class TestAdaptiveScheduler(unittest.TestCase):
         self.assertTrue(order and order[0] == 'b')
 
     def test_device_queueing(self):
-        mod = sys.modules['asi.adaptive_scheduler']
+        mod = sys.modules['asi.schedulers']
         sys.modules['torch'] = types.SimpleNamespace(
             cuda=types.SimpleNamespace(
                 is_available=lambda: True,

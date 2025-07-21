@@ -532,7 +532,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 43. **Summarizing memory compression**: Condense rarely accessed vectors with a small language model before persisting them to disk. Success is a ≥50 % reduction in storage while retrieval accuracy drops <5 %.
 44. **Telemetry instrumentation**: Record GPU/CPU utilization and network throughput across distributed nodes using OpenTelemetry and expose the metrics via Prometheus. Overhead must remain <5 % on a 4-node cluster. *`MemoryServer` now accepts a `TelemetryLogger` to start and stop metrics automatically.*
 44a. **Common server base**: `BaseMemoryServer` holds the gRPC start/stop logic so `MemoryServer` and friends share a single implementation.
-    All memory server variants now reside in `src/memory_servers.py` for easier maintenance.
+    All memory server variants now reside in `src/memory_servers.py` for easier maintenance. Wrapper modules were dropped; tests load the classes from this single file.
 45. **Memory usage dashboard**: Aggregate telemetry from multiple memory nodes and present hit/miss rates in real time.
 46. **License compliance checker**: Parse dataset sources for license text during ingestion and block incompatible samples. Every stored triple should include a valid license entry.
 47. **Adaptive streaming compression**: Add `AdaptiveCompressor` to adjust the compression ratio in `StreamingCompressor` based on retrieval frequency.
@@ -567,7 +567,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 61b. **Fairness gap visualizer**: `fairness.FairnessVisualizer` plots demographic parity and opportunity gaps. `dataset_summary.py --fairness-report` saves the charts under `docs/datasets/`; they appear in the lineage and memory dashboards for quick inspection.
 
 61e. **Fairness adaptation pipeline**: `FairnessAdaptationPipeline` streams bias and cognitive load metrics during ingestion and adjusts `ActiveDataSelector` weights. Bias scores are cached and weight updates are vectorised for faster adaptation. `DatasetLineageManager` logs fairness before and after adaptation, showing improved demographic parity on toy datasets.
-61f. **Consolidated fairness modules**: All fairness classes, including `FairnessAdaptationPipeline`, now live in `fairness.py`. Legacy modules import from this unified file for backward compatibility.
+61f. **Consolidated fairness modules**: All fairness classes, including `FairnessAdaptationPipeline`, now live in `fairness.py`. Legacy wrapper files were removed and tests import directly from the unified module.
 
 61c. **Pre-ingest bias and fairness checks**: `StreamingDatasetWatcher.poll_once()` runs `DatasetBiasDetector` and `fairness.CrossLingualFairnessEvaluator` on newly discovered datasets before they are ingested. Reports are saved as `pre_ingest_analysis.json`. Example usage lives in `scripts/pre_ingest_pipeline.py`.
 61d. **Parallelized bias analysis**: `compute_word_freq()` now uses multithreading when available, roughly doubling analysis throughput for large datasets.

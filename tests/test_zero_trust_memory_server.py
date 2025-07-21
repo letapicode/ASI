@@ -60,15 +60,15 @@ class TestZeroTrustMemoryServer(unittest.TestCase):
         spec_ledger.loader.exec_module(ledger_mod)
         BlockchainProvenanceLedger = ledger_mod.BlockchainProvenanceLedger
 
-        spec_zts = importlib.util.spec_from_file_location(
-            "src.zero_trust_memory_server",
-            os.path.join(SRC_DIR, "zero_trust_memory_server.py"),
+        spec_ms = importlib.util.spec_from_file_location(
+            "src.memory_servers",
+            os.path.join(SRC_DIR, "memory_servers.py"),
             submodule_search_locations=[SRC_DIR],
         )
-        zts_mod = importlib.util.module_from_spec(spec_zts)
-        sys.modules["src.zero_trust_memory_server"] = zts_mod
-        spec_zts.loader.exec_module(zts_mod)
-        ZeroTrustMemoryServer = zts_mod.ZeroTrustMemoryServer
+        ms_mod = importlib.util.module_from_spec(spec_ms)
+        sys.modules["src.memory_servers"] = ms_mod
+        spec_ms.loader.exec_module(ms_mod)
+        ZeroTrustMemoryServer = ms_mod.ZeroTrustMemoryServer
 
         class DummyMemory:
             def __init__(self, dim: int) -> None:

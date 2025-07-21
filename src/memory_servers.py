@@ -6,6 +6,7 @@ from concurrent import futures
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Dict
 import sys
+from pathlib import Path
 import time
 import uuid
 import numpy as np
@@ -24,6 +25,10 @@ try:  # optional tenseal dependency
 except Exception:  # pragma: no cover - optional
     ts = None
     _HAS_TENSEAL = False
+
+pkg = sys.modules.get('asi')
+if pkg is not None and not getattr(pkg, '__path__', None):
+    pkg.__path__ = [str(Path(__file__).parent)]
 
 if _HAS_GRPC:
     import torch

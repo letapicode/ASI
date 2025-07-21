@@ -8,6 +8,12 @@ from .data_ingest import ActiveDataSelector
 from .dataset_bias_detector import DatasetBiasDetector
 from .cognitive_load_monitor import CognitiveLoadMonitor
 from .dataset_lineage_manager import DatasetLineageManager
+from pathlib import Path
+import sys
+
+pkg = sys.modules.get('asi')
+if pkg is not None and not getattr(pkg, '__path__', None):
+    pkg.__path__ = [str(Path(__file__).parent)]
 
 # ---------------------------------------------------------------------------
 class FairnessEvaluator:

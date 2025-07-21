@@ -38,8 +38,8 @@ def _load(name, path):
 _load('asi.carbon_tracker', 'src/carbon_tracker.py')
 _load('asi.memory_event_detector', 'src/memory_event_detector.py')
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
-accel_mod = _load('asi.accelerator_scheduler', 'src/accelerator_scheduler.py')
 hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
+accel_mod = _load('asi.schedulers', 'src/schedulers.py')
 AcceleratorScheduler = accel_mod.AcceleratorScheduler
 
 

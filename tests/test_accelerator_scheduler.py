@@ -8,7 +8,7 @@ import time
 src_pkg = types.ModuleType('src')
 sys.modules['src'] = src_pkg
 
-loader = importlib.machinery.SourceFileLoader('src.accelerator_scheduler', 'src/accelerator_scheduler.py')
+loader = importlib.machinery.SourceFileLoader('src.schedulers', 'src/schedulers.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mod = importlib.util.module_from_spec(spec)
 mod.__package__ = 'src'

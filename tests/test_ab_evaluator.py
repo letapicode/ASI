@@ -37,9 +37,9 @@ def _load(name, path):
     return mod
 
 # Load minimal dependencies
-_load('asi.fairness_evaluator', 'src/fairness_evaluator.py')
+_load('asi.fairness', 'src/fairness.py')
 _load('asi.data_ingest', 'src/data_ingest.py')
-_load('asi.cross_lingual_fairness', 'src/cross_lingual_fairness.py')
+_load('asi.cross_lingual_fairness', 'src/fairness.py')
 _load('asi.emotion_detector', 'src/emotion_detector.py')
 _load('asi.eval_harness', 'src/eval_harness.py')
 ab_mod = _load('asi.ab_evaluator', 'src/ab_evaluator.py')
