@@ -29,11 +29,9 @@ _load('asi.fhe_memory_pb2', 'src/fhe_memory_pb2.py')
 _load('fhe_memory_pb2_grpc', 'src/fhe_memory_pb2_grpc.py')
 _load('asi.fhe_memory_pb2_grpc', 'src/fhe_memory_pb2_grpc.py')
 _load('asi.telemetry', 'src/telemetry.py')
-_load('asi.base_memory_server', 'src/base_memory_server.py')
-_load('base_memory_server', 'src/base_memory_server.py')
-fhe_mod = _load('asi.fhe_memory_server', 'src/fhe_memory_server.py')
-FHEMemoryServer = getattr(fhe_mod, 'FHEMemoryServer', None)
-FHEMemoryClient = getattr(fhe_mod, 'FHEMemoryClient', None)
+ms_mod = _load('asi.memory_servers', 'src/memory_servers.py')
+FHEMemoryServer = getattr(ms_mod, 'FHEMemoryServer', None)
+FHEMemoryClient = getattr(ms_mod, 'FHEMemoryClient', None)
 
 try:
     import grpc  # noqa: F401

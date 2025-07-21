@@ -52,8 +52,8 @@ hardware_detect.list_fpgas = lambda: []
 hardware_detect.list_loihi = lambda: []
 hardware_detect.list_analog = lambda: []
 ComputeBudgetTracker = _load('asi.compute_budget_tracker', 'src/compute_budget_tracker.py').ComputeBudgetTracker
-AdaptiveScheduler = _load('asi.adaptive_scheduler', 'src/adaptive_scheduler.py').AdaptiveScheduler
-EnergyAwareScheduler = _load('asi.energy_aware_scheduler', 'src/energy_aware_scheduler.py').EnergyAwareScheduler
+AdaptiveScheduler = _load('asi.schedulers', 'src/schedulers.py').AdaptiveScheduler
+EnergyAwareScheduler = _load('asi.schedulers', 'src/schedulers.py').EnergyAwareScheduler
 
 
 class TestEnergyAwareScheduler(unittest.TestCase):

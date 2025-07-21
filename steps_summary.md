@@ -199,3 +199,9 @@
 - Removed duplicate fallback classes from several modules and imported the shared helper instead.
 - Unified deterministic text embedding logic by using `cross_lingual_utils.embed_text` across modules.
 - Refactored `analogical_retrieval.py` to rely on the shared embedding helper.
+
+## PR 31
+- Removed legacy wrapper modules for memory servers, schedulers and fairness utilities.
+- Updated imports across code and tests to load classes from `memory_servers.py`, `schedulers.py` and `fairness.py` directly.
+- Adjusted `memory_service.serve` and `distributed_trainer` to use the unified modules.
+- Documented the cleanup in `docs/Plan.md`.

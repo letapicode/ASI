@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
-from .hierarchical_memory import HierarchicalMemory, MemoryServer
-from .base_memory_server import BaseMemoryServer
+from .hierarchical_memory import HierarchicalMemory
+from .memory_servers import (
+    BaseMemoryServer,
+    MemoryServer,
+    FHEMemoryServer,
+    ZeroTrustMemoryServer,
+)
 from .telemetry import TelemetryLogger
 from .blockchain_provenance_ledger import BlockchainProvenanceLedger
 
@@ -32,8 +37,6 @@ def serve(
     if fhe_context is not None:
         if not _HAS_TENSEAL:
             raise ImportError("tenseal is required for FHEMemoryServer")
-        from .fhe_memory_server import FHEMemoryServer  # type: ignore
-
         server = FHEMemoryServer(
             memory.store if hasattr(memory, "store") else memory,  # type: ignore
             fhe_context,
@@ -41,7 +44,6 @@ def serve(
             max_workers=max_workers,
         )
     elif ledger is not None:
-        from .zero_trust_memory_server import ZeroTrustMemoryServer  # type: ignore
         server = ZeroTrustMemoryServer(
             memory,
             ledger,

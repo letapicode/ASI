@@ -11,7 +11,7 @@ src_pkg = types.ModuleType('src')
 sys.modules['src'] = src_pkg
 
 # load dependencies
-for mod_name in ['license_inspector', 'dataset_bias_detector', 'fairness_evaluator']:
+for mod_name in ['license_inspector', 'dataset_bias_detector', 'fairness']:
     loader = importlib.machinery.SourceFileLoader(f'src.{mod_name}', f'src/{mod_name}.py')
     spec = importlib.util.spec_from_loader(loader.name, loader)
     module = importlib.util.module_from_spec(spec)

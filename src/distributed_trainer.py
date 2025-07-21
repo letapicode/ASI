@@ -15,7 +15,7 @@ import torch
 from .gradient_compression import GradientCompressionConfig, GradientCompressor
 from .telemetry import TelemetryLogger
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
-from .accelerator_scheduler import AcceleratorScheduler
+from .schedulers import AcceleratorScheduler
 from .hpc_schedulers import submit_job
 from .enclave_runner import EnclaveRunner, EnclaveConfig
 

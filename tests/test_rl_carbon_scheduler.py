@@ -59,9 +59,9 @@ _load('asi.adaptive_micro_batcher', 'src/adaptive_micro_batcher.py')
 gpu_sched_stub = types.ModuleType('asi.gpu_aware_scheduler')
 gpu_sched_stub.GPUAwareScheduler = object
 sys.modules['asi.gpu_aware_scheduler'] = gpu_sched_stub
-accel_stub = types.ModuleType('asi.accelerator_scheduler')
+accel_stub = types.ModuleType('asi.schedulers')
 accel_stub.AcceleratorScheduler = object
-sys.modules['asi.accelerator_scheduler'] = accel_stub
+sys.modules['asi.schedulers'] = accel_stub
 _load('asi.enclave_runner', 'src/enclave_runner.py')
 dm_stub = types.ModuleType('asi.distributed_memory')
 class _DM:

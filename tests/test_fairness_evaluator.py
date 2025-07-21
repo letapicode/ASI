@@ -8,11 +8,11 @@ src_pkg = types.ModuleType('src')
 src_pkg.__path__ = ['src']
 src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
 sys.modules['src'] = src_pkg
-loader = importlib.machinery.SourceFileLoader('src.fairness_evaluator', 'src/fairness_evaluator.py')
+loader = importlib.machinery.SourceFileLoader('src.fairness', 'src/fairness.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 fe = importlib.util.module_from_spec(spec)
 fe.__package__ = 'src'
-sys.modules['src.fairness_evaluator'] = fe
+sys.modules['src.fairness'] = fe
 loader.exec_module(fe)
 FairnessEvaluator = fe.FairnessEvaluator
 
