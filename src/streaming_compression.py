@@ -7,78 +7,7 @@ try:  # optional torch dependency
     import torch
     from torch import nn
 except Exception:  # pragma: no cover - allow running without torch
-    import types
-    import numpy as np
-
-    class _DummyNN(types.SimpleNamespace):
-        class Module:  # type: ignore[override]
-            pass
-
-        class Linear:
-            def __init__(self, in_f: int, out_f: int):
-                self.in_features = in_f
-                self.out_features = out_f
-
-            def __call__(self, x):
-                arr = x.data if hasattr(x, 'data') else np.asarray(x, dtype=np.float32)
-                out = arr[..., : self.out_features]
-                return _DummyTensor(out)
-
-    class _DummyTensor:
-        def __init__(self, data):
-            self.data = np.asarray(data, dtype=np.float32)
-
-        def dim(self) -> int:
-            return self.data.ndim
-
-        def unsqueeze(self, axis: int) -> "_DummyTensor":
-            return _DummyTensor(np.expand_dims(self.data, axis))
-
-        def detach(self) -> "_DummyTensor":
-            return self
-
-        def clone(self) -> "_DummyTensor":
-            return _DummyTensor(self.data.copy())
-
-        def cpu(self) -> "_DummyTensor":
-            return self
-
-        def __getitem__(self, idx: int) -> "_DummyTensor":
-            return _DummyTensor(self.data[idx])
-
-        def numpy(self) -> np.ndarray:
-            return self.data
-
-        def to(self, *_args: Any, **_kw: Any) -> "_DummyTensor":
-            return self
-
-        @property
-        def device(self) -> str:
-            return "cpu"
-
-        def numel(self) -> int:
-            return self.data.size
-
-        def tolist(self):
-            return self.data.tolist()
-
-        def item(self):
-            return float(self.data)
-
-    class _DummyTorch(types.SimpleNamespace):
-        Tensor = _DummyTensor
-
-        def empty(self, *args: Any):
-            return _DummyTensor(np.empty(*args))
-
-        def stack(self, seq):
-            return _DummyTensor(np.stack([s.data for s in seq]))
-
-        def from_numpy(self, arr):
-            return _DummyTensor(np.asarray(arr, dtype=np.float32))
-
-    torch = _DummyTorch()
-    nn = _DummyNN()
+    from .torch_fallback import torch, nn
 
 
 class ReservoirBuffer:

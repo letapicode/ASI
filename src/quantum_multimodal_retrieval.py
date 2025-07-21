@@ -7,31 +7,7 @@ from typing import Tuple, Any
 try:  # optional torch dependency
     import torch
 except Exception:  # pragma: no cover - allow running without torch
-    import numpy as np
-    import types
-
-    class _DummyTensor(np.ndarray):
-        def to(self, device=None):
-            return self
-
-        @property
-        def device(self):
-            return "cpu"
-
-    def _from_numpy(arr):
-        return np.asarray(arr, dtype=np.float32).view(_DummyTensor)
-
-    def _stack(seq, dim=0):
-        return np.stack(seq, axis=dim).view(_DummyTensor)
-
-    class _DummyTorch(types.SimpleNamespace):
-        pass
-
-    torch = _DummyTorch(
-        from_numpy=_from_numpy,
-        stack=_stack,
-        empty=lambda *shape, device=None: np.empty(shape, dtype=np.float32).view(_DummyTensor),
-    )
+    from .torch_fallback import torch
 
 from .quantum_retrieval import amplify_search
 

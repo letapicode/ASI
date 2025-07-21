@@ -4,83 +4,10 @@ from typing import Iterable, Any, Tuple, List
 try:  # optional torch dependency
     import torch
     from torch import nn
-    _cos_sim = nn.functional.cosine_similarity
 except Exception:  # pragma: no cover - allow running without torch
-    import types
-    import numpy as np
+    from .torch_fallback import torch, nn
 
-    class _DummyTensor:
-        def __init__(self, data):
-            self.data = np.asarray(data, dtype=np.float32)
-
-        def dim(self) -> int:
-            return self.data.ndim
-
-        def unsqueeze(self, axis: int) -> "_DummyTensor":
-            return _DummyTensor(np.expand_dims(self.data, axis))
-
-        def expand_as(self, other: "_DummyTensor") -> "_DummyTensor":
-            arr = self.data
-            if arr.shape[-1] != other.data.shape[-1]:
-                arr = arr[..., : other.data.shape[-1]]
-            return _DummyTensor(np.broadcast_to(arr, other.data.shape))
-
-        def clone(self) -> "_DummyTensor":
-            return _DummyTensor(self.data.copy())
-
-        def detach(self) -> "_DummyTensor":
-            return self
-
-        def cpu(self) -> "_DummyTensor":
-            return self
-
-        def numpy(self) -> np.ndarray:
-            return self.data
-
-        def __iter__(self):
-            if self.data.ndim == 0:
-                yield _DummyTensor(self.data)
-            else:
-                for row in self.data:
-                    yield _DummyTensor(row)
-
-        def size(self, dim: int | None = None):
-            return self.data.shape if dim is None else self.data.shape[dim]
-
-        def to(self, *_args: Any, **_kw: Any) -> "_DummyTensor":
-            return self
-
-        @property
-        def device(self) -> str:
-            return "cpu"
-
-        def numel(self) -> int:
-            return self.data.size
-
-        def tolist(self):
-            return self.data.tolist()
-
-        def item(self):
-            return float(self.data)
-
-    class _DummyTorch(types.SimpleNamespace):
-        Tensor = _DummyTensor
-
-        def from_numpy(self, arr):
-            return _DummyTensor(arr)
-
-        def stack(self, seq):
-            return _DummyTensor(np.stack([s.data for s in seq]))
-
-    torch = _DummyTorch()
-
-    def _cos_sim(a, b, dim=1):
-        a = np.asarray(getattr(a, 'data', a))
-        b = np.asarray(getattr(b, 'data', b))
-        dot = (a * b).sum(axis=dim)
-        na = np.linalg.norm(a, axis=dim)
-        nb = np.linalg.norm(b, axis=dim)
-        return dot / (na * nb + 1e-8)
+_cos_sim = nn.functional.cosine_similarity
 
 from .hierarchical_memory import HierarchicalMemory
 from .data_ingest import CrossLingualTranslator, CrossLingualSpeechTranslator

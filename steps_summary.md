@@ -193,3 +193,9 @@
 - Merged `fairness_adaptation.py` into `fairness.py` and re-exported the class via `fairness_wrappers`.
 - Updated imports in `__init__.py` and tests to reference the unified module.
 - Documented the consolidation in `docs/Plan.md`.
+
+## PR 30
+- Added `torch_fallback.py` providing `DummyTensor` and lightweight `torch`/`nn` replacements.
+- Removed duplicate fallback classes from several modules and imported the shared helper instead.
+- Unified deterministic text embedding logic by using `cross_lingual_utils.embed_text` across modules.
+- Refactored `analogical_retrieval.py` to rely on the shared embedding helper.
