@@ -38,19 +38,16 @@ def _load(name: str, path: str):
 _load("src.lineage_pb2", os.path.join(SRC_DIR, "lineage_pb2.py"))
 _load("src.lineage_pb2_grpc", os.path.join(SRC_DIR, "lineage_pb2_grpc.py"))
 
-DatasetLineageClient = _load(
-    "src.dataset_lineage_client", os.path.join(SRC_DIR, "dataset_lineage_client.py")
-).DatasetLineageClient
-DatasetLineageManager = _load(
-    "src.dataset_lineage_manager", os.path.join(SRC_DIR, "dataset_lineage_manager.py")
-).DatasetLineageManager
+dl_mod = _load(
+    "src.dataset_lineage", os.path.join(SRC_DIR, "dataset_lineage.py")
+)
+DatasetLineageClient = dl_mod.DatasetLineageClient
+DatasetLineageManager = dl_mod.DatasetLineageManager
 BlockchainProvenanceLedger = _load(
     "src.blockchain_provenance_ledger", os.path.join(SRC_DIR, "blockchain_provenance_ledger.py")
 ).BlockchainProvenanceLedger
 
-DatasetLineageServer = _load(
-    "src.dataset_lineage_server", os.path.join(SRC_DIR, "dataset_lineage_server.py")
-).DatasetLineageServer
+DatasetLineageServer = dl_mod.DatasetLineageServer
 
 
 class TestDatasetLineageServer(unittest.TestCase):

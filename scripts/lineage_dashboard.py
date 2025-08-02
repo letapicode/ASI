@@ -5,10 +5,10 @@ import argparse
 import time
 
 try:  # pragma: no cover - prefer package import
-    from asi.dataset_lineage_manager import DatasetLineageManager
+    from asi.dataset_lineage import DatasetLineageManager
     from asi.dataset_lineage_dashboard import DatasetLineageDashboard
 except Exception:  # pragma: no cover - fallback for tests
-    from src.dataset_lineage_manager import DatasetLineageManager  # type: ignore
+    from src.dataset_lineage import DatasetLineageManager  # type: ignore
     from src.dataset_lineage_dashboard import DatasetLineageDashboard  # type: ignore
 
 

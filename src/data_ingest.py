@@ -119,10 +119,10 @@ except Exception:  # pragma: no cover - for tests
                 return {}
 
 try:
-    from .dataset_lineage_manager import DatasetLineageManager
+    from .dataset_lineage import DatasetLineageManager
 except Exception:  # pragma: no cover - for tests
     try:
-        from dataset_lineage_manager import DatasetLineageManager  # type: ignore
+        from dataset_lineage import DatasetLineageManager  # type: ignore
     except Exception:  # pragma: no cover - stub
         class DatasetLineageManager:  # type: ignore
             def __init__(self, *a: Any, **kw: Any) -> None:

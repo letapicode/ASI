@@ -577,7 +577,7 @@ Sensitive ingestion steps can be isolated using `EnclaveRunner`:
 ```python
 from asi.enclave_runner import EnclaveRunner
 from asi.license_inspector import LicenseInspector
-from asi.dataset_lineage_manager import DatasetLineageManager
+from asi.dataset_lineage import DatasetLineageManager
 from asi.data_ingest import download_triples, paraphrase_multilingual
 from pathlib import Path
 
@@ -937,13 +937,13 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
 - Add a `DatasetVersioner` module that logs dataset hashes and transformation steps. Extend `data_ingest` so all downloads and synthetic samples record their provenance in a version file.
   **Implemented in `src/dataset_versioner.py` and wired through `data_ingest`.**
 - Add a `DatasetLineageManager` that records transformation steps and resulting file hashes for reproducible pipelines.
-  **Implemented in `src/dataset_lineage_manager.py` with tests.**
+  **Implemented in `src/dataset_lineage.py` with tests.**
 - Provide a `DatasetLineageDashboard` exposing `/graph` and `/steps` endpoints for searching lineage records. Run `python scripts/lineage_dashboard.py <root>` to launch it.
   **Implemented in `src/dataset_lineage_dashboard.py` with tests.**
 - Introduce a `BlockchainProvenanceLedger` that links each record to the previous hash. Ingestion helpers append their lineage to this ledger and `scripts/check_blockchain_provenance.py` verifies the chain.
-- Expose a `DatasetLineageService` gRPC API. `dataset_lineage_server.py` signs
+- Expose a `DatasetLineageService` gRPC API. `dataset_lineage.py` signs
   each record with an ed25519 key and writes it to the `BlockchainProvenanceLedger`.
-  The companion `dataset_lineage_client.py` provides `add_entry()` and
+  The same module provides a `DatasetLineageClient` with `add_entry()` and
   `get_entries()` helpers.
 - Implement a `ContextWindowProfiler` that measures memory footprint and wall-clock time at various sequence lengths. **Implemented as `src/context_profiler.py` and integrated with `eval_harness.py`.**
 - Extend `HierarchicalMemory` with an adaptive eviction policy that prunes rarely used vectors and emit statistics on hit/miss ratios.

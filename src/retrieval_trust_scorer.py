@@ -5,7 +5,7 @@ import json
 from dataclasses import asdict
 from typing import Any, Iterable
 
-from .dataset_lineage_manager import DatasetLineageManager, LineageStep
+from .dataset_lineage import DatasetLineageManager, LineageStep
 from .blockchain_provenance_ledger import BlockchainProvenanceLedger
 
 

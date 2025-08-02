@@ -10,11 +10,11 @@ import sys
 src_pkg = types.ModuleType('src')
 sys.modules['src'] = src_pkg
 
-loader = importlib.machinery.SourceFileLoader('src.dataset_lineage_manager', 'src/dataset_lineage_manager.py')
+loader = importlib.machinery.SourceFileLoader('src.dataset_lineage', 'src/dataset_lineage.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 dlm = importlib.util.module_from_spec(spec)
 dlm.__package__ = 'src'
-sys.modules['src.dataset_lineage_manager'] = dlm
+sys.modules['src.dataset_lineage'] = dlm
 loader.exec_module(dlm)
 DatasetLineageManager = dlm.DatasetLineageManager
 

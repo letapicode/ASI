@@ -25,7 +25,7 @@ sys.modules['src'] = src_pkg
 src_pkg.__path__ = ['src']
 src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
 
-DatasetLineageManager = _load('src.dataset_lineage_manager', 'src/dataset_lineage_manager.py').DatasetLineageManager
+DatasetLineageManager = _load('src.dataset_lineage', 'src/dataset_lineage.py').DatasetLineageManager
 
 summary_mod = _load('scripts.dataset_summary', 'scripts/dataset_summary.py')
 summarize = summary_mod.summarize

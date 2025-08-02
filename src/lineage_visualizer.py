@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
 
-from .dataset_lineage_manager import DatasetLineageManager
+from .dataset_lineage import DatasetLineageManager
 
 
 class LineageVisualizer:

@@ -26,11 +26,11 @@ li.__package__ = 'src'
 sys.modules['src.license_inspector'] = li
 loader_li.exec_module(li)
 
-loader_dlm = importlib.machinery.SourceFileLoader('src.dataset_lineage_manager', 'src/dataset_lineage_manager.py')
+loader_dlm = importlib.machinery.SourceFileLoader('src.dataset_lineage', 'src/dataset_lineage.py')
 spec_dlm = importlib.util.spec_from_loader(loader_dlm.name, loader_dlm)
 dlm = importlib.util.module_from_spec(spec_dlm)
 dlm.__package__ = 'src'
-sys.modules['src.dataset_lineage_manager'] = dlm
+sys.modules['src.dataset_lineage'] = dlm
 loader_dlm.exec_module(dlm)
 
 loader_pa = importlib.machinery.SourceFileLoader('src.privacy_auditor', 'src/privacy_auditor.py')

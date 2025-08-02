@@ -8,7 +8,7 @@ from typing import Iterable, List
 import aiohttp
 import requests
 
-from .dataset_lineage_manager import DatasetLineageManager
+from .dataset_lineage import DatasetLineageManager
 
 
 @dataclass

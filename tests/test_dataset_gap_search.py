@@ -18,7 +18,7 @@ from asi.dataset_gap_search import (
     run_gap_search_async,
     CandidateURL,
 )
-from asi.dataset_lineage_manager import DatasetLineageManager
+from asi.dataset_lineage import DatasetLineageManager
 
 
 class TestDatasetGapSearch(unittest.TestCase):

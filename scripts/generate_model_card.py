@@ -7,7 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from asi.dataset_lineage_manager import DatasetLineageManager
+from asi.dataset_lineage import DatasetLineageManager
 from asi.telemetry import TelemetryLogger
 from asi.model_card import ModelCardGenerator
 

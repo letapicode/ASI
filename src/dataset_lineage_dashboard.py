@@ -24,7 +24,7 @@ except Exception:  # pragma: no cover - fallback when not packaged
 
 BaseDashboard = load_base_dashboard(__file__)
 
-from .dataset_lineage_manager import DatasetLineageManager, LineageStep
+from .dataset_lineage import DatasetLineageManager, LineageStep
 
 
 class DatasetLineageDashboard(BaseDashboard):
