@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
-from .dataset_lineage_manager import DatasetLineageManager
+from .dataset_lineage import DatasetLineageManager
 from .telemetry import TelemetryLogger
 
 

@@ -34,7 +34,7 @@ sys.modules['src.data_ingest'] = di
 sys.modules['asi.data_ingest'] = di
 loader.exec_module(di)
 
-loader_dlm = importlib.machinery.SourceFileLoader('src.dataset_lineage_manager', 'src/dataset_lineage_manager.py')
+loader_dlm = importlib.machinery.SourceFileLoader('src.dataset_lineage', 'src/dataset_lineage.py')
 spec_dlm = importlib.util.spec_from_loader(loader_dlm.name, loader_dlm)
 dlm = importlib.util.module_from_spec(spec_dlm)
 dlm.__package__ = 'src'
@@ -42,7 +42,7 @@ src_pkg = types.ModuleType('src')
 sys.modules['src'] = src_pkg
 src_pkg.__path__ = ['src']
 src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
-sys.modules['src.dataset_lineage_manager'] = dlm
+sys.modules['src.dataset_lineage'] = dlm
 loader_poison = importlib.machinery.SourceFileLoader('src.data_poison_detector', 'src/data_poison_detector.py')
 spec_p = importlib.util.spec_from_loader(loader_poison.name, loader_poison)
 poison_mod = importlib.util.module_from_spec(spec_p)
@@ -50,7 +50,7 @@ poison_mod.__package__ = 'src'
 sys.modules['src.data_poison_detector'] = poison_mod
 loader_poison.exec_module(poison_mod)
 sys.modules['asi.data_poison_detector'] = poison_mod
-sys.modules['asi.dataset_lineage_manager'] = dlm
+sys.modules['asi.dataset_lineage'] = dlm
 loader_dlm.exec_module(dlm)
 DataPoisonDetector = poison_mod.DataPoisonDetector
 

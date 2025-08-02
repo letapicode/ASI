@@ -28,11 +28,11 @@ loader2.exec_module(dd)
 DiscoveredDataset = dd.DiscoveredDataset
 store_datasets = dd.store_datasets
 
-loader3 = importlib.machinery.SourceFileLoader('src.dataset_lineage_manager', 'src/dataset_lineage_manager.py')
+loader3 = importlib.machinery.SourceFileLoader('src.dataset_lineage', 'src/dataset_lineage.py')
 spec3 = importlib.util.spec_from_loader(loader3.name, loader3)
 dlm = importlib.util.module_from_spec(spec3)
 dlm.__package__ = 'src'
-sys.modules['src.dataset_lineage_manager'] = dlm
+sys.modules['src.dataset_lineage'] = dlm
 loader3.exec_module(dlm)
 DatasetLineageManager = dlm.DatasetLineageManager
 

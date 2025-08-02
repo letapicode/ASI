@@ -1,7 +1,7 @@
 import argparse
 import json
 from pathlib import Path
-from asi.dataset_lineage_manager import DatasetLineageManager
+from asi.dataset_lineage import DatasetLineageManager
 from asi.data_provenance_ledger import DataProvenanceLedger
 
 

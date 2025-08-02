@@ -9,10 +9,10 @@ import json
 from pathlib import Path
 
 try:  # pragma: no cover - prefer package if available
-    from asi.dataset_lineage_manager import DatasetLineageManager
+    from asi.dataset_lineage import DatasetLineageManager
     from asi.license_inspector import LicenseInspector
 except Exception:  # pragma: no cover - fallback for tests
-    from src.dataset_lineage_manager import DatasetLineageManager  # type: ignore
+    from src.dataset_lineage import DatasetLineageManager  # type: ignore
     from src.license_inspector import LicenseInspector  # type: ignore
     from src.dataset_summarizer import summarize_dataset  # type: ignore
 else:  # pragma: no cover - package import

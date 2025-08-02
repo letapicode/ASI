@@ -7,7 +7,7 @@ import numpy as np
 from .data_ingest import ActiveDataSelector
 from .dataset_bias_detector import DatasetBiasDetector
 from .cognitive_load_monitor import CognitiveLoadMonitor
-from .dataset_lineage_manager import DatasetLineageManager
+from .dataset_lineage import DatasetLineageManager
 from pathlib import Path
 import sys
 
@@ -148,9 +148,9 @@ class FairnessFeedback:
             SampleWeightRL = _SWRL
         if DatasetLineageManager is None:
             try:
-                from .dataset_lineage_manager import DatasetLineageManager as _DLM
+                from .dataset_lineage import DatasetLineageManager as _DLM
             except Exception:  # pragma: no cover - during tests
-                from dataset_lineage_manager import DatasetLineageManager as _DLM  # type: ignore
+                from dataset_lineage import DatasetLineageManager as _DLM  # type: ignore
             DatasetLineageManager = _DLM
 
         self.selector = selector

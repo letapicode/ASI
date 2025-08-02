@@ -15,7 +15,7 @@ def _load(name: str, path: str):
     return mod
 
 
-DatasetLineageManager = _load('src.dataset_lineage_manager', 'src/dataset_lineage_manager.py').DatasetLineageManager
+DatasetLineageManager = _load('src.dataset_lineage', 'src/dataset_lineage.py').DatasetLineageManager
 LineageVisualizer = _load('src.lineage_visualizer', 'src/lineage_visualizer.py').LineageVisualizer
 
 

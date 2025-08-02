@@ -7,7 +7,7 @@ from typing import Iterable, Tuple, Optional
 
 from .privacy_budget_manager import PrivacyBudgetManager
 from .license_inspector import LicenseInspector
-from .dataset_lineage_manager import DatasetLineageManager
+from .dataset_lineage import DatasetLineageManager
 
 
 class PrivacyAuditor:

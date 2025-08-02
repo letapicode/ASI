@@ -11,7 +11,7 @@ from typing import Dict, Iterable, Tuple
 import requests
 
 from .dataset_discovery import DiscoveredDataset
-from .dataset_lineage_manager import DatasetLineageManager
+from .dataset_lineage import DatasetLineageManager
 
 
 # Mapping of canonical license tokens to regex patterns. Compiled once at module

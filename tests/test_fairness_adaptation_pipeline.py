@@ -46,7 +46,7 @@ def _load(name, path):
 data_ingest = _load('asi.data_ingest', 'src/data_ingest.py')
 bias_mod = _load('asi.dataset_bias_detector', 'src/dataset_bias_detector.py')
 clm_mod = _load('asi.cognitive_load_monitor', 'src/cognitive_load_monitor.py')
-dlm_mod = _load('asi.dataset_lineage_manager', 'src/dataset_lineage_manager.py')
+dlm_mod = _load('asi.dataset_lineage', 'src/dataset_lineage.py')
 fap_mod = _load('asi.fairness', 'src/fairness.py')
 
 ActiveDataSelector = data_ingest.ActiveDataSelector

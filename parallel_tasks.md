@@ -644,21 +644,21 @@ Analyze the file `src/dataset_discovery.py` for code quality, documentation, and
 
 Analyze the file `src/dataset_gap_search.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 162: Review src/dataset_lineage_client.py
+## Task 162: Review src/dataset_lineage.py
 
-Analyze the file `src/dataset_lineage_client.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/dataset_lineage.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 163: Review src/dataset_lineage_dashboard.py
 
 Analyze the file `src/dataset_lineage_dashboard.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 164: Review src/dataset_lineage_manager.py
+## Task 164: Review src/dataset_lineage.py
 
-Analyze the file `src/dataset_lineage_manager.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/dataset_lineage.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 165: Review src/dataset_lineage_server.py
+## Task 165: Review src/dataset_lineage.py gRPC API
 
-Analyze the file `src/dataset_lineage_server.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the gRPC server and client in `src/dataset_lineage.py` for code quality, documentation, and testing gaps. Propose improvements and ensure they align with `docs/Plan.md`.
 
 ## Task 166: Review src/dataset_summarizer.py
 

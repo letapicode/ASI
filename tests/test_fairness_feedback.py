@@ -46,14 +46,14 @@ def _load(name, path):
 _load('fairness', 'src/fairness.py')
 
 data_ingest = _load('data_ingest', 'src/data_ingest.py')
-_load('dataset_lineage_manager', 'src/dataset_lineage_manager.py')
+_load('dataset_lineage', 'src/dataset_lineage.py')
 _load('adaptive_curriculum', 'src/adaptive_curriculum.py')
 _load('cross_lingual_fairness', 'src/fairness.py')
 _load('dataset_weight_agent', 'src/dataset_weight_agent.py')
 ff_mod = _load('fairness', 'src/fairness.py')
 
 ActiveDataSelector = data_ingest.ActiveDataSelector
-DatasetLineageManager = sys.modules['src.dataset_lineage_manager'].DatasetLineageManager
+DatasetLineageManager = sys.modules['src.dataset_lineage'].DatasetLineageManager
 WeightAgent = sys.modules['src.dataset_weight_agent'].DatasetWeightAgent
 FairnessFeedback = ff_mod.FairnessFeedback
 

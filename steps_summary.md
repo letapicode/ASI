@@ -205,3 +205,8 @@
 - Updated imports across code and tests to load classes from `memory_servers.py`, `schedulers.py` and `fairness.py` directly.
 - Adjusted `memory_service.serve` and `distributed_trainer` to use the unified modules.
 - Documented the cleanup in `docs/Plan.md`.
+
+## PR 32
+- Consolidated dataset lineage client, server and manager into `dataset_lineage.py`.
+- Updated imports across source, tests, scripts and docs to use the unified module.
+- Revised documentation and task references for the new dataset lineage module.

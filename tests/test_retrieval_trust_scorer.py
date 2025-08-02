@@ -60,7 +60,7 @@ class _Tensor(list):
 torch = types.SimpleNamespace(tensor=lambda v, dtype=None: _Tensor(v), Tensor=_Tensor, float32=object)
 sys.modules['torch'] = torch
 
-from asi.dataset_lineage_manager import DatasetLineageManager
+from asi.dataset_lineage import DatasetLineageManager
 from asi.blockchain_provenance_ledger import BlockchainProvenanceLedger
 from asi.retrieval_trust_scorer import RetrievalTrustScorer
 from asi.memory_dashboard import MemoryDashboard
