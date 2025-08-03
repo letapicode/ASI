@@ -40,7 +40,7 @@ hpc_tel = _load('asi.telemetry', 'src/telemetry.py')
 hpc_mod = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 ct_mod = _load('asi.carbon_tracker', 'src/carbon_tracker.py')
 carb_mod = _load('asi.carbon_aware_scheduler', 'src/carbon_aware_scheduler.py')
-mod = _load('asi.cost_aware_scheduler', 'src/cost_aware_scheduler.py')
+mod = carb_mod
 CarbonCostAwareScheduler = mod.CarbonCostAwareScheduler
 get_hourly_price_forecast = mod.get_hourly_price_forecast
 
@@ -51,16 +51,16 @@ class TestCostAwareScheduler(unittest.TestCase):
             json=lambda: {'forecast': [0.2, 0.1]},
             raise_for_status=lambda: None,
         )
-        with patch('asi.cost_aware_scheduler.requests.get', return_value=resp):
+        with patch('asi.carbon_aware_scheduler.requests.get', return_value=resp):
             prices = get_hourly_price_forecast('aws', 'us', 'm5')
         self.assertEqual(prices, [0.2, 0.1])
 
     def test_combined_delay(self):
         sched = CarbonCostAwareScheduler(carbon_weight=1.0, cost_weight=1.0, threshold=0.5)
-        with patch('asi.cost_aware_scheduler.get_hourly_forecast', return_value=[200, 50]), \
-             patch('asi.cost_aware_scheduler.get_hourly_price_forecast', return_value=[1.0, 0.1]), \
+        with patch('asi.carbon_aware_scheduler.get_hourly_forecast', return_value=[200, 50]), \
+             patch('asi.carbon_aware_scheduler.get_hourly_price_forecast', return_value=[1.0, 0.1]), \
              patch('time.sleep') as sl, \
-             patch('asi.cost_aware_scheduler.submit_job', return_value='jid') as sj:
+             patch('asi.carbon_aware_scheduler.submit_job', return_value='jid') as sj:
             jid = sched.submit_at_optimal_time(['run.sh'], max_delay=7200.0)
             sl.assert_called_with(3600.0)
             sj.assert_called_with(['run.sh'], backend='slurm')

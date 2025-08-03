@@ -210,3 +210,8 @@
 - Consolidated dataset lineage client, server and manager into `dataset_lineage.py`.
 - Updated imports across source, tests, scripts and docs to use the unified module.
 - Revised documentation and task references for the new dataset lineage module.
+
+## PR 33
+- Merged `BudgetAwareScheduler` into `schedulers.py` and removed the standalone module.
+- Moved `AdaptiveCostScheduler` and price-aware helpers into `rl_schedulers.py` and `carbon_aware_scheduler.py`.
+- Updated imports, tests, scripts and documentation to reference the unified scheduler modules.

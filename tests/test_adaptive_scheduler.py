@@ -33,9 +33,9 @@ class _MED:
         return []
 med_stub.MemoryEventDetector = _MED
 sys.modules['asi.memory_event_detector'] = med_stub
-cas_stub = types.ModuleType('asi.cost_aware_scheduler')
+cas_stub = types.ModuleType('asi.carbon_aware_scheduler')
 cas_stub.get_current_price = lambda *a, **k: 0.0
-sys.modules['asi.cost_aware_scheduler'] = cas_stub
+sys.modules['asi.carbon_aware_scheduler'] = cas_stub
 
 sys.modules['asi.fpga_backend'] = types.SimpleNamespace(_HAS_FPGA=False, cl=None)
 sys.modules['asi.analog_backend'] = types.SimpleNamespace(

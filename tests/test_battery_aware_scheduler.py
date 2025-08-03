@@ -57,9 +57,9 @@ class _MED:
         return []
 med_stub.MemoryEventDetector = _MED
 sys.modules['asi.memory_event_detector'] = med_stub
-cas_stub = types.ModuleType('asi.cost_aware_scheduler')
+cas_stub = types.ModuleType('asi.carbon_aware_scheduler')
 cas_stub.get_current_price = lambda provider, region, inst: 0.0
-sys.modules['asi.cost_aware_scheduler'] = cas_stub
+sys.modules['asi.carbon_aware_scheduler'] = cas_stub
 TelemetryLogger = _load('asi.telemetry', 'src/telemetry.py').TelemetryLogger
 sys.modules['asi.telemetry']._HAS_PROM = False
 ComputeBudgetTracker = _load('asi.compute_budget_tracker', 'src/compute_budget_tracker.py').ComputeBudgetTracker

@@ -44,7 +44,7 @@ def _load(name, path):
 
 multi = _load('asi.hpc_schedulers', 'src/hpc_schedulers.py')
 strat = _load('asi.forecast_strategies', 'src/forecast_strategies.py')
-mod = _load('asi.adaptive_cost_scheduler', 'src/adaptive_cost_scheduler.py')
+mod = _load('asi.rl_schedulers', 'src/rl_schedulers.py')
 AdaptiveCostScheduler = mod.AdaptiveCostScheduler
 make_scheduler = multi.make_scheduler
 
@@ -57,7 +57,7 @@ class TestAdaptiveCostScheduler(unittest.TestCase):
         with patch('asi.forecast_strategies.arima_forecast', side_effect=[[10, 1], [1.0, 0.2], [5, 0.5], [0.5, 0.1]]), \
              patch.object(sched, '_policy', return_value=0) as pol, \
              patch('time.sleep') as sl, \
-             patch('asi.adaptive_cost_scheduler.submit_job', return_value='jid') as sj:
+             patch('asi.rl_schedulers.submit_job', return_value='jid') as sj:
             cluster, jid = sched.submit_best(['run.sh'], max_delay=7200.0)
             sl.assert_called_with(3600.0)
             sj.assert_called_with(['run.sh'], backend='k8s')

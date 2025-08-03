@@ -1087,7 +1087,7 @@ the aggregator which can then be scraped by Prometheus.
 - Introduce an `EnergyAwareScheduler` that queries `TelemetryLogger.get_carbon_intensity()`
   and delays or migrates jobs when the value exceeds a threshold. Enable it by
   passing `energy_scheduler=True` to `AdaptiveScheduler`. It complements the
-  existing `BudgetAwareScheduler` for compute-aware training.
+  existing `schedulers.BudgetAwareScheduler` for compute-aware training.
 
 - Add an `AdaptiveMicroBatcher` that monitors GPU memory via `TelemetryLogger`
   and adjusts micro-batch sizes automatically. `DistributedTrainer` and

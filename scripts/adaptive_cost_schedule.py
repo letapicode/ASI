@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 from asi.hpc_schedulers import make_scheduler
-from asi.adaptive_cost_scheduler import AdaptiveCostScheduler
+from asi.rl_schedulers import AdaptiveCostScheduler
 
 
 def main() -> None:  # pragma: no cover - CLI entry

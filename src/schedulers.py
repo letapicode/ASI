@@ -6,6 +6,7 @@ import threading
 import time
 from collections import deque
 from typing import Any, Callable, Deque, Dict, List, Optional
+from dataclasses import dataclass
 import yaml
 from pathlib import Path
 import sys
@@ -42,7 +43,7 @@ except Exception:  # pragma: no cover - allow running without torch
             return _P()
 
 try:  # pragma: no cover - optional dependency
-    from .cost_aware_scheduler import get_current_price  # type: ignore
+    from .carbon_aware_scheduler import get_current_price  # type: ignore
 except Exception:  # pragma: no cover - fallback when stub not set
     def get_current_price(*_a, **_k) -> float:
         return 0.0
@@ -52,6 +53,23 @@ list_cpus = list_gpus = list_fpgas = list_loihi = list_analog = None
 analog_backend = None
 from .compute_budget_tracker import ComputeBudgetTracker
 from .telemetry import TelemetryLogger
+
+
+@dataclass
+class BudgetAwareScheduler:
+    """Reduce batch size and learning rate as the budget shrinks."""
+
+    tracker: ComputeBudgetTracker
+    run_id: str = "default"
+    threshold: float = 1.0
+
+    def schedule_step(self, config: Any) -> None:
+        """Modify ``config`` in-place if budget is below ``threshold``."""
+        if self.tracker.remaining(self.run_id) < self.threshold:
+            if hasattr(config, "batch_size"):
+                config.batch_size = max(1, config.batch_size // 2)
+            if hasattr(config, "lr"):
+                config.lr *= 0.5
 
 
 class AcceleratorScheduler:
@@ -406,6 +424,7 @@ class BatteryAwareScheduler(AdaptiveScheduler):
 
 
 __all__ = [
+    "BudgetAwareScheduler",
     "AcceleratorScheduler",
     "AdaptiveScheduler",
     "EnergyAwareScheduler",

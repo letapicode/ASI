@@ -404,9 +404,9 @@ Analyze the file `src/ab_evaluator.py` for code quality, documentation, and test
 
 Analyze the file `src/accelerator_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 102: Review src/adaptive_cost_scheduler.py
+## Task 102: Review src/rl_schedulers.py
 
-Analyze the file `src/adaptive_cost_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the `AdaptiveCostScheduler` section in `src/rl_schedulers.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 103: Review src/adaptive_curriculum.py
 
@@ -496,9 +496,9 @@ Analyze the file `src/bio_memory_replay.py` for code quality, documentation, and
 
 Analyze the file `src/blockchain_provenance_ledger.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 125: Review src/budget_aware_scheduler.py
+## Task 125: Review src/schedulers.py
 
-Analyze the file `src/budget_aware_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the `BudgetAwareScheduler` in `src/schedulers.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 126: Review src/carbon_aware_dataset_ingest.py
 
@@ -572,9 +572,9 @@ Analyze the file `src/context_summary_memory.py` for code quality, documentation
 
 Analyze the file `src/coordinated_rl_cost_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 144: Review src/cost_aware_scheduler.py
+## Task 144: Review src/carbon_aware_scheduler.py
 
-Analyze the file `src/cost_aware_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/carbon_aware_scheduler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 145: Review src/critic_rlhf.py
 

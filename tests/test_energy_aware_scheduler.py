@@ -30,9 +30,9 @@ class _MED:
         return []
 med_stub.MemoryEventDetector = _MED
 sys.modules['asi.memory_event_detector'] = med_stub
-cas_stub = types.ModuleType('asi.cost_aware_scheduler')
+cas_stub = types.ModuleType('asi.carbon_aware_scheduler')
 cas_stub.get_current_price = lambda *a, **k: 0.0
-sys.modules['asi.cost_aware_scheduler'] = cas_stub
+sys.modules['asi.carbon_aware_scheduler'] = cas_stub
 
 
 def _load(name, path):
