@@ -10,12 +10,12 @@ src_pkg = types.ModuleType('src')
 sys.modules['src'] = src_pkg
 src_pkg.__path__ = ['src']
 src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
-loader = importlib.machinery.SourceFileLoader('src.blockchain_provenance_ledger', 'src/blockchain_provenance_ledger.py')
+loader = importlib.machinery.SourceFileLoader('src.provenance_ledger', 'src/provenance_ledger.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mod = importlib.util.module_from_spec(spec)
 mod.__package__ = 'src'
-sys.modules['src.blockchain_provenance_ledger'] = mod
-sys.modules['asi.blockchain_provenance_ledger'] = mod
+sys.modules['src.provenance_ledger'] = mod
+sys.modules['asi.provenance_ledger'] = mod
 loader.exec_module(mod)
 BlockchainProvenanceLedger = mod.BlockchainProvenanceLedger
 

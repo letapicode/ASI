@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.exceptions import InvalidSignature
 
-from .blockchain_provenance_ledger import BlockchainProvenanceLedger
+from .provenance_ledger import BlockchainProvenanceLedger
 
 
 class InMemoryDHT:

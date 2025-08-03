@@ -2,7 +2,7 @@ import argparse
 import json
 from pathlib import Path
 from asi.dataset_lineage import DatasetLineageManager
-from asi.blockchain_provenance_ledger import BlockchainProvenanceLedger
+from asi.provenance_ledger import BlockchainProvenanceLedger
 
 
 def main(root: str) -> None:

@@ -34,7 +34,7 @@ if _HAS_GRPC:
     import torch
     from .telemetry import TelemetryLogger
     from .vector_stores import VectorStore
-    from .blockchain_provenance_ledger import BlockchainProvenanceLedger
+    from .provenance_ledger import BlockchainProvenanceLedger
     from .hierarchical_memory import HierarchicalMemory
     from .memory_clients import query_remote
     from .proofs import RetrievalProof, ZKRetrievalProof

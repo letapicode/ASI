@@ -275,8 +275,7 @@ from .quantum_retrieval import amplify_search
 from .quantum_multimodal_retrieval import quantum_crossmodal_search
 from .risk_scoreboard import RiskScoreboard
 from .semantic_drift_detector import SemanticDriftDetector
-from .data_provenance_ledger import DataProvenanceLedger
-from .blockchain_provenance_ledger import BlockchainProvenanceLedger
+from .provenance_ledger import DataProvenanceLedger, BlockchainProvenanceLedger
 from .fairness import (
     FairnessEvaluator,
     FairnessFeedback,

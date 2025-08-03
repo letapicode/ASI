@@ -42,6 +42,9 @@
   and tweaking retrieval logic.
 
 ## PR 8
+- Consolidated `data_provenance_ledger.py` and `blockchain_provenance_ledger.py` into a unified `provenance_ledger.py` with a shared base class.
+- Updated imports across modules, scripts, docs, and tests to reference the new ledger module.
+- Removed redundant ledger files and adjusted documentation to describe the consolidated design.
 - Optimized candidate lookup in `HierarchicalMemory.search` by indexing
   metadata to vector indices.
 - Extended `VectorStore`, `FaissVectorStore` and `PQVectorStore` with

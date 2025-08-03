@@ -8,8 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
 from .dataset_watermarker import detect_watermark
-from .data_provenance_ledger import DataProvenanceLedger
-from .blockchain_provenance_ledger import BlockchainProvenanceLedger
+from .provenance_ledger import DataProvenanceLedger, BlockchainProvenanceLedger
 
 try:  # pragma: no cover - optional dependency
     import grpc  # type: ignore

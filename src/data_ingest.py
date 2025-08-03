@@ -132,10 +132,10 @@ except Exception:  # pragma: no cover - for tests
                 pass
 
 try:
-    from .blockchain_provenance_ledger import BlockchainProvenanceLedger
+    from .provenance_ledger import BlockchainProvenanceLedger
 except Exception:  # pragma: no cover - for tests
     try:
-        from blockchain_provenance_ledger import BlockchainProvenanceLedger  # type: ignore
+        from provenance_ledger import BlockchainProvenanceLedger  # type: ignore
     except Exception:  # pragma: no cover - stub
         class BlockchainProvenanceLedger:  # type: ignore
             def __init__(self, *a: Any, **kw: Any) -> None:
