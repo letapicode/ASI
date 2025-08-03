@@ -31,7 +31,7 @@ sys.modules[loader_cb.name] = mod_cb
 loader_cb.exec_module(mod_cb)
 ComputeBudgetTracker = mod_cb.ComputeBudgetTracker
 
-loader_sched = importlib.machinery.SourceFileLoader('asi.budget_aware_scheduler', 'src/budget_aware_scheduler.py')
+loader_sched = importlib.machinery.SourceFileLoader('asi.schedulers', 'src/schedulers.py')
 spec_sched = importlib.util.spec_from_loader(loader_sched.name, loader_sched)
 mod_sched = importlib.util.module_from_spec(spec_sched)
 mod_sched.__package__ = 'asi'

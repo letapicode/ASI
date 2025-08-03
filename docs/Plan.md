@@ -272,7 +272,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 7. **Compute budget tracking**: Use `ComputeBudgetTracker` to log GPU hours and
    energy cost for each run and stop training when the budget is exhausted.
 8. **Budget-aware scheduler**: Automatically lower batch size and learning rate
-   via `BudgetAwareScheduler` when `remaining()` falls below a threshold.
+   via `schedulers.BudgetAwareScheduler` when `remaining()` falls below a threshold.
 7a. **Battery-aware scheduler**: Delay jobs when system battery level falls
     below a configurable threshold. `BatteryAwareScheduler` queries the OS for
     the current percentage and logs it via `TelemetryLogger` so runs on laptops
@@ -806,7 +806,7 @@ For research purposes the lightweight `_TrendTransformer` model lives in
 `forecast_strategies`. It can be plugged into custom schedulers to predict
 upcoming carbon intensity and price using a tiny Transformer network.
 
-`adaptive_cost_scheduler.AdaptiveCostScheduler` builds on this multi-cluster
+`rl_schedulers.AdaptiveCostScheduler` builds on this multi-cluster
 approach by training a simple Q-learning policy from the stored carbon and price
 histories.  The policy decides whether to wait for a cheaper, greener slot or
 submit immediately.  Tune `bins`, `epsilon`, `alpha`, `gamma` and

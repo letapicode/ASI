@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import random
 from asi.resource_broker import ResourceBroker
-from asi.cost_aware_scheduler import MultiProviderScheduler
+from asi.carbon_aware_scheduler import MultiProviderScheduler
 
 
 def main() -> None:

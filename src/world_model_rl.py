@@ -50,7 +50,7 @@ from .causal_graph_learner import CausalGraphLearner
 from .sim2real_adapter import Sim2RealAdapter, Sim2RealConfig
 from .rl_decision_narrator import RLDecisionNarrator
 try:
-    from .budget_aware_scheduler import BudgetAwareScheduler
+    from .schedulers import BudgetAwareScheduler
 except Exception:  # pragma: no cover - for tests
     BudgetAwareScheduler = None
 
