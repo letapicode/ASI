@@ -543,8 +543,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 51. **Context summarization memory**: Store compressed summaries for distant tokens and re-expand them on demand; success is >95% retrieval accuracy at 100× token length. *Implemented in `src/context_summary_memory.py` with tests.*
 51a. **Multi-modal summarization memory**: Compress image and audio features into short summaries stored with text embeddings; retrieval using fused summaries must reach ≥90% accuracy. *Implemented in `src/multimodal_summary_memory.py` with tests.*
 52. **Dataset lineage manager**: Automatically track dataset versions and transformations, enabling reproducible training pipelines. *Implemented in `src/dataset_lineage.py`.*
-    Use `DataProvenanceLedger` to append a signed hash of each lineage record. Run `scripts/check_provenance.py <root>` to verify the ledger.
-52a. **Zero-trust memory server**: `ZeroTrustMemoryServer` validates signed access tokens against a `BlockchainProvenanceLedger` before serving requests. Unauthorized clients are rejected.
+    Use `DataProvenanceLedger` from the unified `provenance_ledger` module to append a signed hash of each lineage record. Run `scripts/check_provenance.py <root>` to verify the ledger.
+52a. **Zero-trust memory server**: `ZeroTrustMemoryServer` validates signed access tokens against a `BlockchainProvenanceLedger` from the same module before serving requests. Unauthorized clients are rejected.
 52b. **Dataset watermarking**: `dataset_watermarker.py` embeds and detects watermarks in text, images and audio. Lineage records now include watermark IDs.
 53. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
 54. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
@@ -590,7 +590,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 75. **Dataset summarization**: `scripts/dataset_summary.py --content` clusters text samples with `dataset_summarizer.summarize_dataset()` and writes the result to `docs/datasets/`.
 
 75a. **Secure dataset exchange**: `SecureDatasetExchange` encrypts datasets and verifies signatures so collaborators can share data without exposing proprietary content. The protocol now emits a signed integrity proof of the archive hash; peers must present this proof before extraction. Use `scripts/secure_dataset_exchange.py` with `--proof-out` and `--proof-in` to push and pull archives between nodes.
-75b. **P2P dataset exchange**: `P2PDatasetExchange` breaks encrypted archives into chunks stored in a DHT. Metadata is signed via `BlockchainProvenanceLedger`. Run `scripts/p2p_exchange.py push|pull` to sync datasets or `seed` to serve chunks.
+75b. **P2P dataset exchange**: `P2PDatasetExchange` breaks encrypted archives into chunks stored in a DHT. Metadata is signed via `BlockchainProvenanceLedger` from the `provenance_ledger` module. Run `scripts/p2p_exchange.py push|pull` to sync datasets or `seed` to serve chunks.
 75c. **Retrieval summaries**: `HierarchicalMemory.search(return_summary=True)`
      writes text explanations to `last_trace['summary']`. `MemoryDashboard`
      shows the last summary and `/trace` generates one if missing.

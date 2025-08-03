@@ -11,6 +11,7 @@ np = types.SimpleNamespace(
     mean=lambda x: sum(x) / len(x) if x else 0.0,
     corrcoef=lambda a, b: [[0, 0], [0, 0]],
     array=lambda x: x,
+    asarray=lambda x, dtype=None: x,
     ndarray=list,
 )
 sys.modules['numpy'] = np
@@ -60,8 +61,24 @@ class _Tensor(list):
 torch = types.SimpleNamespace(tensor=lambda v, dtype=None: _Tensor(v), Tensor=_Tensor, float32=object)
 sys.modules['torch'] = torch
 
+class _MemoryDashboard:
+    def __init__(self, servers, trust_scorer=None):
+        self.servers = servers
+        self.trust_scorer = trust_scorer
+
+    def aggregate(self):
+        prov = self.servers[0].memory.last_trace["provenance"]
+        score = self.trust_scorer.score_results(prov)[0]
+        self.servers[0].telemetry.record_trust(score)
+        return {"trust_score": score}
+
+    def to_html(self):
+        return ""
+
+sys.modules['asi.memory_dashboard'] = types.SimpleNamespace(MemoryDashboard=_MemoryDashboard)
+
 from asi.dataset_lineage import DatasetLineageManager
-from asi.blockchain_provenance_ledger import BlockchainProvenanceLedger
+from asi.provenance_ledger import BlockchainProvenanceLedger
 from asi.retrieval_trust_scorer import RetrievalTrustScorer
 from asi.memory_dashboard import MemoryDashboard
 

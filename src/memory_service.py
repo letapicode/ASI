@@ -10,7 +10,7 @@ from .memory_servers import (
     ZeroTrustMemoryServer,
 )
 from .telemetry import TelemetryLogger
-from .blockchain_provenance_ledger import BlockchainProvenanceLedger
+from .provenance_ledger import BlockchainProvenanceLedger
 
 try:
     import tenseal as ts  # type: ignore

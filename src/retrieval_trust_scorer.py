@@ -6,7 +6,7 @@ from dataclasses import asdict
 from typing import Any, Iterable
 
 from .dataset_lineage import DatasetLineageManager, LineageStep
-from .blockchain_provenance_ledger import BlockchainProvenanceLedger
+from .provenance_ledger import BlockchainProvenanceLedger
 
 
 class RetrievalTrustScorer:

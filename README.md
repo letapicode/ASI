@@ -76,7 +76,7 @@ If a `BlockchainProvenanceLedger` is supplied, `serve()` launches a
 operations:
 
 ```python
-from asi.blockchain_provenance_ledger import BlockchainProvenanceLedger
+from asi.provenance_ledger import BlockchainProvenanceLedger
 
 ledger = BlockchainProvenanceLedger("/tmp/ledger")
 ledger.append("valid-token", signature="sig")

@@ -44,7 +44,7 @@ dl_mod = _load(
 DatasetLineageClient = dl_mod.DatasetLineageClient
 DatasetLineageManager = dl_mod.DatasetLineageManager
 BlockchainProvenanceLedger = _load(
-    "src.blockchain_provenance_ledger", os.path.join(SRC_DIR, "blockchain_provenance_ledger.py")
+    "src.provenance_ledger", os.path.join(SRC_DIR, "provenance_ledger.py")
 ).BlockchainProvenanceLedger
 
 DatasetLineageServer = dl_mod.DatasetLineageServer
