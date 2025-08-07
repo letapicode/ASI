@@ -546,6 +546,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     Use `DataProvenanceLedger` from the unified `provenance_ledger` module to append a signed hash of each lineage record. Run `scripts/check_provenance.py <root>` to verify the ledger.
 52a. **Zero-trust memory server**: `ZeroTrustMemoryServer` validates signed access tokens against a `BlockchainProvenanceLedger` from the same module before serving requests. Unauthorized clients are rejected.
 52b. **Dataset watermarking**: `dataset_watermarker.py` embeds and detects watermarks in text, images and audio. Lineage records now include watermark IDs.
+52c. **Dataset lineage dashboard**: `lineage_visualizer.py` combines a basic visualizer and searchable dashboard exposing `/graph` and `/steps` endpoints.
 53. **Multi-stage oversight**: Combine constitutional AI, deliberative alignment, and critic-in-the-loop RLHF with formal verification; success is <1% harmful output on the existing benchmarks.
 54. **Self-supervised sensorimotor pretraining**: Pretrain the embodied world model on large unlabelled multimodal logs; success is 20% fewer real-world samples to reach 90% task success.
 55. **Gradient compression for distributed training**: Implement a `GradientCompressor`
