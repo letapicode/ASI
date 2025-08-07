@@ -224,3 +224,9 @@
 - Merged `BudgetAwareScheduler` into `schedulers.py` and removed the standalone module.
 - Moved `AdaptiveCostScheduler` and price-aware helpers into `rl_schedulers.py` and `carbon_aware_scheduler.py`.
 - Updated imports, tests, scripts and documentation to reference the unified scheduler modules.
+
+## PR 34
+- Combined `quantum_retrieval.py` and `quantum_sampler.py` into `quantum_sampling.py` with a shared softmax helper.
+- Updated source modules, tests, and package exports to import from the new consolidated module.
+- Revised documentation and task references to reflect the unified quantum sampling utilities.
+- Corrected import statements in `quantum_sampling.py`.

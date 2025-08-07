@@ -1,15 +1,29 @@
 import importlib.machinery
+import importlib.machinery
 import importlib.util
+import types
+import sys
 import unittest
 import numpy as np
+
+pkg = types.ModuleType('asi')
+sys.modules['asi'] = pkg
+
+loader_qs = importlib.machinery.SourceFileLoader('qs', 'src/quantum_sampling.py')
+spec_qs = importlib.util.spec_from_loader(loader_qs.name, loader_qs)
+qs = importlib.util.module_from_spec(spec_qs)
+qs.__package__ = 'asi'
+loader_qs.exec_module(qs)
+sys.modules['asi.quantum_sampling'] = qs
+setattr(pkg, 'quantum_sampling', qs)
 
 loader = importlib.machinery.SourceFileLoader('qmm', 'src/quantum_multimodal_retrieval.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 qmm = importlib.util.module_from_spec(spec)
 qmm.__package__ = 'asi'
 loader.exec_module(qmm)
-import sys
 sys.modules['asi.quantum_multimodal_retrieval'] = qmm
+setattr(pkg, 'quantum_multimodal_retrieval', qmm)
 quantum_crossmodal_search = qmm.quantum_crossmodal_search
 torch = qmm.torch
 

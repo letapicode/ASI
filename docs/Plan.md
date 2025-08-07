@@ -419,16 +419,16 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 37. **Compressed vector store**: Implement a `PQVectorStore` using FAISS `IndexIVFPQ`
     and integrate with `HierarchicalMemory`. Benchmark retrieval accuracy vs.
     `FaissVectorStore`.
-37a. **Quantum retrieval benchmark**: `quantum_retrieval.amplify_search()`
+37a. **Quantum retrieval benchmark**: `quantum_sampling.amplify_search()`
      applies amplitude amplification to select vectors. On a toy index its
      accuracy matches FAISS within ~20% latency overhead. The routine now
      accepts language tags from `CrossLingualMemory`; running
      `scripts/quantum_crosslingual_benchmark.py` shows parity across languages
      with ~1.5× latency.
 37b. **Quantum memory server**: `quantum_memory_server` exposes gRPC APIs
-     for vector search using `quantum_retrieval.amplify_search`. The accompanying
-     `QuantumMemoryClient` in `memory_clients.py` lets peers push embeddings and
-     query the server over the network.
+    for vector search using `quantum_sampling.amplify_search`. The accompanying
+    `QuantumMemoryClient` in `memory_clients.py` lets peers push embeddings and
+    query the server over the network.
 37c. **Ephemeral vector store**: `EphemeralVectorStore` subclasses
     `VectorStore`, tracks insert timestamps and automatically purges
     expired embeddings. It integrates into `HierarchicalMemory` via

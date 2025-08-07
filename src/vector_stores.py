@@ -13,7 +13,7 @@ from typing import Iterable, Any, List, Tuple, Dict
 import numpy as np
 
 try:  # optional quantum retrieval
-    from .quantum_retrieval import amplify_search as _amplify_search
+    from .quantum_sampling import amplify_search as _amplify_search
 except Exception:  # pragma: no cover - optional dependency
     _amplify_search = None
 

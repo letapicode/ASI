@@ -1033,7 +1033,7 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
 - Extend `world_model_rl.train_world_model()` to accept 3D data from this
   augmentor, introduce a `VoxelEnv` wrapper emitting voxel observations and add
   a `voxel_rollout` evaluator in `eval_harness.py` for 3D rollouts.
-- Implement a mocked `quantum_sampler.sample_actions_qae()` and integrate it as
+- Implement a mocked `quantum_sampling.sample_actions_qae()` and integrate it as
   an optional sampler in `train_with_self_play`.
 - Compute an overall risk metric via the new `RiskScoreboard` module.
 - Add a `ComputeBudgetTracker` that records GPU hours and memory usage via

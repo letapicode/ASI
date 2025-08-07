@@ -1220,13 +1220,13 @@ Analyze the file `src/quantum_memory_server.py` for code quality, documentation,
 
 Analyze the file `src/quantum_multimodal_retrieval.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 306: Review src/quantum_retrieval.py
+## Task 306: Review src/quantum_sampling.py
 
-Analyze the file `src/quantum_retrieval.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/quantum_sampling.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 307: Review src/quantum_sampler.py
+## Task 307: Review tests/test_quantum_sampler.py
 
-Analyze the file `src/quantum_sampler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `tests/test_quantum_sampler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 308: Review src/reasoning_graph_pb2.py
 

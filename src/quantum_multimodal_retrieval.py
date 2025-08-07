@@ -9,7 +9,7 @@ try:  # optional torch dependency
 except Exception:  # pragma: no cover - allow running without torch
     from .torch_fallback import torch
 
-from .quantum_retrieval import amplify_search
+from .quantum_sampling import amplify_search
 
 
 def _fuse(text: torch.Tensor | None, image: torch.Tensor | None, audio: torch.Tensor | None) -> torch.Tensor:

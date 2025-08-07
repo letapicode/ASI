@@ -270,8 +270,7 @@ from .model_version_manager import ModelVersionManager
 from .model_card import ModelCardGenerator
 from .resource_broker import ResourceBroker
 from .research_ingest import run_ingestion, suggest_modules
-from .quantum_sampler import sample_actions_qae
-from .quantum_retrieval import amplify_search
+from .quantum_sampling import sample_actions_qae, amplify_search
 from .quantum_multimodal_retrieval import quantum_crossmodal_search
 from .risk_scoreboard import RiskScoreboard
 from .semantic_drift_detector import SemanticDriftDetector

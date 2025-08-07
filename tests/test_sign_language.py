@@ -21,13 +21,13 @@ loader_qmm = importlib.machinery.SourceFileLoader('qmm', 'src/quantum_multimodal
 spec_qmm = importlib.util.spec_from_loader(loader_qmm.name, loader_qmm)
 qmm = importlib.util.module_from_spec(spec_qmm)
 qmm.__package__ = 'asi'
-loader_qr = importlib.machinery.SourceFileLoader('qr', 'src/quantum_retrieval.py')
-spec_qr = importlib.util.spec_from_loader(loader_qr.name, loader_qr)
-qr = importlib.util.module_from_spec(spec_qr)
-qr.__package__ = 'asi'
-loader_qr.exec_module(qr)
-sys.modules['asi.quantum_retrieval'] = qr
-setattr(pkg, 'quantum_retrieval', qr)
+loader_qs = importlib.machinery.SourceFileLoader('qs', 'src/quantum_sampling.py')
+spec_qs = importlib.util.spec_from_loader(loader_qs.name, loader_qs)
+qs = importlib.util.module_from_spec(spec_qs)
+qs.__package__ = 'asi'
+loader_qs.exec_module(qs)
+sys.modules['asi.quantum_sampling'] = qs
+setattr(pkg, 'quantum_sampling', qs)
 loader_qmm.exec_module(qmm)
 sys.modules['asi.quantum_multimodal_retrieval'] = qmm
 setattr(pkg, 'quantum_multimodal_retrieval', qmm)

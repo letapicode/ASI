@@ -11,7 +11,7 @@ _cos_sim = nn.functional.cosine_similarity
 
 from .hierarchical_memory import HierarchicalMemory
 from .data_ingest import CrossLingualTranslator, CrossLingualSpeechTranslator
-from .quantum_retrieval import amplify_search
+from .quantum_sampling import amplify_search
 from .cross_lingual_utils import embed_text as _embed_text
 
 

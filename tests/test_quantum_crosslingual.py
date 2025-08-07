@@ -21,6 +21,7 @@ def load(name, path):
     return mod
 
 
+qs = load('asi.quantum_sampling', 'src/quantum_sampling.py')
 clm = load('asi.cross_lingual_memory', 'src/cross_lingual_memory.py')
 di = load('asi.data_ingest', 'src/data_ingest.py')
 
