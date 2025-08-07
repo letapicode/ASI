@@ -80,6 +80,12 @@
 - Confirmed scheduler-related tests run with pytest.
 
 ## PR 14
+- Consolidated dataset lineage visualization by merging `dataset_lineage_dashboard`
+  into `lineage_visualizer` with a shared `_build_graph` helper.
+- Updated imports across modules, scripts, tests and documentation to reference
+  the unified module.
+
+## PR 14
 - Replaced manual BaseDashboard fallbacks in several dashboards with
   `load_base_dashboard` from `dashboard_import_helper`.
 - Added helper import fallbacks and cleaned up unused imports.

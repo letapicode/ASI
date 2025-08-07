@@ -648,9 +648,9 @@ Analyze the file `src/dataset_gap_search.py` for code quality, documentation, an
 
 Analyze the file `src/dataset_lineage.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 163: Review src/dataset_lineage_dashboard.py
+## Task 163: Review src/lineage_visualizer.py
 
-Analyze the file `src/dataset_lineage_dashboard.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/lineage_visualizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 164: Review src/dataset_lineage.py
 
