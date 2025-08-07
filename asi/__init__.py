@@ -31,8 +31,7 @@ def _import(name: str) -> None:
 
 for _m in [
     "vector_stores",
-    "quantum_retrieval",
-    "quantum_sampler",
+    "quantum_sampling",
     "quantum_hpo",
     "memory_pb2",
     "memory_pb2_grpc",
