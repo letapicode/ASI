@@ -41,7 +41,10 @@ retrieval_saliency_stub = types.ModuleType('asi.retrieval_saliency')
 retrieval_saliency_stub.token_saliency = lambda q, r: []
 retrieval_saliency_stub.image_saliency = lambda q, r: []
 sys.modules['asi.retrieval_saliency'] = retrieval_saliency_stub
-retrieval_explainer_stub = types.ModuleType('asi.retrieval_explainer')
+tc_stub = types.ModuleType('asi.transformer_circuits')
+tc_stub.AttentionVisualizer = type('AV', (), {})
+sys.modules['asi.transformer_circuits'] = tc_stub
+retrieval_analysis_stub = types.ModuleType('asi.retrieval_analysis')
 class _RE:
     @staticmethod
     def format(*a, **k):
@@ -66,16 +69,14 @@ class _RE:
                 src = str(prov)
             parts.append(f"{i}. {src} (score={score:.3f})")
         return ' | '.join(parts)
-retrieval_explainer_stub.RetrievalExplainer = _RE
-sys.modules['asi.retrieval_explainer'] = retrieval_explainer_stub
-retrieval_visualizer_stub = types.ModuleType('asi.retrieval_visualizer')
 class RV:
     def __init__(self, *a, **k):
         pass
     def pattern_image(self):
         return ''
-retrieval_visualizer_stub.RetrievalVisualizer = RV
-sys.modules['asi.retrieval_visualizer'] = retrieval_visualizer_stub
+retrieval_analysis_stub.RetrievalExplainer = _RE
+retrieval_analysis_stub.RetrievalVisualizer = RV
+sys.modules['asi.retrieval_analysis'] = retrieval_analysis_stub
 memory_timeline_stub = types.ModuleType('asi.memory_timeline_viewer')
 class MTV:
     def __init__(self, *a, **k):

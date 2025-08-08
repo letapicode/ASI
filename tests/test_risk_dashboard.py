@@ -15,10 +15,12 @@ np = types.SimpleNamespace(mean=lambda x: sum(x)/len(x) if x else 0.0,
 sys.modules.setdefault('numpy', np)
 sys.modules.setdefault('matplotlib', types.ModuleType('matplotlib'))
 sys.modules.setdefault('matplotlib.pyplot', types.SimpleNamespace())
-re_stub = types.ModuleType('asi.retrieval_explainer')
-re_stub.RetrievalExplainer = type('RE', (), {})
-rv_stub = types.ModuleType('asi.retrieval_visualizer')
-rv_stub.RetrievalVisualizer = type('RV', (), {})
+tc_stub = types.ModuleType('asi.transformer_circuits')
+tc_stub.AttentionVisualizer = type('AV', (), {})
+sys.modules['asi.transformer_circuits'] = tc_stub
+ra_stub = types.ModuleType('asi.retrieval_analysis')
+ra_stub.RetrievalExplainer = type('RE', (), {})
+ra_stub.RetrievalVisualizer = type('RV', (), {})
 rts_stub = types.ModuleType('asi.retrieval_trust_scorer')
 rts_stub.RetrievalTrustScorer = type('RTS', (), {'score': staticmethod(lambda *a, **k: 0.0)})
 mtv_stub = types.ModuleType('asi.memory_timeline_viewer')
@@ -26,11 +28,12 @@ mtv_stub.MemoryTimelineViewer = type('MTV', (), {})
 kgv_stub = types.ModuleType('asi.kg_visualizer')
 kgv_stub.KGVisualizer = type('KGV', (), {})
 sys.modules.update({
-    'asi.retrieval_explainer': re_stub,
-    'asi.retrieval_visualizer': rv_stub,
+    'asi.retrieval_analysis': ra_stub,
+    'src.retrieval_analysis': ra_stub,
     'asi.retrieval_trust_scorer': rts_stub,
     'asi.memory_timeline_viewer': mtv_stub,
     'asi.kg_visualizer': kgv_stub,
+    'src.transformer_circuits': tc_stub,
 })
 
 src_pkg = types.ModuleType('src')

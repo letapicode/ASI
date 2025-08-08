@@ -1268,9 +1268,9 @@ Analyze the file `src/resource_broker.py` for code quality, documentation, and t
 
 Analyze the file `src/retnet_retention.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 318: Review src/retrieval_explainer.py
+## Task 318: Review src/retrieval_analysis.py
 
-Analyze the file `src/retrieval_explainer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/retrieval_analysis.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 319: Review src/retrieval_policy_updater.py
 
@@ -1292,13 +1292,13 @@ Analyze the file `src/retrieval_saliency.py` for code quality, documentation, an
 
 Analyze the file `src/retrieval_trust_scorer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 324: Review src/retrieval_visualizer.py
-
-Analyze the file `src/retrieval_visualizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
-
-## Task 325: Review src/risk_dashboard.py
+## Task 324: Review src/risk_dashboard.py
 
 Analyze the file `src/risk_dashboard.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+
+## Task 325: Review src/risk_scoreboard.py
+
+Analyze the file `src/risk_scoreboard.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 326: Review src/risk_scoreboard.py
 

@@ -495,7 +495,7 @@ class HierarchicalMemory:
         provenance: list[Any],
     ) -> str:
         """Return a short summary for ``query`` and ``results``."""
-        from .retrieval_explainer import RetrievalExplainer
+        from .retrieval_analysis import RetrievalExplainer
 
         is_multi = any(
             isinstance(m, dict) and any(k in m for k in ("text", "image", "audio"))

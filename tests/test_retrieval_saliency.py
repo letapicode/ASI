@@ -35,6 +35,16 @@ psutil_stub = types.SimpleNamespace(
     net_io_counters=lambda: types.SimpleNamespace(bytes_sent=0, bytes_recv=0),
 )
 sys.modules['psutil'] = psutil_stub
+tc_stub = types.ModuleType('asi.transformer_circuits')
+tc_stub.AttentionVisualizer = type('AV', (), {})
+sys.modules['asi.transformer_circuits'] = tc_stub
+plt = types.SimpleNamespace(
+    subplots=lambda *a, **k: (types.SimpleNamespace(savefig=lambda *a, **k: None), [types.SimpleNamespace(plot=lambda *a, **k: None, set_ylabel=lambda *a, **k: None, set_xlabel=lambda *a, **k: None, imshow=lambda *a, **k: None) for _ in range((a[0] if a else 1))]),
+    close=lambda *a, **k: None,
+    tight_layout=lambda *a, **k: None,
+)
+sys.modules['matplotlib'] = types.ModuleType('matplotlib')
+sys.modules['matplotlib.pyplot'] = plt
 
 
 def _load(name, path):
@@ -57,10 +67,10 @@ def _load(name, path):
 
 RetrievalSaliency = _load('asi.retrieval_saliency', 'src/retrieval_saliency.py')
 _load('asi.streaming_compression', 'src/streaming_compression.py')
-_load('asi.retrieval_explainer', 'src/retrieval_explainer.py')
+_load('asi.retrieval_analysis', 'src/retrieval_analysis.py')
 HierarchicalMemory = _load('asi.hierarchical_memory', 'src/hierarchical_memory.py').HierarchicalMemory
 MemoryDashboard = _load('asi.dashboards', 'src/dashboards.py').MemoryDashboard
-RetrievalVisualizer = _load('asi.retrieval_visualizer', 'src/retrieval_visualizer.py').RetrievalVisualizer
+RetrievalVisualizer = _load('asi.retrieval_analysis', 'src/retrieval_analysis.py').RetrievalVisualizer
 
 
 class TestRetrievalSaliency(unittest.TestCase):

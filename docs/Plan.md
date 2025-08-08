@@ -294,7 +294,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     five self-play cycles.
 14. **Attention trace analysis**: Use the new `AttentionVisualizer` to
    inspect long-context retrieval patterns on ≥1&nbsp;M-token evaluations.
-    `RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard. `summarize_multimodal()` now formats text snippets and media paths for richer summaries.
+    `retrieval_analysis.RetrievalExplainer` extends `HierarchicalMemory.search()` with similarity scores and provenance so these traces are visible through the memory dashboard. `summarize_multimodal()` now formats text snippets and media paths for richer summaries.
 15. **Graph-of-thought planning**: Implement `GraphOfThought` (see
     `src/graph_of_thought.py`) and measure refactor quality gains over the
     baseline meta-RL agent. The `ReasoningDebugger` now aggregates loops and

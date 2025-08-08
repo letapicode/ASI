@@ -7,7 +7,24 @@ import json
 import http.client
 
 pkg = types.ModuleType('asi')
+pkg.__path__ = ['src']
+pkg.__spec__ = importlib.machinery.ModuleSpec('asi', None, is_package=True)
 sys.modules['asi'] = pkg
+
+ra_stub = types.ModuleType('asi.retrieval_analysis')
+ra_stub.RetrievalExplainer = type('RE', (), {})
+ra_stub.RetrievalVisualizer = type('RV', (), {})
+sys.modules['asi.retrieval_analysis'] = ra_stub
+tc_stub = types.ModuleType('asi.transformer_circuits')
+tc_stub.AttentionVisualizer = type('AV', (), {})
+sys.modules['asi.transformer_circuits'] = tc_stub
+plt = types.SimpleNamespace(
+    subplots=lambda *a, **k: (types.SimpleNamespace(savefig=lambda *a, **k: None), [types.SimpleNamespace(plot=lambda *a, **k: None, set_ylabel=lambda *a, **k: None, set_xlabel=lambda *a, **k: None, imshow=lambda *a, **k: None) for _ in range((a[0] if a else 1))]),
+    close=lambda *a, **k: None,
+    tight_layout=lambda *a, **k: None,
+)
+sys.modules['matplotlib'] = types.ModuleType('matplotlib')
+sys.modules['matplotlib.pyplot'] = plt
 
 
 def _load(name, path):
@@ -16,6 +33,16 @@ def _load(name, path):
     mod = importlib.util.module_from_spec(spec)
     loader.exec_module(mod)
     sys.modules[name] = mod
+    if name == 'asi.hierarchical_memory' and not hasattr(mod, 'MemoryServer'):
+        class MemoryServer:
+            def __init__(self, memory, address=None, max_workers=4, telemetry=None):
+                self.memory = memory
+                self.telemetry = telemetry
+            def start(self):
+                pass
+            def stop(self, grace=0):
+                pass
+        mod.MemoryServer = MemoryServer
     return mod
 
 MemoryTimelineViewer = _load('asi.memory_timeline_viewer', 'src/memory_timeline_viewer.py').MemoryTimelineViewer

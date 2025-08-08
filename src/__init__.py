@@ -297,7 +297,7 @@ from .federated_rl_trainer import (
 )
 
 from .adaptive_micro_batcher import AdaptiveMicroBatcher
-from .retrieval_explainer import RetrievalExplainer
+from .retrieval_analysis import RetrievalExplainer, RetrievalVisualizer
 from .retrieval_rl import RetrievalPolicy, train_policy
 from .retrieval_policy_updater import RetrievalPolicyUpdater
 from .graph_ui import GraphUI

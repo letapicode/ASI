@@ -396,8 +396,8 @@ To reproduce the toy run step by step:
 
 - `src/hierarchical_memory.py` and `src/link_slot_attention.py` provide a two-tier memory backed by FAISS.
 - The store compresses vectors before writing them to disk and loads the nearest neighbours on demand.
-- `RetrievalExplainer.summarize()` distills query results into a brief text used by `MemoryDashboard` to show context for each retrieval.
-- `RetrievalExplainer.summarize_multimodal()` collapses text snippets and lists referenced images or audio so multimodal queries render clearly in the dashboard.
+- `retrieval_analysis.RetrievalExplainer.summarize()` distills query results into a brief text used by `MemoryDashboard` to show context for each retrieval.
+- `retrieval_analysis.RetrievalExplainer.summarize_multimodal()` collapses text snippets and lists referenced images or audio so multimodal queries render clearly in the dashboard.
 - `HierarchicalMemory.search(return_summary=True)` calls these helpers and stores
   the resulting text in ``last_trace['summary']`` so UIs can display the context
   directly.
@@ -887,7 +887,7 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
   **Implemented in `src/dashboards.py` with tests.**
 - Extend `MemoryDashboard` with `/entries`, `/add` and `/delete` HTTP routes for manipulating `HierarchicalMemory` contents.
   **Implemented in `src/dashboards.py` with tests.**
-- Add a `RetrievalVisualizer` that records timestamped hit/miss events and
+- Add a `RetrievalVisualizer` in `src/retrieval_analysis.py` that records timestamped hit/miss events and
   serves an aggregated latency plot via the dashboard's new `/patterns` endpoint.
   Enable it during evaluation to monitor retrieval frequency.
   ```python

@@ -36,15 +36,23 @@ except Exception:  # pragma: no cover - torch may be unavailable
     )
     sys.modules['torch'] = torch
 
+plt = types.SimpleNamespace(
+    subplots=lambda *a, **k: (types.SimpleNamespace(savefig=lambda *a, **k: None), [types.SimpleNamespace(plot=lambda *a, **k: None, set_ylabel=lambda *a, **k: None, set_xlabel=lambda *a, **k: None, imshow=lambda *a, **k: None) for _ in range((a[0] if a else 1))]),
+    close=lambda *a, **k: None,
+    tight_layout=lambda *a, **k: None,
+)
+sys.modules['matplotlib'] = types.ModuleType('matplotlib')
+sys.modules['matplotlib.pyplot'] = plt
+
 src_pkg = types.ModuleType('src')
 src_pkg.__path__ = ['src']
 src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
 sys.modules['src'] = src_pkg
-loader = importlib.machinery.SourceFileLoader('src.retrieval_explainer', 'src/retrieval_explainer.py')
+loader = importlib.machinery.SourceFileLoader('src.retrieval_analysis', 'src/retrieval_analysis.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mod = importlib.util.module_from_spec(spec)
 mod.__package__ = 'src'
-sys.modules['src.retrieval_explainer'] = mod
+sys.modules['src.retrieval_analysis'] = mod
 loader.exec_module(mod)
 RetrievalExplainer = mod.RetrievalExplainer
 

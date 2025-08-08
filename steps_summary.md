@@ -230,3 +230,7 @@
 - Updated source modules, tests, and package exports to import from the new consolidated module.
 - Revised documentation and task references to reflect the unified quantum sampling utilities.
 - Corrected import statements in `quantum_sampling.py`.
+
+## PR 35
+- Consolidated retrieval utilities by merging `retrieval_explainer.py` and `retrieval_visualizer.py` into `retrieval_analysis.py`.
+- Updated modules, tests, and documentation to import `RetrievalExplainer` and `RetrievalVisualizer` from the unified file.

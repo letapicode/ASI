@@ -14,8 +14,7 @@ try:
 except Exception:  # pragma: no cover - allow running without torch
     torch = None  # type: ignore
 
-from .retrieval_explainer import RetrievalExplainer
-from .retrieval_visualizer import RetrievalVisualizer
+from .retrieval_analysis import RetrievalExplainer, RetrievalVisualizer
 try:
     from .retrieval_trust_scorer import RetrievalTrustScorer
 except Exception:  # pragma: no cover - optional dependency
@@ -615,7 +614,6 @@ try:  # pragma: no cover - optional heavy dep
 except Exception:  # pragma: no cover - fallback when torch is missing
     torch = None  # type: ignore
 
-from .memory_dashboard import MemoryDashboard
 from .transformer_circuits import AttentionVisualizer
 
 BaseDashboard = load_base_dashboard(__file__)
@@ -751,7 +749,6 @@ except Exception:  # pragma: no cover - fallback when not packaged
 BaseDashboard = load_base_dashboard(__file__)
 
 from .risk_scoreboard import RiskScoreboard
-from .memory_dashboard import MemoryDashboard
 
 
 class RiskDashboard(BaseDashboard):

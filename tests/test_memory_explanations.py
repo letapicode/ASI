@@ -82,19 +82,26 @@ except Exception:  # pragma: no cover - torch may be unavailable
     retrieval_saliency_stub.token_saliency = lambda q, r: []
     retrieval_saliency_stub.image_saliency = lambda q, r: []
     sys.modules['asi.retrieval_saliency'] = retrieval_saliency_stub
+    tc_stub = types.ModuleType('asi.transformer_circuits')
+    tc_stub.AttentionVisualizer = type('AV', (), {})
+    sys.modules['asi.transformer_circuits'] = tc_stub
 
 pkg = types.ModuleType('asi')
 pkg.__path__ = ['src']
 pkg.__spec__ = importlib.machinery.ModuleSpec('asi', None, is_package=True)
 sys.modules['asi'] = pkg
 
-loader = importlib.machinery.SourceFileLoader('asi.retrieval_explainer', 'src/retrieval_explainer.py')
-spec = importlib.util.spec_from_loader(loader.name, loader)
-re_mod = importlib.util.module_from_spec(spec)
-re_mod.__package__ = 'asi'
-loader.exec_module(re_mod)
+
+def _load(name, path):
+    loader = importlib.machinery.SourceFileLoader(name, path)
+    spec = importlib.util.spec_from_loader(name, loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    sys.modules[name] = mod
+    return mod
+
+re_mod = _load('asi.retrieval_analysis', 'src/retrieval_analysis.py')
 RetrievalExplainer = re_mod.RetrievalExplainer
-sys.modules['asi.retrieval_explainer'] = re_mod
 
 
 class HierarchicalMemory:
@@ -157,7 +164,7 @@ class MemoryServer:
 stub_hm.MemoryServer = MemoryServer
 sys.modules['asi.hierarchical_memory'] = stub_hm
 
-from asi.memory_dashboard import MemoryDashboard
+MemoryDashboard = _load('asi.dashboards', 'src/dashboards.py').MemoryDashboard
 
 class TestMemoryExplanations(unittest.TestCase):
     def test_summary_return_and_dashboard(self):
