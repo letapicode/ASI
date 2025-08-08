@@ -40,7 +40,7 @@ class GraphOfThought:
         edges = [[s, d] for s, ds in self.edges.items() for d in ds]
         return {"nodes": nodes, "edges": edges}
 
-loader = importlib.machinery.SourceFileLoader('got_3d_visualizer', 'src/got_3d_visualizer.py')
+loader = importlib.machinery.SourceFileLoader('graph_visualizer', 'src/graph_visualizer.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mod = importlib.util.module_from_spec(spec)
 sys.modules[loader.name] = mod

@@ -230,3 +230,10 @@
 - Updated source modules, tests, and package exports to import from the new consolidated module.
 - Revised documentation and task references to reflect the unified quantum sampling utilities.
 - Corrected import statements in `quantum_sampling.py`.
+
+## PR 35
+- Merged `graph_visualizer_base.py`, `got_visualizer.py` and
+  `got_3d_visualizer.py` into a unified `graph_visualizer.py`.
+- Updated imports across modules, scripts and tests to reference the
+  consolidated visualizer.
+- Documented the new module in `docs/Plan.md` and revised related review tasks.
