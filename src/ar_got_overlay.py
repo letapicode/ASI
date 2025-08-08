@@ -3,12 +3,12 @@ from __future__ import annotations
 import json
 from aiohttp import web
 try:  # pragma: no cover - prefer package imports
-    from asi.graph_visualizer_base import WebSocketServer
+    from asi.graph_visualizer import WebSocketServer
 except Exception:  # pragma: no cover - fallback for tests
     import importlib.util
     from pathlib import Path
     spec = importlib.util.spec_from_file_location(
-        'graph_visualizer_base', Path(__file__).with_name('graph_visualizer_base.py')
+        'graph_visualizer', Path(__file__).with_name('graph_visualizer.py')
     )
     assert spec and spec.loader
     _base = importlib.util.module_from_spec(spec)

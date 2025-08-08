@@ -625,19 +625,14 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 79a. **Federated reasoning graph**: `FederatedReasoningGraph` replicates `GraphOfThought` nodes via gRPC and merges updates using CRDT rules so peers converge after concurrent edits.
 80. **Federated RL self-play**: `FederatedRLTrainer` wraps self-play loops and shares gradients via `SecureFederatedLearner`. Reward should match single-node training within 2% using two peers.
 81. **Self-reflection history**: `self_reflect()` summarises reasoning graphs and `ReasoningHistoryLogger` stores each summary with timestamps. The logger now provides `analyze()` to cluster repeated steps and flag inconsistencies, and can translate summaries when a `CrossLingualTranslator` is supplied. Use `python -m asi.self_reflection` to print a report from saved histories.
-82. **Graph-of-thought visualizer**: Use `src/got_visualizer.py` and the CLI
-    `scripts/got_visualizer.py trace.json --out graph.html` to render reasoning
-    traces for collaborative editing sessions.
-82a. **3D graph viewer**: `got_3d_visualizer.py` renders nodes with pythreejs.
-     Launch `scripts/got_3d_viewer.py trace.json` and push updates over
-     WebSockets from `ARDebugger` or `GraphUI` for real-time exploration.
-82b. **VR graph explorer**: `vr_graph_explorer.py` displays reasoning graphs in
+82. **Graph-of-thought visualizers**: `graph_visualizer.py` provides shared
+    helpers plus both a Plotly 2D renderer and a pythreejs 3D viewer. Use
+    `scripts/got_visualizer.py trace.json --out graph.html` or
+    `scripts/got_3d_viewer.py trace.json` to explore reasoning traces.
+82a. **VR graph explorer**: `vr_graph_explorer.py` displays reasoning graphs in
      VR with a vectorised layout for quicker updates. Run
      `scripts/vr_explorer.py trace.json` to open a WebXR scene with voice and
      gesture commands.
-82c. **Graph visualizer base**: `graph_visualizer_base.py` shares WebSocket
-     helpers, layout utilities and JSON loading across the 2D and 3D
-     visualizers to avoid duplication.
 83. **Graph UI**: `GraphUI` serves interactive D3 graphs via FastAPI. When
     cognitive load exceeds a threshold the UI throttles update frequency and
     shortens node text. Visit `http://localhost:8070/graph` while the server is

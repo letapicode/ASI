@@ -2,7 +2,7 @@ import argparse
 import json
 from pathlib import Path
 
-from asi.got_visualizer import GOTVisualizer
+from asi.graph_visualizer import GOTVisualizer
 
 
 def main(argv: list[str] | None = None) -> None:

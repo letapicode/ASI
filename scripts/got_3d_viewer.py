@@ -4,10 +4,10 @@ import time
 
 try:  # pragma: no cover - prefer package imports
     from asi.graph_of_thought import GraphOfThought
-    from asi.got_3d_visualizer import GOT3DVisualizer, GOT3DViewer
+    from asi.graph_visualizer import GOT3DVisualizer, GOT3DViewer
 except Exception:  # pragma: no cover - fallback for tests
     from src.graph_of_thought import GraphOfThought  # type: ignore
-    from src.got_3d_visualizer import GOT3DVisualizer, GOT3DViewer  # type: ignore
+    from src.graph_visualizer import GOT3DVisualizer, GOT3DViewer  # type: ignore
 
 
 def main(path: str, port: int) -> None:

@@ -868,13 +868,13 @@ Analyze the file `src/generative_data_augmentor.py` for code quality, documentat
 
 Analyze the file `src/gnn_memory.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 218: Review src/got_3d_visualizer.py
+## Task 218: Review src/graph_visualizer.py
 
-Analyze the file `src/got_3d_visualizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/graph_visualizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 219: Review src/got_visualizer.py
+## Task 219: Review src/graph_visualizer.py
 
-Analyze the file `src/got_visualizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/graph_visualizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 220: Review src/gpu_aware_scheduler.py
 

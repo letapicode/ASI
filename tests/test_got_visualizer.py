@@ -3,7 +3,7 @@ import importlib.machinery
 import importlib.util
 import sys
 
-loader = importlib.machinery.SourceFileLoader('got_visualizer', 'src/got_visualizer.py')
+loader = importlib.machinery.SourceFileLoader('graph_visualizer', 'src/graph_visualizer.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mod = importlib.util.module_from_spec(spec)
 sys.modules[loader.name] = mod
