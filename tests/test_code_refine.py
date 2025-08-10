@@ -51,7 +51,7 @@ class TestCodeRefinePipeline(unittest.TestCase):
         saved = sys.argv
         sys.argv = ['code_refine.py'] + argv
         try:
-            runpy.run_path('scripts/code_refine.py', run_name='__main__')
+            runpy.run_path('src/code_refine.py', run_name='__main__')
         finally:
             sys.argv = saved
 

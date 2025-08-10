@@ -237,3 +237,8 @@
 - Updated imports across modules, scripts and tests to reference the
   consolidated visualizer.
 - Documented the new module in `docs/Plan.md` and revised related review tasks.
+
+## PR 36
+- Merged `scripts/code_refine.py` and `scripts/secure_dataset_exchange.py` into their corresponding modules under `src/`.
+- Added CLI entry points to `code_refine.py` and `secure_dataset_exchange.py` and removed the duplicate scripts.
+- Updated tests, documentation and task references to use `python -m asi.code_refine` and `python -m asi.secure_dataset_exchange`.

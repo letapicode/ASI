@@ -63,7 +63,7 @@ See `docs/Implementation.md` for the optimisation workflow.
 
 `SemanticDriftDetector` monitors predictions between checkpoints by computing KL divergence of output distributions. Call it from `WorldModelDebugger.check()` to flag unexpected behaviour changes before patching.
 - **Automated documentation**: run `python -m asi.doc_summarizer <module>` to keep module summaries under `docs/autodoc/` up to date.
-- **Code refinement pipeline**: run `scripts/code_refine.py <file>` to clean up LLM-generated Python before committing. The tool adds `Any` type hints, fixes `None`/`bool` comparisons and ensures future annotations.
+- **Code refinement pipeline**: run `python -m asi.code_refine <file>` to clean up LLM-generated Python before committing. The tool adds `Any` type hints, fixes `None`/`bool` comparisons and ensures future annotations.
 
 - **Reasoning graph merger**: `reasoning_merger.merge_graphs()` deduplicates nodes across agents and aligns timestamps. The `dashboards.MultiAgentDashboard` now displays the merged trace.
 
@@ -590,7 +590,7 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
 74b. **Privacy auditor**: `PrivacyAuditor` combines `PrivacyBudgetManager`, `LicenseInspector` and `DatasetLineageManager`. `download_triples()` logs each triple through the auditor and periodic reports are written to `docs/privacy_reports/`.
 75. **Dataset summarization**: `scripts/dataset_summary.py --content` clusters text samples with `dataset_summarizer.summarize_dataset()` and writes the result to `docs/datasets/`.
 
-75a. **Secure dataset exchange**: `SecureDatasetExchange` encrypts datasets and verifies signatures so collaborators can share data without exposing proprietary content. The protocol now emits a signed integrity proof of the archive hash; peers must present this proof before extraction. Use `scripts/secure_dataset_exchange.py` with `--proof-out` and `--proof-in` to push and pull archives between nodes.
+75a. **Secure dataset exchange**: `SecureDatasetExchange` encrypts datasets and verifies signatures so collaborators can share data without exposing proprietary content. The protocol now emits a signed integrity proof of the archive hash; peers must present this proof before extraction. Use `python -m asi.secure_dataset_exchange` with `--proof-out` and `--proof-in` to push and pull archives between nodes.
 75b. **P2P dataset exchange**: `P2PDatasetExchange` breaks encrypted archives into chunks stored in a DHT. Metadata is signed via `BlockchainProvenanceLedger` from the `provenance_ledger` module. Run `scripts/p2p_exchange.py push|pull` to sync datasets or `seed` to serve chunks.
 75c. **Retrieval summaries**: `HierarchicalMemory.search(return_summary=True)`
      writes text explanations to `last_trace['summary']`. `MemoryDashboard`
