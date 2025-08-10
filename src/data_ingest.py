@@ -147,10 +147,10 @@ except Exception:  # pragma: no cover - for tests
 
 
 try:
-    from .data_bias_mitigator import DataBiasMitigator
+    from .dataset_bias_detector import DataBiasMitigator
 except Exception:  # pragma: no cover - for tests
     try:
-        from data_bias_mitigator import DataBiasMitigator  # type: ignore
+        from dataset_bias_detector import DataBiasMitigator  # type: ignore
     except Exception:
         class DataBiasMitigator:  # type: ignore
             def __init__(self, *a: Any, **kw: Any) -> None:

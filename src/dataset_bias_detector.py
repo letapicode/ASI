@@ -1,4 +1,10 @@
-"""Compute simple representation metrics for dataset bias analysis."""
+"""Compute and mitigate dataset bias.
+
+This module combines helpers for detecting representation skews and
+filtering datasets using those metrics.  Previously the detection and
+mitigation logic lived in separate files which led to duplicated imports
+and scattered responsibilities.  Consolidating them here keeps all
+bias-related utilities in one place and avoids cross-file redundancy."""
 
 from __future__ import annotations
 
@@ -6,7 +12,7 @@ import numpy as np
 from collections import Counter
 import concurrent.futures
 from pathlib import Path
-from typing import Iterable, Dict, Union, Callable, List
+from typing import Iterable, Dict, Union, Callable, List, Tuple, Optional
 
 from .telemetry import TelemetryLogger
 
@@ -95,10 +101,56 @@ class DatasetBiasDetector:
             }
 
 
+class DataBiasMitigator:
+    """Reweight or filter dataset samples based on bias scores."""
+
+    def __init__(self, threshold: float | None = None) -> None:
+        """Initialize with optional ``threshold`` for filtering."""
+        self.threshold = threshold
+
+    # ------------------------------------------------------------------
+    def score_file(self, path: str | Path) -> float:
+        """Return bias score for the file at ``path``."""
+        return file_bias_score(path)
+
+    # ------------------------------------------------------------------
+    def reweight_files(self, paths: Iterable[str | Path]) -> Dict[Path, float]:
+        """Return a weight for each file proportional to its bias score."""
+        return {Path(p): self.score_file(p) for p in paths}
+
+    # ------------------------------------------------------------------
+    def filter_files(
+        self,
+        paths: Iterable[str | Path],
+        threshold: Optional[float] = None,
+    ) -> List[Path]:
+        """Return paths whose bias score meets ``threshold``."""
+        thr = self.threshold if threshold is None else threshold
+        if thr is None:
+            return [Path(p) for p in paths]
+        return [Path(p) for p in paths if self.score_file(p) >= thr]
+
+    # ------------------------------------------------------------------
+    def apply_to_triples(
+        self,
+        triples: Iterable[Tuple[Path, Path, Path]],
+        threshold: Optional[float] = None,
+    ) -> List[Tuple[Path, Path, Path]]:
+        """Filter triples based on text bias score."""
+        thr = self.threshold if threshold is None else threshold
+        out: List[Tuple[Path, Path, Path]] = []
+        for t, i, a in triples:
+            score = self.score_file(t)
+            if thr is None or score >= thr:
+                out.append((t, i, a))
+        return out
+
+
 __all__ = [
     "compute_word_freq",
     "bias_score",
     "text_bias_score",
     "file_bias_score",
     "DatasetBiasDetector",
+    "DataBiasMitigator",
 ]

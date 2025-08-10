@@ -242,3 +242,8 @@
 - Merged `scripts/code_refine.py` and `scripts/secure_dataset_exchange.py` into their corresponding modules under `src/`.
 - Added CLI entry points to `code_refine.py` and `secure_dataset_exchange.py` and removed the duplicate scripts.
 - Updated tests, documentation and task references to use `python -m asi.code_refine` and `python -m asi.secure_dataset_exchange`.
+
+## PR 37
+- Consolidated dataset bias utilities by folding `DataBiasMitigator` into `dataset_bias_detector.py`.
+- Removed the standalone `data_bias_mitigator.py` and updated imports across the package and tests.
+- Documented the unified bias module in `docs/Plan.md`.

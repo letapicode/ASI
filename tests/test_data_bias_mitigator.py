@@ -6,15 +6,14 @@ import importlib.util
 import types
 import sys
 
-src_pkg = types.ModuleType('src')
-src_pkg.__path__ = ['src']
-src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
-sys.modules['src'] = src_pkg
-loader = importlib.machinery.SourceFileLoader('src.data_bias_mitigator', 'src/data_bias_mitigator.py')
+pkg = types.ModuleType('asi')
+pkg.__path__ = ['src']
+sys.modules['asi'] = pkg
+loader = importlib.machinery.SourceFileLoader('asi.dataset_bias_detector', 'src/dataset_bias_detector.py')
 spec = importlib.util.spec_from_loader(loader.name, loader)
 mod = importlib.util.module_from_spec(spec)
-mod.__package__ = 'src'
-sys.modules['src.data_bias_mitigator'] = mod
+mod.__package__ = 'asi'
+sys.modules['asi.dataset_bias_detector'] = mod
 loader.exec_module(mod)
 DataBiasMitigator = mod.DataBiasMitigator
 
