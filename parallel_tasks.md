@@ -160,9 +160,9 @@ Analyze the file `scripts/check_blockchain_provenance.py` for code quality, docu
 
 Analyze the file `scripts/check_provenance.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 41: Review scripts/code_refine.py
+## Task 41: scripts/code_refine.py (merged into src)
 
-Analyze the file `scripts/code_refine.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+This script was merged into `src/code_refine.py` which now provides the CLI via `python -m asi.code_refine`.
 
 ## Task 42: Review scripts/continuous_eval.py
 
@@ -340,9 +340,9 @@ Analyze the file `scripts/resource_broker_demo.py` for code quality, documentati
 
 Analyze the file `scripts/rl_hpc_schedule.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 86: Review scripts/secure_dataset_exchange.py
+## Task 86: scripts/secure_dataset_exchange.py (merged into src)
 
-Analyze the file `scripts/secure_dataset_exchange.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+This CLI now lives in `src/secure_dataset_exchange.py` and is invoked via `python -m asi.secure_dataset_exchange`.
 
 ## Task 87: Review scripts/secure_inference_example.py
 
