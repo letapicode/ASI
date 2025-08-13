@@ -21,7 +21,7 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     RetrievalTrustScorer = None  # type: ignore
 from .memory_timeline_viewer import MemoryTimelineViewer
-from .kg_visualizer import KGVisualizer
+from .graph_visualizers import KGVisualizer
 
 from .hierarchical_memory import MemoryServer
 
@@ -615,7 +615,6 @@ try:  # pragma: no cover - optional heavy dep
 except Exception:  # pragma: no cover - fallback when torch is missing
     torch = None  # type: ignore
 
-from .memory_dashboard import MemoryDashboard
 from .transformer_circuits import AttentionVisualizer
 
 BaseDashboard = load_base_dashboard(__file__)
@@ -751,7 +750,6 @@ except Exception:  # pragma: no cover - fallback when not packaged
 BaseDashboard = load_base_dashboard(__file__)
 
 from .risk_scoreboard import RiskScoreboard
-from .memory_dashboard import MemoryDashboard
 
 
 class RiskDashboard(BaseDashboard):

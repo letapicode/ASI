@@ -939,7 +939,7 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
 - Add a `DatasetLineageManager` that records transformation steps and resulting file hashes for reproducible pipelines.
   **Implemented in `src/dataset_lineage.py` with tests.**
 - Provide a `DatasetLineageDashboard` exposing `/graph` and `/steps` endpoints for searching lineage records. Run `python scripts/lineage_dashboard.py <root>` to launch it.
-  **Implemented in `src/lineage_visualizer.py` with tests.**
+  **Implemented in `src/graph_visualizers.py` with tests.**
 - Introduce a `BlockchainProvenanceLedger` in the unified `provenance_ledger` module that links each record to the previous hash. Ingestion helpers append their lineage to this ledger and `scripts/check_blockchain_provenance.py` verifies the chain.
 - Expose a `DatasetLineageService` gRPC API. `dataset_lineage.py` signs
   each record with an ed25519 key and writes it to the `BlockchainProvenanceLedger` from that module.

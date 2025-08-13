@@ -32,7 +32,7 @@ def _load(name: str, path: str):
     return mod
 
 DatasetLineageManager = _load('src.dataset_lineage', 'src/dataset_lineage.py').DatasetLineageManager
-DatasetLineageDashboard = _load('src.lineage_visualizer', 'src/lineage_visualizer.py').DatasetLineageDashboard
+DatasetLineageDashboard = _load('src.graph_visualizers', 'src/graph_visualizers.py').DatasetLineageDashboard
 
 
 class TestDatasetLineageDashboard(unittest.TestCase):
