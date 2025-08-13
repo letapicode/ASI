@@ -247,3 +247,7 @@
 - Consolidated dataset bias utilities by folding `DataBiasMitigator` into `dataset_bias_detector.py`.
 - Removed the standalone `data_bias_mitigator.py` and updated imports across the package and tests.
 - Documented the unified bias module in `docs/Plan.md`.
+
+## PR 38
+- Merged `lineage_visualizer.py` and `kg_visualizer.py` into a unified `graph_visualizers.py` with shared `D3GraphVisualizer` base.
+- Updated imports across modules, scripts, tests, and documentation to reference the consolidated visualizers.

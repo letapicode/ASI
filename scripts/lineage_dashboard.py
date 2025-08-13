@@ -6,10 +6,10 @@ import time
 
 try:  # pragma: no cover - prefer package import
     from asi.dataset_lineage import DatasetLineageManager
-    from asi.lineage_visualizer import DatasetLineageDashboard
+    from asi.graph_visualizers import DatasetLineageDashboard
 except Exception:  # pragma: no cover - fallback for tests
     from src.dataset_lineage import DatasetLineageManager  # type: ignore
-    from src.lineage_visualizer import DatasetLineageDashboard  # type: ignore
+    from src.graph_visualizers import DatasetLineageDashboard  # type: ignore
 
 
 def main(argv: list[str] | None = None) -> None:
