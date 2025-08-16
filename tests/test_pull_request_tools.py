@@ -3,20 +3,33 @@ import unittest
 from unittest.mock import patch
 
 import asyncio
+import importlib.machinery
 import importlib.util
+import types
+import sys
 import os
 
-spec = importlib.util.spec_from_file_location(
-    "pull_request_monitor",
-    os.path.join(os.path.dirname(__file__), "..", "src", "pull_request_monitor.py"),
-)
-prmon = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(prmon)
+pkg = types.ModuleType("asi")
+sys.modules["asi"] = pkg
 
-list_open_prs = prmon.list_open_prs
-check_mergeable = prmon.check_mergeable
-list_open_prs_async = prmon.list_open_prs_async
-check_mergeable_async = prmon.check_mergeable_async
+loader_ab = importlib.machinery.SourceFileLoader("asi.autobench", "src/autobench.py")
+spec_ab = importlib.util.spec_from_loader(loader_ab.name, loader_ab)
+ab = importlib.util.module_from_spec(spec_ab)
+sys.modules["asi.autobench"] = ab
+loader_ab.exec_module(ab)
+
+spec = importlib.util.spec_from_file_location(
+    "asi.pull_request_tools",
+    os.path.join(os.path.dirname(__file__), "..", "src", "pull_request_tools.py"),
+)
+prt = importlib.util.module_from_spec(spec)
+sys.modules["asi.pull_request_tools"] = prt
+spec.loader.exec_module(prt)
+
+list_open_prs = prt.list_open_prs
+check_mergeable = prt.check_mergeable
+list_open_prs_async = prt.list_open_prs_async
+check_mergeable_async = prt.check_mergeable_async
 
 
 def fake_urlopen_factory(responses):
@@ -43,17 +56,17 @@ def fake_async_api_factory(responses, calls=None):
     return fake_api
 
 
-class TestPullRequestMonitor(unittest.TestCase):
+class TestPullRequestTools(unittest.TestCase):
     def test_list_open_prs(self):
         responses = [[{"number": 1, "title": "Fix bug"}, {"number": 2, "title": "Add feature"}]]
-        with patch.object(prmon, 'urlopen', fake_urlopen_factory(responses)):
+        with patch.object(prt, 'urlopen', fake_urlopen_factory(responses)):
             prs = list_open_prs('owner/repo')
         self.assertEqual(len(prs), 2)
         self.assertEqual(prs[0]['number'], 1)
 
     def test_check_mergeable(self):
         responses = [{"mergeable": True}]
-        with patch.object(prmon, 'urlopen', fake_urlopen_factory(responses)):
+        with patch.object(prt, 'urlopen', fake_urlopen_factory(responses)):
             result = check_mergeable('owner/repo', 1)
         self.assertTrue(result)
 
@@ -61,7 +74,7 @@ class TestPullRequestMonitor(unittest.TestCase):
         responses = [[{"number": 1, "title": "Bug"}, {"number": 2, "title": "Feature"}]]
         calls = []
         session = object()
-        with patch.object(prmon, '_github_api_async', fake_async_api_factory(responses, calls)):
+        with patch.object(prt, '_github_api_async', fake_async_api_factory(responses, calls)):
             prs = asyncio.run(list_open_prs_async('owner/repo', session=session))
         self.assertEqual(len(prs), 2)
         self.assertEqual(prs[1]['title'], 'Feature')
@@ -71,7 +84,7 @@ class TestPullRequestMonitor(unittest.TestCase):
         responses = [{"mergeable": False}]
         calls = []
         session = object()
-        with patch.object(prmon, '_github_api_async', fake_async_api_factory(responses, calls)):
+        with patch.object(prt, '_github_api_async', fake_async_api_factory(responses, calls)):
             result = asyncio.run(check_mergeable_async('owner/repo', 1, session=session))
         self.assertFalse(result)
         self.assertIs(calls[0], session)

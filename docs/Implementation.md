@@ -357,10 +357,11 @@ To reproduce the toy run step by step:
 
 ## Pull Request Monitoring
 
-- `src/pull_request_monitor.py` lists open pull requests and checks mergeability.
-- The asynchronous helpers now accept an optional `aiohttp.ClientSession` so
-  multiple API calls can share a single session. The `main()` helper creates
-  one session when invoked with `--use-asyncio` and reuses it across requests.
+- `src/pull_request_tools.py` lists open pull requests, checks mergeability and
+  detects conflicts.
+- The asynchronous helpers accept an optional `aiohttp.ClientSession` so
+  multiple API calls can share a single session. The CLI exposes both the PR
+  listing and conflict checker subcommands.
 
 ## L-1 Collective Constitutional AI
 
@@ -477,7 +478,8 @@ python scripts/distributed_memory_benchmark.py --servers 4 --vectors 100
 
 ## A-9 Automated PR Conflict Checks
 
-- `src/pr_conflict_checker.py` reuses `pull_request_monitor.list_open_prs()` and runs `git merge-base` to detect conflicts.
+- `src/pull_request_tools.py` fetches open PR branches and runs `git merge-tree`
+  against a base branch to detect conflicts.
 - Summaries appear in the AutoBench-style scoreboard.
 
 ## A-10 Goal-Oriented Evaluation Harness

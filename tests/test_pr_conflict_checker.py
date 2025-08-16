@@ -1,4 +1,5 @@
 import os
+import os
 import tempfile
 import subprocess
 from unittest.mock import patch
@@ -16,21 +17,15 @@ sys.modules['asi.autobench'] = ab
 loader2.exec_module(ab)
 summarize_results = ab.summarize_results
 
-loader_pm = importlib.machinery.SourceFileLoader('asi.pull_request_monitor', 'src/pull_request_monitor.py')
-spec_pm = importlib.util.spec_from_loader(loader_pm.name, loader_pm)
-pm = importlib.util.module_from_spec(spec_pm)
-sys.modules['asi.pull_request_monitor'] = pm
-loader_pm.exec_module(pm)
-
 pkg = types.ModuleType('asi')
 sys.modules['asi'] = pkg
 
-loader = importlib.machinery.SourceFileLoader('asi.pr_conflict_checker', 'src/pr_conflict_checker.py')
-spec = importlib.util.spec_from_loader(loader.name, loader)
-prcc = importlib.util.module_from_spec(spec)
-sys.modules['asi.pr_conflict_checker'] = prcc
-loader.exec_module(prcc)
-check_pr_conflicts = prcc.check_pr_conflicts
+loader_tools = importlib.machinery.SourceFileLoader('asi.pull_request_tools', 'src/pull_request_tools.py')
+spec_tools = importlib.util.spec_from_loader(loader_tools.name, loader_tools)
+prt = importlib.util.module_from_spec(spec_tools)
+sys.modules['asi.pull_request_tools'] = prt
+loader_tools.exec_module(prt)
+check_pr_conflicts = prt.check_pr_conflicts
 
 
 def git(cmd, cwd):
@@ -78,7 +73,7 @@ class TestPRConflictChecker(unittest.TestCase):
 
     def test_check_pr_conflicts(self):
         prs = [{"number": 1, "title": "clean"}, {"number": 2, "title": "conflict"}]
-        with patch("asi.pr_conflict_checker.list_open_prs", return_value=prs):
+        with patch("asi.pull_request_tools.list_open_prs", return_value=prs):
             results = check_pr_conflicts("dummy/repo", repo_path=self.repo)
         self.assertTrue(results["PR 1"].passed)
         self.assertFalse(results["PR 2"].passed)
