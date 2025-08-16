@@ -23,14 +23,15 @@ rts_stub = types.ModuleType('asi.retrieval_trust_scorer')
 rts_stub.RetrievalTrustScorer = type('RTS', (), {'score': staticmethod(lambda *a, **k: 0.0)})
 mtv_stub = types.ModuleType('asi.memory_timeline_viewer')
 mtv_stub.MemoryTimelineViewer = type('MTV', (), {})
-kgv_stub = types.ModuleType('asi.graph_visualizers')
+kgv_stub = types.ModuleType('asi.graph_visualizer')
 kgv_stub.KGVisualizer = type('KGV', (), {})
 sys.modules.update({
     'asi.retrieval_explainer': re_stub,
     'asi.retrieval_visualizer': rv_stub,
     'asi.retrieval_trust_scorer': rts_stub,
     'asi.memory_timeline_viewer': mtv_stub,
-    'asi.graph_visualizers': kgv_stub,
+    'asi.graph_visualizer': kgv_stub,
+    'src.graph_visualizer': kgv_stub,
 })
 
 src_pkg = types.ModuleType('src')

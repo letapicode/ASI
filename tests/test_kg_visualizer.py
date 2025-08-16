@@ -29,7 +29,7 @@ class KnowledgeGraphMemory:
     def query_triples(self, **k):
         return []
 
-KGVisualizer = _load('asi.graph_visualizers', 'src/graph_visualizers.py').KGVisualizer
+KGVisualizer = _load('asi.graph_visualizer', 'src/graph_visualizer.py').KGVisualizer
 
 
 class TestKGVisualizer(unittest.TestCase):

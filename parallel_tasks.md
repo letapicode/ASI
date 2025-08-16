@@ -648,9 +648,9 @@ Analyze the file `src/dataset_gap_search.py` for code quality, documentation, an
 
 Analyze the file `src/dataset_lineage.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 163: Review src/graph_visualizers.py
+## Task 163: Review src/graph_visualizer.py
 
-Analyze the file `src/graph_visualizers.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/graph_visualizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 164: Review src/dataset_lineage.py
 
@@ -972,9 +972,9 @@ Analyze the file `src/kg_memory_pb2.py` for code quality, documentation, and tes
 
 Analyze the file `src/kg_memory_pb2_grpc.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 244: Review src/graph_visualizers.py
+## Task 244: Review src/graph_visualizer.py
 
-Analyze the file `src/graph_visualizers.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/graph_visualizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 245: Review src/knowledge_base_client.py
 
@@ -996,9 +996,9 @@ Analyze the file `src/lineage_pb2.py` for code quality, documentation, and testi
 
 Analyze the file `src/lineage_pb2_grpc.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 250: Review src/graph_visualizers.py
+## Task 250: Review src/graph_visualizer.py
 
-Analyze the file `src/graph_visualizers.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/graph_visualizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 251: Review src/link_slot_attention.py
 
