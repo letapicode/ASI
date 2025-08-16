@@ -21,7 +21,7 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     RetrievalTrustScorer = None  # type: ignore
 from .memory_timeline_viewer import MemoryTimelineViewer
-from .graph_visualizers import KGVisualizer
+from .graph_visualizer import KGVisualizer
 
 from .hierarchical_memory import MemoryServer
 

@@ -23,7 +23,7 @@ def _load(name: str, path: str):
 
 
 DatasetLineageManager = _load('src.dataset_lineage', 'src/dataset_lineage.py').DatasetLineageManager
-LineageVisualizer = _load('src.graph_visualizers', 'src/graph_visualizers.py').LineageVisualizer
+LineageVisualizer = _load('src.graph_visualizer', 'src/graph_visualizer.py').LineageVisualizer
 
 
 class TestLineageVisualizer(unittest.TestCase):

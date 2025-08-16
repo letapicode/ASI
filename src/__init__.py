@@ -178,7 +178,16 @@ except Exception:  # pragma: no cover - optional
 from .differential_privacy_optimizer import DifferentialPrivacyOptimizer, DifferentialPrivacyConfig
 
 from .embedding_visualizer import EmbeddingVisualizer
-from .graph_visualizer import GOTVisualizer, GOT3DVisualizer, GOT3DViewer, WebSocketServer
+from .graph_visualizer import (
+    GOTVisualizer,
+    GOT3DVisualizer,
+    GOT3DViewer,
+    WebSocketServer,
+    D3GraphVisualizer,
+    LineageVisualizer,
+    DatasetLineageDashboard,
+    KGVisualizer,
+)
 from .duplicate_detector import DuplicateDetector
 from .telemetry import TelemetryLogger, MemoryEventDetector
 from .fine_grained_profiler import FineGrainedProfiler
@@ -187,7 +196,6 @@ from .cognitive_load_monitor import CognitiveLoadMonitor
 from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner
 from .dataset_lineage import DatasetLineageManager
-from .graph_visualizers import DatasetLineageDashboard
 from .dataset_anonymizer import DatasetAnonymizer
 from .ner_anonymizer import NERAnonymizer
 from .dataset_discovery import (

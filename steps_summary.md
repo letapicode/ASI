@@ -251,3 +251,7 @@
 ## PR 38
 - Merged `lineage_visualizer.py` and `kg_visualizer.py` into a unified `graph_visualizers.py` with shared `D3GraphVisualizer` base.
 - Updated imports across modules, scripts, tests, and documentation to reference the consolidated visualizers.
+
+## PR 39
+- Consolidated all graph visualizers into `graph_visualizer.py`.
+- Removed the old `graph_visualizers.py` module and redirected imports in code, tests, scripts and documentation.
