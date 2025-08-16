@@ -196,8 +196,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
   deems them misaligned. `AlignmentDashboard` now reports the count of such
   BCI-derived events.
 - `src/rlaif_trainer.py` runs a synthetic-critic RLAIF loop for **L-7**.
-- `src/pull_request_monitor.py` now supports asynchronous GitHub queries using
-  `aiohttp` for faster monitoring of open pull requests.
+- `src/pull_request_tools.py` consolidates pull request monitoring and
+  conflict checks with asynchronous GitHub queries.
 - `src/lora_quant.py` provides 4-bit LoRA adapters and `apply_quant_lora()` to
   inject them into existing models.
 - `src/spiking_layers.py` defines `LIFNeuron` and `SpikingLinear`. Set

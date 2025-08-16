@@ -60,11 +60,12 @@ from .mamba_block import MambaBlock
 from .retention import RetNetRetention, HybridRetention
 from .adaptive_planner import GraphOfThoughtPlanner, AdaptivePlanner
 
-from .pull_request_monitor import (
+from .pull_request_tools import (
     list_open_prs,
     check_mergeable,
     list_open_prs_async,
     check_mergeable_async,
+    check_pr_conflicts,
 )
 from .multimodal_world_model import (
     MultiModalWorldModelConfig,

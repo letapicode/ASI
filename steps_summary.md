@@ -255,3 +255,9 @@
 ## PR 39
 - Consolidated all graph visualizers into `graph_visualizer.py`.
 - Removed the old `graph_visualizers.py` module and redirected imports in code, tests, scripts and documentation.
+
+## PR 40
+- Unified pull request utilities by merging `pull_request_monitor` and
+  `pr_conflict_checker` into `pull_request_tools`.
+- Updated imports, tests, and documentation to use the consolidated module and
+  its CLI subcommands.

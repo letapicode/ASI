@@ -1180,9 +1180,9 @@ Analyze the file `src/parameter_efficient_adapter.py` for code quality, document
 
 Analyze the file `src/pq_vector_store.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 296: Review src/pr_conflict_checker.py
+## Task 296: Review src/pull_request_tools.py
 
-Analyze the file `src/pr_conflict_checker.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/pull_request_tools.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 297: Review src/privacy_auditor.py
 
@@ -1200,9 +1200,9 @@ Analyze the file `src/privacy_guard.py` for code quality, documentation, and tes
 
 Analyze the file `src/prompt_optimizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 301: Review src/pull_request_monitor.py
+## Task 301: Review src/pull_request_tools.py
 
-Analyze the file `src/pull_request_monitor.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/pull_request_tools.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 302: Review src/quantum_hpo.py
 
@@ -2336,9 +2336,9 @@ Analyze the file `tests/test_privacy_guard.py` for code quality, documentation, 
 
 Analyze the file `tests/test_prompt_optimizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 585: Review tests/test_pull_request_monitor.py
+## Task 585: Review tests/test_pull_request_tools.py
 
-Analyze the file `tests/test_pull_request_monitor.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `tests/test_pull_request_tools.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 586: Review tests/test_quantum_amplitude.py
 

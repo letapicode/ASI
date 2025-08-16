@@ -62,7 +62,7 @@ for every open pull request. It fetches each PR branch, runs `git merge-base`
 and `git merge-tree`, then prints an AutoBench-style table.
 
 ```bash
-python -m src.pr_conflict_checker letapicode/ASI
+python -m src.pull_request_tools conflicts letapicode/ASI
 ```
 
 If the package imports fail, run the standalone helper instead:
