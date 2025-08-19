@@ -26,7 +26,11 @@ sys.modules['asi.loihi_backend'] = types.SimpleNamespace(
     configure_loihi=lambda *a, **kw: None,
     _HAS_LOIHI=False,
 )
-sys.modules['asi.privacy_guard'] = types.SimpleNamespace(PrivacyGuard=object)
+sys.modules['asi.privacy'] = types.SimpleNamespace(
+    PrivacyGuard=object,
+    PrivacyBudgetManager=object,
+    PrivacyAuditor=object,
+)
 sys.modules['asi.dataset_watermarker'] = types.SimpleNamespace(detect_watermark=lambda *a, **kw: None)
 sys.modules['asi.provenance_ledger'] = types.SimpleNamespace(
     DataProvenanceLedger=lambda root: None,

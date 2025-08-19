@@ -1,6 +1,6 @@
 import argparse
 import json
-from asi.privacy_budget_manager import PrivacyBudgetManager
+from asi.privacy import PrivacyBudgetManager
 
 
 if __name__ == "__main__":

@@ -12,12 +12,13 @@ sys.modules['src'] = src_pkg
 src_pkg.__path__ = ['src']
 src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
 
-loader_pbm = importlib.machinery.SourceFileLoader('src.privacy_budget_manager', 'src/privacy_budget_manager.py')
-spec_pbm = importlib.util.spec_from_loader(loader_pbm.name, loader_pbm)
-pbm = importlib.util.module_from_spec(spec_pbm)
-pbm.__package__ = 'src'
-sys.modules['src.privacy_budget_manager'] = pbm
-loader_pbm.exec_module(pbm)
+loader_priv = importlib.machinery.SourceFileLoader('src.privacy', 'src/privacy.py')
+spec_priv = importlib.util.spec_from_loader(loader_priv.name, loader_priv)
+priv = importlib.util.module_from_spec(spec_priv)
+priv.__package__ = 'src'
+sys.modules['src.privacy'] = priv
+sys.modules['asi.privacy'] = priv
+loader_priv.exec_module(priv)
 
 loader_li = importlib.machinery.SourceFileLoader('src.license_inspector', 'src/license_inspector.py')
 spec_li = importlib.util.spec_from_loader(loader_li.name, loader_li)
@@ -33,17 +34,10 @@ dlm.__package__ = 'src'
 sys.modules['src.dataset_lineage'] = dlm
 loader_dlm.exec_module(dlm)
 
-loader_pa = importlib.machinery.SourceFileLoader('src.privacy_auditor', 'src/privacy_auditor.py')
-spec_pa = importlib.util.spec_from_loader(loader_pa.name, loader_pa)
-pa = importlib.util.module_from_spec(spec_pa)
-pa.__package__ = 'src'
-sys.modules['src.privacy_auditor'] = pa
-loader_pa.exec_module(pa)
-
-PrivacyBudgetManager = pbm.PrivacyBudgetManager
+PrivacyBudgetManager = priv.PrivacyBudgetManager
 LicenseInspector = li.LicenseInspector
 DatasetLineageManager = dlm.DatasetLineageManager
-PrivacyAuditor = pa.PrivacyAuditor
+PrivacyAuditor = priv.PrivacyAuditor
 
 
 class TestPrivacyAuditor(unittest.TestCase):

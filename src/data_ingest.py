@@ -30,7 +30,7 @@ except Exception:  # pragma: no cover - optional
 
         def stop(self) -> None:
             pass
-from .privacy_guard import PrivacyGuard
+from .privacy import PrivacyGuard
 try:
     from .advanced_ingest import LLMIngestParser
 except Exception:  # pragma: no cover - optional
@@ -205,10 +205,10 @@ except Exception:  # pragma: no cover - for tests
             return 1.0
 
 try:
-    from .privacy_auditor import PrivacyAuditor
+    from .privacy import PrivacyAuditor
 except Exception:  # pragma: no cover - for tests
     try:
-        from privacy_auditor import PrivacyAuditor  # type: ignore
+        from privacy import PrivacyAuditor  # type: ignore
     except Exception:  # pragma: no cover - stub
         class PrivacyAuditor:  # type: ignore
             def audit_triple(self, *a: Any, **kw: Any) -> bool:

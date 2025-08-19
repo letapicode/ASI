@@ -12,7 +12,7 @@ try:
         DifferentialPrivacyOptimizer,
         DifferentialPrivacyConfig,
     )
-    from .privacy_budget_manager import PrivacyBudgetManager
+    from .privacy import PrivacyBudgetManager
 except Exception:  # pragma: no cover - fallback for tests
     import importlib.util
     import sys
@@ -37,7 +37,7 @@ except Exception:  # pragma: no cover - fallback for tests
     dpo = _load("differential_privacy_optimizer")
     DifferentialPrivacyOptimizer = dpo.DifferentialPrivacyOptimizer  # type: ignore
     DifferentialPrivacyConfig = dpo.DifferentialPrivacyConfig
-    pbm_mod = _load("privacy_budget_manager")
+    pbm_mod = _load("privacy")
     PrivacyBudgetManager = pbm_mod.PrivacyBudgetManager
 
 import torch

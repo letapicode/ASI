@@ -613,7 +613,7 @@ To inject noise for differential privacy, create a `PrivacyGuard` and pass it to
 `download_triples()`. After ingestion, inspect the remaining budget:
 
 ```python
-from asi.privacy_guard import PrivacyGuard
+from asi.privacy import PrivacyGuard
 
 guard = PrivacyGuard(budget=1.0)
 download_triples(text_urls, img_urls, aud_urls, "./data", privacy_guard=guard)
@@ -806,7 +806,7 @@ s1.stop(0); s2.stop(0)
 Enabling proof verification adds a small SHA-256 hash computation per vector when syncing. Proof digests are cached and replication now uses a thread pool to contact peers concurrently, roughly halving the latency compared to the naive approach.
 - Develop a `HierarchicalPlanner` combining `GraphOfThought` with `world_model_rl.rollout_policy` to compose multi-stage plans. **Implemented in `src/hierarchical_planner.py`.**
 - Integrate a `DifferentialPrivacyOptimizer` into training loops so models can optionally clip gradients and inject noise during updates. **Implemented in `src/differential_privacy_optimizer.py` and integrated with `world_model_rl.train_world_model`.**
-- Add a `PrivacyBudgetManager` to track cumulative privacy loss across runs. `train_world_model` accepts the manager and records the consumed epsilon/delta after each training session. **Implemented in `src/privacy_budget_manager.py` with `scripts/privacy_budget_status.py`.**
+- Add a `PrivacyBudgetManager` to track cumulative privacy loss across runs. `train_world_model` accepts the manager and records the consumed epsilon/delta after each training session. **Implemented in `src/privacy.py` with `scripts/privacy_budget_status.py`.**
 - Add a `GradientCompressor` utility that performs top-k or quantized gradient
   compression. `DistributedTrainer` uses it when ``grad_compression`` is
   provided. **Implemented in `src/gradient_compression.py` and wired through
@@ -823,7 +823,7 @@ Enabling proof verification adds a small SHA-256 hash computation per vector whe
 - Implement a `HolographicVectorStore` that encodes text, image and audio embeddings with holographic reduced representations. `scripts/holographic_retrieval_benchmark.py` measures retrieval accuracy with this store type. Run `python scripts/holographic_retrieval_benchmark.py --samples 500` after installing `faiss-cpu` to reproduce the numbers.
 - Add a `DuplicateDetector` that uses CLIP embeddings with locality-sensitive hashing to drop near-duplicate samples during ingestion and connect it to `AutoDatasetFilter`. **Implemented in `src/duplicate_detector.py` and integrated with `filter_text_files()`.**
 - Add a `DataPoisonDetector` that clusters word statistics and flags poisoned samples during ingestion. `download_triples()` now drops flagged triples. **Implemented in `src/data_poison_detector.py` and wired through `data_ingest`.**
-- Add a `PrivacyGuard` that injects noise into downloaded triples and tracks epsilon usage. `download_triples()` records the budget per sample. **Implemented in `src/privacy_guard.py` and integrated with `data_ingest.download_triples`.**
+- Add a `PrivacyGuard` that injects noise into downloaded triples and tracks epsilon usage. `download_triples()` records the budget per sample. **Implemented in `src/privacy.py` and integrated with `data_ingest.download_triples`.**
 - Implement a `TemporalVectorCompressor` in `streaming_compression.py` with a
   decay factor so `HierarchicalMemory` can prioritize recent context. Benchmark
   retrieval accuracy against the existing compressor. **Implemented in
