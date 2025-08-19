@@ -20,11 +20,12 @@ src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
 sys.modules['torch'] = types.SimpleNamespace()
 sys.modules['psutil'] = types.SimpleNamespace()
 
-loader_pg = importlib.machinery.SourceFileLoader('src.privacy_guard', 'src/privacy_guard.py')
+loader_pg = importlib.machinery.SourceFileLoader('src.privacy', 'src/privacy.py')
 spec_pg = importlib.util.spec_from_loader(loader_pg.name, loader_pg)
 pg_mod = importlib.util.module_from_spec(spec_pg)
 pg_mod.__package__ = 'src'
-sys.modules['src.privacy_guard'] = pg_mod
+sys.modules['src.privacy'] = pg_mod
+sys.modules['asi.privacy'] = pg_mod
 loader_pg.exec_module(pg_mod)
 PrivacyGuard = pg_mod.PrivacyGuard
 
@@ -47,7 +48,7 @@ class TestPrivacyGuard(unittest.TestCase):
         self.assertTrue(changed)
 
     def test_download_triples_privacy(self):
-        async def fake_download(session, url, dest):
+        async def fake_download(session, url, dest, watermark_id=None):
             dest.parent.mkdir(parents=True, exist_ok=True)
             if dest.suffix == ".txt":
                 dest.write_text("hello world")

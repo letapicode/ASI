@@ -54,12 +54,13 @@ sys.modules['asi.dataset_lineage'] = dlm
 loader_dlm.exec_module(dlm)
 DataPoisonDetector = poison_mod.DataPoisonDetector
 
-loader_pbm = importlib.machinery.SourceFileLoader('src.privacy_budget_manager', 'src/privacy_budget_manager.py')
-spec_pbm = importlib.util.spec_from_loader(loader_pbm.name, loader_pbm)
-pbm_mod = importlib.util.module_from_spec(spec_pbm)
-pbm_mod.__package__ = 'src'
-sys.modules['src.privacy_budget_manager'] = pbm_mod
-loader_pbm.exec_module(pbm_mod)
+loader_priv = importlib.machinery.SourceFileLoader('src.privacy', 'src/privacy.py')
+spec_priv = importlib.util.spec_from_loader(loader_priv.name, loader_priv)
+priv_mod = importlib.util.module_from_spec(spec_priv)
+priv_mod.__package__ = 'src'
+sys.modules['src.privacy'] = priv_mod
+sys.modules['asi.privacy'] = priv_mod
+loader_priv.exec_module(priv_mod)
 
 loader_li = importlib.machinery.SourceFileLoader('src.license_inspector', 'src/license_inspector.py')
 spec_li = importlib.util.spec_from_loader(loader_li.name, loader_li)
@@ -67,13 +68,6 @@ li_mod = importlib.util.module_from_spec(spec_li)
 li_mod.__package__ = 'src'
 sys.modules['src.license_inspector'] = li_mod
 loader_li.exec_module(li_mod)
-
-loader_pa = importlib.machinery.SourceFileLoader('src.privacy_auditor', 'src/privacy_auditor.py')
-spec_pa = importlib.util.spec_from_loader(loader_pa.name, loader_pa)
-pa_mod = importlib.util.module_from_spec(spec_pa)
-pa_mod.__package__ = 'src'
-sys.modules['src.privacy_auditor'] = pa_mod
-loader_pa.exec_module(pa_mod)
 
 loader_wm = importlib.machinery.SourceFileLoader('src.dataset_watermarker', 'src/dataset_watermarker.py')
 spec_wm = importlib.util.spec_from_loader(loader_wm.name, loader_wm)
@@ -234,10 +228,10 @@ class TestDataIngest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as root:
             urls = ['u']
-            pbm = pbm_mod.PrivacyBudgetManager(1.0, 1e-5, Path(root)/'b.json')
+            pbm = priv_mod.PrivacyBudgetManager(1.0, 1e-5, Path(root)/'b.json')
             insp = li_mod.LicenseInspector(['mit'])
             lin = dlm.DatasetLineageManager(root)
-            auditor = pa_mod.PrivacyAuditor(pbm, insp, lin, report_dir=root)
+            auditor = priv_mod.PrivacyAuditor(pbm, insp, lin, report_dir=root)
             meta = Path(root)/'text'/ '0.json'
             meta.parent.mkdir(parents=True, exist_ok=True)
             meta.write_text(json.dumps({'license': 'MIT'}))

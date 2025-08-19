@@ -13,11 +13,11 @@ def _load(name, path):
     loader = importlib.machinery.SourceFileLoader(name, path)
     spec = importlib.util.spec_from_loader(name, loader)
     mod = importlib.util.module_from_spec(spec)
-    loader.exec_module(mod)
     sys.modules[name] = mod
+    loader.exec_module(mod)
     return mod
 
-PrivacyBudgetManager = _load('asi.privacy_budget_manager', 'src/privacy_budget_manager.py').PrivacyBudgetManager
+PrivacyBudgetManager = _load('asi.privacy', 'src/privacy.py').PrivacyBudgetManager
 _load('asi.streaming_compression', 'src/streaming_compression.py')
 wm = _load('asi.world_model_rl', 'src/world_model_rl.py')
 RLBridgeConfig = wm.RLBridgeConfig

@@ -48,7 +48,11 @@ sys.modules['asi.loihi_backend'] = types.SimpleNamespace(
     _HAS_LOIHI=False,
 )
 sys.modules['requests'] = types.SimpleNamespace(get=lambda *a, **kw: None)
-sys.modules['asi.privacy_guard'] = types.SimpleNamespace(PrivacyGuard=object)
+sys.modules['asi.privacy'] = types.SimpleNamespace(
+    PrivacyGuard=object,
+    PrivacyBudgetManager=object,
+    PrivacyAuditor=object,
+)
 
 pkg = types.ModuleType('asi')
 pkg.__path__ = ['src']

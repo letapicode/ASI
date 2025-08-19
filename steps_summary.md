@@ -261,3 +261,9 @@
   `pr_conflict_checker` into `pull_request_tools`.
 - Updated imports, tests, and documentation to use the consolidated module and
   its CLI subcommands.
+
+## PR 41
+- Consolidated privacy utilities into a single `privacy.py` module housing `PrivacyGuard`,
+  `PrivacyBudgetManager`, and `PrivacyAuditor`.
+- Removed the old dedicated modules and updated all imports across the codebase,
+  scripts, tests, and documentation to reference the unified file.
