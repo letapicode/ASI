@@ -7,43 +7,83 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import numpy as np
+import wave
+from PIL import Image
+
+# Set up src package
 src_pkg = types.ModuleType('src')
 src_pkg.__path__ = ['src']
 src_pkg.__spec__ = importlib.machinery.ModuleSpec('src', None, is_package=True)
 sys.modules['src'] = src_pkg
 
-# lightweight torch stub for data_ingest import
+# Stub heavy dependencies
 torch_stub = types.SimpleNamespace(
     tensor=lambda *a, **kw: None,
     zeros=lambda *a, **kw: None,
     long=lambda: None,
 )
 sys.modules['torch'] = torch_stub
-
 requests_stub = types.SimpleNamespace(get=lambda *a, **k: types.SimpleNamespace(content=b'', raise_for_status=lambda: None))
 sys.modules['requests'] = requests_stub
-
-# psutil stub for CarbonFootprintTracker
 psutil_stub = types.SimpleNamespace(cpu_percent=lambda interval=None: 0.0)
 sys.modules['psutil'] = psutil_stub
 sys.modules['pynvml'] = types.ModuleType('pynvml')
 
-# load ner_anonymizer
-loader_na = importlib.machinery.SourceFileLoader('src.ner_anonymizer', 'src/ner_anonymizer.py')
-spec_na = importlib.util.spec_from_loader(loader_na.name, loader_na)
-na_mod = importlib.util.module_from_spec(spec_na)
-na_mod.__package__ = 'src'
-sys.modules['src.ner_anonymizer'] = na_mod
-loader_na.exec_module(na_mod)
-NERAnonymizer = na_mod.NERAnonymizer
+# Load anonymizer module
+loader = importlib.machinery.SourceFileLoader('src.anonymizer', 'src/anonymizer.py')
+spec = importlib.util.spec_from_loader(loader.name, loader)
+ana_mod = importlib.util.module_from_spec(spec)
+ana_mod.__package__ = 'src'
+sys.modules['src.anonymizer'] = ana_mod
+loader.exec_module(ana_mod)
+DatasetAnonymizer = ana_mod.DatasetAnonymizer
+NERAnonymizer = ana_mod.NERAnonymizer
 
-# load data_ingest
+# Load data_ingest for integration tests
 loader_di = importlib.machinery.SourceFileLoader('src.data_ingest', 'src/data_ingest.py')
 spec_di = importlib.util.spec_from_loader(loader_di.name, loader_di)
 di_mod = importlib.util.module_from_spec(spec_di)
 di_mod.__package__ = 'src'
 sys.modules['src.data_ingest'] = di_mod
 loader_di.exec_module(di_mod)
+
+
+class TestDatasetAnonymizer(unittest.TestCase):
+    def test_scrub_text(self):
+        da = DatasetAnonymizer()
+        out = da.scrub_text("contact me at foo@bar.com or 123-456-7890")
+        self.assertNotIn("@", out)
+        self.assertNotIn("123-456-7890", out)
+        self.assertEqual(da.summary()["text"], 1)
+
+    def test_scrub_files(self):
+        da = DatasetAnonymizer()
+        with tempfile.TemporaryDirectory() as tmp:
+            t = Path(tmp) / "t.txt"
+            i = Path(tmp) / "i.png"
+            a = Path(tmp) / "a.wav"
+            t.write_text("a@b.com")
+            img = Image.new("RGB", (2, 2), color=1)
+            img.save(i)
+            with wave.open(str(a), "wb") as f:
+                f.setnchannels(1)
+                f.setsampwidth(2)
+                f.setframerate(8000)
+                f.writeframes(np.ones(8, dtype=np.int16).tobytes())
+            da.scrub_text_file(t)
+            da.scrub_image_file(i)
+            da.scrub_audio_file(a)
+            self.assertEqual(t.read_text(), "[EMAIL]")
+            self.assertTrue(np.all(np.array(Image.open(i)) == 0))
+            with wave.open(str(a)) as f:
+                data = np.frombuffer(f.readframes(f.getnframes()), dtype=np.int16)
+            self.assertTrue(np.all(data == 0))
+            summ = da.summary()
+            self.assertEqual(summ["text"], 1)
+            self.assertEqual(summ["image"], 1)
+            self.assertEqual(summ["audio"], 1)
+
 
 class TestNERAnonymizer(unittest.TestCase):
     def test_scrub_text_and_files(self):

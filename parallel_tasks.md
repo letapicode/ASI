@@ -628,9 +628,9 @@ Analyze the file `src/data_poison_detector.py` for code quality, documentation, 
 
 Analyze the file `src/provenance_ledger.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 158: Review src/dataset_anonymizer.py
+## Task 158: Review src/anonymizer.py
 
-Analyze the file `src/dataset_anonymizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/anonymizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 159: Review src/dataset_bias_detector.py
 
@@ -1124,9 +1124,9 @@ Analyze the file `src/multimodal_summary_memory.py` for code quality, documentat
 
 Analyze the file `src/multimodal_world_model.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 282: Review src/ner_anonymizer.py
+## Task 282: Review src/anonymizer.py (NER components)
 
-Analyze the file `src/ner_anonymizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the NER functionality in `src/anonymizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 283: Review src/nerf_world_model.py
 
@@ -1784,9 +1784,9 @@ Analyze the file `tests/test_data_ingest.py` for code quality, documentation, an
 
 Analyze the file `tests/test_data_poison_detector.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 447: Review tests/test_dataset_anonymizer.py
+## Task 447: Review tests/test_anonymizer.py
 
-Analyze the file `tests/test_dataset_anonymizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `tests/test_anonymizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 448: Review tests/test_dataset_bias_detector.py
 
@@ -2256,9 +2256,9 @@ Analyze the file `tests/test_multimodal_summary_memory.py` for code quality, doc
 
 Analyze the file `tests/test_multimodal_world_model.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 565: Review tests/test_ner_anonymizer.py
+## Task 565: Review tests/test_anonymizer.py (NER coverage)
 
-Analyze the file `tests/test_ner_anonymizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the NER-focused tests in `tests/test_anonymizer.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 566: Review tests/test_nerf_world_model.py
 
