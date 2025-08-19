@@ -197,8 +197,7 @@ from .cognitive_load_monitor import CognitiveLoadMonitor
 from .license_inspector import LicenseInspector
 from .dataset_versioner import DatasetVersioner
 from .dataset_lineage import DatasetLineageManager
-from .dataset_anonymizer import DatasetAnonymizer
-from .ner_anonymizer import NERAnonymizer
+from .anonymizer import DatasetAnonymizer, NERAnonymizer
 from .dataset_discovery import (
     DiscoveredDataset,
     discover_huggingface,

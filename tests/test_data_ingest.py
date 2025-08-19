@@ -8,11 +8,11 @@ import importlib.util
 import sys
 import types
 import wave
-loader_ana = importlib.machinery.SourceFileLoader('src.dataset_anonymizer', 'src/dataset_anonymizer.py')
+loader_ana = importlib.machinery.SourceFileLoader('src.anonymizer', 'src/anonymizer.py')
 spec_ana = importlib.util.spec_from_loader(loader_ana.name, loader_ana)
 ana_mod = importlib.util.module_from_spec(spec_ana)
 ana_mod.__package__ = 'src'
-sys.modules['src.dataset_anonymizer'] = ana_mod
+sys.modules['src.anonymizer'] = ana_mod
 loader_ana.exec_module(ana_mod)
 torch = types.SimpleNamespace(
     tensor=lambda *a, **kw: None,

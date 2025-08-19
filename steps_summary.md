@@ -79,6 +79,11 @@
   package path.
 - Confirmed scheduler-related tests run with pytest.
 
+## PR 41
+- Consolidated dataset and NER anonymizers into unified `anonymizer.py` with shared file rewrite helper.
+- Removed legacy anonymizer modules and merged their tests into `tests/test_anonymizer.py`.
+- Updated imports, documentation and task lists to reference the new module.
+
 ## PR 14
 - Consolidated dataset lineage visualization by merging `dataset_lineage_dashboard`
   into `lineage_visualizer` with a shared `_build_graph` helper.

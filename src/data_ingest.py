@@ -81,10 +81,10 @@ except Exception:  # pragma: no cover - for tests
                 return []
 
 try:  # pragma: no cover - optional
-    from .dataset_anonymizer import DatasetAnonymizer
+    from .anonymizer import DatasetAnonymizer, NERAnonymizer
 except Exception:  # pragma: no cover - for tests
     try:
-        from dataset_anonymizer import DatasetAnonymizer  # type: ignore
+        from anonymizer import DatasetAnonymizer, NERAnonymizer  # type: ignore
     except Exception:  # pragma: no cover - stub
         class DatasetAnonymizer:  # type: ignore
             def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -102,12 +102,6 @@ except Exception:  # pragma: no cover - for tests
             def summary(self) -> Dict[str, int]:
                 return {}
 
-try:  # pragma: no cover - optional
-    from .ner_anonymizer import NERAnonymizer
-except Exception:  # pragma: no cover - for tests
-    try:
-        from ner_anonymizer import NERAnonymizer  # type: ignore
-    except Exception:  # pragma: no cover - stub
         class NERAnonymizer:  # type: ignore
             def __init__(self, *a: Any, **kw: Any) -> None:
                 pass
