@@ -14,7 +14,7 @@ if __name__ not in sys.modules:  # pragma: no cover - for manual loaders
 if TYPE_CHECKING:  # pragma: no cover - only for type hints
     from .data_ingest import CrossLingualTranslator
     from .graph_of_thought import GraphOfThought
-    from .graph_pruning_manager import GraphPruningManager
+    from .pruning_manager import GraphPruningManager
 
 
 @dataclass

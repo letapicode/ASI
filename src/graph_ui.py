@@ -17,7 +17,7 @@ except Exception:  # pragma: no cover - stub if fastapi is missing
 
 from .graph_of_thought import GraphOfThought
 from .reasoning_history import ReasoningHistoryLogger
-from .graph_pruning_manager import GraphPruningManager
+from .pruning_manager import GraphPruningManager
 from .nl_graph_editor import NLGraphEditor
 try:  # pragma: no cover - optional dependency
     from .voice_graph_controller import VoiceGraphController
