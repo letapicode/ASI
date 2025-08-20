@@ -10,7 +10,10 @@ except Exception:  # pragma: no cover - allow running without torch
 _cos_sim = nn.functional.cosine_similarity
 
 from .hierarchical_memory import HierarchicalMemory
-from .data_ingest import CrossLingualTranslator, CrossLingualSpeechTranslator
+from .cross_lingual_translator import (
+    CrossLingualTranslator,
+    CrossLingualSpeechTranslator,
+)
 from .quantum_sampling import amplify_search
 from .cross_lingual_utils import embed_text as _embed_text
 

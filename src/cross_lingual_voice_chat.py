@@ -4,7 +4,7 @@ from collections import deque
 from typing import Any, Deque, Dict, TYPE_CHECKING
 
 from .graph_of_thought import GraphOfThought
-from .data_ingest import CrossLingualSpeechTranslator
+from .cross_lingual_translator import CrossLingualSpeechTranslator
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints
     import numpy as np

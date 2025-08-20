@@ -9,7 +9,7 @@ from typing import Iterable, Any, Tuple, List, Dict
 import torch
 
 from .summarizing_memory import BaseSummarizingMemory
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 
 
 class ContextSummaryMemory(BaseSummarizingMemory):

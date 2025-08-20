@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict
 
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 from .reasoning_history import ReasoningHistoryLogger
 
 

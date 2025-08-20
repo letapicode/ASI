@@ -29,7 +29,7 @@ from .vector_stores import (
 )
 from .hopfield_memory import HopfieldMemory
 from .dnc_memory import DNCMemory
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 from .retrieval_rl import RetrievalPolicy
 from .user_preferences import UserPreferences
 from .memory_pruning_manager import MemoryPruningManager

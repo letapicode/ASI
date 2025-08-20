@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import Dict
 
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 
 
 class AdaptiveTranslator:

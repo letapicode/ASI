@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import Any, Dict, Mapping, TYPE_CHECKING
 
 from .nl_graph_editor import NLGraphEditor
-from .data_ingest import CrossLingualTranslator, CrossLingualSpeechTranslator
+from .cross_lingual_translator import (
+    CrossLingualTranslator,
+    CrossLingualSpeechTranslator,
+)
 from .sign_language import SignLanguageRecognizer
 
 if TYPE_CHECKING:  # pragma: no cover - for type hints

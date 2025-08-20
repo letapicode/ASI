@@ -138,8 +138,8 @@ from .data_ingest import (
     paraphrase_multilingual,
     ingest_translated_triples,
     ActiveDataSelector,
-    CrossLingualTranslator,
 )
+from .cross_lingual_translator import CrossLingualTranslator
 from .adaptive_translator import AdaptiveTranslator
 from .advanced_ingest import LLMIngestParser
 from .generative_data_augmentor import GenerativeDataAugmentor

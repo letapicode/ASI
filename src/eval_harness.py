@@ -317,7 +317,7 @@ def _eval_fairness_evaluator() -> Tuple[bool, str]:
 
 def _eval_cross_lingual_fairness() -> Tuple[bool, str]:
     from asi.fairness import CrossLingualFairnessEvaluator
-    from asi.data_ingest import CrossLingualTranslator
+    from asi.cross_lingual_translator import CrossLingualTranslator
 
     stats = {
         "hola": {"tp": 1, "fn": 1},
