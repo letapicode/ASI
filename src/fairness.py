@@ -61,10 +61,7 @@ class FairnessEvaluator:
 
 
 # ---------------------------------------------------------------------------
-try:  # pragma: no cover - optional dependency
-    from .data_ingest import CrossLingualTranslator
-except Exception:  # pragma: no cover - missing torch
-    from .translator_fallback import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 
 
 class CrossLingualFairnessEvaluator:

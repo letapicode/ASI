@@ -31,7 +31,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     translations: dict[str, str] = {}
     if languages:
-        from .data_ingest import CrossLingualTranslator
+        from .cross_lingual_translator import CrossLingualTranslator
         from .reasoning_summary_translator import ReasoningSummaryTranslator
 
         translator = CrossLingualTranslator(sorted(languages))

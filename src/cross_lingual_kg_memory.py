@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterable, Tuple, Union, Optional, List
 
 from .knowledge_graph_memory import KnowledgeGraphMemory, TimedTriple
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 
 
 class CrossLingualKGMemory(KnowledgeGraphMemory):

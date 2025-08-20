@@ -13,10 +13,7 @@ from .dataset_discovery import DiscoveredDataset, _parse_rss, store_datasets
 from .dataset_summarizer import summarize_dataset
 from .dataset_bias_detector import compute_word_freq, bias_score
 from .fairness import CrossLingualFairnessEvaluator
-try:  # pragma: no cover - optional dependency
-    from .data_ingest import CrossLingualTranslator
-except Exception:  # pragma: no cover - missing torch
-    from .translator_fallback import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 
 
 class StreamingDatasetWatcher:

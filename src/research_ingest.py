@@ -7,7 +7,7 @@ import urllib.request
 from pathlib import Path
 from typing import List, Dict
 
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 
 
 def fetch_recent_papers(max_results: int = 5) -> List[Dict[str, str]]:

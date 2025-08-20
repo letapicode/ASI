@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import Callable, List, Tuple, Optional
 
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 
 from .user_preferences import UserPreferences
 from .emotion_detector import detect_emotion

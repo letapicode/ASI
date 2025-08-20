@@ -9,7 +9,7 @@ except Exception:  # pragma: no cover - torch optional
     torch = None  # type: ignore
 
 from .graph_of_thought import GraphOfThought
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 from .cross_lingual_utils import embed_text
 try:  # pragma: no cover - optional dependency
     from .context_summary_memory import ContextSummaryMemory

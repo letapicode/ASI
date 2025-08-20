@@ -11,7 +11,7 @@ from urllib.parse import urlparse, parse_qs
 
 from .telemetry import TelemetryLogger
 from .reasoning_history import ReasoningHistoryLogger
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 
 
 class CollaborationPortal:

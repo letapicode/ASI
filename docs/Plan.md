@@ -451,7 +451,8 @@ Combine 1-4 and the *effective* context limit becomes hardware bandwidth, not mo
     embeddings by recency. Evaluate retrieval accuracy drop <3% compared with
     the existing `StreamingCompressor` on 1&nbsp;M-token streams.
 40. **Cross-lingual data ingestion**: Integrate a `CrossLingualTranslator`
-    into `data_ingest` so text is stored in multiple languages. *Implemented*
+    (now in `cross_lingual_translator`) into `data_ingest` so text is stored in
+    multiple languages. *Implemented*
     via the optional ``translator`` argument of ``download_triples()`` which
     saves translated files alongside the originals. Translated triples are now
     passed through `cross_modal_fusion.encode_all()` and their fused embeddings

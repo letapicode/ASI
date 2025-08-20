@@ -4,7 +4,7 @@ from typing import Tuple, List, Any, TYPE_CHECKING, Iterable, Sequence, Dict
 
 import torch
 
-from .data_ingest import CrossLingualTranslator
+from .cross_lingual_translator import CrossLingualTranslator
 from .cross_lingual_utils import embed_text
 
 if TYPE_CHECKING:  # pragma: no cover - import for type hints

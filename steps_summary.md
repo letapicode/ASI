@@ -79,6 +79,13 @@
   package path.
 - Confirmed scheduler-related tests run with pytest.
 
+## PR 14
+- Centralized translation helpers by moving `CrossLingualTranslator` and
+  `CrossLingualSpeechTranslator` into a new `cross_lingual_translator` module.
+- Updated all modules to import these classes from the shared module and removed
+  the redundant `translator_fallback` file.
+- Adjusted documentation in `docs/Plan.md` accordingly.
+
 ## PR 41
 - Consolidated dataset and NER anonymizers into unified `anonymizer.py` with shared file rewrite helper.
 - Removed legacy anonymizer modules and merged their tests into `tests/test_anonymizer.py`.
