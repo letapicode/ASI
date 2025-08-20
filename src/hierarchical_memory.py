@@ -32,7 +32,7 @@ from .dnc_memory import DNCMemory
 from .cross_lingual_translator import CrossLingualTranslator
 from .retrieval_rl import RetrievalPolicy
 from .user_preferences import UserPreferences
-from .memory_pruning_manager import MemoryPruningManager
+from .pruning_manager import MemoryPruningManager
 
 
 class SSDCache:

@@ -279,3 +279,8 @@
   `PrivacyBudgetManager`, and `PrivacyAuditor`.
 - Removed the old dedicated modules and updated all imports across the codebase,
   scripts, tests, and documentation to reference the unified file.
+
+## PR 42
+- Merged graph and memory pruning managers into a unified `pruning_manager.py` with a shared telemetry helper.
+- Updated source imports and replaced separate tests with a single `test_pruning_manager.py`.
+- Revised task references to point to the consolidated module and test.

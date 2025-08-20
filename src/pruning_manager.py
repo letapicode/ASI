@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Sequence
 import time
+from typing import Any, Sequence, List
+import numpy as np
 
-try:  # optional heavy dep
+try:  # optional torch dependency
     import torch
-except Exception:  # pragma: no cover - fallback when torch missing
-    torch = None  # type: ignore
+except Exception:  # pragma: no cover - allow running without torch
+    from .torch_fallback import torch
 
 from .graph_of_thought import GraphOfThought
 
@@ -21,6 +22,16 @@ except Exception:  # pragma: no cover - fallback
     class TelemetryLogger:  # type: ignore[dead-code]
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             self.events = []
+
+
+def _log_events(
+    telemetry: TelemetryLogger | None, event: str, items: Sequence[Any], key: str
+) -> None:
+    """Record pruning ``items`` in ``telemetry`` if provided."""
+    if telemetry is None:
+        return
+    for item in items:
+        telemetry.events.append({"event": event, key: item})
 
 
 class GraphPruningManager:
@@ -50,12 +61,10 @@ class GraphPruningManager:
                 counts[d] = counts.get(d, 0) + 1
         return counts
 
-    # --------------------------------------------------------------
     def attach(self, graph: GraphOfThought) -> None:
         """Attach to a :class:`GraphOfThought` instance."""
         self.graph = graph
 
-    # --------------------------------------------------------------
     def _summarize(self, nodes: Sequence[int]) -> None:
         if not nodes or self.memory is None or self.summarizer is None or self.graph is None:
             return
@@ -65,14 +74,9 @@ class GraphPruningManager:
         if self.memory.translator is not None:
             info["translations"] = self.memory.translator.translate_all(summary)
         vec = self.summarizer.expand(summary)
-        if torch is not None:
-            with torch.no_grad():
-                comp = self.memory.compressor.encoder(vec.unsqueeze(0))
-        else:
-            comp = self.memory.compressor.encoder(vec.unsqueeze(0))
+        comp = self.memory.compressor.encoder(vec.unsqueeze(0))
         self.memory.add_compressed(comp, [{"ctxsum": info}])
 
-    # --------------------------------------------------------------
     def prune_low_degree(self, threshold: int | None = None) -> Sequence[int]:
         if self.graph is None:
             return []
@@ -88,7 +92,6 @@ class GraphPruningManager:
             self._remove_nodes(remove)
         return remove
 
-    # --------------------------------------------------------------
     def prune_old_nodes(self, *, age: float | None = None, now: float | None = None) -> Sequence[int]:
         if self.graph is None:
             return []
@@ -107,7 +110,6 @@ class GraphPruningManager:
             self._remove_nodes(remove)
         return remove
 
-    # --------------------------------------------------------------
     def _remove_nodes(self, nodes: Sequence[int]) -> None:
         assert self.graph is not None
         to_remove = set(nodes)
@@ -121,11 +123,8 @@ class GraphPruningManager:
             for (s, d), ts in self.graph.edge_timestamps.items()
             if s not in to_remove and d not in to_remove
         }
-        if nodes and self.telemetry is not None:
-            for n in nodes:
-                self.telemetry.events.append({"event": "graph_prune", "node": n})
+        _log_events(self.telemetry, "graph_prune", nodes, "node")
 
-    # --------------------------------------------------------------
     def prune_if_needed(self, max_nodes: int) -> None:
         if self.graph is None:
             return
@@ -134,4 +133,70 @@ class GraphPruningManager:
             self.prune_old_nodes()
 
 
-__all__ = ["GraphPruningManager"]
+class MemoryPruningManager:
+    """Monitor memory usage and prune rarely accessed vectors."""
+
+    def __init__(
+        self,
+        threshold: int = 1,
+        summarizer: Any | None = None,
+        telemetry: TelemetryLogger | None = None,
+    ) -> None:
+        self.threshold = int(threshold)
+        self.summarizer = summarizer
+        self.telemetry = telemetry
+        self.memory: "HierarchicalMemory | None" = None
+
+    def attach(self, memory: "HierarchicalMemory") -> None:
+        """Attach to a :class:`HierarchicalMemory` instance."""
+        self.memory = memory
+
+    def _get_vector(self, meta: Any) -> np.ndarray | None:
+        if self.memory is None:
+            return None
+        store = self.memory.store
+        mlist = getattr(store, "_meta", getattr(store, "meta", []))
+        try:
+            idx = mlist.index(meta)
+        except ValueError:
+            return None
+        vecs = getattr(store, "_vectors", getattr(store, "vectors", None))
+        if vecs is None:
+            return None
+        if isinstance(vecs, list):
+            if not vecs:
+                return None
+            mat = np.concatenate(vecs, axis=0)
+        else:
+            mat = vecs
+        if idx >= len(mat):
+            return None
+        return mat[idx]
+
+    def prune(self) -> None:
+        """Prune or summarize entries below the usage ``threshold``."""
+        if self.memory is None:
+            return
+        removed: List[Any] = []
+        for meta, count in list(self.memory._usage.items()):
+            if count >= self.threshold:
+                continue
+            vec = self._get_vector(meta)
+            if self.summarizer is not None and vec is not None:
+                comp = torch.from_numpy(vec).unsqueeze(0)
+                full = self.memory.compressor.decoder(comp).squeeze(0)
+                if hasattr(self.summarizer, "summarize"):
+                    text = self.summarizer.summarize(full)
+                else:
+                    text = self.summarizer(full)
+                self.memory.store.delete(tag=meta)
+                zero = np.zeros((1, vec.shape[-1]), dtype=np.float32)
+                self.memory.store.add(zero, [{"summary": text}])
+            else:
+                self.memory.store.delete(tag=meta)
+            self.memory._usage.pop(meta, None)
+            removed.append(meta)
+        _log_events(self.telemetry, "memory_prune", removed, "meta")
+
+
+__all__ = ["GraphPruningManager", "MemoryPruningManager"]

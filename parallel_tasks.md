@@ -896,9 +896,9 @@ Analyze the file `src/graph_neural_reasoner.py` for code quality, documentation,
 
 Analyze the file `src/graph_of_thought.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 225: Review src/graph_pruning_manager.py
+## Task 225: Review src/pruning_manager.py
 
-Analyze the file `src/graph_pruning_manager.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/pruning_manager.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 226: Review src/graph_ui.py
 
@@ -1052,9 +1052,9 @@ Analyze the file `src/memory_pb2_grpc.py` for code quality, documentation, and t
 
 Analyze the file `src/memory_profiler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 264: Review src/memory_pruning_manager.py
+## Task 264: Review src/pruning_manager.py
 
-Analyze the file `src/memory_pruning_manager.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `src/pruning_manager.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 265: Review src/memory_service.py
 
@@ -2032,9 +2032,9 @@ Analyze the file `tests/test_graph_neural_reasoner.py` for code quality, documen
 
 Analyze the file `tests/test_graph_of_thought.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 509: Review tests/test_graph_pruning_manager.py
+## Task 509: Review tests/test_pruning_manager.py
 
-Analyze the file `tests/test_graph_pruning_manager.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `tests/test_pruning_manager.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 510: Review tests/test_graph_ui.py
 
@@ -2168,9 +2168,9 @@ Analyze the file `tests/test_memory_explanations.py` for code quality, documenta
 
 Analyze the file `tests/test_memory_profiler.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
-## Task 543: Review tests/test_memory_pruning_manager.py
+## Task 543: Review tests/test_pruning_manager.py
 
-Analyze the file `tests/test_memory_pruning_manager.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
+Analyze the file `tests/test_pruning_manager.py` for code quality, documentation, and testing gaps. Propose improvements and ensure it aligns with `docs/Plan.md`.
 
 ## Task 544: Review tests/test_memory_server_telemetry.py
 
